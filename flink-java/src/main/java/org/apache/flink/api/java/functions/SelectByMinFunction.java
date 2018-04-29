@@ -21,7 +21,7 @@ package org.apache.flink.api.java.functions;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.api.java.typeutils.TupleTypeInfo;
+import org.apache.flink.api.java.typeutils.TupleTypeInfoBase;
 
 /**
  * Function that enables selection by minimal value of a field.
@@ -41,7 +41,7 @@ public class SelectByMinFunction<T extends Tuple> implements ReduceFunction<T> {
 	 * is regarded in the reduce function. First index has highest priority and last index has
 	 * least priority.
 	 */
-	public SelectByMinFunction(TupleTypeInfo<T> type, int... fields) {
+	public SelectByMinFunction(TupleTypeInfoBase<T> type, int... fields) {
 		this.fields = fields;
 
 		// Check correctness of each position
@@ -49,13 +49,13 @@ public class SelectByMinFunction<T extends Tuple> implements ReduceFunction<T> {
 			// Is field inside array
 			if (field < 0 || field >= type.getArity()) {
 				throw new java.lang.IndexOutOfBoundsException(
-						"MinReduceFunction field position " + field + " is out of range.");
+					"MinReduceFunction field position " + field + " is out of range.");
 			}
 
 			// Check whether type is comparable
 			if (!type.getTypeAt(field).isKeyType()) {
 				throw new java.lang.IllegalArgumentException(
-						"MinReduceFunction supports only key(Comparable) types.");
+					"MinReduceFunction supports only key(Comparable) types.");
 			}
 
 		}
