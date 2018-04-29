@@ -166,7 +166,7 @@ public class UnsortedGrouping<T> extends Grouping<T> {
 			throw new NullPointerException("GroupReduce function must not be null.");
 		}
 		TypeInformation<R> resultType = TypeExtractor.getGroupReduceReturnTypes(reducer,
-			this.getInputDataSet().getType(), Utils.getCallLocationName(), true);
+				this.getInputDataSet().getType(), Utils.getCallLocationName(), true);
 
 		return new GroupReduceOperator<T, R>(this, resultType, inputDataSet.clean(reducer), Utils.getCallLocationName());
 	}
@@ -188,7 +188,7 @@ public class UnsortedGrouping<T> extends Grouping<T> {
 			throw new NullPointerException("GroupCombine function must not be null.");
 		}
 		TypeInformation<R> resultType = TypeExtractor.getGroupCombineReturnTypes(combiner,
-			this.getInputDataSet().getType(), Utils.getCallLocationName(), true);
+				this.getInputDataSet().getType(), Utils.getCallLocationName(), true);
 
 		return new GroupCombineOperator<T, R>(this, resultType, inputDataSet.clean(combiner), Utils.getCallLocationName());
 	}
@@ -198,7 +198,7 @@ public class UnsortedGrouping<T> extends Grouping<T> {
 	 *
 	 * @param n The desired number of elements for each group.
 	 * @return A GroupReduceOperator that represents the DataSet containing the elements.
-	 */
+	*/
 	public GroupReduceOperator<T, T> first(int n) {
 		if (n < 1) {
 			throw new InvalidProgramException("Parameter n of first(n) must be at least 1.");
@@ -226,7 +226,7 @@ public class UnsortedGrouping<T> extends Grouping<T> {
 		}
 
 		return new ReduceOperator<T>(this, new SelectByMinFunction(
-			(TupleTypeInfoBase) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
+				(TupleTypeInfoBase) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
 	}
 
 	/**
@@ -248,7 +248,7 @@ public class UnsortedGrouping<T> extends Grouping<T> {
 		}
 
 		return new ReduceOperator<T>(this, new SelectByMaxFunction(
-			(TupleTypeInfoBase) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
+				(TupleTypeInfoBase) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
 	}
 	// --------------------------------------------------------------------------------------------
 	//  Group Operations

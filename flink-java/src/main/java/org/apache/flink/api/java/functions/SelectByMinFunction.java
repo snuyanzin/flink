@@ -49,13 +49,13 @@ public class SelectByMinFunction<T extends Tuple> implements ReduceFunction<T> {
 			// Is field inside array
 			if (field < 0 || field >= type.getArity()) {
 				throw new java.lang.IndexOutOfBoundsException(
-					"MinReduceFunction field position " + field + " is out of range.");
+						"MinReduceFunction field position " + field + " is out of range.");
 			}
 
 			// Check whether type is comparable
 			if (!type.getTypeAt(field).isKeyType()) {
 				throw new java.lang.IllegalArgumentException(
-					"MinReduceFunction supports only key(Comparable) types.");
+						"MinReduceFunction supports only key(Comparable) types.");
 			}
 
 		}

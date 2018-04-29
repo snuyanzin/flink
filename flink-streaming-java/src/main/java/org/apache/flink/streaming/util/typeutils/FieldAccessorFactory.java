@@ -56,7 +56,7 @@ public class FieldAccessorFactory implements Serializable {
 		if (typeInfo instanceof BasicArrayTypeInfo || typeInfo instanceof PrimitiveArrayTypeInfo) {
 			return new FieldAccessor.ArrayFieldAccessor<>(pos, typeInfo);
 
-			// In case of basic types
+		// In case of basic types
 		} else if (typeInfo instanceof BasicTypeInfo) {
 			if (pos != 0) {
 				throw new CompositeType.InvalidFieldReferenceException("The " + ((Integer) pos).toString() + ". field selected on a " +
@@ -67,7 +67,7 @@ public class FieldAccessorFactory implements Serializable {
 			FieldAccessor<T, F> result = (FieldAccessor<T, F>) new FieldAccessor.SimpleFieldAccessor<>(typeInfo);
 			return result;
 
-			// In case of case classes
+		// In case of case classes
 		} else if (typeInfo.isTupleType() && ((TupleTypeInfoBase) typeInfo).isCaseClass()) {
 			TupleTypeInfoBase tupleTypeInfo = (TupleTypeInfoBase) typeInfo;
 			@SuppressWarnings("unchecked")
@@ -75,13 +75,13 @@ public class FieldAccessorFactory implements Serializable {
 			return new FieldAccessor.RecursiveProductFieldAccessor<>(
 				pos, typeInfo, new FieldAccessor.SimpleFieldAccessor<>(fieldTypeInfo), config);
 
-			// In case of tuples
+		// In case of tuples
 		} else if (typeInfo.isTupleType()) {
 			@SuppressWarnings("unchecked")
 			FieldAccessor<T, F> result = new FieldAccessor.SimpleTupleFieldAccessor(pos, typeInfo);
 			return result;
 
-			// Default case, PojoType is directed to this statement
+		// Default case, PojoType is directed to this statement
 		} else {
 			throw new CompositeType.InvalidFieldReferenceException("Cannot reference field by position on " + typeInfo.toString()
 				+ "Referencing a field by position is supported on tuples, case classes, and arrays. "
@@ -110,7 +110,7 @@ public class FieldAccessorFactory implements Serializable {
 					("A field expression on an array must be an integer index (that might be given as a string).");
 			}
 
-			// In case of basic types
+		// In case of basic types
 		} else if (typeInfo instanceof BasicTypeInfo) {
 			try {
 				int pos = field.equals(Keys.ExpressionKeys.SELECT_ALL_CHAR) ? 0 : Integer.parseInt(field);
@@ -121,7 +121,7 @@ public class FieldAccessorFactory implements Serializable {
 					" (both of which mean selecting the entire basic type).");
 			}
 
-			// In case of Pojos
+		// In case of Pojos
 		} else if (typeInfo instanceof PojoTypeInfo) {
 			FieldExpression decomp = decomposeFieldExpression(field);
 			PojoTypeInfo<?> pojoTypeInfo = (PojoTypeInfo) typeInfo;
@@ -145,7 +145,7 @@ public class FieldAccessorFactory implements Serializable {
 					return new FieldAccessor.PojoFieldAccessor<>(pojoField.getField(), innerAccessor);
 				}
 			}
-			// In case of case classes
+		// In case of case classes
 		} else if (typeInfo.isTupleType() && ((TupleTypeInfoBase) typeInfo).isCaseClass()) {
 			TupleTypeInfoBase tupleTypeInfo = (TupleTypeInfoBase) typeInfo;
 			FieldExpression decomp = decomposeFieldExpression(field);
@@ -162,7 +162,7 @@ public class FieldAccessorFactory implements Serializable {
 				return new FieldAccessor.RecursiveProductFieldAccessor<>(fieldPos, typeInfo, innerAccessor, config);
 			}
 
-			// In case of tuples
+		// In case of tuples
 		} else if (typeInfo.isTupleType()) {
 			TupleTypeInfoBase tupleTypeInfo = (TupleTypeInfoBase) typeInfo;
 			FieldExpression decomp = decomposeFieldExpression(field);
@@ -187,7 +187,7 @@ public class FieldAccessorFactory implements Serializable {
 				return result;
 			}
 
-			// Default statement
+		// Default statement
 		} else {
 			throw new CompositeType.InvalidFieldReferenceException("Cannot reference field by field expression on " + typeInfo.toString()
 				+ "Field expressions are only supported on POJO types, tuples, and case classes. "
