@@ -157,7 +157,7 @@ public abstract class FieldAccessor<T, F> implements Serializable {
 
 		SimpleTupleFieldAccessor(int pos, TypeInformation<T> typeInfo) {
 			checkNotNull(typeInfo, "typeInfo must not be null.");
-			int arity = ((TupleTypeInfo) typeInfo).getArity();
+			int arity = typeInfo.getArity();
 			if (pos < 0 || pos >= arity) {
 				throw new CompositeType.InvalidFieldReferenceException(
 					"Tried to select " + ((Integer) pos).toString() + ". field on \"" +
@@ -165,7 +165,7 @@ public abstract class FieldAccessor<T, F> implements Serializable {
 			}
 
 			this.pos = pos;
-			this.fieldType = ((TupleTypeInfo) typeInfo).getTypeAt(pos);
+			this.fieldType = ((TupleTypeInfoBase) typeInfo).getTypeAt(pos);
 		}
 
 		@SuppressWarnings("unchecked")
