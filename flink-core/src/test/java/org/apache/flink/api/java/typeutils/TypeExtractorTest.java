@@ -2087,10 +2087,4 @@ public class TypeExtractorTest {
 		Assert.assertEquals(SqlTimeTypeInfo.TIMESTAMP, TypeExtractor.getForObject(Timestamp.valueOf("1998-12-12 12:37:45")));
 	}
 
-	@Test
-	public void testProgram() {
-		TypeHint<Map<String, String>> typehint = new TypeHint<Map<String, String>>() {};
-
-		System.out.println(typehint);
-	}
 }

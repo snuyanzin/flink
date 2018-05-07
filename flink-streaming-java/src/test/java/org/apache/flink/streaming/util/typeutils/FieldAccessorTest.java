@@ -46,7 +46,7 @@ public class FieldAccessorTest {
 	public void testFlatTuple() {
 		Tuple2<String, Integer> t = Tuple2.of("aa", 5);
 		TupleTypeInfo<Tuple2<String, Integer>> tpeInfo =
-			(TupleTypeInfo<Tuple2<String, Integer>>) TypeExtractor.getForObject(t);
+				(TupleTypeInfo<Tuple2<String, Integer>>) TypeExtractor.getForObject(t);
 
 		FieldAccessor<Tuple2<String, Integer>, String> f0 = FieldAccessorFactory.getAccessor(tpeInfo, "f0", null);
 		assertEquals("aa", f0.get(t));
@@ -107,7 +107,7 @@ public class FieldAccessorTest {
 	public void testTupleInTuple() {
 		Tuple2<String, Tuple3<Integer, Long, Double>> t = Tuple2.of("aa", Tuple3.of(5, 9L, 2.0));
 		TupleTypeInfo<Tuple2<String, Tuple3<Integer, Long, Double>>> tpeInfo =
-			(TupleTypeInfo<Tuple2<String, Tuple3<Integer, Long, Double>>>) TypeExtractor.getForObject(t);
+				(TupleTypeInfo<Tuple2<String, Tuple3<Integer, Long, Double>>>) TypeExtractor.getForObject(t);
 
 		FieldAccessor<Tuple2<String, Tuple3<Integer, Long, Double>>, String> f0 = FieldAccessorFactory
 			.getAccessor(tpeInfo, "f0", null);
@@ -173,7 +173,7 @@ public class FieldAccessorTest {
 	public void testTupleInPojoInTuple() {
 		Tuple2<String, Foo> t = Tuple2.of("aa", new Foo(8, Tuple2.of("ddd", 9L), (short) 2));
 		TupleTypeInfo<Tuple2<String, Foo>> tpeInfo =
-			(TupleTypeInfo<Tuple2<String, Foo>>) TypeExtractor.getForObject(t);
+				(TupleTypeInfo<Tuple2<String, Foo>>) TypeExtractor.getForObject(t);
 
 		FieldAccessor<Tuple2<String, Foo>, Long> f1tf1 = FieldAccessorFactory.getAccessor(tpeInfo, "f1.t.f1", null);
 		assertEquals(9L, (long) f1tf1.get(t));
@@ -283,8 +283,8 @@ public class FieldAccessorTest {
 	public void testArray() {
 		int[] a = new int[]{3, 5};
 		FieldAccessor<int[], Integer> fieldAccessor =
-			(FieldAccessor<int[], Integer>) (Object)
-				FieldAccessorFactory.getAccessor(PrimitiveArrayTypeInfo.getInfoFor(a.getClass()), 1, null);
+				(FieldAccessor<int[], Integer>) (Object)
+						FieldAccessorFactory.getAccessor(PrimitiveArrayTypeInfo.getInfoFor(a.getClass()), 1, null);
 
 		assertEquals(Integer.class, fieldAccessor.getFieldType().getTypeClass());
 
@@ -295,8 +295,8 @@ public class FieldAccessorTest {
 
 		Integer[] b = new Integer[]{3, 5};
 		FieldAccessor<Integer[], Integer> fieldAccessor2 =
-			(FieldAccessor<Integer[], Integer>) (Object)
-				FieldAccessorFactory.getAccessor(BasicArrayTypeInfo.getInfoFor(b.getClass()), 1, null);
+				(FieldAccessor<Integer[], Integer>) (Object)
+						FieldAccessorFactory.getAccessor(BasicArrayTypeInfo.getInfoFor(b.getClass()), 1, null);
 
 		assertEquals(Integer.class, fieldAccessor2.getFieldType().getTypeClass());
 
