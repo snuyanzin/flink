@@ -370,11 +370,12 @@ public class FieldAccessorTest {
 		FieldAccessor<Long, Long> f = FieldAccessorFactory.getAccessor(tpeInfo, "foo", null);
 	}
 
-	/*
-	should not fail e.g. like in FLINK-8255
+	/**
+	 * Validates that no ClassCastException happens
+	 * should not fail e.g. like in FLINK-8255.
 	 */
 	@Test
-	public void testTupleInTuple2() {
+	public void testRowTypeInfo() {
 		TypeInformation<?>[] typeList = new TypeInformation<?>[]{
 			new RowTypeInfo(
 				BasicTypeInfo.SHORT_TYPE_INFO,

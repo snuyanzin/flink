@@ -235,8 +235,9 @@ public class MaxByOperatorTest {
 		}
 	}
 
-	/*
-	should not fail e.g. like in FLINK-8255
+	/**
+	 * Validates that no ClassCastException happens
+	 * should not fail e.g. like in FLINK-8255.
 	 */
 	@Test
 	public void testMaxMinByRowTypeInfoKeyFieldsDataset() {
@@ -252,6 +253,25 @@ public class MaxByOperatorTest {
 
 		tupleDs.maxBy(0);
 		tupleDs.minBy(0);
+	}
+
+    /**
+     * Validates that no ClassCastException happens
+	 * should not fail e.g. like in FLINK-8255.
+	 */
+	@Test
+	public void testMaxMinByRowTypeInfoKeyFieldsForUnsortedGrouping() {
+		final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+
+		TypeInformation[] types = new TypeInformation[]{Types.INT, Types.INT};
+
+		String[] fieldNames = new String[]{"id", "value"};
+		RowTypeInfo rowTypeInfo = new RowTypeInfo(types, fieldNames);
+
+		UnsortedGrouping groupDs = env.fromCollection(Collections.singleton(new Row(2)), rowTypeInfo).groupBy(0);
+
+		groupDs.maxBy(1);
+		groupDs.minBy(1);
 	}
 
 }
