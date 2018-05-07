@@ -81,7 +81,7 @@ import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.InputTypeConfigurable;
 import org.apache.flink.api.java.typeutils.MissingTypeInfo;
-import org.apache.flink.api.java.typeutils.TupleTypeInfo;
+import org.apache.flink.api.java.typeutils.TupleTypeInfoBase;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.core.fs.FileSystem.WriteMode;
 import org.apache.flink.core.fs.Path;
@@ -526,7 +526,7 @@ public abstract class DataSet<T> {
 		}
 
 		return new ReduceOperator<>(this, new SelectByMinFunction(
-			(TupleTypeInfo) getType(), fields), Utils.getCallLocationName());
+			(TupleTypeInfoBase) getType(), fields), Utils.getCallLocationName());
 	}
 
 	/**
@@ -562,7 +562,7 @@ public abstract class DataSet<T> {
 		}
 
 		return new ReduceOperator<>(this, new SelectByMaxFunction(
-			(TupleTypeInfo) getType(), fields), Utils.getCallLocationName());
+			(TupleTypeInfoBase) getType(), fields), Utils.getCallLocationName());
 	}
 
 	/**

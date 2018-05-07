@@ -23,7 +23,6 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.CompositeType;
 import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TupleTypeInfoBase;
 import org.apache.flink.api.java.typeutils.runtime.FieldSerializer;
 import org.apache.flink.api.java.typeutils.runtime.TupleSerializerBase;
@@ -197,7 +196,7 @@ public abstract class FieldAccessor<T, F> implements Serializable {
 			checkNotNull(typeInfo, "typeInfo must not be null.");
 			checkNotNull(innerAccessor, "innerAccessor must not be null.");
 
-			int arity = ((TupleTypeInfo) typeInfo).getArity();
+			int arity = typeInfo.getArity();
 			if (pos < 0 || pos >= arity) {
 				throw new CompositeType.InvalidFieldReferenceException(
 					"Tried to select " + ((Integer) pos).toString() + ". field on \"" +
