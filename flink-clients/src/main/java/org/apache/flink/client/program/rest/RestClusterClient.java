@@ -67,6 +67,7 @@ import org.apache.flink.runtime.rest.messages.RequestBody;
 import org.apache.flink.runtime.rest.messages.ResponseBody;
 import org.apache.flink.runtime.rest.messages.TerminationModeQueryParameter;
 import org.apache.flink.runtime.rest.messages.TriggerId;
+import org.apache.flink.runtime.rest.messages.cluster.ShutdownHeaders;
 import org.apache.flink.runtime.rest.messages.job.JobDetailsHeaders;
 import org.apache.flink.runtime.rest.messages.job.JobDetailsInfo;
 import org.apache.flink.runtime.rest.messages.job.JobExecutionResultHeaders;
@@ -318,18 +319,19 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 		CompletableFuture<JobGraph> jobUploadFuture = portFuture.thenCombine(
 			getDispatcherAddress(),
 			(BlobServerPortResponseBody response, String dispatcherAddress) -> {
-				log.info("Uploading jar files.");
 				final int blobServerPort = response.port;
 				final InetSocketAddress address = new InetSocketAddress(dispatcherAddress, blobServerPort);
 				final List<PermanentBlobKey> keys;
 				try {
-					keys = BlobClient.uploadJarFiles(address, flinkConfig, jobGraph.getJobID(), jobGraph.getUserJars());
+					log.info("Uploading jar files.");
+					keys = BlobClient.uploadFiles(address, flinkConfig, jobGraph.getJobID(), jobGraph.getUserJars());
+					jobGraph.uploadUserArtifacts(address, flinkConfig);
 				} catch (IOException ioe) {
-					throw new CompletionException(new FlinkException("Could not upload job jar files.", ioe));
+					throw new CompletionException(new FlinkException("Could not upload job files.", ioe));
 				}
 
 				for (PermanentBlobKey key : keys) {
-					jobGraph.addBlob(key);
+					jobGraph.addUserJarBlobKey(key);
 				}
 
 				return jobGraph;
@@ -568,6 +570,21 @@ public class RestClusterClient<T> extends ClusterClient<T> implements NewCluster
 					throw new CompletionException(asynchronousOperationInfo.getFailureCause());
 				}
 			});
+	}
+
+	@Override
+	public void shutDownCluster() {
+		try {
+			sendRetryableRequest(
+				ShutdownHeaders.getInstance(),
+				EmptyMessageParameters.getInstance(),
+				EmptyRequestBody.getInstance(),
+				isConnectionProblemException()).get();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		} catch (ExecutionException e) {
+			log.error("Error while shutting down cluster", e);
+		}
 	}
 
 	/**

@@ -518,6 +518,12 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 				jobMasterGateway.triggerSavepoint(targetDirectory, cancelJob, timeout));
 	}
 
+	@Override
+	public CompletableFuture<Acknowledge> shutDownCluster() {
+		shutDown();
+		return CompletableFuture.completedFuture(Acknowledge.get());
+	}
+
 	/**
 	 * Cleans up the job related data from the dispatcher. If cleanupHA is true, then
 	 * the data will also be removed from HA.
@@ -692,7 +698,7 @@ public abstract class Dispatcher extends FencedRpcEndpoint<DispatcherId> impleme
 	 */
 	@Override
 	public void grantLeadership(final UUID newLeaderSessionID) {
-		final DispatcherId dispatcherId = new DispatcherId(newLeaderSessionID);
+		final DispatcherId dispatcherId = DispatcherId.fromUuid(newLeaderSessionID);
 		log.info("Dispatcher {} was granted leadership with fencing token {}", getAddress(), dispatcherId);
 
 		final CompletableFuture<Collection<JobGraph>> recoveredJobsFuture = recoverJobs();

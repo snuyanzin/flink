@@ -68,14 +68,12 @@ import org.apache.flink.util.Preconditions;
 import org.apache.flink.util.StateMigrationException;
 import org.apache.flink.util.function.SupplierWithException;
 
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -345,8 +343,10 @@ public class HeapKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
 			try {
 				DataInputViewStreamWrapper inView = new DataInputViewStreamWrapper(fsDataInputStream);
 
+				// isSerializerPresenceRequired flag is set to true, since for the heap state backend,
+				// deserialization of state happens eagerly at restore time
 				KeyedBackendSerializationProxy<K> serializationProxy =
-						new KeyedBackendSerializationProxy<>(userCodeClassLoader);
+						new KeyedBackendSerializationProxy<>(userCodeClassLoader, true);
 
 				serializationProxy.read(inView);
 
@@ -372,22 +372,6 @@ public class HeapKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
 						serializationProxy.getStateMetaInfoSnapshots();
 
 				for (RegisteredKeyedBackendStateMetaInfo.Snapshot<?, ?> restoredMetaInfo : restoredMetaInfos) {
-
-					if (restoredMetaInfo.getStateSerializer() == null ||
-							restoredMetaInfo.getStateSerializer() instanceof UnloadableDummyTypeSerializer) {
-
-						// must fail now if the previous serializer cannot be restored because there is no serializer
-						// capable of reading previous state
-						// TODO when eager state registration is in place, we can try to get a convert deserializer
-						// TODO from the newly registered serializer instead of simply failing here
-
-						throw new IOException("Unable to restore keyed state [" + restoredMetaInfo.getName() + "]." +
-							" For memory-backed keyed state, the previous serializer of the keyed state must be" +
-							" present; the serializer could have been removed from the classpath, or its implementation" +
-							" have changed and could not be loaded. This is a temporary restriction that will be fixed" +
-							" in future versions.");
-					}
-
 					restoredKvStateMetaInfos.put(restoredMetaInfo.getName(), restoredMetaInfo);
 
 					StateTable<K, ?, ?> stateTable = stateTables.get(restoredMetaInfo.getName());
@@ -615,20 +599,23 @@ public class HeapKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
 
 			final Map<String, Integer> kVStateToId = new HashMap<>(stateTables.size());
 
-			final Map<StateTable<K, ?, ?>, StateTableSnapshot> cowStateStableSnapshots =
-				new HashedMap(stateTables.size());
+			final Map<String, StateTableSnapshot> cowStateStableSnapshots =
+				new HashMap<>(stateTables.size());
 
 			for (Map.Entry<String, StateTable<K, ?, ?>> kvState : stateTables.entrySet()) {
-				kVStateToId.put(kvState.getKey(), kVStateToId.size());
+				String stateName = kvState.getKey();
+				kVStateToId.put(stateName, kVStateToId.size());
 				StateTable<K, ?, ?> stateTable = kvState.getValue();
 				if (null != stateTable) {
 					metaInfoSnapshots.add(stateTable.getMetaInfo().snapshot());
-					cowStateStableSnapshots.put(stateTable, stateTable.createSnapshot());
+					cowStateStableSnapshots.put(stateName, stateTable.createSnapshot());
 				}
 			}
 
 			final KeyedBackendSerializationProxy<K> serializationProxy =
 				new KeyedBackendSerializationProxy<>(
+					// TODO: this code assumes that writing a serializer is threadsafe, we should support to
+					// get a serialized form already at state registration time in the future
 					keySerializer,
 					metaInfoSnapshots,
 					!Objects.equals(UncompressedStreamCompressionDecorator.INSTANCE, keyGroupCompressionDecorator));
@@ -703,11 +690,12 @@ public class HeapKeyedStateBackend<K> extends AbstractKeyedStateBackend<K> {
 							keyGroupRangeOffsets[keyGroupPos] = localStream.getPos();
 							outView.writeInt(keyGroupId);
 
-							for (Map.Entry<String, StateTable<K, ?, ?>> kvState : stateTables.entrySet()) {
+							for (Map.Entry<String, StateTableSnapshot> kvState : cowStateStableSnapshots.entrySet()) {
 								try (OutputStream kgCompressionOut = keyGroupCompressionDecorator.decorateWithCompression(localStream)) {
+									String stateName = kvState.getKey();
 									DataOutputViewStreamWrapper kgCompressionView = new DataOutputViewStreamWrapper(kgCompressionOut);
-									kgCompressionView.writeShort(kVStateToId.get(kvState.getKey()));
-									cowStateStableSnapshots.get(kvState.getValue()).writeMappingsInKeyGroup(kgCompressionView, keyGroupId);
+									kgCompressionView.writeShort(kVStateToId.get(stateName));
+									kvState.getValue().writeMappingsInKeyGroup(kgCompressionView, keyGroupId);
 								} // this will just close the outer compression stream
 							}
 						}

@@ -18,10 +18,6 @@
 
 package org.apache.flink.runtime.state;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.FoldFunction;
@@ -78,11 +74,18 @@ import org.apache.flink.runtime.state.internal.InternalListState;
 import org.apache.flink.runtime.state.internal.InternalReducingState;
 import org.apache.flink.runtime.state.internal.InternalValueState;
 import org.apache.flink.runtime.util.BlockerCheckpointStreamFactory;
-import org.apache.flink.shaded.guava18.com.google.common.base.Joiner;
+import org.apache.flink.testutils.ArtificialCNFExceptionThrowingClassLoader;
 import org.apache.flink.types.IntValue;
 import org.apache.flink.util.IOUtils;
 import org.apache.flink.util.StateMigrationException;
 import org.apache.flink.util.TestLogger;
+
+import org.apache.flink.shaded.guava18.com.google.common.base.Joiner;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -101,9 +104,14 @@ import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -136,6 +144,8 @@ public abstract class StateBackendTestBase<B extends AbstractStateBackend> exten
 	private CheckpointStorageLocation checkpointStorageLocation;
 
 	protected abstract B getStateBackend() throws Exception;
+
+	protected abstract boolean isSerializerPresenceRequiredOnRestore();
 
 	protected CheckpointStreamFactory createStreamFactory() throws Exception {
 		if (checkpointStorageLocation == null) {
@@ -1016,6 +1026,78 @@ public abstract class StateBackendTestBase<B extends AbstractStateBackend> exten
 			restoredState2 = state.value();
 			assertEquals("new-test-message-2", restoredState2.getMessage());
 			assertEquals("extra-message-2", restoredState2.getExtraMessage());
+		} finally {
+			backend.dispose();
+		}
+	}
+
+	@Test
+	public void testSerializerPresenceOnRestore() throws Exception {
+		CheckpointStreamFactory streamFactory = createStreamFactory();
+		SharedStateRegistry sharedStateRegistry = new SharedStateRegistry();
+		Environment env = new DummyEnvironment();
+
+		AbstractKeyedStateBackend<Integer> backend = createKeyedBackend(IntSerializer.INSTANCE, env);
+
+		try {
+			ValueStateDescriptor<TestCustomStateClass> kvId = new ValueStateDescriptor<>("id", new TestReconfigurableCustomTypeSerializerPreUpgrade());
+			ValueState<TestCustomStateClass> state = backend.getPartitionedState(VoidNamespace.INSTANCE, VoidNamespaceSerializer.INSTANCE, kvId);
+
+			// ============== create snapshot, using the old serializer ==============
+
+			// make some modifications
+			backend.setCurrentKey(1);
+			state.update(new TestCustomStateClass("test-message-1", "this-should-be-ignored"));
+
+			backend.setCurrentKey(2);
+			state.update(new TestCustomStateClass("test-message-2", "this-should-be-ignored"));
+
+			KeyedStateHandle snapshot1 = runSnapshot(backend.snapshot(
+				682375462378L,
+				2,
+				streamFactory,
+				CheckpointOptions.forCheckpointWithDefaultLocation()));
+
+			snapshot1.registerSharedStates(sharedStateRegistry);
+			backend.dispose();
+
+			// ========== restore snapshot, using the new serializer (that has different classname) ==========
+
+			// on restore, simulate that the previous serializer class is no longer in the classloader
+			env = new DummyEnvironment(
+				new ArtificialCNFExceptionThrowingClassLoader(
+					getClass().getClassLoader(),
+					Collections.singleton(TestReconfigurableCustomTypeSerializerPreUpgrade.class.getName())));
+
+			try {
+				backend = restoreKeyedBackend(IntSerializer.INSTANCE, snapshot1, env);
+			} catch (IOException e) {
+				if (!isSerializerPresenceRequiredOnRestore()) {
+					fail("Presence of old serializer should not have been required.");
+				} else {
+					// test success
+					return;
+				}
+			}
+
+			// if serializer presence is not required, continue on to modify some state to make sure that everything works correctly
+			kvId = new ValueStateDescriptor<>("id", new TestReconfigurableCustomTypeSerializerUpgraded());
+			state = backend.getPartitionedState(VoidNamespace.INSTANCE, VoidNamespaceSerializer.INSTANCE, kvId);
+
+			backend.setCurrentKey(1);
+			state.update(new TestCustomStateClass("new-test-message-1", "extra-message-1"));
+
+			backend.setCurrentKey(2);
+			state.update(new TestCustomStateClass("new-test-message-2", "extra-message-2"));
+
+			KeyedStateHandle snapshot2 = runSnapshot(backend.snapshot(
+				682375462379L,
+				3,
+				streamFactory,
+				CheckpointOptions.forCheckpointWithDefaultLocation()));
+
+			snapshot2.registerSharedStates(sharedStateRegistry);
+			snapshot1.discardState();
 		} finally {
 			backend.dispose();
 		}
@@ -3723,6 +3805,58 @@ public abstract class StateBackendTestBase<B extends AbstractStateBackend> exten
 		}
 	}
 
+	@Test
+	public void testCheckConcurrencyProblemWhenPerformingCheckpointAsync() throws Exception {
+
+		CheckpointStreamFactory streamFactory = createStreamFactory();
+		Environment env = new DummyEnvironment();
+		AbstractKeyedStateBackend<Integer> backend = createKeyedBackend(IntSerializer.INSTANCE, env);
+
+		ExecutorService executorService = Executors.newScheduledThreadPool(1);
+		try {
+			long checkpointID = 0;
+			List<Future> futureList = new ArrayList();
+			for (int i = 0; i < 10; ++i) {
+				ValueStateDescriptor<Integer> kvId = new ValueStateDescriptor<>("id" + i, IntSerializer.INSTANCE);
+				ValueState<Integer> state = backend.getOrCreateKeyedState(VoidNamespaceSerializer.INSTANCE, kvId);
+				((InternalValueState) state).setCurrentNamespace(VoidNamespace.INSTANCE);
+				backend.setCurrentKey(i);
+				state.update(i);
+
+				futureList.add(runSnapshotAsync(executorService,
+					backend.snapshot(checkpointID++, System.currentTimeMillis(), streamFactory, CheckpointOptions.forCheckpointWithDefaultLocation())));
+			}
+
+			for (Future future : futureList) {
+				future.get(20, TimeUnit.SECONDS);
+			}
+		} catch (Exception e) {
+			fail();
+		} finally {
+			backend.dispose();
+			executorService.shutdown();
+		}
+	}
+
+	protected Future<SnapshotResult<KeyedStateHandle>> runSnapshotAsync(
+		ExecutorService executorService,
+		RunnableFuture<SnapshotResult<KeyedStateHandle>> snapshotRunnableFuture) throws Exception {
+
+		if (!snapshotRunnableFuture.isDone()) {
+			CompletableFuture<SnapshotResult<KeyedStateHandle>> completableFuture = new CompletableFuture<>();
+			executorService.submit(() -> {
+				try {
+					snapshotRunnableFuture.run();
+					completableFuture.complete(snapshotRunnableFuture.get());
+				} catch (Exception e) {
+					completableFuture.completeExceptionally(e);
+				}
+			});
+			return completableFuture;
+		}
+		return CompletableFuture.completedFuture(snapshotRunnableFuture.get());
+	}
+
 	/**
 	 * Returns the value by getting the serialized value and deserializing it
 	 * if it is not null.
@@ -4200,6 +4334,9 @@ public abstract class StateBackendTestBase<B extends AbstractStateBackend> exten
 			return reconfigured;
 		}
 	}
+
+	public static class TestReconfigurableCustomTypeSerializerPreUpgrade extends TestReconfigurableCustomTypeSerializer {}
+	public static class TestReconfigurableCustomTypeSerializerUpgraded extends TestReconfigurableCustomTypeSerializer {}
 
 	/**
 	 * We throw this in our {@link ExceptionThrowingTestSerializer}.

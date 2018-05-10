@@ -241,6 +241,8 @@ public abstract class ClusterEntrypoint implements FatalErrorHandler {
 						LOG.info("Could not properly terminate the Dispatcher.", throwable);
 					}
 
+					// This is the general shutdown path. If a separate more specific shutdown was
+					// already triggered, this will do nothing
 					shutDownAndTerminate(
 						SUCCESS_RETURN_CODE,
 						ApplicationStatus.SUCCEEDED,
@@ -304,14 +306,14 @@ public abstract class ClusterEntrypoint implements FatalErrorHandler {
 			LeaderGatewayRetriever<DispatcherGateway> dispatcherGatewayRetriever = new RpcGatewayRetriever<>(
 				rpcService,
 				DispatcherGateway.class,
-				DispatcherId::new,
+				DispatcherId::fromUuid,
 				10,
 				Time.milliseconds(50L));
 
 			LeaderGatewayRetriever<ResourceManagerGateway> resourceManagerGatewayRetriever = new RpcGatewayRetriever<>(
 				rpcService,
 				ResourceManagerGateway.class,
-				ResourceManagerId::new,
+				ResourceManagerId::fromUuid,
 				10,
 				Time.milliseconds(50L));
 
@@ -578,7 +580,7 @@ public abstract class ClusterEntrypoint implements FatalErrorHandler {
 		return terminationFuture;
 	}
 
-	private void shutDownAndTerminate(
+	protected void shutDownAndTerminate(
 		int returnCode,
 		ApplicationStatus applicationStatus,
 		@Nullable String diagnostics,
