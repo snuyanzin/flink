@@ -1020,7 +1020,7 @@ abstract class TableEnvironment(val config: TableConfig) {
             validateFieldType(requestedTypeInfo)
             if (fType != requestedTypeInfo) {
               throw new TableException(s"Result field does not match requested type. " +
-                s"Requested: ${requestedTypeInfo.getTypeClass.getTypeName}; Actual: ${fType.getTypeClass.getTypeName}")
+                s"Requested: $requestedTypeInfo; Actual: $fType")
             }
         }
 
@@ -1032,7 +1032,7 @@ abstract class TableEnvironment(val config: TableConfig) {
             validateFieldType(requestedTypeInfo)
             if (fieldTypeInfo != requestedTypeInfo) {
               throw new TableException(s"Result field does not match requested type. " +
-                s"Requested: ${requestedTypeInfo.getTypeClass.getTypeName}; Actual: ${fieldTypeInfo.getTypeClass.getTypeName}")
+                s"Requested: $requestedTypeInfo; Actual: $fieldTypeInfo")
             }
         }
 
@@ -1046,11 +1046,11 @@ abstract class TableEnvironment(val config: TableConfig) {
         validateFieldType(requestedTypeInfo)
         if (requestedTypeInfo != t) {
           throw new TableException(s"Result field does not match requested type. " +
-            s"Requested: ${t.getTypeClass.getTypeName}; Actual: ${requestedTypeInfo.getTypeClass.getTypeName}")
+            s"Requested: $t; Actual: $requestedTypeInfo")
         }
 
       case _ =>
-        throw new TableException(s"Unsupported result type: ${requestedTypeInfo.getTypeClass.getTypeName}")
+        throw new TableException(s"Unsupported result type: $requestedTypeInfo")
     }
 
     // code generate MapFunction
