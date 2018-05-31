@@ -25,7 +25,6 @@ import org.apache.flink.runtime.clusterframework.types.ResourceProfile;
 import org.apache.flink.runtime.clusterframework.types.SlotProfile;
 import org.apache.flink.runtime.concurrent.FutureUtils;
 import org.apache.flink.runtime.executiongraph.utils.SimpleAckingTaskManagerGateway;
-import org.apache.flink.runtime.instance.SlotSharingGroupId;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobmanager.scheduler.DummyScheduledUnit;
 import org.apache.flink.runtime.jobmanager.scheduler.ScheduledUnit;
@@ -45,7 +44,6 @@ import org.apache.flink.runtime.taskmanager.LocalTaskManagerLocation;
 import org.apache.flink.runtime.taskmanager.TaskManagerLocation;
 import org.apache.flink.runtime.testingUtils.TestingUtils;
 import org.apache.flink.runtime.util.clock.ManualClock;
-import org.apache.flink.testutils.category.New;
 import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.FlinkException;
 import org.apache.flink.util.TestLogger;
@@ -54,11 +52,8 @@ import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -80,7 +75,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-@Category(New.class)
 public class SlotPoolTest extends TestLogger {
 
 	private static final Logger LOG = LoggerFactory.getLogger(SlotPoolTest.class);
@@ -346,24 +340,7 @@ public class SlotPoolTest extends TestLogger {
 
 		resourceManagerGateway.setRequestSlotConsumer(slotRequest -> slotRequestFuture.complete(slotRequest));
 
-		final CompletableFuture<Boolean> slotReturnFuture = new CompletableFuture<>();
-
-		final SlotPool slotPool = new SlotPool(rpcService, jobId) {
-			@Override
-			public CompletableFuture<Acknowledge> releaseSlot(
-					SlotRequestId slotRequestId,
-					@Nullable SlotSharingGroupId slotSharingGroupId,
-					@Nullable Throwable cause) {
-				super.releaseSlot(
-					slotRequestId,
-					slotSharingGroupId,
-					cause);
-
-				slotReturnFuture.complete(true);
-
-				return CompletableFuture.completedFuture(Acknowledge.get());
-			}
-		};
+		final SlotPool slotPool = new SlotPool(rpcService, jobId);
 
 		try {
 			SlotPoolGateway slotPoolGateway = setupSlotPool(slotPool, resourceManagerGateway);
@@ -396,11 +373,14 @@ public class SlotPoolTest extends TestLogger {
 			assertTrue(future1.isDone());
 			assertFalse(future2.isDone());
 
+			final CompletableFuture<?> releaseFuture = new CompletableFuture<>();
+			final DummyPayload dummyPayload = new DummyPayload(releaseFuture);
+
+			slot1.tryAssignPayload(dummyPayload);
+
 			slotPoolGateway.releaseTaskManager(taskManagerLocation.getResourceID());
 
-			// wait until the slot has been returned
-			slotReturnFuture.get();
-
+			releaseFuture.get();
 			assertFalse(slot1.isAlive());
 
 			// slot released and not usable, second allocation still not fulfilled

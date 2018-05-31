@@ -71,7 +71,7 @@ The command line can be used to
 
 -   Run example program on a specific JobManager:
 
-        ./bin/flink run -m myJMHost:6123 \
+        ./bin/flink run -m myJMHost:8081 \
                                ./examples/batch/WordCount.jar \
                                --input file:///home/user/hamlet.txt --output file:///home/user/wordcount_out
 
@@ -285,6 +285,8 @@ Action "run" compiles and runs a program.
                                           MB]
      -yz,--yarnzookeeperNamespace <arg>   Namespace to create the Zookeeper
                                           sub-paths for high availability mode
+     -ynl,--yarnnodeLabel <arg>           Specify YARN node label for 
+                                          the YARN application 
 
 
 

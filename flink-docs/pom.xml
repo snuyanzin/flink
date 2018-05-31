@@ -95,14 +95,6 @@ under the License.
 			<version>1.11.2</version>
 			<scope>test</scope>
 		</dependency>
-
-		<dependency>
-			<!-- Required because the surefire plugin tries to load the New category annotation -->
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-test-utils-junit</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -130,6 +122,16 @@ under the License.
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<rootDir>${rootDir}</rootDir>
+					</systemPropertyVariables>
+				</configuration>
 			</plugin>
 		</plugins>
 

@@ -47,7 +47,6 @@ import org.apache.flink.runtime.rpc.RpcUtils;
 import org.apache.flink.runtime.testingUtils.TestingUtils;
 import org.apache.flink.runtime.webmonitor.RestfulGateway;
 import org.apache.flink.runtime.webmonitor.retriever.GatewayRetriever;
-import org.apache.flink.testutils.category.New;
 import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.TestLogger;
 
@@ -62,7 +61,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -102,7 +100,6 @@ import static org.mockito.Mockito.when;
 /**
  * IT cases for {@link RestClient} and {@link RestServerEndpoint}.
  */
-@Category(New.class)
 @RunWith(Parameterized.class)
 public class RestServerEndpointITCase extends TestLogger {
 
@@ -568,6 +565,11 @@ public class RestServerEndpointITCase extends TestLogger {
 		}
 
 		@Override
+		public String getDescription() {
+			return "";
+		}
+
+		@Override
 		public TestParameters getUnresolvedMessageParameters() {
 			return new TestParameters();
 		}
@@ -699,6 +701,11 @@ public class RestServerEndpointITCase extends TestLogger {
 		@Override
 		public String getTargetRestEndpointURL() {
 			return "/upload";
+		}
+
+		@Override
+		public String getDescription() {
+			return "";
 		}
 	}
 }

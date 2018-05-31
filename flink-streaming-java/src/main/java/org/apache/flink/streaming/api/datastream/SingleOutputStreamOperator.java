@@ -23,6 +23,7 @@ import org.apache.flink.api.common.functions.InvalidTypesException;
 import org.apache.flink.api.common.operators.ResourceSpec;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.streaming.api.collector.selector.OutputSelector;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.operators.ChainingStrategy;
 import org.apache.flink.streaming.api.transformations.SideOutputTransformation;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
+import static org.apache.flink.util.Preconditions.checkArgument;
 
 /**
  * {@code SingleOutputStreamOperator} represents a user defined transformation
@@ -53,6 +55,8 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * type because this would lead to problems at runtime.
 	 */
 	private Map<OutputTag<?>, TypeInformation> requestedSideOutputs = new HashMap<>();
+
+	private boolean wasSplitApplied = false;
 
 	protected SingleOutputStreamOperator(StreamExecutionEnvironment environment, StreamTransformation<T> transformation) {
 		super(environment, transformation);
@@ -222,14 +226,23 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	}
 
 	/**
-	 * Sets the maximum time frequency (ms) for the flushing of the output
-	 * buffer. By default the output buffers flush only when they are full.
+	 * Sets the buffering timeout for data produced by this operation.
+	 * The timeout defines how long data may linger in a partially full buffer
+	 * before being sent over the network.
+	 *
+	 * <p>Lower timeouts lead to lower tail latencies, but may affect throughput.
+	 * Timeouts of 1 ms still sustain high throughput, even for jobs with high parallelism.
+	 *
+	 * <p>A value of '-1' means that the default buffer timeout should be used. A value
+	 * of '0' indicates that no buffering should happen, and all records/events should be
+	 * immediately sent through the network, without additional buffering.
 	 *
 	 * @param timeoutMillis
 	 *            The maximum time between two output flushes.
 	 * @return The operator with buffer timeout set.
 	 */
 	public SingleOutputStreamOperator<T> setBufferTimeout(long timeoutMillis) {
+		checkArgument(timeoutMillis >= -1, "timeout must be >= -1");
 		transformation.setBufferTimeout(timeoutMillis);
 		return this;
 	}
@@ -376,6 +389,17 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 		return this;
 	}
 
+	@Override
+	public SplitStream<T> split(OutputSelector<T> outputSelector) {
+		if (requestedSideOutputs.isEmpty()) {
+			wasSplitApplied = true;
+			return super.split(outputSelector);
+		} else {
+			throw new UnsupportedOperationException("getSideOutput() and split() may not be called on the same DataStream. " +
+				"As a work-around, please add a no-op map function before the split() call.");
+		}
+	}
+
 	/**
 	 * Gets the {@link DataStream} that contains the elements that are emitted from an operation
 	 * into the side output with the given {@link OutputTag}.
@@ -383,6 +407,11 @@ public class SingleOutputStreamOperator<T> extends DataStream<T> {
 	 * @see org.apache.flink.streaming.api.functions.ProcessFunction.Context#output(OutputTag, Object)
 	 */
 	public <X> DataStream<X> getSideOutput(OutputTag<X> sideOutputTag) {
+		if (wasSplitApplied) {
+			throw new UnsupportedOperationException("getSideOutput() and split() may not be called on the same DataStream. " +
+				"As a work-around, please add a no-op map function before the split() call.");
+		}
+
 		sideOutputTag = clean(requireNonNull(sideOutputTag));
 
 		// make a defensive copy
