@@ -760,6 +760,8 @@ public class DateTimeUtils {
 			case DOY:
 				final long janFirst = ymdToJulian(year, 1, 1);
 				return (int) (julian - janFirst) + 1;
+			case DECADE:
+				return year / 10;
 			case CENTURY:
 				return year > 0
 					? (year + 99) / 100

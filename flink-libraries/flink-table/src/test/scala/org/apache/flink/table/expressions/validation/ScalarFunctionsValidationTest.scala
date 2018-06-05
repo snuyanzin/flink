@@ -21,7 +21,7 @@ package org.apache.flink.table.expressions.validation
 import org.apache.flink.table.api.{SqlParserException, ValidationException}
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.expressions.utils.ScalarTypesTestBase
-import org.junit.Test
+import org.junit.{Test, Ignore}
 
 class ScalarFunctionsValidationTest extends ScalarTypesTestBase {
 
@@ -95,6 +95,13 @@ class ScalarFunctionsValidationTest extends ScalarTypesTestBase {
   @Test(expected = classOf[ValidationException])
   def testTimestampAddWithWrongQuantity(): Unit = {
     testSqlApi("TIMESTAMPADD(YEAR, 1.0, timestamp '2016-02-24 12:42:25')", "2016-06-16")
+  }
+
+  // Need to be activated after merge with changes from FLINK-9482
+  @Ignore
+  @Test(expected = classOf[ValidationException])
+  def testDecadeWithTime(): Unit = {
+    testSqlApi("EXTRACT(DECADE FROM TIME '12:42:25')", "")
   }
 
   // ----------------------------------------------------------------------------------------------

@@ -1468,6 +1468,14 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
       "20")
 
     testSqlApi(
+     "EXTRACT(DECADE FROM f18)",
+     "199")
+
+    testSqlApi(
+      "EXTRACT(DECADE FROM f16)",
+      "199")
+
+    testSqlApi(
       "EXTRACT(DOY FROM f18)",
       "315")
 
