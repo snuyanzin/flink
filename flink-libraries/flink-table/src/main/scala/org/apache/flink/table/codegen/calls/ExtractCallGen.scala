@@ -93,6 +93,8 @@ class ExtractCallGen(returnType: TypeInformation[_], method: Method)
         TimeUnit.HOUR.multiplier.longValue()
       case TimeUnit.SECOND =>
         TimeUnit.MINUTE.multiplier.longValue()
+      case TimeUnit.MICROSECOND =>
+        TimeUnit.MICROSECOND.multiplier.longValue()
       case TimeUnit.MONTH =>
         TimeUnit.YEAR.multiplier.longValue()
       case TimeUnit.QUARTER =>

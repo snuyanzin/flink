@@ -58,6 +58,7 @@ case class Extract(timeIntervalUnit: Expression, temporal: Expression) extends E
       case SymbolExpression(TimeIntervalUnit.HOUR)
            | SymbolExpression(TimeIntervalUnit.MINUTE)
            | SymbolExpression(TimeIntervalUnit.SECOND)
+           | SymbolExpression(TimeIntervalUnit.MICROSECOND)
         if temporal.resultType == SqlTimeTypeInfo.TIME
           || temporal.resultType == SqlTimeTypeInfo.TIMESTAMP
           || temporal.resultType == TimeIntervalTypeInfo.INTERVAL_MILLIS =>
