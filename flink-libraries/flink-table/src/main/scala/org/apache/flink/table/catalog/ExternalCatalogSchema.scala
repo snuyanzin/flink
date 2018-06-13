@@ -20,12 +20,14 @@ package org.apache.flink.table.catalog
 
 import java.util
 import java.util.{Collection => JCollection, Collections => JCollections, LinkedHashSet => JLinkedHashSet, Set => JSet}
+import java.util
 
 import org.apache.calcite.linq4j.tree.Expression
 import org.apache.calcite.rel.`type`.RelProtoDataType
 import org.apache.calcite.schema._
 import org.apache.flink.table.api.{CatalogNotExistException, TableEnvironment, TableNotExistException}
 import org.apache.flink.table.util.Logging
+import org.apache.calcite.rel.`type`.RelProtoDataType
 
 import scala.collection.JavaConverters._
 
@@ -61,6 +63,10 @@ class ExternalCatalogSchema(
         null
     }
   }
+
+  protected def getTypeMap: util.Map[String, RelProtoDataType] = {
+        JCollections.emptyMap()
+      }
 
   /**
     * Lists the sub-schemas of the external catalog.

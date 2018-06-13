@@ -175,4 +175,21 @@ public class JavaSqlITCase extends TableProgramsCollectionTestBase {
 		String expected = "bar\n" + "spam\n";
 		compareResultAsText(results, expected);
 	}
+
+	@Test
+	public void testMultiset() throws Exception {
+		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+		BatchTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env, config());
+
+		DataSet<Tuple3<Integer, Long, String>> ds = CollectionDataSets.get3TupleDataSet(env);
+		tableEnv.registerDataSet("t1", ds, "x, y, z");
+
+		String sqlQuery = "SELECT multiset[1,2]";
+		Table result = tableEnv.sqlQuery(sqlQuery);
+
+		DataSet<Row> resultSet = tableEnv.toDataSet(result, Row.class);
+		List<Row> results = resultSet.collect();
+		String expected = "[1, 2]";
+		compareResultAsText(results, expected);
+	}
 }

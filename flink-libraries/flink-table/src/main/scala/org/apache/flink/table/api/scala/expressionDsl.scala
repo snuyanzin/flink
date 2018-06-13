@@ -239,6 +239,18 @@ trait ImplicitExpressionOperations {
   def asc = Asc(expr)
   def desc = Desc(expr)
 
+
+  /**
+    * Returns true if an expression exists in a given list of expressions. This is a shorthand
+    * for multiple OR conditions.
+    *
+    * If the testing set contains null, the result will be null if the element can not be found
+    * and true if it can be found. If the element is null, the result is always null.
+    *
+    * e.g. "42".memberOf(1, 2, 3) leads to false.
+    */
+  def memberOf(element: Expression) = MemberOf(expr, element)
+
   /**
     * Returns true if an expression exists in a given list of expressions. This is a shorthand
     * for multiple OR conditions.
@@ -780,12 +792,13 @@ trait ImplicitExpressionOperations {
   def cardinality() = Cardinality(expr)
 
   /**
-    * Returns the sole element of an array with a single element. Returns null if the array is
-    * empty. Throws an exception if the array has more than one element.
+    * Returns the sole element of an array or a multiset with a single element.
+    * Returns null if the array or multiset is empty.
+    * Throws an exception if the array or multiset has more than one element.
     *
-    * @return the first and only element of an array with a single element
+    * @return the first and only element of an array or a multiset with a single element
     */
-  def element() = ArrayElement(expr)
+  def element() = Element(expr)
 
   // Time definition
 
@@ -1114,6 +1127,19 @@ object array {
     */
   def apply(head: Expression, tail: Expression*): Expression = {
     ArrayConstructor(head +: tail.toSeq)
+  }
+}
+
+/**
+  * Creates an array of literals. The array will be an array of objects (not primitives).
+  */
+object multiset {
+
+  /**
+    * Creates an array of literals. The array will be an array of objects (not primitives).
+    */
+  def apply(head: Expression, tail: Expression*): Expression = {
+    MultisetConstructor(head +: tail.toSeq)
   }
 }
 

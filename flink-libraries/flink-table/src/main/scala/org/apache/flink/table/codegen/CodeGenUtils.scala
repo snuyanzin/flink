@@ -198,6 +198,11 @@ object CodeGenUtils {
       throw new CodeGenException("Array expression type expected.")
     }
 
+  def requireMultiset(genExpr: GeneratedExpression): Unit =
+    if (!TypeCheckUtils.isMultiset(genExpr.resultType)) {
+      throw new CodeGenException("Multiset expression type expected.")
+    }
+
   def requireMap(genExpr: GeneratedExpression): Unit =
     if (!TypeCheckUtils.isMap(genExpr.resultType)) {
       throw new CodeGenException("Map expression type expected.")

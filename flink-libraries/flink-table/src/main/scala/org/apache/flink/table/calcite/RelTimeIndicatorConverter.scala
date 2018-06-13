@@ -120,6 +120,10 @@ class RelTimeIndicatorConverter(rexBuilder: RexBuilder) extends RelShuttle {
         aggregate.getNamedProperties,
         convAggregate)
 
+    case collect: Collect =>
+      val input = collect.getInput.accept(this)
+      collect.copy(collect.getTraitSet, input)
+
     case _ =>
       throw new TableException(s"Unsupported logical operator: ${other.getClass.getSimpleName}")
   }

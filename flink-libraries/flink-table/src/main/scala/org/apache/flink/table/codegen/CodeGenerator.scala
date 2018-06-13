@@ -37,7 +37,7 @@ import org.apache.flink.table.api.{TableConfig, TableException}
 import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.codegen.CodeGenUtils._
 import org.apache.flink.table.codegen.GeneratedExpression.{ALWAYS_NULL, NEVER_NULL, NO_CODE}
-import org.apache.flink.table.codegen.calls.ScalarOperators._
+import org.apache.flink.table.codegen.calls.ScalarOperators.{generateMemberOf, _}
 import org.apache.flink.table.codegen.calls.{CurrentTimePointCallGen, FunctionGenerator}
 import org.apache.flink.table.functions.sql.{ProctimeSqlFunction, ScalarSqlFunctions, StreamRecordTimestampSqlFunction}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
@@ -773,6 +773,13 @@ abstract class CodeGenerator(
         requireTemporal(right)
         generateTemporalPlusMinus(plus = true, nullCheck, left, right, config)
 
+      case MEMBER_OF =>
+        val left = operands.head
+        val right = operands(1)
+        requireMultiset(right)
+        generateMemberOf(this, left, right)
+
+
       case MINUS if isNumeric(resultType) =>
         val left = operands.head
         val right = operands(1)
@@ -958,6 +965,10 @@ abstract class CodeGenerator(
       case MAP_VALUE_CONSTRUCTOR =>
         generateMap(this, resultType, operands)
 
+      // multisets
+      case MULTISET_VALUE =>
+        generateMultiset(this, resultType, operands)
+
       case ITEM =>
         operands.head.resultType match {
           case t: TypeInformation[_] if isArray(t) =>
@@ -987,9 +998,16 @@ abstract class CodeGenerator(
         }
 
       case ELEMENT =>
-        val array = operands.head
-        requireArray(array)
-        generateArrayElement(this, array)
+        operands.head.resultType match {
+          case t: TypeInformation[_] if isArray(t) =>
+            val array = operands.head
+            generateArrayElement(this, array)
+
+          case t: TypeInformation[_] if isMultiset(t) =>
+            val multiset = operands.head
+            generateMultisetElement(this, multiset)
+          case _ => throw new CodeGenException("Expect an array or a map.")
+        }
 
       case DOT =>
         // Due to https://issues.apache.org/jira/browse/CALCITE-2162, expression such as
@@ -1697,6 +1715,22 @@ abstract class CodeGenerator(
         |final $classQualifier $fieldTerm =
         |    new $initArray;
         |""".stripMargin
+    reusableMemberStatements.add(fieldArray)
+    fieldTerm
+  }
+
+  /**
+    * Adds a reusable multiset to the member area of the generated [[Function]].
+    */
+  def addReusableMultiset(): String = {
+    val fieldTerm = newName("multiset")
+    val classQualifier = "java.util.Collection"
+    val initMultiset = "java.util.ArrayList()"
+    val fieldArray =
+      s"""
+         |final $classQualifier $fieldTerm =
+         |    new $initMultiset;
+         |""".stripMargin
     reusableMemberStatements.add(fieldArray)
     fieldTerm
   }
