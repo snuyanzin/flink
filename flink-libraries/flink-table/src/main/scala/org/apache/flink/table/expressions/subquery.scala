@@ -20,6 +20,7 @@ package org.apache.flink.table.expressions
 
 import com.google.common.collect.ImmutableList
 import org.apache.calcite.rex.{RexNode, RexSubQuery}
+import org.apache.calcite.sql.SqlOperator
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
@@ -88,4 +89,3 @@ case class In(expression: Expression, elements: Seq[Expression]) extends Express
 
   override private[flink] def resultType: TypeInformation[_] = BOOLEAN_TYPE_INFO
 }
-

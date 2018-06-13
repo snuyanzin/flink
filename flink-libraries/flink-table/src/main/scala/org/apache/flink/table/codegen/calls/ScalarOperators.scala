@@ -24,7 +24,7 @@ import org.apache.calcite.avatica.util.{DateTimeUtils, TimeUnitRange}
 import org.apache.calcite.util.BuiltInMethod
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo._
-import org.apache.flink.api.java.typeutils.{MapTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
+import org.apache.flink.api.java.typeutils.{MapTypeInfo, MultisetTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
 import org.apache.flink.table.api.TableConfig
 import org.apache.flink.table.codegen.CodeGenUtils._
 import org.apache.flink.table.codegen.calls.CallGenerator.generateCallIfArgsNotNull
@@ -104,6 +104,33 @@ object ScalarOperators {
         }
     }
   }
+
+  def generateMemberOf(codeGenerator: CodeGenerator,
+                       left: GeneratedExpression,
+                       right: GeneratedExpression)
+  : GeneratedExpression = {
+
+    val resultTerm = newName("result")
+    val resultType = BOOLEAN_TYPE_INFO
+    val resultTypeTerm = boxedTypeTermForTypeInfo(BOOLEAN_TYPE_INFO)
+
+    val accessCode =
+      s"""
+         |${left.code}
+         |${right.code}
+         |$resultTypeTerm $resultTerm = ${right.resultTerm}.keySet().contains(${left.resultTerm});
+         |""".stripMargin
+
+    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
+
+    unboxing.copy(code =
+      s"""
+         |$accessCode
+         |${unboxing.code}
+         |""".stripMargin
+    )
+  }
+
 
   def generateIn(
       codeGenerator: CodeGenerator,
@@ -940,6 +967,33 @@ object ScalarOperators {
     GeneratedExpression(arrayTerm, GeneratedExpression.NEVER_NULL, code, resultType)
   }
 
+  def generateMultiset(
+                     codeGenerator: CodeGenerator,
+                     resultType: TypeInformation[_],
+                     elements: Seq[GeneratedExpression])
+  : GeneratedExpression = {
+    val multisetTerm = codeGenerator.addReusableMultiset()
+
+    val boxedElements: Seq[GeneratedExpression] = resultType match {
+      // we box the elements to also represent null values
+      case mti: MultisetTypeInfo[_] =>
+        elements.map { e =>
+          codeGenerator.generateNullableOutputBoxing(e, mti.getElementTypeInfo)
+        }
+    }
+
+    val code = boxedElements
+      .zipWithIndex
+      .map { element =>
+        s"""
+           |$element
+           |$multisetTerm.add($element);
+           |""".stripMargin
+      }
+      .mkString("\n")
+    GeneratedExpression(multisetTerm, GeneratedExpression.NEVER_NULL, code, resultType)
+  }
+
   def generateArrayElementAt(
       codeGenerator: CodeGenerator,
       array: GeneratedExpression,
@@ -1203,6 +1257,49 @@ object ScalarOperators {
     )
   }
 
+  def generateMultisetElement(
+                      codeGenerator: CodeGenerator,
+                      multiset: GeneratedExpression)
+  : GeneratedExpression = {
+
+    val resultTerm = newName("result")
+    val nullTerm = newName("isNull")
+    val ty = multiset.resultType.asInstanceOf[MultisetTypeInfo[_]]
+    val resultType = ty.getValueTypeInfo
+    val resultTypeTerm = boxedTypeTermForTypeInfo(ty.getValueTypeInfo)
+
+    val accessCode = if (codeGenerator.nullCheck) {
+      s"""
+         |${multiset.code}
+         |$resultTypeTerm $resultTerm = null;
+         |if (!${multiset.nullTerm}) {
+         |   if(${multiset.resultTerm}.size() > 1) {
+         |      throw new RuntimeException("Map has more than one element.");
+         |   }
+         |  $resultTerm = ($resultTypeTerm) ${multiset.resultTerm}.values().iterator().next();
+         | }
+         |boolean $nullTerm = $resultTerm == null;
+         |""".stripMargin
+     } else {
+      s"""
+         |${multiset.code}
+         |$resultTypeTerm $resultTerm = null;
+         |if (${multiset.resultTerm}.size() > 1) {
+         |   throw new RuntimeException("Map has more than one element.");
+         |}
+         |$resultTerm = ($resultTypeTerm) ${multiset.resultTerm}.values().iterator().next();
+         |""".stripMargin
+    }
+    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
+
+    unboxing.copy(code =
+      s"""
+         |$accessCode
+         |${unboxing.code}
+         |""".stripMargin
+    )
+  }
+
   def generateMapCardinality(
       nullCheck: Boolean,
       map: GeneratedExpression)
@@ -1354,3 +1451,4 @@ object ScalarOperators {
     }
   }
 }
+

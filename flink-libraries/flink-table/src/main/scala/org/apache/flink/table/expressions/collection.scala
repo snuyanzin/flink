@@ -19,13 +19,15 @@
 package org.apache.flink.table.expressions
 
 import org.apache.calcite.rex.RexNode
+import org.apache.calcite.sql.SqlOperator
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo.INT_TYPE_INFO
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo.{BOOLEAN_TYPE_INFO, INT_TYPE_INFO}
 import org.apache.flink.api.common.typeinfo.{BasicArrayTypeInfo, BasicTypeInfo, PrimitiveArrayTypeInfo, TypeInformation}
-import org.apache.flink.api.java.typeutils.{GenericTypeInfo, MapTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
+import org.apache.flink.api.java.typeutils._
 import org.apache.flink.table.calcite.FlinkRelBuilder
-import org.apache.flink.table.typeutils.TypeCheckUtils.{isArray, isMap}
+import org.apache.flink.table.typeutils.TypeCheckUtils.{isArray, isMap, isMultiset}
+import org.apache.flink.table.typeutils.TypeCheckUtils
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
 
 import scala.collection.JavaConverters._
@@ -132,28 +134,63 @@ case class MapConstructor(elements: Seq[Expression]) extends Expression {
   }
 }
 
-case class ArrayElement(array: Expression) extends Expression {
+case class MultisetConstructor(elements: Seq[Expression]) extends Expression {
+  override private[flink] def children: Seq[Expression] = elements
 
-  override private[flink] def children: Seq[Expression] = Seq(array)
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    val typeFactory = relBuilder.asInstanceOf[FlinkRelBuilder].getTypeFactory
+    val relDataType = typeFactory.createMultisetType(
+      typeFactory.createTypeFromTypeInfo(elements.head.resultType, isNullable = true),
+      10 //is it really used?
+    )
+    val values = elements.map(_.toRexNode).toList.asJava
+    relBuilder
+      .getRexBuilder
+      .makeCall(relDataType, SqlStdOperatorTable.MULTISET_VALUE, values)
+  }
+
+  override def toString = s"multiset(${elements.mkString(", ")})"
+
+  override private[flink] def resultType: TypeInformation[_] = new MultisetTypeInfo(
+    elements.head.resultType
+  )
+
+  override private[flink] def validateInput(): ValidationResult = {
+    if (elements.isEmpty) {
+      return ValidationFailure("Empty multisets are not supported yet.")
+    }
+    val elementType = elements.head.resultType
+    if (!elements.forall(_.resultType == elementType)) {
+      ValidationFailure("Not all elements of the multiset have the same type.")
+    } else {
+      ValidationSuccess
+    }
+  }
+}
+
+case class Element(container: Expression) extends Expression {
+
+  override private[flink] def children: Seq[Expression] = Seq(container)
 
   override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
     relBuilder
       .getRexBuilder
-      .makeCall(SqlStdOperatorTable.ELEMENT, array.toRexNode)
+      .makeCall(SqlStdOperatorTable.ELEMENT, container.toRexNode)
   }
 
-  override def toString = s"($array).element()"
+  override def toString = s"($container).element()"
 
-  override private[flink] def resultType = array.resultType match {
+  override private[flink] def resultType = container.resultType match {
     case oati: ObjectArrayTypeInfo[_, _] => oati.getComponentInfo
     case bati: BasicArrayTypeInfo[_, _] => bati.getComponentInfo
     case pati: PrimitiveArrayTypeInfo[_] => pati.getComponentType
   }
 
   override private[flink] def validateInput(): ValidationResult = {
-    array.resultType match {
+    container.resultType match {
       case ati: TypeInformation[_] if isArray(ati) => ValidationSuccess
-      case other@_ => ValidationFailure(s"Array expected but was '$other'.")
+      case msti: TypeInformation[_] if isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Array or Map expected but was '$other'.")
     }
   }
 }
@@ -229,4 +266,26 @@ case class ItemAt(container: Expression, key: Expression) extends Expression {
       case other@_ => ValidationFailure(s"Array or map expected but was '$other'.")
     }
   }
+}
+
+
+case class MemberOf(element: Expression, container: Expression) extends Expression {
+  override def toString = s"$element MEMBER OF $container"
+
+  private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.MEMBER_OF
+
+  override private[flink] def children: Seq[Expression] = Seq(element, container)
+
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder.call(SqlStdOperatorTable.MEMBER_OF, element.toRexNode, container.toRexNode)
+  }
+
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+      case msti: TypeInformation[_] if TypeCheckUtils.isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
+    }
+  }
+
+  override private[flink] def resultType: TypeInformation[_] = BOOLEAN_TYPE_INFO
 }

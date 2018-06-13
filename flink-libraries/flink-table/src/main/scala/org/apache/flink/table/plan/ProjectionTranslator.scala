@@ -186,6 +186,12 @@ object ProjectionTranslator {
             replaceAggregationsAndProperties(exp, tableEnv, aggNames, propNames, projectedNames))
         c.makeCopy(Array(newArgs))
 
+      // mulltiset constructor
+      case c @ MultisetConstructor(args) =>
+        val newArgs = c.elements
+          .map((exp: Expression) =>
+            replaceAggregationsAndProperties(exp, tableEnv, aggNames, propNames, projectedNames))
+        c.makeCopy(Array(newArgs))
       // General expression
       case e: Expression =>
         val newArgs = e.productIterator.map {

@@ -292,6 +292,29 @@ class SqlITCase extends StreamingWithStateTestBase {
   }
 
   @Test
+  def testUnboundedElement(): Unit = {
+
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env)
+    env.setStateBackend(getStateBackend)
+    StreamITCase.clear
+
+    val sqlQuery = "SELECT a, ELEMENT(COLLECT(a)) FROM MyTable GROUP BY a"
+
+    val t = StreamTestData.get3TupleDataStream(env).toTable(tEnv).as('a, 'b, 'c)
+    tEnv.registerTable("MyTable", t)
+
+    val result = tEnv.sqlQuery(sqlQuery).toRetractStream[Row]
+    result.addSink(new StreamITCase.RetractingSink).setParallelism(1)
+    env.execute()
+
+    val expected = List(
+      "1,1", "10,1", "11,1", "12,1", "13,1", "14,1", "15,1", "16,1", "17,1", "18,1", "19,1",
+      "2,1", "20,1", "21,1", "3,1", "4,1", "5,1", "6,1", "7,1", "8,1", "9,1")
+    assertEquals(expected.sorted, StreamITCase.retractedResults.sorted)
+  }
+
+  @Test
   def testUnboundedGroupByCollectWithObject(): Unit = {
 
     val env = StreamExecutionEnvironment.getExecutionEnvironment

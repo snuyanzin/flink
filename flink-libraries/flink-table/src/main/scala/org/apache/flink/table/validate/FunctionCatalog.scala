@@ -170,6 +170,7 @@ object FunctionCatalog {
     "if" -> classOf[If],
     "between" -> classOf[Between],
     "notBetween" -> classOf[NotBetween],
+    "memberOf" -> classOf[MemberOf],
 
     // aggregate functions
     "avg" -> classOf[Avg],
@@ -262,13 +263,17 @@ object FunctionCatalog {
     // cardinality
     "cardinality" -> classOf[Cardinality],
 
+    // element
+    "element" -> classOf[Element],
+
     // array
     "array" -> classOf[ArrayConstructor],
-    "element" -> classOf[ArrayElement],
 
     // map
     "map" -> classOf[MapConstructor],
 
+    // multiset
+    "multiset" -> classOf[MultisetConstructor],
     // row
     "row" -> classOf[RowConstructor],
 
@@ -335,6 +340,7 @@ class BasicOperatorTable extends ReflectiveSqlOperatorTable {
     SqlStdOperatorTable.OR,
     SqlStdOperatorTable.PLUS,
     SqlStdOperatorTable.DATETIME_PLUS,
+    SqlStdOperatorTable.MEMBER_OF,
     // POSTFIX OPERATORS
     SqlStdOperatorTable.DESC,
     SqlStdOperatorTable.NULLS_FIRST,
@@ -368,11 +374,20 @@ class BasicOperatorTable extends ReflectiveSqlOperatorTable {
     SqlStdOperatorTable.VAR_SAMP,
     // ARRAY OPERATORS
     SqlStdOperatorTable.ARRAY_VALUE_CONSTRUCTOR,
-    SqlStdOperatorTable.ELEMENT,
     // MAP OPERATORS
     SqlStdOperatorTable.MAP_VALUE_CONSTRUCTOR,
-    // ARRAY MAP SHARED OPERATORS
+    // MULTISET OPERATORS
+    SqlStdOperatorTable.MULTISET_VALUE,
+    SqlStdOperatorTable.MULTISET_EXCEPT,
+    SqlStdOperatorTable.MULTISET_INTERSECT,
+    SqlStdOperatorTable.MULTISET_UNION,
+    SqlStdOperatorTable.MEMBER_OF,
+    SqlStdOperatorTable.IS_A_SET,
+    SqlStdOperatorTable.SUBMULTISET_OF,
+    SqlStdOperatorTable.FUSION,
+    // ARRAY MAP MULTISET SHARED OPERATORS
     SqlStdOperatorTable.ITEM,
+    SqlStdOperatorTable.ELEMENT,
     SqlStdOperatorTable.CARDINALITY,
     // SPECIAL OPERATORS
     SqlStdOperatorTable.ROW,

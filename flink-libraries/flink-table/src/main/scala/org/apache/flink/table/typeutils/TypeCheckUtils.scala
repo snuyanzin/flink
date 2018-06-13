@@ -20,7 +20,7 @@ package org.apache.flink.table.typeutils
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo._
 import org.apache.flink.api.common.typeutils.CompositeType
-import org.apache.flink.api.java.typeutils.{MapTypeInfo, ObjectArrayTypeInfo, PojoTypeInfo}
+import org.apache.flink.api.java.typeutils.{MapTypeInfo, MultisetTypeInfo, ObjectArrayTypeInfo, PojoTypeInfo}
 import org.apache.flink.table.api.ValidationException
 import org.apache.flink.table.typeutils.TimeIntervalTypeInfo.{INTERVAL_MILLIS, INTERVAL_MONTHS}
 import org.apache.flink.table.validate._
@@ -83,6 +83,9 @@ object TypeCheckUtils {
          _: PrimitiveArrayTypeInfo[_]  => true
     case _ => false
   }
+
+  def isMultiset(dataType: TypeInformation[_]): Boolean =
+    dataType.isInstanceOf[MultisetTypeInfo[_]]
 
   def isMap(dataType: TypeInformation[_]): Boolean =
     dataType.isInstanceOf[MapTypeInfo[_, _]]
