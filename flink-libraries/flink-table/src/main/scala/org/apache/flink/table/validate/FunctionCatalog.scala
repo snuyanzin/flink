@@ -170,6 +170,7 @@ object FunctionCatalog {
     "if" -> classOf[If],
     "between" -> classOf[Between],
     "notBetween" -> classOf[NotBetween],
+    "memberOf" -> classOf[MemberOf],
 
     // aggregate functions
     "avg" -> classOf[Avg],
@@ -327,6 +328,7 @@ class BasicOperatorTable extends ReflectiveSqlOperatorTable {
     SqlStdOperatorTable.OR,
     SqlStdOperatorTable.PLUS,
     SqlStdOperatorTable.DATETIME_PLUS,
+    SqlStdOperatorTable.MEMBER_OF,
     // POSTFIX OPERATORS
     SqlStdOperatorTable.DESC,
     SqlStdOperatorTable.NULLS_FIRST,

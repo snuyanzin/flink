@@ -559,4 +559,67 @@ class AggregateITCase(
 
     TestBaseUtils.compareResultAsText(result.asJava, expected)
   }
+
+
+  @Test
+  def testMemberOfTrue(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+
+    val sqlQuery = "SELECT 1 MEMBER OF COLLECT(a) FROM (SELECT 1 AS a UNION ALL SELECT 2)"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMemberOfFalse(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+
+    val sqlQuery = "SELECT 42 MEMBER OF COLLECT(a) FROM (SELECT 1 AS a UNION ALL SELECT 2)"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "false"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMemberOfNullTrue(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+
+    val sqlQuery = "SELECT 1 MEMBER OF COLLECT(a) " +
+      "FROM (SELECT 1 AS a UNION ALL SELECT CAST(NULL AS integer))"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMemberOfNull(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+
+    val sqlQuery = "SELECT CAST(NULL AS integer) MEMBER OF COLLECT(a) " +
+      "FROM (SELECT 1 AS a UNION ALL SELECT CAST(NULL AS integer))"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "false"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
 }

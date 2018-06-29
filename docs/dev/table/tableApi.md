@@ -3038,6 +3038,31 @@ ARRAY.element()
 <table class="table table-bordered">
   <thead>
     <tr>
+      <th class="text-left" style="width: 40%">Multiset functions</th>
+      <th class="text-center">Description</th>
+    </tr>
+  </thead>
+
+  <tbody>
+
+    <tr>
+      <td>
+        {% highlight java %}
+VALUE.memberOf(MULTISET)
+{% endhighlight %}
+      </td>
+      <td>
+        <p>Returns boolean value whether this multiset contains this value.</p>
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
       <th class="text-left" style="width: 40%">Map functions</th>
       <th class="text-center">Description</th>
     </tr>

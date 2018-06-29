@@ -37,7 +37,7 @@ import org.apache.flink.table.api.{TableConfig, TableException}
 import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.codegen.CodeGenUtils._
 import org.apache.flink.table.codegen.GeneratedExpression.{ALWAYS_NULL, NEVER_NULL, NO_CODE}
-import org.apache.flink.table.codegen.calls.ScalarOperators._
+import org.apache.flink.table.codegen.calls.ScalarOperators.{generateMemberOf, _}
 import org.apache.flink.table.codegen.calls.{CurrentTimePointCallGen, FunctionGenerator}
 import org.apache.flink.table.functions.sql.{ProctimeSqlFunction, ScalarSqlFunctions, StreamRecordTimestampSqlFunction}
 import org.apache.flink.table.functions.utils.UserDefinedFunctionUtils
@@ -772,6 +772,13 @@ abstract class CodeGenerator(
         requireTemporal(left)
         requireTemporal(right)
         generateTemporalPlusMinus(plus = true, nullCheck, left, right, config)
+
+      case MEMBER_OF =>
+        val left = operands.head
+        val right = operands(1)
+        requireMultiset(right)
+        generateMemberOf(this, left, right)
+
 
       case MINUS if isNumeric(resultType) =>
         val left = operands.head

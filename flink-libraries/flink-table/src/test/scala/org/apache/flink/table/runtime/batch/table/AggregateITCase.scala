@@ -37,6 +37,7 @@ import org.junit.runners.Parameterized
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.util.Random
 
 @RunWith(classOf[Parameterized])
 class AggregationsITCase(
@@ -455,6 +456,74 @@ class AggregationsITCase(
     val results = t.toDataSet[Row].collect()
     TestBaseUtils.compareResultAsText(results.asJava, expected)
   }
+
+  @Test
+  def testMemberOfConst2(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    val t = CollectionDataSets.get3TupleDataSet(env).toTable(tEnv, 'a, 'b, 'c)
+      .groupBy('b)
+      .select('b, 'a.collect as 'coll)
+      .select(2.memberOf('coll))
+
+    val results = t.toDataSet[Row].collect()
+
+    val expected = "false\nfalse\nfalse\nfalse\nfalse\ntrue"
+    TestBaseUtils.compareResultAsText(results.asJava, expected)
+  }
+
+  @Test
+  def testMemberOfConst3L(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    val t = CollectionDataSets.get3TupleDataSet(env).toTable(tEnv, 'a, 'b, 'c)
+      .groupBy('b)
+      .select('b, 'a.collect as 'coll)
+      .select(3L.memberOf('coll))
+
+    val results = t.toDataSet[Row].collect()
+
+    val expected = "false\nfalse\nfalse\nfalse\nfalse\nfalse"
+    TestBaseUtils.compareResultAsText(results.asJava, expected)
+  }
+
+  @Test
+  def testMemberOfConst3Lcast(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    val t = CollectionDataSets.get3TupleDataSet(env).toTable(tEnv, 'a, 'b, 'c)
+      .groupBy('b)
+      .select('b, 'a.collect as 'coll)
+      .select(3L.cast(Types.INT).memberOf('coll))
+
+    val results = t.toDataSet[Row].collect()
+
+    val expected = "false\nfalse\nfalse\nfalse\nfalse\ntrue"
+    TestBaseUtils.compareResultAsText(results.asJava, expected)
+  }
+
+  @Test
+  def testMemberOfConstB(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+
+    val data = new mutable.MutableList[(Int, Int, String)]
+    data.+=((1, 1, "Hi"))
+    data.+=((2, 2, "Hello"))
+    data.+=((3, 2, "Hello world"))
+    data.+=((4, 3, "Hello world, how are you?"))
+    data.+=((5, 3, "I am fine."))
+    data.+=((6, 3, "Luke Skywalker"))
+    val t = env.fromCollection(Random.shuffle(data)).toTable(tEnv, 'a, 'b, 'c)
+      .groupBy('b)
+      .select('b, 'a.collect as 'coll)
+      .select('b.memberOf('coll))
+
+    val results = t.toDataSet[Row].collect()
+    val expected = "false\ntrue\ntrue"
+    TestBaseUtils.compareResultAsText(results.asJava, expected)
+  }
+
 }
 
 case class WC(word: String, frequency: Long)

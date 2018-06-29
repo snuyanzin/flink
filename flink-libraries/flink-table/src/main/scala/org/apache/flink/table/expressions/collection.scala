@@ -19,12 +19,14 @@
 package org.apache.flink.table.expressions
 
 import org.apache.calcite.rex.RexNode
+import org.apache.calcite.sql.SqlOperator
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
-import org.apache.flink.api.common.typeinfo.BasicTypeInfo.INT_TYPE_INFO
+import org.apache.flink.api.common.typeinfo.BasicTypeInfo.{BOOLEAN_TYPE_INFO, INT_TYPE_INFO}
 import org.apache.flink.api.common.typeinfo.{BasicArrayTypeInfo, BasicTypeInfo, PrimitiveArrayTypeInfo, TypeInformation}
 import org.apache.flink.api.java.typeutils.{GenericTypeInfo, MapTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
 import org.apache.flink.table.calcite.FlinkRelBuilder
+import org.apache.flink.table.typeutils.TypeCheckUtils
 import org.apache.flink.table.typeutils.TypeCheckUtils.{isArray, isMap}
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
 
@@ -229,4 +231,26 @@ case class ItemAt(container: Expression, key: Expression) extends Expression {
       case other@_ => ValidationFailure(s"Array or map expected but was '$other'.")
     }
   }
+}
+
+
+case class MemberOf(element: Expression, container: Expression) extends Expression {
+  override def toString = s"$element MEMBER OF $container"
+
+  private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.MEMBER_OF
+
+  override private[flink] def children: Seq[Expression] = Seq(element, container)
+
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder.call(SqlStdOperatorTable.MEMBER_OF, element.toRexNode, container.toRexNode)
+  }
+
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+      case msti: TypeInformation[_] if TypeCheckUtils.isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
+    }
+  }
+
+  override private[flink] def resultType: TypeInformation[_] = BOOLEAN_TYPE_INFO
 }

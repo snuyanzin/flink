@@ -105,6 +105,33 @@ object ScalarOperators {
     }
   }
 
+  def generateMemberOf(codeGenerator: CodeGenerator,
+                       left: GeneratedExpression,
+                       right: GeneratedExpression)
+  : GeneratedExpression = {
+
+    val resultTerm = newName("result")
+    val resultType = BOOLEAN_TYPE_INFO
+    val resultTypeTerm = boxedTypeTermForTypeInfo(BOOLEAN_TYPE_INFO)
+
+    val accessCode =
+      s"""
+         |${left.code}
+         |${right.code}
+         |$resultTypeTerm $resultTerm = ${right.resultTerm}.keySet().contains(${left.resultTerm});
+         |""".stripMargin
+
+    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
+
+    unboxing.copy(code =
+      s"""
+         |$accessCode
+         |${unboxing.code}
+         |""".stripMargin
+    )
+  }
+
+
   def generateIn(
       codeGenerator: CodeGenerator,
       needle: GeneratedExpression,
@@ -1354,3 +1381,4 @@ object ScalarOperators {
     }
   }
 }
+

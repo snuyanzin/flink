@@ -2474,6 +2474,31 @@ MAP ‘[’ key, value [, key, value ]* ‘]’
 <table class="table table-bordered">
   <thead>
     <tr>
+      <th class="text-left" style="width: 40%">Multiset functions</th>
+      <th class="text-center">Description</th>
+    </tr>
+  </thead>
+
+  <tbody>
+
+    <tr>
+      <td>
+        {% highlight text %}
+VALUE MEMBER OF(MULTISET)
+{% endhighlight %}
+      </td>
+      <td>
+        <p>Returns boolean value whether this multiset contains this value.</p>
+      </td>
+    </tr>
+
+  </tbody>
+</table>
+
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
       <th class="text-left" style="width: 40%">Array functions</th>
       <th class="text-center">Description</th>
     </tr>
