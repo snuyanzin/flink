@@ -20,6 +20,9 @@ package org.apache.flink.table.client.config;
 
 import org.apache.flink.streaming.api.TimeCharacteristic;
 
+import org.apache.commons.lang3.SystemUtils;
+
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,6 +97,13 @@ public class Execution {
 		return Objects.equals(
 			properties.get(PropertyStrings.EXECUTION_RESULT_MODE),
 			PropertyStrings.EXECUTION_RESULT_MODE_VALUE_CHANGELOG);
+	}
+
+	public String getHistoryFileName() {
+		return properties.getOrDefault(PropertyStrings.EXECUTION_HISTORY_FILE,
+			Paths.get(System.getProperty("user.home"), "flinksqlclient",
+				SystemUtils.IS_OS_WINDOWS ? "history" : ".history")
+				.toAbsolutePath().toString());
 	}
 
 	public boolean isTableMode() {

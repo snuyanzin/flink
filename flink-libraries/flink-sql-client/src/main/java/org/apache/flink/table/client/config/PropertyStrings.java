@@ -57,6 +57,8 @@ public final class PropertyStrings {
 
 	public static final String EXECUTION_RESULT_MODE_VALUE_TABLE = "table";
 
+	public static final String EXECUTION_HISTORY_FILE = "history-file";
+
 	public static final String DEPLOYMENT = "deployment";
 
 	public static final String DEPLOYMENT_TYPE = "type";

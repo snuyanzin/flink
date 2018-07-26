@@ -21,14 +21,15 @@ package org.apache.flink.table.client.cli;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.client.SqlClientException;
 import org.apache.flink.table.client.cli.SqlCommandParser.SqlCommandCall;
+import org.apache.flink.table.client.config.PropertyStrings;
 import org.apache.flink.table.client.gateway.Executor;
 import org.apache.flink.table.client.gateway.ProgramTargetDescriptor;
 import org.apache.flink.table.client.gateway.ResultDescriptor;
 import org.apache.flink.table.client.gateway.SessionContext;
 import org.apache.flink.table.client.gateway.SqlExecutionException;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.jline.reader.EndOfFileException;
+import org.jline.reader.History;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.MaskingCallback;
@@ -52,6 +53,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -73,9 +75,8 @@ public class CliClient {
 
 	private boolean isRunning;
 
-	private static final Path HISTORY_FILE_PATH =
-		Paths.get(System.getProperty("user.home"),
-			SystemUtils.IS_OS_WINDOWS ? "flinksqlclienthistory" : ".flinksqlclienthistory");
+	private History history;
+
 	private static final int PLAIN_TERMINAL_WIDTH = 80;
 
 	private static final int PLAIN_TERMINAL_HEIGHT = 30;
@@ -107,10 +108,7 @@ public class CliClient {
 			.parser(parser)
 			.build();
 
-		lineReader.setVariable(LineReader.HISTORY_FILE, HISTORY_FILE_PATH);
-		// attach to lineReader is called inside DefaultHistory constructor =>
-		// call for such constructor is enough
-		new DefaultHistory(lineReader);
+		setHistory();
 
 		// create prompt
 		prompt = new AttributedStringBuilder()
@@ -313,8 +311,41 @@ public class CliClient {
 		}
 		// set a property
 		else {
+			System.out.println("changing " + cmdCall.operands[0] + " to " + cmdCall.operands[1]);
 			context.setSessionProperty(cmdCall.operands[0], cmdCall.operands[1]);
 			terminal.writer().println(CliStrings.messageInfo(CliStrings.MESSAGE_SET).toAnsi());
+			System.out.println("operand0: '" + cmdCall.operands[0]
+				+ "' vs '" + PropertyStrings.EXECUTION_HISTORY_FILE + "'");
+			System.out.println("operand1: '" + cmdCall.operands[1] + "'");
+			System.out.println("linereader: '" + lineReader.getVariable(LineReader.HISTORY_FILE) + "'");
+			System.out.println(Objects.equals(cmdCall.operands[0], PropertyStrings.EXECUTION_HISTORY_FILE));
+			System.out.println(!Objects.equals(cmdCall.operands[1], lineReader.getVariable(LineReader.HISTORY_FILE)));
+			if (Objects.equals(cmdCall.operands[0],
+				PropertyStrings.EXECUTION + "." + PropertyStrings.EXECUTION_HISTORY_FILE)
+				&& !Objects.equals(cmdCall.operands[1], lineReader.getVariable(LineReader.HISTORY_FILE))) {
+				System.out.println("inside");
+				if (history != null) {
+					try {
+						history.purge();
+					} catch (IOException e) {
+						printException(e);
+					}
+					lineReader.setVariable(LineReader.HISTORY_FILE,
+						context.getEnvironment().getExecution().getHistoryFileName());
+					history.attach(lineReader);
+					try {
+						if (Files.exists(Paths.get((String) lineReader.getVariable(LineReader.HISTORY_FILE)))) {
+							history.load();
+						} else {
+							history.save();
+						}
+					} catch (Exception e) {
+						printException(e);
+					}
+				} else {
+					setHistory();
+				}
+			}
 		}
 		terminal.flush();
 	}
@@ -455,6 +486,14 @@ public class CliClient {
 		// try to run it
 		final Optional<SqlCommandCall> call = parseCommand(stmt);
 		call.ifPresent(this::callCommand);
+	}
+
+	private void setHistory() {
+		lineReader.setVariable(LineReader.HISTORY_FILE,
+			context.getEnvironment().getExecution().getHistoryFileName());
+		// attach to lineReader is called inside DefaultHistory constructor =>
+		// call for such constructor is enough
+		history = new DefaultHistory(lineReader);
 	}
 
 	// --------------------------------------------------------------------------------------------
