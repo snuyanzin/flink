@@ -338,7 +338,6 @@ class BasicOperatorTable extends ReflectiveSqlOperatorTable {
     SqlStdOperatorTable.OR,
     SqlStdOperatorTable.PLUS,
     SqlStdOperatorTable.DATETIME_PLUS,
-    SqlStdOperatorTable.MEMBER_OF,
     // POSTFIX OPERATORS
     SqlStdOperatorTable.DESC,
     SqlStdOperatorTable.NULLS_FIRST,
@@ -381,7 +380,9 @@ class BasicOperatorTable extends ReflectiveSqlOperatorTable {
     SqlStdOperatorTable.MULTISET_UNION,
     SqlStdOperatorTable.MEMBER_OF,
     SqlStdOperatorTable.IS_A_SET,
+    SqlStdOperatorTable.IS_NOT_A_SET,
     SqlStdOperatorTable.SUBMULTISET_OF,
+    SqlStdOperatorTable.NOT_SUBMULTISET_OF,
     SqlStdOperatorTable.FUSION,
     // ARRAY MAP MULTISET SHARED OPERATORS
     SqlStdOperatorTable.ITEM,

@@ -773,13 +773,6 @@ abstract class CodeGenerator(
         requireTemporal(right)
         generateTemporalPlusMinus(plus = true, nullCheck, left, right, config)
 
-      case MEMBER_OF =>
-        val left = operands.head
-        val right = operands(1)
-        requireMultiset(right)
-        generateMemberOf(this, left, right)
-
-
       case MINUS if isNumeric(resultType) =>
         val left = operands.head
         val right = operands(1)
@@ -1008,6 +1001,42 @@ abstract class CodeGenerator(
             generateMultisetElement(this, multiset)
           case _ => throw new CodeGenException("Expect an array or a map.")
         }
+
+      case IS_A_SET =>
+        operands.head.resultType match {
+          case t: TypeInformation[_] if isMultiset(t) =>
+            val multiset = operands.head
+            generateMultisetSetCheck(this, multiset, isASet = true)
+          case _ => throw new CodeGenException("Expect a multiset.")
+        }
+        
+      case IS_NOT_A_SET =>
+        operands.head.resultType match {
+          case t: TypeInformation[_] if isMultiset(t) =>
+            val multiset = operands.head
+            generateMultisetSetCheck(this, multiset, isASet = false)
+          case _ => throw new CodeGenException("Expect a multiset.")
+        }
+
+      case SUBMULTISET_OF =>
+        val left = operands.head
+        val right = operands(1)
+        requireMultiset(left)
+        requireMultiset(right)
+        generateSubMultisetCheck(this, left, right, subMultisetOf = true)
+
+      case NOT_SUBMULTISET_OF =>
+        val left = operands.head
+        val right = operands(1)
+        requireMultiset(left)
+        requireMultiset(right)
+        generateSubMultisetCheck(this, left, right, subMultisetOf = false)
+
+      case MEMBER_OF =>
+        val left = operands.head
+        val right = operands(1)
+        requireMultiset(right)
+        generateMemberOf(this, left, right)
 
       case DOT =>
         // Due to https://issues.apache.org/jira/browse/CALCITE-2162, expression such as
