@@ -168,6 +168,95 @@ case class MultisetConstructor(elements: Seq[Expression]) extends Expression {
   }
 }
 
+case class IsASet(container: Expression) extends Expression {
+  override private[flink] def children: Seq[Expression] = Seq(container)
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder
+      .getRexBuilder
+      .makeCall(SqlStdOperatorTable.IS_A_SET, container.toRexNode)
+  }
+  override def toString = s"($container).isASet()"
+  override private[flink] def resultType = BasicTypeInfo.BOOLEAN_TYPE_INFO
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+      case msti: TypeInformation[_] if isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
+    }
+  }
+}
+
+case class IsNotASet(container: Expression) extends Expression {
+  override private[flink] def children: Seq[Expression] = Seq(container)
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder
+      .getRexBuilder
+      .makeCall(SqlStdOperatorTable.IS_NOT_A_SET, container.toRexNode)
+  }
+  override def toString = s"($container).isNotASet()"
+  override private[flink] def resultType = BasicTypeInfo.BOOLEAN_TYPE_INFO
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+      case msti: TypeInformation[_] if isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
+    }
+  }
+}
+
+case class SubMultisetOf(container: Expression) extends Expression {
+  override private[flink] def children: Seq[Expression] = Seq(container)
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder
+      .getRexBuilder
+      .makeCall(SqlStdOperatorTable.SUBMULTISET_OF, container.toRexNode)
+  }
+  override def toString = s"($container).subMultisetOf()"
+  override private[flink] def resultType = BasicTypeInfo.BOOLEAN_TYPE_INFO
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+      case msti: TypeInformation[_] if isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
+    }
+  }
+}
+
+case class NotSubMultisetOf(container: Expression) extends Expression {
+  override private[flink] def children: Seq[Expression] = Seq(container)
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder
+      .getRexBuilder
+      .makeCall(SqlStdOperatorTable.NOT_SUBMULTISET_OF, container.toRexNode)
+  }
+  override def toString = s"($container).notSubMultisetOf()"
+  override private[flink] def resultType = BasicTypeInfo.BOOLEAN_TYPE_INFO
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+      case msti: TypeInformation[_] if isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
+    }
+  }
+}
+
+case class MemberOf(element: Expression, container: Expression) extends Expression {
+  override def toString = s"$element MEMBER OF $container"
+
+  private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.MEMBER_OF
+
+  override private[flink] def children: Seq[Expression] = Seq(element, container)
+
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder.call(SqlStdOperatorTable.MEMBER_OF, element.toRexNode, container.toRexNode)
+  }
+
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+      case msti: TypeInformation[_] if TypeCheckUtils.isMultiset(msti) => ValidationSuccess
+      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
+    }
+  }
+
+  override private[flink] def resultType: TypeInformation[_] = BOOLEAN_TYPE_INFO
+}
+
 case class Element(container: Expression) extends Expression {
 
   override private[flink] def children: Seq[Expression] = Seq(container)
@@ -266,26 +355,4 @@ case class ItemAt(container: Expression, key: Expression) extends Expression {
       case other@_ => ValidationFailure(s"Array or map expected but was '$other'.")
     }
   }
-}
-
-
-case class MemberOf(element: Expression, container: Expression) extends Expression {
-  override def toString = s"$element MEMBER OF $container"
-
-  private[flink] val sqlOperator: SqlOperator = SqlStdOperatorTable.MEMBER_OF
-
-  override private[flink] def children: Seq[Expression] = Seq(element, container)
-
-  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
-    relBuilder.call(SqlStdOperatorTable.MEMBER_OF, element.toRexNode, container.toRexNode)
-  }
-
-  override private[flink] def validateInput(): ValidationResult = {
-    container.resultType match {
-      case msti: TypeInformation[_] if TypeCheckUtils.isMultiset(msti) => ValidationSuccess
-      case other@_ => ValidationFailure(s"Multiset expected but was '$other'.")
-    }
-  }
-
-  override private[flink] def resultType: TypeInformation[_] = BOOLEAN_TYPE_INFO
 }

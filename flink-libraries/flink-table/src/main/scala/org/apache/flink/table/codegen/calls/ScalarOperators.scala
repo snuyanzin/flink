@@ -105,33 +105,6 @@ object ScalarOperators {
     }
   }
 
-  def generateMemberOf(codeGenerator: CodeGenerator,
-                       left: GeneratedExpression,
-                       right: GeneratedExpression)
-  : GeneratedExpression = {
-
-    val resultTerm = newName("result")
-    val resultType = BOOLEAN_TYPE_INFO
-    val resultTypeTerm = boxedTypeTermForTypeInfo(BOOLEAN_TYPE_INFO)
-
-    val accessCode =
-      s"""
-         |${left.code}
-         |${right.code}
-         |$resultTypeTerm $resultTerm = ${right.resultTerm}.keySet().contains(${left.resultTerm});
-         |""".stripMargin
-
-    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
-
-    unboxing.copy(code =
-      s"""
-         |$accessCode
-         |${unboxing.code}
-         |""".stripMargin
-    )
-  }
-
-
   def generateIn(
       codeGenerator: CodeGenerator,
       needle: GeneratedExpression,
@@ -1292,6 +1265,122 @@ object ScalarOperators {
     }
     val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
 
+    unboxing.copy(code =
+      s"""
+         |$accessCode
+         |${unboxing.code}
+         |""".stripMargin
+    )
+  }
+
+  def generateMemberOf(codeGenerator: CodeGenerator,
+      left: GeneratedExpression,
+      right: GeneratedExpression)
+  : GeneratedExpression = {
+
+    val resultTerm = newName("result")
+    val resultType = BOOLEAN_TYPE_INFO
+    val resultTypeTerm = boxedTypeTermForTypeInfo(BOOLEAN_TYPE_INFO)
+
+    val accessCode =
+      s"""
+         |${left.code}
+         |${right.code}
+         |$resultTypeTerm $resultTerm = ${right.resultTerm}.keySet().contains(${left.resultTerm});
+         |""".stripMargin
+
+    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
+
+    unboxing.copy(code =
+      s"""
+         |$accessCode
+         |${unboxing.code}
+         |""".stripMargin
+    )
+  }
+
+  def generateSubMultisetCheck(
+      codeGenerator: CodeGenerator,
+      left: GeneratedExpression,
+      right: GeneratedExpression,
+      subMultisetOf: Boolean)
+  : GeneratedExpression = {
+    val resultTerm = newName("result")
+    val resultType = BOOLEAN_TYPE_INFO
+    val resultTypeTerm = boxedTypeTermForTypeInfo(BOOLEAN_TYPE_INFO)
+    val accessCode =
+      s"""
+         |${left.code}
+         |${right.code}
+         |$resultTypeTerm $resultTerm = ${right.resultTerm}.entrySet().containsAll(${left.resultTerm}.entrySet());
+         |$resultTerm = $subMultisetOf ? $resultTerm : !$resultTerm;
+         |""".stripMargin
+
+    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
+
+    unboxing.copy(code =
+      s"""
+         |$accessCode
+         |${unboxing.code}
+         |""".stripMargin
+    )
+  }
+
+  def generateIsEmptyCheck(
+                                codeGenerator: CodeGenerator,
+                                multiset: GeneratedExpression,
+                                isASet: Boolean)
+  : GeneratedExpression = {
+    val resultTerm = newName("result")
+    val resultType = BOOLEAN_TYPE_INFO
+    val resultTypeTerm = boxedTypeTermForTypeInfo(BOOLEAN_TYPE_INFO)
+    val elementTypeTerm = boxedTypeTermForTypeInfo(INT_TYPE_INFO)
+    val accessCode =
+      s"""
+         |${multiset.code}
+         |$resultTypeTerm $resultTerm = $isASet;
+         |if (!${multiset.nullTerm}) {
+         |   for ($elementTypeTerm element: ${multiset.resultTerm}.values()) {
+         |       if (element > 1) {
+         |           $resultTerm = !$resultTerm;
+         |           break;
+         |       }
+         |   }
+         |}
+         |
+         |""".stripMargin
+    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
+    unboxing.copy(code =
+      s"""
+         |$accessCode
+         |${unboxing.code}
+         |""".stripMargin
+    )
+  }
+
+  def generateMultisetSetCheck(
+      codeGenerator: CodeGenerator,
+      multiset: GeneratedExpression,
+      isASet: Boolean)
+  : GeneratedExpression = {
+    val resultTerm = newName("result")
+    val resultType = BOOLEAN_TYPE_INFO
+    val resultTypeTerm = boxedTypeTermForTypeInfo(BOOLEAN_TYPE_INFO)
+    val elementTypeTerm = boxedTypeTermForTypeInfo(INT_TYPE_INFO)
+    val accessCode =
+      s"""
+         |${multiset.code}
+         |$resultTypeTerm $resultTerm = $isASet;
+         |if (!${multiset.nullTerm}) {
+         |   for ($elementTypeTerm element: ${multiset.resultTerm}.values()) {
+         |       if (element > 1) {
+         |           $resultTerm = !$resultTerm;
+         |           break;
+         |       }
+         |   }
+         |}
+         |""".stripMargin
+    val unboxing = codeGenerator.generateInputFieldUnboxing(resultType, resultTerm)
     unboxing.copy(code =
       s"""
          |$accessCode

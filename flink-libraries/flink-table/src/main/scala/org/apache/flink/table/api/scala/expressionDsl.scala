@@ -250,18 +250,6 @@ trait ImplicitExpressionOperations {
     */
   def desc = Desc(expr)
 
-
-  /**
-    * Returns true if an expression exists in a given list of expressions. This is a shorthand
-    * for multiple OR conditions.
-    *
-    * If the testing set contains null, the result will be null if the element can not be found
-    * and true if it can be found. If the element is null, the result is always null.
-    *
-    * e.g. "42".memberOf(1, 2, 3) leads to false.
-    */
-  def memberOf(element: Expression) = MemberOf(expr, element)
-
   /**
     * Returns true if an expression exists in a given list of expressions. This is a shorthand
     * for multiple OR conditions.
@@ -821,6 +809,43 @@ trait ImplicitExpressionOperations {
     */
   def element() = Element(expr)
 
+  /**
+    * Returns true if an expression exists in a given list of expressions. This is a shorthand
+    * for multiple OR conditions.
+    *
+    * If the testing set contains null, the result will be null if the element can not be found
+    * and true if it can be found. If the element is null, the result is always null.
+    *
+    * e.g. "42".memberOf(1, 2, 3) leads to false.
+    */
+  def memberOf(element: Expression) = MemberOf(expr, element)
+
+  /**
+    * Returns true if the multiset consists of distinct values
+    *
+    * @return the flag whether multiset is a set
+    */
+  def isASet() = IsASet(expr)
+  /**
+    * Returns true if the multiset consists of distinct values
+    *
+    * @return the flag whether multiset is a set
+    */
+  def isNotASet() = IsNotASet(expr)
+
+  /**
+    * Returns true if the multiset consists of distinct values
+    *
+    * @return the flag whether multiset is a set
+    */
+  def subMultisetOf() = SubMultisetOf(expr)
+  /**
+    * Returns true if the multiset consists of distinct values
+    *
+    * @return the flag whether multiset is a set
+    */
+  def notSubMultisetOf() = NotSubMultisetOf(expr)
+  
   // Time definition
 
   /**

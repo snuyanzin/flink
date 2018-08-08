@@ -622,4 +622,127 @@ class AggregateITCase(
 
     TestBaseUtils.compareResultAsText(result.asJava, expected)
   }
+
+  @Test
+  def testMultisetIsASetTrue(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+    val sqlQuery =
+      "SELECT COLLECT(a) IS A SET FROM T"
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "true"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMultisetIsASetFalse(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+    val sqlQuery =
+      "SELECT COLLECT(b) IS A SET FROM T"
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "false"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+  
+  @Test
+  def testMultisetIsNotASetFalse(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+    val sqlQuery =
+      "SELECT COLLECT(a) IS NOT A SET FROM T"
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "false"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+  
+  @Test
+  def testMultisetIsNotASetTrue(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+    val sqlQuery =
+      "SELECT COLLECT(b) IS NOT A SET FROM T"
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "true"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMultisetIsEmpty(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+    val sqlQuery =
+      "SELECT COLLECT(a) IS EMPTY FROM T"
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "false"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMultisetIsNotEmpty(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+    val sqlQuery =
+      "SELECT COLLECT(b) IS NOT EMPTY FROM T"
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "true"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testSubMultisetOf(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+
+    val sqlQuery = "SELECT COLLECT(a) submultiset of COLLECT(a) from T"
+
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "true"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testNotSubMultisetOf(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = TableEnvironment.getTableEnvironment(env, config)
+    tEnv.registerFunction("countFun", new CountAggFunction)
+    tEnv.registerFunction("wAvgWithMergeAndReset", new WeightedAvgWithMergeAndReset)
+
+    val sqlQuery = "SELECT COLLECT(a) not submultiset of COLLECT(b) from T"
+
+    val ds = CollectionDataSets.get3TupleDataSet(env)
+    tEnv.registerDataSet("T", ds, 'a, 'b, 'c)
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = "true"
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
 }
