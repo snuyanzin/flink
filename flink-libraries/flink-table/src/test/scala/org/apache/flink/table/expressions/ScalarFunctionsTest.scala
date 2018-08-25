@@ -21,7 +21,7 @@ package org.apache.flink.table.expressions
 import org.apache.flink.table.api.Types
 import org.apache.flink.table.api.scala._
 import org.apache.flink.table.expressions.utils.ScalarTypesTestBase
-import org.junit.Test
+import org.junit.{Ignore, Test}
 
 class ScalarFunctionsTest extends ScalarTypesTestBase {
 
@@ -1785,6 +1785,7 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
       "EXTRACT(SECOND FROM f17)",
       "44")
 
+
     testAllApis(
       'f19.extract(TimeIntervalUnit.DAY),
       "f19.extract(DAY)",
@@ -1947,6 +1948,23 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
     testSqlApi(
       "SECOND(f19)",
       "33")
+  }
+
+  // Need to be activated after merge with support of extract microsecond from Calcite's sql parser
+  @Ignore
+  @Test
+  def testExtractMicrosecdond(): Unit = {
+    testAllApis(
+      'f18.extract(TimeIntervalUnit.MICROSECOND),
+      "f18.extract(MICROSECOND)",
+      "EXTRACT(MICROSECOND FROM f18)",
+      "44333000")
+
+    testAllApis(
+      'f17.extract(TimeIntervalUnit.MICROSECOND),
+      "f17.extract(MICROSECOND)",
+      "EXTRACT(MICROSECOND FROM f17)",
+      "44000000")
   }
 
   @Test

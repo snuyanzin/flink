@@ -97,6 +97,7 @@ object TimeIntervalUnit extends TableSymbols {
   val MINUTE = Value(TimeUnitRange.MINUTE)
   val MINUTE_TO_SECOND = Value(TimeUnitRange.MINUTE_TO_SECOND)
   val SECOND = Value(TimeUnitRange.SECOND)
+  val MICROSECOND = Value(TimeUnitRange.MICROSECOND)
 
 }
 

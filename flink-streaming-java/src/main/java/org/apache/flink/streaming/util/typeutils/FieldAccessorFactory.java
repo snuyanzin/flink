@@ -27,7 +27,6 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.CompositeType;
 import org.apache.flink.api.java.typeutils.PojoField;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
-import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TupleTypeInfoBase;
 
 import java.io.Serializable;
@@ -165,7 +164,7 @@ public class FieldAccessorFactory implements Serializable {
 
 		// In case of tuples
 		} else if (typeInfo.isTupleType()) {
-			TupleTypeInfo tupleTypeInfo = (TupleTypeInfo) typeInfo;
+			TupleTypeInfoBase tupleTypeInfo = (TupleTypeInfoBase) typeInfo;
 			FieldExpression decomp = decomposeFieldExpression(field);
 			int fieldPos = tupleTypeInfo.getFieldIndex(decomp.head);
 			if (fieldPos == -1) {

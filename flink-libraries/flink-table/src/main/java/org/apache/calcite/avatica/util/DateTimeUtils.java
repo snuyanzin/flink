@@ -802,6 +802,8 @@ public class DateTimeUtils {
 			case SECOND:
 				final int seconds = time / (int) MILLIS_PER_SECOND;
 				return seconds % 60;
+			case MICROSECOND:
+				return time % 1000 * 1000;
 			default:
 				throw new AssertionError(range);
 		}

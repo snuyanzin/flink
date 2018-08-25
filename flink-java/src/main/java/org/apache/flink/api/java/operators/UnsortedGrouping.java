@@ -34,7 +34,7 @@ import org.apache.flink.api.java.functions.FirstReducer;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.functions.SelectByMaxFunction;
 import org.apache.flink.api.java.functions.SelectByMinFunction;
-import org.apache.flink.api.java.typeutils.TupleTypeInfo;
+import org.apache.flink.api.java.typeutils.TupleTypeInfoBase;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.util.Preconditions;
 
@@ -226,7 +226,7 @@ public class UnsortedGrouping<T> extends Grouping<T> {
 		}
 
 		return new ReduceOperator<T>(this, new SelectByMinFunction(
-				(TupleTypeInfo) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
+				(TupleTypeInfoBase) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
 	}
 
 	/**
@@ -248,7 +248,7 @@ public class UnsortedGrouping<T> extends Grouping<T> {
 		}
 
 		return new ReduceOperator<T>(this, new SelectByMaxFunction(
-				(TupleTypeInfo) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
+				(TupleTypeInfoBase) this.inputDataSet.getType(), fields), Utils.getCallLocationName());
 	}
 	// --------------------------------------------------------------------------------------------
 	//  Group Operations
