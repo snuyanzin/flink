@@ -40,8 +40,11 @@ class ExtractCallGen(returnType: TypeInformation[_], method: Method)
            TimeUnit.DAY |
            TimeUnit.QUARTER |
            TimeUnit.DOY |
+           TimeUnit.ISOYEAR |
            TimeUnit.DOW |
+           TimeUnit.ISODOW |
            TimeUnit.WEEK |
+           TimeUnit.DECADE |
            TimeUnit.CENTURY |
            TimeUnit.MILLENNIUM =>
         tpe match {
@@ -103,6 +106,7 @@ class ExtractCallGen(returnType: TypeInformation[_], method: Method)
       case TimeUnit.QUARTER =>
         TimeUnit.YEAR.multiplier.longValue()
       case TimeUnit.YEAR |
+           TimeUnit.DECADE |
            TimeUnit.CENTURY |
            TimeUnit.MILLENNIUM => 1L
       case _ =>

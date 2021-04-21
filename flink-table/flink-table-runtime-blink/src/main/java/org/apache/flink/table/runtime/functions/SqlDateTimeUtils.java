@@ -736,8 +736,11 @@ public class SqlDateTimeUtils {
             case QUARTER:
             case MONTH:
             case DAY:
+            case DECADE:
             case DOW:
+            case ISODOW:
             case DOY:
+            case ISOYEAR:
             case WEEK:
                 if (type instanceof TimestampType) {
                     long d = divide(utcTs, TimeUnit.DAY.multiplier);
@@ -748,9 +751,6 @@ public class SqlDateTimeUtils {
                     // TODO support it
                     throw new TableException(type + " is unsupported now.");
                 }
-            case DECADE:
-                // TODO support it
-                throw new TableException("DECADE is unsupported now.");
             case EPOCH:
                 // TODO support it
                 throw new TableException("EPOCH is unsupported now.");

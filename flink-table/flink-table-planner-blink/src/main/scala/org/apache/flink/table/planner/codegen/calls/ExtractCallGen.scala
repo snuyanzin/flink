@@ -43,7 +43,9 @@ class ExtractCallGen(method: Method)
            TimeUnit.DAY |
            TimeUnit.QUARTER |
            TimeUnit.DOY |
+           TimeUnit.ISOYEAR |
            TimeUnit.DOW |
+           TimeUnit.ISODOW |
            TimeUnit.WEEK |
            TimeUnit.CENTURY |
            TimeUnit.MILLENNIUM =>
@@ -134,6 +136,7 @@ class ExtractCallGen(method: Method)
       case TimeUnit.QUARTER =>
         TimeUnit.YEAR.multiplier.longValue()
       case TimeUnit.YEAR |
+           TimeUnit.DECADE |
            TimeUnit.CENTURY |
            TimeUnit.MILLENNIUM => 1L
       case _ =>

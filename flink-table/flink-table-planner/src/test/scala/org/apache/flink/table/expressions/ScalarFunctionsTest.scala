@@ -2066,6 +2066,25 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
   // ----------------------------------------------------------------------------------------------
 
   @Test
+  def testMyExtract(): Unit = {
+    testSqlApi(
+      "EXTRACT(DECADE FROM f18)",
+      "199")
+
+    testSqlApi(
+      "EXTRACT(DECADE FROM f16)",
+      "199")
+
+    testSqlApi(
+      "EXTRACT(ISODOW FROM f16)",
+      "7")
+
+    testSqlApi(
+      "EXTRACT(ISOYEAR FROM f16)",
+      "1996")
+  }
+
+  @Test
   def testExtract(): Unit = {
     testAllApis(
       'f16.extract(TimeIntervalUnit.YEAR),

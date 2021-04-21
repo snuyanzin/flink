@@ -154,12 +154,21 @@ public final class GettingStartedExample {
         // use SQL whenever you like
         // call execute() and print() to get insights
         env.sqlQuery(
+                "SELECT "
+                        + "  COUNT(*) AS `number of customers`, "
+                        + "  AVG(extract(DECADE FROM date_of_birth)) AS `average birth decade`, "
+                        + "  AVG(extract(YEAR FROM date_of_birth)) AS `average birth year`, "
+                        + "  AVG(extract(CENTURY FROM date_of_birth)) AS `average birth century` "
+                        + "FROM `customers`")
+                .execute()
+                .print();
+        /*env.sqlQuery(
                         "SELECT "
                                 + "  COUNT(*) AS `number of customers`, "
                                 + "  AVG(YEAR(date_of_birth)) AS `average birth year` "
                                 + "FROM `customers`")
                 .execute()
-                .print();
+                .print();*/
 
         // or further transform the data using the fluent Table API
         // e.g. filter, project fields, or call a user-defined function
@@ -198,6 +207,7 @@ public final class GettingStartedExample {
             iterator.forEachRemaining(actualOutput::add);
 
             if (actualOutput.equals(expectedOutput)) {
+                actualOutput.forEach(System.out::println);
                 System.out.println("SUCCESS!");
             } else {
                 System.out.println("FAILURE!");
