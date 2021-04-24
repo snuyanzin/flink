@@ -104,6 +104,15 @@ class BasicOperatorTable extends ReflectiveSqlOperatorTable {
     SqlStdOperatorTable.ELEMENT,
     // MAP OPERATORS
     SqlStdOperatorTable.MAP_VALUE_CONSTRUCTOR,
+    // MULTISET OPERATORS
+    SqlStdOperatorTable.MULTISET_VALUE,
+    SqlStdOperatorTable.MULTISET_EXCEPT,
+    SqlStdOperatorTable.MULTISET_INTERSECT,
+    SqlStdOperatorTable.MULTISET_UNION,
+    SqlStdOperatorTable.MEMBER_OF,
+    SqlStdOperatorTable.IS_A_SET,
+    SqlStdOperatorTable.SUBMULTISET_OF,
+    SqlStdOperatorTable.FUSION,
     // ARRAY MAP SHARED OPERATORS
     SqlStdOperatorTable.ITEM,
     SqlStdOperatorTable.CARDINALITY,

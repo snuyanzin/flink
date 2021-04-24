@@ -118,6 +118,103 @@ class AggregateITCase(
   }
 
   @Test
+  def testMemberOfTrue(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = BatchTableEnvironment.create(env, config)
+
+    val sqlQuery = " SELECT COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1)"
+    //val sqlQuery = "SELECT COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1)"
+
+    System.out.println(tEnv.sqlQuery(sqlQuery).explain())
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testIsASetTrue(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = BatchTableEnvironment.create(env, config)
+
+    val sqlQuery = "SELECT COLLECT(a) IS A SET FROM (SELECT 2 AS a UNION ALL SELECT 1) "
+    //val sqlQuery = "SELECT COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1)"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testCardinality(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = BatchTableEnvironment.create(env, config)
+
+    val sqlQuery = "SELECT CARDINALITY(COLLECT(a)) FROM (SELECT 2 AS a UNION ALL SELECT 1) "
+    //val sqlQuery = "SELECT COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1)"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testIsEmpty(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = BatchTableEnvironment.create(env, config)
+
+    val sqlQuery = "SELECT COLLECT(a) IS EMPTY FROM (SELECT 2 AS a UNION ALL SELECT 1) "
+    //val sqlQuery = "SELECT COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1)"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMultisetUnion(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = BatchTableEnvironment.create(env, config)
+
+    val sqlQuery = "SELECT COLLECT(a) MULTISET UNION COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1) "
+    //val sqlQuery = "SELECT COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1)"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
+  def testMultiset(): Unit = {
+    val env = ExecutionEnvironment.getExecutionEnvironment
+    val tEnv = BatchTableEnvironment.create(env, config)
+
+    val sqlQuery = "SELECT multiset[1] "
+    //val sqlQuery = "SELECT COLLECT(a) FROM (SELECT 2 AS a UNION ALL SELECT 1)"
+
+    val result = tEnv.sqlQuery(sqlQuery).toDataSet[Row].collect()
+    val expected = Seq(
+      "true"
+    ).mkString("\n")
+
+    TestBaseUtils.compareResultAsText(result.asJava, expected)
+  }
+
+  @Test
   def testTableProjection(): Unit = {
 
     val env = ExecutionEnvironment.getExecutionEnvironment

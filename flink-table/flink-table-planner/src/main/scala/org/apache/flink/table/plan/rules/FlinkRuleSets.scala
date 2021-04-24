@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.plan.rules
 
+import org.apache.calcite.adapter.enumerable.EnumerableRules
 import org.apache.calcite.rel.core.RelFactories
 import org.apache.calcite.rel.rules._
 import org.apache.calcite.tools.{RuleSet, RuleSets}
@@ -121,6 +122,7 @@ object FlinkRuleSets {
     CoreRules.PROJECT_TO_CALC,
     CoreRules.CALC_MERGE,
 
+    EnumerableRules.ENUMERABLE_COLLECT_RULE,
     // scan optimization
     PushProjectIntoTableSourceScanRule.INSTANCE,
     PushFilterIntoTableSourceScanRule.INSTANCE,

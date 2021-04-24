@@ -18,14 +18,14 @@
 package org.apache.flink.table.codegen.calls
 
 import java.math.MathContext
-
 import org.apache.calcite.avatica.util.DateTimeUtils.MILLIS_PER_DAY
 import org.apache.calcite.avatica.util.{DateTimeUtils, TimeUnitRange}
 import org.apache.calcite.util.BuiltInMethod
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo._
 import org.apache.flink.api.common.typeinfo._
-import org.apache.flink.api.java.typeutils.{MapTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
+import org.apache.flink.api.java.typeutils.{MapTypeInfo, MultisetTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
 import org.apache.flink.table.api.TableConfig
+import org.apache.flink.table.calcite.FlinkTypeFactory
 import org.apache.flink.table.codegen.CodeGenUtils._
 import org.apache.flink.table.codegen.calls.CallGenerator.generateCallIfArgsNotNull
 import org.apache.flink.table.codegen.{CodeGenException, CodeGenerator, GeneratedExpression}
@@ -1182,6 +1182,67 @@ object ScalarOperators {
     }
   }
 
+  def generateMemberOf(
+      nullCheck: Boolean,
+      element: GeneratedExpression,
+      multiset: GeneratedExpression)
+  : GeneratedExpression = {
+
+    generateOperatorIfNotNull(nullCheck, BOOLEAN_TYPE_INFO, element, multiset) {
+      (e, m) => s"${qualifyMethod(BuiltInMethod.MEMBER_OF.method)}($e, ${multiset.resultTerm}.keySet())"
+    }
+  }
+
+  def generateIsASet(
+      nullCheck: Boolean,
+      multiset: GeneratedExpression)
+  : GeneratedExpression = {
+
+    generateUnaryOperatorIfNotNull(nullCheck, BOOLEAN_TYPE_INFO, multiset) {
+      (operandTerm) => s"${qualifyMethod(BuiltInMethod.IS_A_SET.method)}(${multiset.resultTerm}.keySet())"
+    }
+  }
+
+  def generateIsEmpty(
+      nullCheck: Boolean,
+      multiset: GeneratedExpression)
+  : GeneratedExpression = {
+
+    generateUnaryOperatorIfNotNull(nullCheck, BOOLEAN_TYPE_INFO, multiset) {
+      (operandTerm) => s"${qualifyMethod(BuiltInMethod.IS_EMPTY.method)}(${multiset.resultTerm})"
+    }
+  }
+
+  def generateMultisetUnion(
+     multiset: GeneratedExpression,
+     multiset2: GeneratedExpression)
+  : GeneratedExpression = {
+
+    val resultTerm = newName("result")
+    val nullTerm = newName("isNull")
+    val defaultValue = multiset.resultType
+    val operatorCode =
+        s"""
+           |
+           |String $resultTerm;
+           |boolean $nullTerm;
+           |if (${multiset.nullTerm} || ${multiset2.nullTerm}) {
+           |  $nullTerm = true;
+           |  $resultTerm = null;
+           |} else {
+           |  if (${multiset.resultTerm}.size() > ${multiset2.resultTerm}.size()) {
+           |     ${multiset2.resultTerm}.forEach((key, value) => ${multiset.resultTerm}.merge(key, value, Integer.sum))
+           |     $resultTerm = ${multiset.resultTerm}
+           |  } else {
+           |     ${multiset.resultTerm}.forEach((key, value) => ${multiset2.resultTerm}.merge(key, value, Integer.sum))
+           |     $resultTerm = ${multiset2.resultTerm}
+           |  }
+           |}
+           |""".stripMargin
+
+    GeneratedExpression(resultTerm, nullTerm, operatorCode, multiset.resultType)
+  }
+
   def generateConcat(
       nullCheck: Boolean,
       operands: Seq[GeneratedExpression])
@@ -1223,6 +1284,46 @@ object ScalarOperators {
         |""".stripMargin
 
     GeneratedExpression(resultTerm, nullTerm, operatorCode, Types.STRING)
+  }
+
+  def generateMultiset(
+                   codeGenerator: CodeGenerator,
+                   resultType: TypeInformation[_],
+                   elements: Seq[GeneratedExpression])
+  : GeneratedExpression = {
+
+    val mapTerm = codeGenerator.addReusableMap()
+
+    val boxedElements: Seq[GeneratedExpression] = resultType match {
+      case mti: MultisetTypeInfo[_] =>
+        elements.zipWithIndex.map { case (e, idx) =>
+          codeGenerator.generateNullableOutputBoxing(e,
+            mti.getKeyTypeInfo)
+        }
+    }
+
+    // clear the map when it is not guaranteed that keys are constant
+    var clearMap: Boolean = false
+
+    val code = boxedElements.grouped(2)
+      .map { case Seq(key, value) =>
+        // check if all keys are constant
+        if (!key.literal) {
+          clearMap = true
+        }
+        s"""
+           |${key.code}
+           |${value.code}
+           |$mapTerm.put(${key.resultTerm}, ${value.resultTerm});
+           |""".stripMargin
+      }
+      .mkString("\n")
+
+    GeneratedExpression(
+      mapTerm,
+      GeneratedExpression.NEVER_NULL,
+      (if (clearMap) s"$mapTerm.clear();\n" else "") + code,
+      resultType)
   }
 
   def generateMap(

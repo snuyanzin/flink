@@ -23,7 +23,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.tools.RelBuilder
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo.INT_TYPE_INFO
 import org.apache.flink.api.common.typeinfo.{BasicArrayTypeInfo, BasicTypeInfo, PrimitiveArrayTypeInfo, TypeInformation}
-import org.apache.flink.api.java.typeutils.{GenericTypeInfo, MapTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
+import org.apache.flink.api.java.typeutils.{GenericTypeInfo, MapTypeInfo, MultisetTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
 import org.apache.flink.table.calcite.FlinkRelBuilder
 import org.apache.flink.table.typeutils.TypeCheckUtils.{isArray, isMap}
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
@@ -127,6 +127,39 @@ case class MapConstructor(elements: Seq[PlannerExpression]) extends PlannerExpre
     }
     if (!elements.grouped(2).forall(_.last.resultType == elements.last.resultType)) {
       return ValidationFailure("Not all value elements of the map literal have the same type.")
+    }
+    ValidationSuccess
+  }
+}
+
+case class MultisetConstructor(elements: Seq[PlannerExpression]) extends PlannerExpression {
+  override private[flink] def children: Seq[PlannerExpression] = elements
+
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    val typeFactory = relBuilder.asInstanceOf[FlinkRelBuilder].getTypeFactory
+    val relDataType = typeFactory.createMultisetType(
+      typeFactory.createTypeFromTypeInfo(elements.head.resultType, isNullable = true),
+      elements.length
+    )
+    val values = elements.map(_.toRexNode).toList.asJava
+    relBuilder
+      .getRexBuilder
+      .makeCall(relDataType, SqlStdOperatorTable.MAP_VALUE_CONSTRUCTOR, values)
+  }
+
+  override def toString = s"multiset(${elements.mkString(", ")})"
+
+  override private[flink] def resultType: TypeInformation[_] = new MultisetTypeInfo(
+    elements.head.resultType
+  )
+
+  override private[flink] def validateInput(): ValidationResult = {
+    if (elements.isEmpty) {
+      return ValidationFailure("Empty multiset are not supported yet.")
+    }
+    val elementType = elements.head.resultType
+    if (!elements.forall(_.resultType == elementType)) {
+      return ValidationFailure("Not all elements of the multiset literal have the same type.")
     }
     ValidationSuccess
   }

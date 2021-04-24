@@ -680,6 +680,9 @@ class PlannerExpressionConverter private
           case MAP =>
             MapConstructor(args)
 
+          case MULTISET =>
+            MultisetConstructor(args)
+
           case ROW =>
             RowConstructor(args)
 

@@ -174,6 +174,14 @@ public final class TypeStrategies {
                 return Optional.of(DataTypes.ARRAY(argumentDataTypes.get(0)).notNull());
             };
 
+    public static final TypeStrategy MULTISET =
+            callContext -> {
+                List<DataType> argumentDataTypes = callContext.getArgumentDataTypes();
+                if (argumentDataTypes.size() < 1) {
+                    return Optional.empty();
+                }
+                return Optional.of(DataTypes.MULTISET(argumentDataTypes.get(0)).notNull());
+            };
     /**
      * Type strategy that returns the sum of an exact numeric addition that includes at least one
      * decimal.

@@ -316,6 +316,9 @@ public final class InputTypeStrategies {
     public static final InputTypeStrategy SPECIFIC_FOR_ARRAY =
             new CommonInputTypeStrategy(ConstantArgumentCount.from(1));
 
+    public static final InputTypeStrategy SPECIFIC_FOR_MULTISET =
+            new CommonInputTypeStrategy(ConstantArgumentCount.from(1));
+
     /**
      * Strategy specific for {@link BuiltInFunctionDefinitions#MAP}.
      *

@@ -116,6 +116,7 @@ object FlinkBatchRuleSets {
         // slices a project into sections which contain window agg functions
         // and sections which do not.
         CoreRules.PROJECT_TO_LOGICAL_PROJECT_AND_WINDOW,
+        CoreRules.JOIN_EXTRACT_FILTER,
         // adjust the sequence of window's groups.
         WindowGroupReorderRule.INSTANCE,
         WindowPropertiesRules.WINDOW_PROPERTIES_RULE,

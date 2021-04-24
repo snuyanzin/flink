@@ -969,6 +969,10 @@ abstract class CodeGenerator(
       case MAP_VALUE_CONSTRUCTOR =>
         generateMap(this, resultType, operands)
 
+      // maps
+      case MULTISET_VALUE =>
+        generateMultiset(this, resultType, operands)
+
       case ITEM =>
         operands.head.resultType match {
           case t: TypeInformation[_] if isArray(t) =>
@@ -996,6 +1000,29 @@ abstract class CodeGenerator(
 
           case _ => throw new CodeGenException("Expect an array or a map.")
         }
+
+      case MEMBER_OF =>
+        val element = operands.head
+        val multiset = operands(1)
+        requireMultiset(multiset)
+        generateMemberOf(nullCheck, element, multiset)
+
+      case IS_A_SET =>
+        val multiset = operands.head
+        requireMultiset(multiset)
+        generateIsASet(nullCheck, multiset)
+
+      case IS_EMPTY =>
+        val multiset = operands.head
+        requireMultiset(multiset)
+        generateIsEmpty(nullCheck, multiset)
+
+      case MULTISET_UNION =>
+        val multiset = operands.head
+        val multiset2 = operands(1)
+        requireMultiset(multiset)
+        requireMultiset(multiset2)
+        generateMultisetUnion(multiset, multiset2)
 
       case ELEMENT =>
         val array = operands.head

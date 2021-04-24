@@ -108,6 +108,7 @@ private class FlinkLogicalJoinConverter
       case lf: Filter => isSingleRow(lf.getInput)
       case lc: Calc => isSingleRow(lc.getInput)
       case la: Aggregate => la.getGroupSet.isEmpty
+      case lc: Collect => true
       case _ => false
     }
   }

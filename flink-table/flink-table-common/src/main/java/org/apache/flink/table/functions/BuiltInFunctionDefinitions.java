@@ -1230,6 +1230,14 @@ public final class BuiltInFunctionDefinitions {
                     .outputTypeStrategy(TypeStrategies.MAP)
                     .build();
 
+    public static final BuiltInFunctionDefinition MULTISET =
+            BuiltInFunctionDefinition.newBuilder()
+                    .name("multiset")
+                    .kind(SCALAR)
+                    .inputTypeStrategy(InputTypeStrategies.SPECIFIC_FOR_MULTISET)
+                    .outputTypeStrategy(TypeStrategies.MULTISET)
+                    .build();
+
     public static final BuiltInFunctionDefinition ROW =
             BuiltInFunctionDefinition.newBuilder()
                     .name("row")

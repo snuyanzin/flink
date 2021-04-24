@@ -283,7 +283,7 @@ abstract class Optimizer(
       case e: CannotPlanException =>
         throw new TableException(
           s"Cannot generate a valid execution plan for the given query: \n\n" +
-            s"${RelOptUtil.toString(input)}\n" +
+            s"${RelOptUtil.toString(input)}\n" + s"$e\n" +
             s"This exception indicates that the query uses an unsupported SQL feature.\n" +
             s"Please check the documentation for the set of currently supported SQL features.")
       case t: TableException =>
