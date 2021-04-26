@@ -41,7 +41,6 @@ import org.apache.flink.table.runtime.typeutils.TypeCheckUtils.{isNumeric, isTem
 import org.apache.flink.table.types.logical._
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks.{getFieldCount, isCompositeType}
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo
-
 import org.apache.calcite.rex._
 import org.apache.calcite.sql.{SqlKind, SqlOperator}
 import org.apache.calcite.sql.`type`.{ReturnTypes, SqlTypeName}
@@ -789,6 +788,11 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
         val array = operands.head
         requireArray(array)
         generateArrayElement(ctx, array)
+
+      case ARRAY_CONTAINS =>
+        val array = operands.head
+        val element = operands(1)
+        generateArrayContains(ctx, array, element)
 
       case DOT =>
         generateDot(ctx, operands)

@@ -25,6 +25,7 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo.INT_TYPE_INFO
 import org.apache.flink.api.common.typeinfo.{BasicArrayTypeInfo, BasicTypeInfo, PrimitiveArrayTypeInfo, TypeInformation}
 import org.apache.flink.api.java.typeutils.{GenericTypeInfo, MapTypeInfo, ObjectArrayTypeInfo, RowTypeInfo}
 import org.apache.flink.table.calcite.FlinkRelBuilder
+import org.apache.flink.table.functions.sql.ScalarSqlFunctions
 import org.apache.flink.table.typeutils.TypeCheckUtils.{isArray, isMap}
 import org.apache.flink.table.validate.{ValidationFailure, ValidationResult, ValidationSuccess}
 
@@ -199,6 +200,52 @@ case class ItemAt(container: PlannerExpression, key: PlannerExpression) extends 
     case bati: BasicArrayTypeInfo[_, _] => bati.getComponentInfo
     case pati: PrimitiveArrayTypeInfo[_] => pati.getComponentType
   }
+
+  override private[flink] def validateInput(): ValidationResult = {
+    container.resultType match {
+
+      case ati: TypeInformation[_] if isArray(ati)  =>
+        if (key.resultType == INT_TYPE_INFO) {
+          // check for common user mistake
+          key match {
+            case Literal(value: Int, INT_TYPE_INFO) if value < 1 =>
+              ValidationFailure(
+                s"Array element access needs an index starting at 1 but was $value.")
+            case _ => ValidationSuccess
+          }
+        } else {
+          ValidationFailure(
+            s"Array element access needs an integer index but was '${key.resultType}'.")
+        }
+
+      case mti: MapTypeInfo[_, _]  =>
+        if (key.resultType == mti.getKeyTypeInfo) {
+          ValidationSuccess
+        } else {
+          ValidationFailure(
+            s"Map entry access needs a valid key of type " +
+              s"'${mti.getKeyTypeInfo}', found '${key.resultType}'.")
+        }
+
+      case other@_ => ValidationFailure(s"Array or map expected but was '$other'.")
+    }
+  }
+}
+
+
+case class ArrayContains(container: PlannerExpression, key: PlannerExpression) extends PlannerExpression {
+
+  override private[flink] def children: Seq[PlannerExpression] = Seq(container, key)
+
+  override private[flink] def toRexNode(implicit relBuilder: RelBuilder): RexNode = {
+    relBuilder
+      .getRexBuilder
+      .makeCall(ScalarSqlFunctions.ARRAY_CONTAINS, container.toRexNode, key.toRexNode)
+  }
+
+  override def toString = s"($container).array_contains($key)"
+
+  override private[flink] def resultType = BasicTypeInfo.BOOLEAN_TYPE_INFO
 
   override private[flink] def validateInput(): ValidationResult = {
     container.resultType match {

@@ -83,6 +83,15 @@ object ScalarSqlFunctions {
     OperandTypes.ONE_OR_MORE,
     SqlFunctionCategory.STRING)
 
+  val ARRAY_CONTAINS = new SqlFunction(
+    "ARRAY_CONTAINS",
+    SqlKind.OTHER_FUNCTION,
+    ReturnTypes.BOOLEAN,
+    null,
+    OperandTypes.family(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC),
+    SqlFunctionCategory.USER_DEFINED_FUNCTION
+  )
+
   val LOG = new SqlFunction(
     "LOG",
     SqlKind.OTHER_FUNCTION,

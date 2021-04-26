@@ -40,7 +40,6 @@ import org.apache.flink.table.types.logical.utils.LogicalTypeCasts.supportsExpli
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks.getFieldTypes
 import org.apache.flink.table.types.logical.utils.LogicalTypeMerging.findCommonType
 import org.apache.flink.util.Preconditions.checkArgument
-
 import org.apache.calcite.avatica.util.DateTimeUtils.MILLIS_PER_DAY
 import org.apache.calcite.avatica.util.{DateTimeUtils, TimeUnitRange}
 import org.apache.calcite.util.BuiltInMethod
@@ -48,7 +47,6 @@ import org.apache.calcite.util.BuiltInMethod
 import java.lang.{StringBuilder => JStringBuilder}
 import java.nio.charset.StandardCharsets
 import java.util.Arrays.asList
-
 import scala.collection.JavaConversions._
 
 /**
@@ -1754,6 +1752,46 @@ object ScalarOperatorGens {
     generateUnaryOperatorIfNotNull(ctx, new IntType(), array) {
       _ => s"${array.resultTerm}.size()"
     }
+  }
+
+  def generateArrayContains(
+      ctx: CodeGeneratorContext,
+      array: GeneratedExpression,
+      element: GeneratedExpression)
+  : GeneratedExpression = {
+    val resultTerm = newName("result")
+    val nullTerm = newName("isNull")
+    val index = newName("index")
+    val length = newName("length")
+    val data = newName("length")
+
+    val operatorCode = if (ctx.nullCheck) {
+      s"""
+         |${array.code}
+         |boolean $nullTerm = false;
+         |boolean $resultTerm = false;
+         |if (${array.resultTerm} instanceof $BINARY_ARRAY) {
+         |  $BINARY_ARRAY $data = ($BINARY_ARRAY) ${array.resultTerm};
+         |  final int $length = $data.size();
+         |  int $index = 0;
+         |  while ($index < $data.length && !$resultTerm) {
+         |    if ($data[$index].equals(${element.resultTerm})) {
+         |       $resultTerm = true;
+         |    }
+         |    $index++;
+         |  }
+         |}
+         |""".stripMargin
+    }
+    else {
+      s"""
+         |${array.code}
+         |boolean $resultTerm = true;
+         |boolean $nullTerm = false;
+         |""".stripMargin
+    }
+
+    GeneratedExpression(resultTerm, nullTerm, operatorCode, new BooleanType())
   }
 
   def generateMap(

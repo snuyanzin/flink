@@ -878,6 +878,15 @@ public class FlinkSqlOperatorTable extends ReflectiveSqlOperatorTable {
                             OperandTypes.family(SqlTypeFamily.STRING, SqlTypeFamily.STRING)),
                     SqlFunctionCategory.STRING);
 
+    public static final SqlFunction ARRAY_CONTAINS =
+            new SqlFunction(
+                    "ARRAY_CONTAINS",
+                    SqlKind.OTHER_FUNCTION,
+                    ReturnTypes.BOOLEAN,
+                    null,
+                    OperandTypes.family(SqlTypeFamily.ARRAY, SqlTypeFamily.NUMERIC),
+                    SqlFunctionCategory.USER_DEFINED_FUNCTION);
+
     public static final SqlFunction RTRIM =
             new SqlFunction(
                     "RTRIM",

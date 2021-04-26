@@ -46,6 +46,7 @@ import static org.apache.flink.table.expressions.ApiExpressionUtils.valueLiteral
 import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.ABS;
 import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.ACOS;
 import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.AND;
+import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.ARRAY_CONTAINS;
 import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.ARRAY_ELEMENT;
 import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.ASIN;
 import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.AT;
@@ -700,6 +701,11 @@ public abstract class BaseExpressions<InType, OutType> {
     public OutType substring(InType beginIndex) {
         return toApiSpecificExpression(
                 unresolvedCall(SUBSTRING, toExpr(), objectToExpression(beginIndex)));
+    }
+
+    public OutType array_contains(InType array, InType beginIndex) {
+        return toApiSpecificExpression(
+                unresolvedCall(ARRAY_CONTAINS, toExpr(), objectToExpression(array), objectToExpression(beginIndex)));
     }
 
     /** Removes leading space characters from the given string. */

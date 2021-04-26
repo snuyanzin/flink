@@ -155,8 +155,7 @@ public final class GettingStartedExample {
         // call execute() and print() to get insights
         env.sqlQuery(
                         "SELECT "
-                                + "  COUNT(*) AS `number of customers`, "
-                                + "  AVG(YEAR(date_of_birth)) AS `average birth year` "
+                                + "  ARRAY_CONTAINS(array[1, 2, 3], 1) "
                                 + "FROM `customers`")
                 .execute()
                 .print();

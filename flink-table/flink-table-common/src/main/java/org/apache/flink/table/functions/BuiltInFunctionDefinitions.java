@@ -471,6 +471,13 @@ public final class BuiltInFunctionDefinitions {
                     .outputTypeStrategy(nullable(varyingString(argument(0))))
                     .build();
 
+    public static final BuiltInFunctionDefinition ARRAY_CONTAINS =
+            BuiltInFunctionDefinition.newBuilder()
+                    .name("array_contains")
+                    .kind(SCALAR)
+                    .outputTypeStrategy(TypeStrategies.MISSING)
+                    .build();
+
     public static final BuiltInFunctionDefinition REPLACE =
             BuiltInFunctionDefinition.newBuilder()
                     .name("replace")

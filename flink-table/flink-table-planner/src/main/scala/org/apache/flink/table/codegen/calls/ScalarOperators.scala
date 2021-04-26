@@ -18,7 +18,6 @@
 package org.apache.flink.table.codegen.calls
 
 import java.math.MathContext
-
 import org.apache.calcite.avatica.util.DateTimeUtils.MILLIS_PER_DAY
 import org.apache.calcite.avatica.util.{DateTimeUtils, TimeUnitRange}
 import org.apache.calcite.util.BuiltInMethod
@@ -1170,6 +1169,40 @@ object ScalarOperators {
     }
 
     GeneratedExpression(resultTerm, nullTerm, arrayAccessCode, resultType)
+  }
+
+  def generateArrayContains(
+      nullCheck: Boolean,
+      array: GeneratedExpression,
+      element: GeneratedExpression)
+    : GeneratedExpression = {
+    val resultTerm = newName("result")
+    val nullTerm = newName("isNull")
+    val index = newName("index")
+
+    val operatorCode = if (nullCheck) {
+      s"""
+         |${array.code}
+         |boolean $nullTerm = false;
+         |boolean $resultTerm = false;
+         |int $index = 0;
+         |while($index < ${array.resultTerm}.length && !$resultTerm) {
+         |  if (${array.resultTerm}[$index].equals(${element.resultTerm})) {
+         |     $resultTerm = true;
+         |  }
+         |  $index++;
+         |}
+         |""".stripMargin
+    }
+    else {
+      s"""
+         |${array.code}
+         |boolean $resultTerm = true;
+         |boolean $nullTerm = false;
+         |""".stripMargin
+    }
+
+    GeneratedExpression(resultTerm, nullTerm, operatorCode, BOOLEAN_TYPE_INFO)
   }
 
   def generateArrayCardinality(

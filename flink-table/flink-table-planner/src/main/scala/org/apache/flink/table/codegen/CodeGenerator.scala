@@ -1023,6 +1023,11 @@ abstract class CodeGenerator(
       case ScalarSqlFunctions.CONCAT_WS =>
         generateConcatWs(operands)
 
+      case ScalarSqlFunctions.ARRAY_CONTAINS =>
+        val array = operands.head
+        val element = operands(1)
+        generateArrayContains(this.nullCheck, array, element)
+
       case StreamRecordTimestampSqlFunction =>
         generateStreamRecordRowtimeAccess()
 
