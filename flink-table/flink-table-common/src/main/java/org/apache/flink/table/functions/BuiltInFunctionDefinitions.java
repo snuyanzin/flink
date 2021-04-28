@@ -155,6 +155,29 @@ public final class BuiltInFunctionDefinitions {
                             "org.apache.flink.table.runtime.functions.scalar.MapValuesFunction")
                     .build();
 
+    public static final BuiltInFunctionDefinition MAP_FROM_ARRAYS =
+            BuiltInFunctionDefinition.newBuilder()
+                    .name("MAP_FROM_ARRAYS")
+                    .kind(SCALAR)
+                    .inputTypeStrategy(SPECIFIC_FOR_MAP_FROM_ARRAYS)
+                    .outputTypeStrategy(
+                            callContext ->
+                                    Optional.of(
+                                            DataTypes.MAP(
+                                                    callContext
+                                                            .getArgumentDataTypes()
+                                                            .get(0)
+                                                            .getChildren()
+                                                            .get(0),
+                                                    callContext
+                                                            .getArgumentDataTypes()
+                                                            .get(1)
+                                                            .getChildren()
+                                                            .get(0))))
+                    .runtimeClass(
+                            "org.apache.flink.table.runtime.functions.scalar.MapFromArraysFunction")
+                    .build();
+    
     public static final BuiltInFunctionDefinition SOURCE_WATERMARK =
             BuiltInFunctionDefinition.newBuilder()
                     .name("SOURCE_WATERMARK")
