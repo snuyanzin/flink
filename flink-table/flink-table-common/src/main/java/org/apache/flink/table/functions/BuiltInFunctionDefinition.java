@@ -82,6 +82,35 @@ public final class BuiltInFunctionDefinition implements SpecializedFunction {
         return Optional.ofNullable(runtimeClass);
     }
 
+
+    public UserDefinedFunction specializeCast(SpecializedContext context) {
+        if (runtimeClass == null) {
+            throw new TableException(
+                    String.format(
+                            "Could not find a runtime implementation for built-in function '%s'. "
+                                    + "The planner should have provided an implementation.",
+                            name));
+        }
+        try {
+            final Class<?> udfClass =
+                    Class.forName(runtimeClass, true, context.getBuiltInClassLoader());
+            final Constructor<?> udfConstructor = udfClass.getConstructor(SpecializedContext.class);
+            final UserDefinedFunction udf =
+                    (UserDefinedFunction) udfConstructor.newInstance(context);
+            // in case another level of specialization is required
+            if (udf instanceof SpecializedFunction) {
+                return ((SpecializedFunction) udf).specialize(context);
+            }
+            return udf;
+        } catch (Exception e) {
+            throw new TableException(
+                    String.format(
+                            "Could not instantiate a runtime implementation for built-in function '%s'.",
+                            name),
+                    e);
+        }
+    }
+
     @Override
     public UserDefinedFunction specialize(SpecializedContext context) {
         if (runtimeClass == null) {

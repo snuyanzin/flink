@@ -26,6 +26,7 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalType;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
 
@@ -101,4 +102,13 @@ public interface CallContext {
      * COUNT(*) FROM t GROUP BY k} is.
      */
     boolean isGroupedAggregation();
+
+    default ProvidedFunction getProvidedFunction(LogicalType left, LogicalType right) {
+        return null;
+    }
+
+    interface ProvidedFunction extends Serializable {
+        void compile();
+        Object eval(Object ... input);
+    }
 }

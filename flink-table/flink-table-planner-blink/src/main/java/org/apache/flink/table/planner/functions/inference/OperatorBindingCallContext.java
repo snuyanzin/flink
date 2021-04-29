@@ -21,6 +21,10 @@ package org.apache.flink.table.planner.functions.inference;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.functions.UserDefinedFunction;
+import org.apache.flink.table.planner.codegen.CodeGeneratorContext;
+import org.apache.flink.table.planner.codegen.GeneratedExpression;
+import org.apache.flink.table.planner.codegen.calls.ScalarOperatorGens;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.logical.LogicalType;
@@ -33,6 +37,8 @@ import javax.annotation.Nullable;
 import java.util.AbstractList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.apache.flink.table.planner.calcite.FlinkTypeFactory.toLogicalType;
 import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDataType;
@@ -46,6 +52,8 @@ public final class OperatorBindingCallContext extends AbstractSqlCallContext {
     private final List<DataType> argumentDataTypes;
 
     private final @Nullable DataType outputDataType;
+
+    private BiFunction<LogicalType, LogicalType, ProvidedFunction> providedFunction;
 
     public OperatorBindingCallContext(
             DataTypeFactory dataTypeFactory,
@@ -116,5 +124,22 @@ public final class OperatorBindingCallContext extends AbstractSqlCallContext {
     @Override
     public Optional<DataType> getOutputDataType() {
         return Optional.ofNullable(outputDataType);
+    }
+
+    @Override
+    public ProvidedFunction getProvidedFunction(LogicalType left, LogicalType right) {
+        UserDefinedFunction udf = ScalarOperatorGens.generateCast(
+                new CodeGeneratorContext(config), new GeneratedExpression(), right);
+        return new ProvidedFunction() {
+            @Override
+            public void compile() {
+
+            }
+
+            @Override
+            public Object eval(Object... input) {
+                return null;
+            }
+        }
     }
 }
