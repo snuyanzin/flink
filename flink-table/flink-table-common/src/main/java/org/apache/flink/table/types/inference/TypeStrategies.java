@@ -19,6 +19,7 @@
 package org.apache.flink.table.types.inference;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.strategies.CommonTypeStrategy;
 import org.apache.flink.table.types.inference.strategies.ExplicitTypeStrategy;
@@ -129,6 +130,17 @@ public final class TypeStrategies {
     public static TypeStrategy varyingString(TypeStrategy initialStrategy) {
         return new VaryingStringTypeStrategy(initialStrategy);
     }
+
+    /** Type strategy specific for {@link BuiltInFunctionDefinitions#MAP_KEYS}. */
+    public static final TypeStrategy SPECIFIC_FOR_MAP_KEYS =
+            callContext ->
+                    Optional.of(
+                            DataTypes.ARRAY(
+                                    callContext
+                                            .getArgumentDataTypes()
+                                            .get(0)
+                                            .getChildren()
+                                            .get(0)));
 
     /**
      * Type strategy specific for aggregations that partially produce different nullability

@@ -184,6 +184,17 @@ public final class BuiltInFunctionDefinitions {
                     .outputTypeStrategy(argument(1))
                     .build();
 
+    public static final BuiltInFunctionDefinition MAP_KEYS =
+            BuiltInFunctionDefinition.newBuilder()
+                    .name("MAP_KEYS")
+                    .kind(SCALAR)
+                    .inputTypeStrategy(
+                            sequence(
+                                    new String[] {"input"},
+                                    new ArgumentTypeStrategy[] {logical(LogicalTypeRoot.MAP)}))
+                    .outputTypeStrategy(nullableIfArgs(TypeStrategies.SPECIFIC_FOR_MAP_KEYS))
+                    .runtimeClass("org.apache.flink.table.runtime.functions.scalar.MapKeysFunction")
+                    .build();
     // --------------------------------------------------------------------------------------------
     // Comparison functions
     // --------------------------------------------------------------------------------------------

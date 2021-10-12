@@ -584,6 +584,9 @@ collection:
   - sql: map ‘[’ value ‘]’
     table: MAP.at(ANY)
     description: Returns the value specified by key value in map.
+  - sql: MAP_KEYS(map)
+    table: MAP.mapKeys()
+    description: Returns the keys of the map as array.
 
 json:
   - sql: IS JSON [ { VALUE | SCALAR | ARRAY | OBJECT } ]
