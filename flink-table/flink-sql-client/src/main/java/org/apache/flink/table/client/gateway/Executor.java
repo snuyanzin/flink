@@ -149,4 +149,10 @@ public interface Executor {
 
     /** List the JAR resources of the classloader with specified session. */
     List<String> listJars(String sessionId);
+
+    /** Get current catalog name. */
+    String getCurrentCatalogName(String sessionId);
+
+    /** Get current database name. */
+    String getCurrentDatabaseName(String sessionId);
 }

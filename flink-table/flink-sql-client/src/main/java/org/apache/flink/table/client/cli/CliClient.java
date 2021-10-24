@@ -61,8 +61,6 @@ import org.jline.reader.MaskingCallback;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 import org.jline.utils.AttributedString;
-import org.jline.utils.AttributedStringBuilder;
-import org.jline.utils.AttributedStyle;
 import org.jline.utils.InfoCmp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,13 +144,7 @@ public class CliClient implements AutoCloseable {
         this.historyFilePath = historyFilePath;
 
         // create prompt
-        prompt =
-                new AttributedStringBuilder()
-                        .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN))
-                        .append("Flink SQL")
-                        .style(AttributedStyle.DEFAULT)
-                        .append("> ")
-                        .toAnsi();
+        prompt = new PromptHandler(sessionId, executor, terminalFactory).getPrompt();
     }
 
     /**
@@ -267,6 +259,7 @@ public class CliClient implements AutoCloseable {
         isRunning = true;
         LineReader lineReader = createLineReader(terminal);
 
+        PromptHandler promptHandler = new PromptHandler(sessionId, executor, () -> terminal);
         // make space from previous output and test the writer
         terminal.writer().println();
         terminal.writer().flush();
@@ -282,7 +275,12 @@ public class CliClient implements AutoCloseable {
 
             String line;
             try {
-                line = lineReader.readLine(prompt, null, inputTransformer, null);
+                line =
+                        lineReader.readLine(
+                                promptHandler.getPrompt(),
+                                promptHandler.getRightPrompt(),
+                                inputTransformer,
+                                null);
             } catch (UserInterruptException e) {
                 // user cancelled line with Ctrl+C
                 continue;

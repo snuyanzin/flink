@@ -322,4 +322,14 @@ public class LocalExecutor implements Executor {
         final SessionContext context = getSessionContext(sessionId);
         return context.listJars();
     }
+
+    @Override
+    public String getCurrentCatalogName(String sessionId) {
+        return getSessionContext(sessionId).getCurrentCatalogName();
+    }
+
+    @Override
+    public String getCurrentDatabaseName(String sessionId) {
+        return getSessionContext(sessionId).getCurrentDatabaseName();
+    }
 }
