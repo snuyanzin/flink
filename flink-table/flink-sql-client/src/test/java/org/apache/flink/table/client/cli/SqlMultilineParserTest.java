@@ -42,6 +42,7 @@ public class SqlMultilineParserTest {
     public static Object[][] parameters() {
         return new Object[][] {
             // valid
+            ok("select", "select", new String2StateConverter().appendKeyWord("select").build()),
             ok(
                     "select /*+ hint */ 1;",
                     "select /*+ hint */ 1;",
@@ -137,6 +138,10 @@ public class SqlMultilineParserTest {
                             .appendHint("/*+ hint */")
                             .append(" 1;")
                             .build()),
+            ok(
+                    "/*+ hint */",
+                    "/*+ hint */",
+                    new String2StateConverter().appendHint("/*+ hint */").build()),
             // missed semicolon
             nokSemicolon("quit", new String2StateConverter().append("quit").build()),
             nokSemicolon(
@@ -340,7 +345,7 @@ public class SqlMultilineParserTest {
         if (expectedExceptionMessage == null) {
             Assert.assertEquals(
                     expectedParsedWords,
-                    SqlMultiLineParser.getParsedCommentFreeLine(sql, () -> false));
+                    SqlMultiLineParser.getParsedCommentFreeLine(sql, () -> false, false));
         } else {
             try {
                 PARSER.parse(sql, 0);
@@ -354,7 +359,7 @@ public class SqlMultilineParserTest {
     @Test
     public void testMask() {
         Assert.assertArrayEquals(
-                expectedMask, PARSER.parse(sql, 0, Parser.ParseContext.COMPLETE).getState());
+                expectedMask, PARSER.parse(sql, 0, Parser.ParseContext.COMPLETE, false).getState());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -393,7 +398,7 @@ public class SqlMultilineParserTest {
 
         public String2StateConverter appendKeyWord(String line) {
             // TODO: should be State.KEYWORD after FLINK-24910 completed
-            lines.add(Pair.of(SqlMultiLineParser.State.DEFAULT, line));
+            lines.add(Pair.of(SqlMultiLineParser.State.KEYWORD, line));
             return this;
         }
 

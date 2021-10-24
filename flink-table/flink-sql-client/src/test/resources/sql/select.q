@@ -221,3 +221,23 @@ FROM (VALUES
 +----------+---------------------+-------------------------+-------------------------------+-------------------------+-------------------------+-------------------------------+
 2 rows in set
 !ok
+
+ELECT 1;
+[ERROR] Could not execute SQL statement. Non-query expression: "ELECT" at line 1 column 1 Reason:
+org.apache.calcite.runtime.CalciteException: Non-query expression encountered in illegal context
+!error
+
+/*
+comment
+*/  ELECT 1;
+[ERROR] Could not execute SQL statement. Non-query expression: "ELECT" at line 3 column 5 Reason:
+org.apache.calcite.runtime.CalciteException: Non-query expression encountered in illegal context
+!error
+
+/*
+comment
+*/
+ELECT 1;
+[ERROR] Could not execute SQL statement. Non-query expression: "ELECT" at line 4 column 1 Reason:
+org.apache.calcite.runtime.CalciteException: Non-query expression encountered in illegal context
+!error
