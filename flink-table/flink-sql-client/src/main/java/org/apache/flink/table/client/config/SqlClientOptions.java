@@ -22,6 +22,9 @@ import org.apache.flink.annotation.docs.Documentation;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.AttributedStyle;
+
 /** Options used in sql client. */
 public class SqlClientOptions {
     private SqlClientOptions() {}
@@ -55,7 +58,6 @@ public class SqlClientOptions {
                             "Determine whether to output the verbose output to the console. If set the option true, it will print the exception stack. Otherwise, it only output the cause.");
 
     // Display options
-
     @Documentation.TableOption(execMode = Documentation.ExecMode.STREAMING)
     public static final ConfigOption<Integer> DISPLAY_MAX_COLUMN_WIDTH =
             ConfigOptions.key("sql-client.display.max-column-width")
@@ -65,6 +67,30 @@ public class SqlClientOptions {
                             "When printing the query results, this parameter determines the number of characters shown on screen before truncating."
                                     + "This only applies to columns with variable-length types (e.g. STRING) in streaming mode."
                                     + "Fixed-length types and all types in batch mode are printed using a deterministic column width");
+
+    @Documentation.TableOption(execMode = Documentation.ExecMode.BATCH_STREAMING)
+    public static final ConfigOption<String> PROMPT =
+            ConfigOptions.key("sql-client.display.prompt.pattern")
+                    .stringType()
+                    .defaultValue(
+                            new AttributedStringBuilder()
+                                    .style(
+                                            AttributedStyle.DEFAULT.foreground(
+                                                    AttributedStyle.GREEN))
+                                    .append("Flink SQL")
+                                    .style(AttributedStyle.DEFAULT)
+                                    .append("> ")
+                                    .toAnsi())
+                    .withDescription(
+                            "Determine what pattern will be used for prompt at the start of the line.");
+
+    @Documentation.TableOption(execMode = Documentation.ExecMode.BATCH_STREAMING)
+    public static final ConfigOption<String> RIGHT_PROMPT =
+            ConfigOptions.key("sql-client.display.right-prompt.pattern")
+                    .stringType()
+                    .defaultValue("")
+                    .withDescription(
+                            "Determine what pattern will be used for prompt at the end of the line.");
 
     @Documentation.TableOption(execMode = Documentation.ExecMode.BATCH_STREAMING)
     public static final ConfigOption<Boolean> DISPLAY_PROMPT_HINT =

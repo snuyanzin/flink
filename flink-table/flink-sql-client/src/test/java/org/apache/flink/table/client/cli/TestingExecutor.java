@@ -68,6 +68,31 @@ class TestingExecutor implements Executor {
     }
 
     @Override
+    public void addJar(String sessionId, String jarUrl) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public void removeJar(String sessionId, String jarUrl) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public List<String> listJars(String sessionId) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public String getCurrentCatalogName(String sessionId) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public String getCurrentDatabaseName(String sessionId) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
     public TypedResult<List<Row>> retrieveResultChanges(String sessionId, String resultId)
             throws SqlExecutionException {
         return resultChanges
