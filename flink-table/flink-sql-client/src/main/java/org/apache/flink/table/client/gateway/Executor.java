@@ -139,4 +139,10 @@ public interface Executor {
      * has been sent to cluster.
      */
     void cancelQuery(String sessionId, String resultId) throws SqlExecutionException;
+
+    /** Get current catalog name. */
+    String getCurrentCatalogName(String sessionId);
+
+    /** Get current database name. */
+    String getCurrentDatabaseName(String sessionId);
 }
