@@ -234,7 +234,28 @@ SET 'key' = 'value';
 
 {{< generated/sql_client_configuration >}}
 
-### SQL client result modes
+### SQL Client continuation prompts
+
+The CLI could give hints with continuation prompts regarding the current query.
+In case quote or bracket is expecting it will notify user in continuation prompt.
+
+The whole list of currently supported continuation prompt values:
+
+| Prompt    | Description |
+|:----------|:------------|
+|Flink SQL> | Ready for a new query |
+| ;>        | Waiting for next line of multiple-line query, waiting for completion of query with semicolon `;` |
+| '>        | Waiting for next line, waiting for completion of a string that began with a single quote `'` |
+| `>        | Waiting for next line, waiting for completion of a string that began with a back tick ` |
+|*\\>       | Waiting for next line, waiting for completion of a block comment or a hint that began with `/*` or `/*+` |
+| )>        | Waiting for next line, waiting for completion of a string that began with a round bracket, `(` |
+| ]>        | Waiting for next line, waiting for completion of a string that began with a square bracket, `[` |
+|missed )>  | There is an extra round bracket `)`, that is not opened with `(` |
+|missed ]>  | There is an extra square bracket `]`, that is not opened with `[` |
+
+Showing of these hints could be turned off/on via property `sql-client.display.prompt.hint`
+
+### SQL Client result modes
 
 The CLI supports **three modes** for maintaining and visualizing results.
 

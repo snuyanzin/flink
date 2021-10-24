@@ -20,57 +20,34 @@ package org.apache.flink.table.client.cli;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Line splitter to determine whether the submitted line is complete. It also offers to split the
- * submitted content into multiple statements.
- *
- * <p>This is a simple splitter. It just split the line in context-unrelated way, e.g. it fails to
- * parse line "';\n'"
+ * submitted content into multiple statements. It removes one line and multiline (NOT hints)
+ * comments.
  */
 public class CliStatementSplitter {
 
-    private static final String MASK = "--.*$";
-    private static final String BEGINNING_MASK = "^(\\s)*--.*$";
-
-    public static boolean isStatementComplete(String statement) {
-        String[] lines = statement.split("\n");
-        // fix input statement is "\n"
-        if (lines.length == 0) {
-            return false;
-        } else {
-            return isEndOfStatement(lines[lines.length - 1]);
-        }
-    }
-
     public static List<String> splitContent(String content) {
         List<String> statements = new ArrayList<>();
-        List<String> buffer = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
 
         for (String line : content.split("\n")) {
-            if (isEndOfStatement(line)) {
-                buffer.add(line);
-                statements.add(normalize(buffer));
-                buffer.clear();
-            } else {
-                buffer.add(line);
+            sb.append(line).append("\n");
+            String stmt =
+                    SqlMultiLineParser.getParsedCommentFreeLine(sb.toString(), () -> false).trim();
+            if (stmt.endsWith(";")) {
+                statements.add(stmt);
+                sb.setLength(0);
             }
         }
-        if (!buffer.isEmpty()) {
-            statements.add(normalize(buffer));
+        if (sb.length() > 0) {
+            String stmt =
+                    SqlMultiLineParser.getParsedCommentFreeLine(sb.toString(), () -> false).trim();
+            if (!stmt.isEmpty()) {
+                statements.add(stmt);
+            }
         }
         return statements;
-    }
-
-    private static String normalize(List<String> buffer) {
-        // remove comment lines
-        return buffer.stream()
-                .map(statementLine -> statementLine.replaceAll(BEGINNING_MASK, ""))
-                .collect(Collectors.joining("\n"));
-    }
-
-    private static boolean isEndOfStatement(String line) {
-        return line.replaceAll(MASK, "").trim().endsWith(";");
     }
 }

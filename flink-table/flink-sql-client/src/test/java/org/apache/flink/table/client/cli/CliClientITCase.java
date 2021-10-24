@@ -251,7 +251,10 @@ public class CliClientITCase extends AbstractTestBase {
                 if (line.startsWith(PROMOTE)) {
                     if (reachFirstPromote) {
                         // begin a new result, put current result into list
-                        results.add(convertToResult(contentLines));
+                        Result e = convertToResult(contentLines);
+                        if (!e.content.isEmpty()) {
+                            results.add(e);
+                        }
                         // and start to consume new one
                         contentLines.clear();
                     } else {
