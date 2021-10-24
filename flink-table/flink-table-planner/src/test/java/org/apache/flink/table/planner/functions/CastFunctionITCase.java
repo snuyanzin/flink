@@ -955,7 +955,8 @@ public class CastFunctionITCase extends BuiltInFunctionTestBase {
                         .fromCase(
                                 STRING(),
                                 "2021-09-27 12:34:56.123456789",
-                                fromLocalToUTC(LocalDateTime.of(2021, 9, 27, 12, 34, 56, 0)))
+                                fromLocalToUTC(
+                                        LocalDateTime.of(2021, 9, 27, 12, 34, 56, 789000000)))
 
                         // Not supported - no fix
                         .fail(BOOLEAN(), true)
