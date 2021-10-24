@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.client.cli;
 
+import org.apache.calcite.sql.parser.SqlAbstractParserImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jline.reader.EOFError;
 import org.jline.reader.impl.DefaultParser;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -103,7 +105,14 @@ public class SqlMultiLineParser extends DefaultParser {
                         case MULTILINE_COMMENT_START:
                         case MINUS_ONE_LINE_COMMENT_START:
                         case SLASH_LINE_COMMENT_START:
-                            addWordIfNotEmpty(words, currentWord);
+                            if (respectBlankWords
+                                    && tokenType == TokenType.MULTILINE_COMMENT_START) {
+                                state[i] = tokenType.nextState(state[i]);
+                                state[i + 1] = state[i];
+                                currentWord.append(c);
+                                break;
+                            }
+                            handleWord(words, currentWord, state, i);
                             state[i] = tokenType.nextState(state[i]);
                             final int commentSignLength = tokenTypePair.getLeft().length();
                             int iOldValue = i;
@@ -117,7 +126,7 @@ public class SqlMultiLineParser extends DefaultParser {
                         default:
                             if (Character.isWhitespace(c)) {
                                 if (currentWord.length() > 0) {
-                                    addWordIfNotEmpty(words, currentWord);
+                                    handleWord(words, currentWord, state, i);
                                     if (rawWordCursor >= 0 && rawWordLength < 0) {
                                         rawWordLength = i - rawWordStart;
                                     }
@@ -160,6 +169,9 @@ public class SqlMultiLineParser extends DefaultParser {
                 case ONE_LINE_COMMENTED:
                     state[i + 1] = tokenType.nextState(state[i]);
                     if (state[i + 1] == State.DEFAULT) {
+                        if (respectBlankWords && tokenType == TokenType.MULTILINE_COMMENT_END) {
+                            currentWord.append(MULTILINE_COMMENT_END);
+                        }
                         final int commentSignLength =
                                 (tokenType == TokenType.MULTILINE_COMMENT_END
                                                 ? MULTILINE_COMMENT_END
@@ -173,12 +185,14 @@ public class SqlMultiLineParser extends DefaultParser {
                                 Math.min(i + 1, state.length),
                                 state[iPrevValue]);
                         rawWordStart = i + 1;
+                    } else if (respectBlankWords && state[i] == State.MULTILINE_COMMENTED) {
+                        currentWord.append(c);
                     }
             }
         }
 
         if (currentWord.length() > 0 || (line != null && cursor == line.length())) {
-            addWordIfNotEmpty(words, currentWord);
+            handleWord(words, currentWord, state, line.length());
             if (rawWordCursor >= 0 && rawWordLength < 0) {
                 rawWordLength = line.length() - rawWordStart;
             }
@@ -225,6 +239,11 @@ public class SqlMultiLineParser extends DefaultParser {
                     throw getEOFError("Missing end of multiline comment */", "*/");
                 case DEFAULT:
                 case ONE_LINE_COMMENTED:
+                    if (!respectBlankWords
+                            && line.trim().length() > 0
+                            && !line.trim().endsWith(";")) {
+                        throw getEOFError("Missing semicolon", NEW_LINE_PROMPT);
+                    }
                     for (int i = words.size() - 1; i >= 0; i--) {
                         String trimmed = words.get(i).trim();
                         if (!trimmed.isEmpty()) {
@@ -364,12 +383,17 @@ public class SqlMultiLineParser extends DefaultParser {
         }
     }
 
-    private void addWordIfNotEmpty(List<String> words, StringBuilder currentWord) {
-        if (currentWord.length() > 0) {
-            String word = currentWord.toString();
-            words.add(word);
-            currentWord.setLength(0);
+    private void handleWord(
+            List<String> words, StringBuilder currentWord, State[] states, int pos) {
+        if (currentWord.length() == 0) {
+            return;
         }
+        String word = currentWord.toString();
+        if (SqlAbstractParserImpl.getSql92ReservedWords().contains(word.toUpperCase(Locale.ROOT))) {
+            Arrays.fill(states, pos - word.length(), pos, State.KEYWORD);
+        }
+        words.add(word);
+        currentWord.setLength(0);
     }
 
     private Pair<String, TokenType> getTokenTypePair(String line, int pos) {
