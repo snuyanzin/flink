@@ -308,7 +308,6 @@ public class LocalExecutor implements Executor {
         resultStore.removeResult(resultId);
     }
 
-
     @Override
     public String getCurrentCatalogName(String sessionId) {
         return getSessionContext(sessionId).getCurrentCatalogName();
