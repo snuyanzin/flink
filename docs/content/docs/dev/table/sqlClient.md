@@ -299,6 +299,125 @@ Mode "embedded" (default) submits Flink jobs from the local machine.
 
 {{< generated/sql_client_configuration >}}
 
+### SQL Client continuation prompts
+
+The CLI could give hints with continuation prompts regarding the current query.
+In case quote or bracket is expecting it will notify user in continuation prompt.
+
+The whole list of currently supported continuation prompt values:
+
+| Prompt    | Description |
+|:----------|:------------|
+|Flink SQL> | Ready for a new query |
+| ;>        | Waiting for next line of multiple-line query, waiting for completion of query with semicolon `;` |
+| '>        | Waiting for next line, waiting for completion of a string that began with a single quote `'` |
+| `>        | Waiting for next line, waiting for completion of a string that began with a back tick ` |
+|*\\>       | Waiting for next line, waiting for completion of a block comment or a hint that began with `/*` or `/*+` |
+| )>        | Waiting for next line, waiting for completion of a string that began with a round bracket, `(` |
+| ]>        | Waiting for next line, waiting for completion of a string that began with a square bracket, `[` |
+|missed )>  | There is an extra round bracket `)`, that is not opened with `(` |
+|missed ]>  | There is an extra square bracket `]`, that is not opened with `[` |
+
+Showing of these hints could be turned off/on via property `sql-client.display.prompt.hint`
+
+### SQL Client result modes
+
+The CLI supports **three modes** for maintaining and visualizing results.
+
+The **table mode** materializes results in memory and visualizes them in a regular, paginated table representation.
+It can be enabled by executing the following command in the CLI:
+
+```text
+SET 'sql-client.execution.result-mode' = 'table';
+```
+
+The result of a query would then look like this, you can use the keys indicated at the bottom of the screen as well
+as the arrows keys to navigate and open the various records:
+
+```text
+
+                           name         age isHappy        dob                         height
+                          user1          20    true 1995-12-03                            1.7
+                          user2          30    true 1972-08-02                           1.89
+                          user3          40   false 1983-12-23                           1.63
+                          user4          41    true 1977-11-13                           1.72
+                          user5          22   false 1998-02-20                           1.61
+                          user6          12    true 1969-04-08                           1.58
+                          user7          38   false 1987-12-15                            1.6
+                          user8          62    true 1996-08-05                           1.82
+
+
+
+
+Q Quit                     + Inc Refresh              G Goto Page                N Next Page                O Open Row
+R Refresh                  - Dec Refresh              L Last Page                P Prev Page
+```
+
+The **changelog mode** does not materialize results and visualizes the result stream that is produced
+by a [continuous query]({{< ref "docs/dev/table/concepts/dynamic_tables" >}}#continuous-queries) consisting of insertions (`+`) and retractions (`-`).
+
+```text
+SET 'sql-client.execution.result-mode' = 'changelog';
+```
+
+The result of a query would then look like this:
+
+```text
+ op                           name         age isHappy        dob                         height
+ +I                          user1          20    true 1995-12-03                            1.7
+ +I                          user2          30    true 1972-08-02                           1.89
+ +I                          user3          40   false 1983-12-23                           1.63
+ +I                          user4          41    true 1977-11-13                           1.72
+ +I                          user5          22   false 1998-02-20                           1.61
+ +I                          user6          12    true 1969-04-08                           1.58
+ +I                          user7          38   false 1987-12-15                            1.6
+ +I                          user8          62    true 1996-08-05                           1.82
+
+
+
+
+Q Quit                                       + Inc Refresh                                O Open Row
+R Refresh                                    - Dec Refresh
+
+```
+
+The **tableau mode** is more like a traditional way which will display the results in the screen directly with a tableau format.
+The displaying content will be influenced by the query execution type (`execution.type`).
+
+```text
+SET 'sql-client.execution.result-mode' = 'tableau';
+```
+
+The result of a query would then look like this:
+
+```text
++----+--------------------------------+-------------+---------+------------+--------------------------------+
+| op |                           name |         age | isHappy |        dob |                         height |
++----+--------------------------------+-------------+---------+------------+--------------------------------+
+| +I |                          user1 |          20 |    true | 1995-12-03 |                            1.7 |
+| +I |                          user2 |          30 |    true | 1972-08-02 |                           1.89 |
+| +I |                          user3 |          40 |   false | 1983-12-23 |                           1.63 |
+| +I |                          user4 |          41 |    true | 1977-11-13 |                           1.72 |
+| +I |                          user5 |          22 |   false | 1998-02-20 |                           1.61 |
+| +I |                          user6 |          12 |    true | 1969-04-08 |                           1.58 |
+| +I |                          user7 |          38 |   false | 1987-12-15 |                            1.6 |
+| +I |                          user8 |          62 |    true | 1996-08-05 |                           1.82 |
++----+--------------------------------+-------------+---------+------------+--------------------------------+
+Received a total of 8 rows
+```
+
+Note that when you use this mode with streaming query, the result will be continuously printed on the console. If the input data of
+this query is bounded, the job will terminate after Flink processed all input data, and the printing will also be stopped automatically.
+Otherwise, if you want to terminate a running query, just type `CTRL-C` in this case, the job and the printing will be stopped.
+
+All these result modes can be useful during the prototyping of SQL queries. In all these modes,
+results are stored in the Java heap memory of the SQL Client. In order to keep the CLI interface responsive,
+the changelog mode only shows the latest 1000 changes. The table mode allows for navigating through
+bigger results that are only limited by the available main memory and the configured
+[maximum number of rows](#sql-client-execution-max-table-result-rows) (`sql-client.execution.max-table-result.rows`).
+
+<span class="label label-danger">Attention</span> Queries that are executed in a batch environment, can only be retrieved using the `table` or `tableau` result mode.
+
 ### Initialize Session Using SQL Files
 
 A SQL query needs a configuration environment in which it is executed. SQL Client supports the `-i`
