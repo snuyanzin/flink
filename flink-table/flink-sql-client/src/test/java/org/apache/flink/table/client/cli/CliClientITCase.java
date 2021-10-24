@@ -37,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jline.reader.MaskingCallback;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.impl.DumbTerminal;
+import org.jline.utils.AttributedString;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -133,7 +134,7 @@ public class CliClientITCase extends AbstractTestBase {
         List<String> sqlStatements =
                 testSqlStatements.stream().map(s -> s.sql).collect(Collectors.toList());
         List<Result> actualResults = runSqlStatements(sqlStatements);
-        String out = transformOutput(testSqlStatements, actualResults);
+        String out = AttributedString.stripAnsi(transformOutput(testSqlStatements, actualResults));
         String errorMsg = "SQL script " + sqlPath + " is not passed.";
         assertEquals(errorMsg, in, out);
     }

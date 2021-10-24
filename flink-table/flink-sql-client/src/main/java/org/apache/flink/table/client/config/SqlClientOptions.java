@@ -21,6 +21,7 @@ package org.apache.flink.table.client.config;
 import org.apache.flink.annotation.docs.Documentation;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
+import org.apache.flink.table.client.cli.SyntaxHighlightStyle;
 
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
@@ -99,4 +100,20 @@ public class SqlClientOptions {
                     .defaultValue(true)
                     .withDescription(
                             "Determine whether SQL Client should show hints in prompt continuation or not.");
+
+    @Documentation.TableOption(execMode = Documentation.ExecMode.STREAMING)
+    public static final ConfigOption<Boolean> SHOW_COMPLETION_DESCRIPTION =
+            ConfigOptions.key("sql-client.completion-description")
+                    .booleanType()
+                    .defaultValue(false)
+                    .withDescription(
+                            "Determine whether Flink SQL Client should show description for autocompletion options.");
+
+    @Documentation.TableOption(execMode = Documentation.ExecMode.BATCH_STREAMING)
+    public static final ConfigOption<SyntaxHighlightStyle.BuiltInStyle> SYNTAX_HIGHLIGHT_STYLE =
+            ConfigOptions.key("sql-client.syntax-highlight-style")
+                    .enumType(SyntaxHighlightStyle.BuiltInStyle.class)
+                    .defaultValue(SyntaxHighlightStyle.BuiltInStyle.DEFAULT)
+                    .withDescription(
+                            "Determine whether to output the verbose output to the console. If set the option true, it will print the exception stack. Otherwise, it only output the cause.");
 }

@@ -51,6 +51,8 @@ import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.MaskingCallback;
 import org.jline.reader.UserInterruptException;
+import org.jline.reader.Widget;
+import org.jline.reader.impl.LineReaderImpl;
 import org.jline.terminal.Terminal;
 import org.jline.utils.AttributedString;
 import org.jline.utils.InfoCmp;
@@ -92,6 +94,8 @@ import static org.apache.flink.table.client.config.YamlConfigUtils.getProperties
 import static org.apache.flink.table.client.config.YamlConfigUtils.isDeprecatedKey;
 import static org.apache.flink.table.client.config.YamlConfigUtils.isRemovedKey;
 import static org.apache.flink.util.Preconditions.checkState;
+import static org.jline.keymap.KeyMap.alt;
+import static org.jline.keymap.KeyMap.ctrl;
 
 /** SQL CLI client. */
 public class CliClient implements AutoCloseable {
@@ -648,6 +652,8 @@ public class CliClient implements AutoCloseable {
                                         () ->
                                                 executor.getSessionConfig(sessionId)
                                                         .get(SqlClientOptions.DISPLAY_PROMPT_HINT)))
+                        .completer(new FlinkSqlCompleter(sessionId, executor))
+                        .highlighter(new SqlHighlighter(sessionId, executor))
                         .completer(new SqlCompleter(sessionId, executor))
                         .build();
         // this option is disabled for now for correct backslash escaping
@@ -669,6 +675,40 @@ public class CliClient implements AutoCloseable {
             terminal.writer().println(msg);
             LOG.warn(msg);
         }
+        Widget lineNumberWidget =
+                () -> {
+                    String value =
+                            (String) lineReader.getVariable(LineReader.SECONDARY_PROMPT_PATTERN);
+                    if ("%N.%M> ".equals(value)) {
+                        lineReader.setVariable(
+                                LineReader.SECONDARY_PROMPT_PATTERN,
+                                LineReaderImpl.DEFAULT_SECONDARY_PROMPT_PATTERN);
+                    } else {
+                        lineReader.setVariable(LineReader.SECONDARY_PROMPT_PATTERN, "%N.%M> ");
+                    }
+                    lineReader.callWidget(LineReader.REDISPLAY);
+                    return true;
+                };
+        Widget colorSchemaSwitcher =
+                () -> {
+                    SyntaxHighlightStyle.BuiltInStyle value =
+                            executor.getSessionConfig(sessionId)
+                                    .get(SqlClientOptions.SYNTAX_HIGHLIGHT_STYLE);
+                    SyntaxHighlightStyle.BuiltInStyle next =
+                            SyntaxHighlightStyle.BuiltInStyle.fromOrdinal(value.ordinal() + 1);
+                    executor.setSessionProperty(
+                            sessionId, SqlClientOptions.SYNTAX_HIGHLIGHT_STYLE.key(), next.name());
+                    lineReader.callWidget(LineReader.REDISPLAY);
+                    return true;
+                };
+        addWidget(lineReader, lineNumberWidget, "TOGGLE_LINE_NUMBERS", alt(ctrl('n')));
+        addWidget(lineReader, colorSchemaSwitcher, "SWITCH_COLOR_SCHEMA", alt('h'));
         return lineReader;
+    }
+
+    private void addWidget(LineReader lineReader, Widget widget, String name, CharSequence keySeq) {
+        lineReader.getWidgets().put(name, widget);
+        lineReader.getKeyMaps().get(LineReader.EMACS).bind(widget, keySeq);
+        lineReader.getKeyMaps().get(LineReader.VIINS).bind(widget, keySeq);
     }
 }
