@@ -371,7 +371,12 @@ public class CliClient implements AutoCloseable {
 
     private Optional<Operation> parseCommand(String stmt) {
         // normalize
-        stmt = stmt.trim();
+        stmt =
+                SqlMultiLineParser.getParsedCommentFreeLine(
+                        stmt.trim(),
+                        () ->
+                                executor.getSessionConfig(sessionId)
+                                        .get(SqlClientOptions.DISPLAY_PROMPT_HINT));
         // remove ';' at the end
         if (stmt.endsWith(";")) {
             stmt = stmt.substring(0, stmt.length() - 1).trim();
@@ -640,7 +645,11 @@ public class CliClient implements AutoCloseable {
                 LineReaderBuilder.builder()
                         .terminal(terminal)
                         .appName(CliStrings.CLI_NAME)
-                        .parser(new SqlMultiLineParser())
+                        .parser(
+                                new SqlMultiLineParser(
+                                        () ->
+                                                executor.getSessionConfig(sessionId)
+                                                        .get(SqlClientOptions.DISPLAY_PROMPT_HINT)))
                         .completer(new SqlCompleter(sessionId, executor))
                         .build();
         // this option is disabled for now for correct backslash escaping

@@ -19,41 +19,24 @@
 package org.apache.flink.table.client.cli;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /** Test {@link CliStatementSplitter}. */
+@RunWith(Parameterized.class)
 public class CliStatementSplitterTest {
 
-    @Test
-    public void testIsNotEndOfStatement() {
-        // TODO: fix ';
-        List<String> lines = Arrays.asList(" --;", "", "select -- ok;", "\n");
-        for (String line : lines) {
-            assertFalse(
-                    String.format("%s is not end of statement but get true", line),
-                    CliStatementSplitter.isStatementComplete(line));
-        }
-    }
-
-    @Test
-    public void testIsEndOfStatement() {
-        List<String> lines = Arrays.asList(" ; --;", "select a from b;-- ok;", ";\n");
-        for (String line : lines) {
-            assertTrue(
-                    String.format("%s is end of statement but get false", line),
-                    CliStatementSplitter.isStatementComplete(line));
-        }
-    }
-
-    @Test
-    public void testSplitContent() {
-        List<String> lines =
+    @Parameterized.Parameters(
+            name = "Parsing: {0}. Expected identifier: {1}, Expected exception message: {2}")
+    public static Object[][] parameters() {
+        return new Object[][] {
+            new Object[] {
                 Arrays.asList(
                         "-- Define Table; \n"
                                 + "CREATE TABLE MyTable (\n"
@@ -64,23 +47,35 @@ public class CliStatementSplitterTest {
                                 + "  'test-property' = 'test.value'\n);"
                                 + "-- Define Table;",
                         "SET a = b;",
-                        "\n" + "SELECT func(id) from MyTable\n;");
-        List<String> actual = CliStatementSplitter.splitContent(String.join("\n", lines));
-
-        List<String> expected =
+                        "\n" + "SELECT func(id) from MyTable\n;"),
                 Arrays.asList(
-                        "\nCREATE TABLE MyTable (\n"
+                        "CREATE TABLE MyTable (\n"
                                 + "  id INT,\n"
                                 + "  name STRING,\n"
                                 + ") WITH (\n"
                                 + "  'connector' = 'values',\n"
-                                + "  'test-property' = 'test.value'\n);"
-                                + "-- Define Table;",
+                                + "  'test-property' = 'test.value'\n);",
                         "SET a = b;",
-                        "\n" + "SELECT func(id) from MyTable\n;");
+                        "SELECT func(id) from MyTable\n;")
+            },
+            new Object[] {
+                Collections.singletonList("select 1; --comment  \n "),
+                Collections.singletonList("select 1;")
+            }
+        };
+    }
 
+    @Parameterized.Parameter() public List<String> sqlLines;
+
+    @Parameterized.Parameter(1)
+    public List<String> expectedSplittedLines;
+
+    @Test
+    public void testSplitContent() {
+        List<String> lines = sqlLines;
+        List<String> actual = CliStatementSplitter.splitContent(String.join("\n", lines));
         for (int i = 0; i < lines.size(); i++) {
-            assertEquals(expected.get(i), actual.get(i));
+            assertEquals(expectedSplittedLines.get(i), actual.get(i));
         }
     }
 }
