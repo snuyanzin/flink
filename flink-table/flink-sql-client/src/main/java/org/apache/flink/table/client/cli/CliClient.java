@@ -45,7 +45,11 @@ import org.apache.flink.table.operations.ddl.AlterOperation;
 import org.apache.flink.table.operations.ddl.CreateOperation;
 import org.apache.flink.table.operations.ddl.DropOperation;
 import org.apache.flink.table.utils.PrintUtils;
+import org.apache.flink.util.ExceptionUtils;
 
+import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.util.Static;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -328,8 +332,10 @@ public class CliClient implements AutoCloseable {
             final Optional<Operation> operation = parseCommand(statement);
             operation.ifPresent(op -> callOperation(op, executionMode));
         } catch (SqlExecutionException e) {
-            printExecutionException(e);
+            printExecutionException(e, statement);
             return false;
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
         return true;
     }
@@ -589,12 +595,74 @@ public class CliClient implements AutoCloseable {
 
     // --------------------------------------------------------------------------------------------
 
-    private void printExecutionException(Throwable t) {
+    private void printExecutionException(Throwable t, String statement) {
+        Optional<Throwable> spe =
+                ExceptionUtils.findThrowable(
+                        t,
+                        throwable ->
+                                throwable instanceof SqlParseException
+                                        && Objects.equals(
+                                                throwable.getMessage(),
+                                                // Exceptions with this type and message have pos
+                                                // info as a field, however there is no info about
+                                                // pos in message text
+                                                Static.RESOURCE.illegalNonQueryExpression().str()));
         final String errorMessage = CliStrings.MESSAGE_SQL_EXECUTION_ERROR;
         LOG.warn(errorMessage, t);
         boolean isVerbose = executor.getSessionConfig(sessionId).get(SqlClientOptions.VERBOSE);
-        terminal.writer().println(CliStrings.messageError(errorMessage, t, isVerbose).toAnsi());
+        terminal.writer()
+                .println(
+                        spe.isPresent()
+                                ? CliStrings.messageError(
+                                                errorMessage
+                                                        + extractUnknownPart(
+                                                                spe.get(), statement.trim()),
+                                                t,
+                                                isVerbose)
+                                        .toAnsi()
+                                : CliStrings.messageError(errorMessage, t, isVerbose).toAnsi());
         terminal.flush();
+    }
+
+    private String extractUnknownPart(Throwable t, String statement) {
+        if (!(t instanceof SqlParseException)) {
+            return "";
+        }
+        SqlParserPos pos = ((SqlParseException) t).getPos();
+        int i = 0;
+        int curLine = 1;
+        int curCol = 1;
+        while (i < statement.length()
+                && (curLine < pos.getLineNum()
+                        || curLine == pos.getLineNum() && curCol < pos.getColumnNum())) {
+            curCol++;
+            if (statement.charAt(i) == '\n') {
+                curLine++;
+                curCol = 1;
+            }
+            i++;
+        }
+        int startIndex = i;
+        while (i < statement.length()
+                && (curLine == pos.getEndLineNum() && curCol < pos.getEndColumnNum()
+                        || curLine < pos.getEndLineNum())) {
+            curCol++;
+            if (statement.charAt(i) == '\n') {
+                curLine++;
+                curCol = 1;
+            }
+            i++;
+        }
+        return startIndex >= i
+                ? ""
+                : " Non-query expression: \""
+                        + (i < statement.length() - 1
+                                ? statement.substring(startIndex, i + 1)
+                                : statement.substring(startIndex))
+                        + "\" at line "
+                        + pos.getLineNum()
+                        + " column "
+                        + pos.getColumnNum();
     }
 
     private void printInfo(String message) {
@@ -654,7 +722,6 @@ public class CliClient implements AutoCloseable {
                                                         .get(SqlClientOptions.DISPLAY_PROMPT_HINT)))
                         .completer(new FlinkSqlCompleter(sessionId, executor))
                         .highlighter(new SqlHighlighter(sessionId, executor))
-                        .completer(new SqlCompleter(sessionId, executor))
                         .build();
         // this option is disabled for now for correct backslash escaping
         // a "SELECT '\'" query should return a string with a backslash

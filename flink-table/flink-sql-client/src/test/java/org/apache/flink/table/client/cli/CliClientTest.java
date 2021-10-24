@@ -118,6 +118,7 @@ public class CliClientTest extends TestLogger {
 
     @Test
     public void testSqlCompletion() throws IOException {
+        verifySqlCompletion("INSE", Collections.singletonList("INSERT"));
         verifySqlCompletion("INSERT IN", Collections.singletonList("INSERT INTO"));
         verifySqlCompletion("INSERT O", Collections.singletonList("INSERT OVERWRITE"));
         verifySqlCompletion("SELE", Collections.singletonList("SELECT"));

@@ -93,6 +93,8 @@ public class SqlClient {
 
                 // do the actual work
                 openCli(sessionId, executor);
+            } catch (Throwable t) {
+                t.printStackTrace();
             } finally {
                 executor.closeSession(sessionId);
             }
