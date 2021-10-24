@@ -384,7 +384,7 @@ public class CliClient implements AutoCloseable {
 
     private Optional<Operation> parseCommand(String stmt) {
         // normalize
-        stmt = stmt.trim();
+        stmt = SqlMultiLineParser.getParsedCommentFreeLine(stmt.trim());
         // remove ';' at the end
         if (stmt.endsWith(";")) {
             stmt = stmt.substring(0, stmt.length() - 1).trim();
