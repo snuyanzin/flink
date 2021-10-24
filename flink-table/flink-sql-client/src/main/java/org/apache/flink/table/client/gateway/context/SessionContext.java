@@ -386,4 +386,12 @@ public class SessionContext {
         }
         return jarsInConfig;
     }
+
+    public String getCurrentCatalogName() {
+        return sessionState.catalogManager.getCurrentCatalog();
+    }
+
+    public String getCurrentDatabaseName() {
+        return sessionState.catalogManager.getCurrentDatabase();
+    }
 }

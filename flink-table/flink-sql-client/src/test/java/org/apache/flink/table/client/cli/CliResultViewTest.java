@@ -250,6 +250,16 @@ public class CliResultViewTest {
         public List<String> listJars(String sessionId) {
             throw new UnsupportedOperationException("Not implemented.");
         }
+
+        @Override
+        public String getCurrentCatalogName(String sessionId) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
+
+        @Override
+        public String getCurrentDatabaseName(String sessionId) {
+            throw new UnsupportedOperationException("Not implemented.");
+        }
     }
 
     private static final class TestingCliResultView implements Runnable {

@@ -62,8 +62,6 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.MaskingCallback;
 import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
-import org.jline.utils.AttributedStringBuilder;
-import org.jline.utils.AttributedStyle;
 import org.jline.utils.InfoCmp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,13 +150,7 @@ public class CliClient implements AutoCloseable {
         this.parser = new SqlMultiLineParser(new SqlCommandParserImpl(executor, sessionId));
 
         // create prompt
-        prompt =
-                new AttributedStringBuilder()
-                        .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN))
-                        .append("Flink SQL")
-                        .style(AttributedStyle.DEFAULT)
-                        .append("> ")
-                        .toAnsi();
+        prompt = new PromptHandler(sessionId, executor, terminalFactory).getPrompt();
     }
 
     /**
@@ -270,6 +262,10 @@ public class CliClient implements AutoCloseable {
      * terminal.
      */
     private void executeInteractive() {
+        isRunning = true;
+        LineReader lineReader = createLineReader(terminal);
+
+        PromptHandler promptHandler = new PromptHandler(sessionId, executor, () -> terminal);
         // make space from previous output and test the writer
         terminal.writer().println();
         terminal.writer().flush();
@@ -277,11 +273,14 @@ public class CliClient implements AutoCloseable {
         // print welcome
         terminal.writer().append(CliStrings.MESSAGE_WELCOME);
 
-        LineReader lineReader = createLineReader(terminal);
-        getAndExecuteStatements(lineReader, ExecutionMode.INTERACTIVE_EXECUTION);
+        getAndExecuteStatements(lineReader, ExecutionMode.INTERACTIVE_EXECUTION, promptHandler);
     }
 
     private boolean getAndExecuteStatements(LineReader lineReader, ExecutionMode mode) {
+        return getAndExecuteStatements(lineReader, mode, null);
+    }
+
+    private boolean getAndExecuteStatements(LineReader lineReader, ExecutionMode mode, PromptHandler promptHandler) {
         // begin reading loop
         boolean exitOnFailure = !mode.equals(ExecutionMode.INTERACTIVE_EXECUTION);
         isRunning = true;
@@ -293,7 +292,11 @@ public class CliClient implements AutoCloseable {
             Optional<Operation> parsedOperation = Optional.empty();
             try {
                 // read a statement from terminal and parse it
-                String line = lineReader.readLine(prompt, null, inputTransformer, null);
+                String line = lineReader.readLine(
+                        promptHandler == null ? prompt : promptHandler.getPrompt(),
+                        promptHandler == null ? prompt : promptHandler.getRightPrompt(),
+                        inputTransformer,
+                        null);
                 if (line.trim().isEmpty()) {
                     continue;
                 }
@@ -562,7 +565,7 @@ public class CliClient implements AutoCloseable {
 
         if (resultDesc.isTableauMode()) {
             try (CliTableauResultView tableauResultView =
-                    new CliTableauResultView(terminal, executor, sessionId, resultDesc)) {
+                         new CliTableauResultView(terminal, executor, sessionId, resultDesc)) {
                 tableauResultView.displayResults();
             }
         } else {

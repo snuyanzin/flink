@@ -82,6 +82,16 @@ class TestingExecutor implements Executor {
     }
 
     @Override
+    public String getCurrentCatalogName(String sessionId) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public String getCurrentDatabaseName(String sessionId) {
+        throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
     public TypedResult<List<RowData>> retrieveResultChanges(String sessionId, String resultId)
             throws SqlExecutionException {
         return resultChanges
