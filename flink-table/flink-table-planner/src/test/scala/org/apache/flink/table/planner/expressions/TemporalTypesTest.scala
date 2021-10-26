@@ -837,7 +837,6 @@ class TemporalTypesTest extends ExpressionTestBase {
 
     // Floor & Ceil
     // TODO: fix this legacy bug
-    //testSqlApi("CEIL(TO_DATE('2018-03-18') TO DAY)", "2018-04-01")
     //testSqlApi("CEIL(TIMESTAMP '2018-03-20 06:10:31' TO HOUR)", "2018-03-20 07:00:00.000")
   }
 
@@ -886,10 +885,12 @@ class TemporalTypesTest extends ExpressionTestBase {
     testSqlApi("CEIL(TIME '12:44:31' TO MINUTE)", "12:45:00")
     testSqlApi("CEIL(TIME '12:44:31' TO HOUR)", "13:00:00")
 
-    testSqlApi("FLOOR( DATE '2021-02-27' TO WEEK)", "2021-02-21")
-    testSqlApi("FLOOR( DATE '2021-03-01' TO WEEK)", "2021-02-28")
-    testSqlApi("CEIL( DATE '2021-02-27' TO WEEK)", "2021-02-28")
-    testSqlApi("CEIL( DATE '2021-03-01' TO WEEK)", "2021-03-07")
+    testSqlApi("FLOOR(DATE '2021-02-27' TO DAY)", "2021-02-27")
+    testSqlApi("FLOOR(DATE '2021-02-27' TO WEEK)", "2021-02-21")
+    testSqlApi("FLOOR(DATE '2021-03-01' TO WEEK)", "2021-02-28")
+    testSqlApi("CEIL(DATE '2021-02-27' TO DAY)", "2021-02-28")
+    testSqlApi("CEIL(DATE '2021-02-27' TO WEEK)", "2021-02-28")
+    testSqlApi("CEIL(DATE '2021-03-01' TO WEEK)", "2021-03-07")
     testSqlApi("CEIL(DATE '2018-01-02' TO DECADE)", "2020-01-01")
     testSqlApi("CEIL(DATE '2018-03-27' TO CENTURY)", "2101-01-01")
     testSqlApi("CEIL(DATE '2018-01-02' TO MILLENNIUM)", "3001-01-01")

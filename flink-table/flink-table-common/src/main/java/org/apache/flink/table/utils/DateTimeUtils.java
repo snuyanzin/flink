@@ -1245,6 +1245,9 @@ public class DateTimeUtils {
                     offset -= 7;
                 }
                 return ymdToUnixDate(year, month, day) - offset;
+            case DAY:
+                int res = ymdToUnixDate(year, month, day);
+                return floor ? res : res + 1;
             default:
                 throw new AssertionError(range);
         }

@@ -79,14 +79,25 @@ class FloorCeilCallGen(
                  |""".stripMargin
 
             // for Unix Date / Unix Time
-            case MILLENNIUM | CENTURY | DECADE | YEAR | QUARTER | MONTH | WEEK =>
+            case MILLENNIUM | CENTURY | DECADE | YEAR | QUARTER | MONTH | WEEK | DAY =>
               operand.resultType.getTypeRoot match {
                 case LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE =>
-                  val longTerm = s"${terms.head}.getMillisecond()"
-                  s"""
-                     |$TIMESTAMP_DATA.fromEpochMillis(
-                     |  ${qualifyMethod(temporalMethod.get)}(${terms(1)}, $longTerm))
+                  unit match {
+                    case DAY =>
+                      val longTerm = s"${terms.head}.getMillisecond()"
+                          s"""
+                             |$TIMESTAMP_DATA.fromEpochMillis(${qualifyMethod(arithmeticMethod)}(
+                             |  $longTerm,
+                             |  (long) ${unit.startUnit.multiplier.intValue()}))
+                       """.stripMargin
+                    case _ =>
+                      val longTerm = s"${terms.head}.getMillisecond()"
+                      s"""
+                         |$TIMESTAMP_DATA.fromEpochMillis(
+                         |  ${qualifyMethod(temporalMethod.get)}(${terms(1)}, $longTerm))
                    """.stripMargin
+                  }
+
                 case _ =>
                   s"""
                      |($internalType) ${qualifyMethod(temporalMethod.get)}(
