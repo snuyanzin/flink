@@ -685,6 +685,7 @@ public class CliClient implements AutoCloseable {
                         .terminal(terminal)
                         .appName(CliStrings.CLI_NAME)
                         .parser(new SqlMultiLineParser())
+                        .highlighter(new SqlHighlighter())
                         .completer(new SqlCompleter(sessionId, executor))
                         .build();
         // this option is disabled for now for correct backslash escaping

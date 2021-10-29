@@ -22,6 +22,7 @@ import org.jline.reader.EOFError;
 import org.jline.reader.impl.DefaultParser;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -107,7 +108,8 @@ public class SqlMultiLineParser extends DefaultParser {
         int rawWordCursor = -1;
         int rawWordLength = -1;
         int rawWordStart = 0;
-        State state = State.DEFAULT;
+        State[] state = new State[line.length() + 1];
+        Arrays.fill(state, State.DEFAULT);
         for (int i = 0; (line != null) && (i < line.length()); i++) {
             // once we reach the cursor, set the
             // position of the selected index
@@ -121,22 +123,27 @@ public class SqlMultiLineParser extends DefaultParser {
 
             TokenType tokenType = getTokenType(line, i);
             final char c = line.charAt(i);
-            switch (state) {
+            switch (state[i]) {
                 case DEFAULT:
                     switch (tokenType) {
                         case SINGLE_QUOTE:
                         case SQL_IDENTIFIER:
                         case HINT_START:
-                            state = tokenType.nextState(state);
+                            state[i] = tokenType.nextState(state[i]);
+                            state[i + 1] = state[i];
                             current.append(c);
                             break;
                         case MULTILINE_COMMENT_START:
                         case MINUS_ONE_LINE_COMMENT_START:
                         case SLASH_LINE_COMMENT_START:
                             updateWords(words, current);
-                            state = tokenType.nextState(state);
+                            state[i] = tokenType.nextState(state[i]);
                             final int length = tokenType.value.length();
+                            int iOldValue = i;
                             i += length - 1;
+                            for (int j = iOldValue; j <= Math.min(i + 1, state.length - 1); j++) {
+                                state[j] = state[iOldValue];
+                            }
                             break;
                         default:
                             if (Character.isWhitespace(c)) {
@@ -157,31 +164,39 @@ public class SqlMultiLineParser extends DefaultParser {
                     break;
                 case SINGLE_QUOTED:
                 case SQL_IDENTIFIER_QUOTED:
-                    state = tokenType.nextState(state);
+                    state[i + 1] = tokenType.nextState(state[i]);
                     current.append(c);
                     break;
 
                 case HINT:
                     if (tokenType == TokenType.MULTILINE_COMMENT_END) {
                         // Hints and multiline comments have the same ending
-                        state = TokenType.HINT_END.nextState(state);
+                        state[i + 1] = TokenType.HINT_END.nextState(state[i]);
                         current.append(MULTILINE_COMMENT_END);
+                        int iOldValue = i;
                         i += MULTILINE_COMMENT_END.length() - 1;
+                        for (int j = iOldValue; j <= Math.min(i - 1, state.length - 1); j++) {
+                            state[j] = state[iOldValue];
+                        }
                     } else {
-                        state = tokenType.nextState(state);
+                        state[i + 1] = tokenType.nextState(state[i]);
                         current.append(c);
                     }
                     break;
 
                 case MULTILINE_COMMENTED:
                 case ONE_LINE_COMMENTED:
-                    state = tokenType.nextState(state);
-                    if (state == State.DEFAULT) {
+                    state[i + 1] = tokenType.nextState(state[i]);
+                    if (state[i + 1] == State.DEFAULT) {
                         final int length =
                                 tokenType == TokenType.MULTILINE_COMMENT_END
                                         ? MULTILINE_COMMENT_END.length()
                                         : System.lineSeparator().length();
+                        int iOldValue = i;
                         i += length - 1;
+                        for (int j = iOldValue; j <= Math.min(i - 1, state.length - 1); j++) {
+                            state[j] = state[iOldValue];
+                        }
                         rawWordStart = i + 1;
                     }
             }
@@ -216,7 +231,7 @@ public class SqlMultiLineParser extends DefaultParser {
                 throw new EOFError(-1, -1, message, missing);
             }
 
-            switch (state) {
+            switch (state[state.length - 1]) {
                 case SINGLE_QUOTED:
                     throw new EOFError(-1, -1, "Missing closing quote '", "'");
                 case SQL_IDENTIFIER_QUOTED:
@@ -240,7 +255,15 @@ public class SqlMultiLineParser extends DefaultParser {
         }
 
         return new SqlArgumentList(
-                line, words, wordIndex, wordCursor, cursor, null, rawWordCursor, rawWordLength);
+                state,
+                line,
+                words,
+                wordIndex,
+                wordCursor,
+                cursor,
+                null,
+                rawWordCursor,
+                rawWordLength);
     }
 
     public static String getParsedCommentFreeLine(String line) {
@@ -259,9 +282,13 @@ public class SqlMultiLineParser extends DefaultParser {
         }
     }
 
-    private class SqlArgumentList extends DefaultParser.ArgumentList {
+    /** test. */
+    public class SqlArgumentList extends DefaultParser.ArgumentList {
+
+        private final State[] state;
 
         public SqlArgumentList(
+                State[] state,
                 String line,
                 List<String> words,
                 int wordIndex,
@@ -280,6 +307,11 @@ public class SqlMultiLineParser extends DefaultParser {
                     openingQuote,
                     rawWordCursor,
                     rawWordLength);
+            this.state = state;
+        }
+
+        public State[] getState() {
+            return state;
         }
 
         @Override
@@ -294,7 +326,7 @@ public class SqlMultiLineParser extends DefaultParser {
     // ------------------------------------------------------------------------------------------------
 
     /** State describing cursor position. */
-    private enum State {
+    public enum State {
         DEFAULT,
         SINGLE_QUOTED,
         SQL_IDENTIFIER_QUOTED,
