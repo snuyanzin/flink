@@ -46,9 +46,9 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.apache.flink.runtime.state.testutils.StateEntryMatcher.entry;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test for {@link CopyOnWriteStateMap}. */
 public class CopyOnWriteStateMapTest extends TestLogger {

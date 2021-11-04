@@ -28,8 +28,8 @@ import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseSt
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /** Tests for {@link AbstractMetricsHeaders}. */
 public class AbstractMetricsHeadersTest extends TestLogger {

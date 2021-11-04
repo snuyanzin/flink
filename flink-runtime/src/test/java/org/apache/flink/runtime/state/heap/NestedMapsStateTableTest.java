@@ -33,8 +33,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.apache.flink.runtime.state.testutils.StateEntryMatcher.entry;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 /** Tests for {@link NestedMapsStateTable}. */
 public class NestedMapsStateTableTest {

@@ -24,9 +24,9 @@ import org.apache.flink.util.TestLogger;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link JobManagerProcessSpec}. */
 public class JobManagerProcessSpecTest extends TestLogger {

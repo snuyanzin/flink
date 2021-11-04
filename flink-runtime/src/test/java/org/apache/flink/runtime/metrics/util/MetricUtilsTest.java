@@ -52,8 +52,8 @@ import java.util.List;
 import static org.apache.flink.runtime.metrics.util.MetricUtils.METRIC_GROUP_FLINK;
 import static org.apache.flink.runtime.metrics.util.MetricUtils.METRIC_GROUP_MANAGED_MEMORY;
 import static org.apache.flink.runtime.metrics.util.MetricUtils.METRIC_GROUP_MEMORY;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Tests for the {@link MetricUtils} class. */
 public class MetricUtilsTest extends TestLogger {

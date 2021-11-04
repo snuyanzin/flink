@@ -40,8 +40,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Tests for the recovery of task failures. */
 public class JobRecoveryITCase extends TestLogger {

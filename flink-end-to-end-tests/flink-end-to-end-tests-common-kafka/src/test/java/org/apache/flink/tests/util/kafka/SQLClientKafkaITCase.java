@@ -60,8 +60,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 
 /** End-to-end test for the kafka SQL connectors. */
 @RunWith(Parameterized.class)

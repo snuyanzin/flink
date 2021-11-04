@@ -22,9 +22,9 @@ import org.apache.flink.util.TestLogger;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Tests for {@link ExponentialWaitStrategy}. */

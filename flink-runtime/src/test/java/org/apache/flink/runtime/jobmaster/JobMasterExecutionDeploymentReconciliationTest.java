@@ -59,9 +59,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the execution deployment-reconciliation logic in the {@link JobMaster}. */
 public class JobMasterExecutionDeploymentReconciliationTest extends TestLogger {

@@ -31,10 +31,10 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the WebMonitorUtils. */
 public class WebMonitorUtilsTest extends TestLogger {

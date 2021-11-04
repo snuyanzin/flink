@@ -32,9 +32,9 @@ import org.junit.rules.ExpectedException;
 
 import java.util.ArrayDeque;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests {@link BatchGroupedReduceOperator}. */
 public class BatchGroupedReduceOperatorTest extends TestLogger {

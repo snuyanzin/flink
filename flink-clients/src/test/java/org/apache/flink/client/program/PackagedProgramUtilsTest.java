@@ -27,8 +27,8 @@ import java.io.File;
 import java.net.URISyntaxException;
 
 import static org.apache.flink.client.program.PackagedProgramUtils.resolveURI;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Tests {@link PackagedProgramUtils}.

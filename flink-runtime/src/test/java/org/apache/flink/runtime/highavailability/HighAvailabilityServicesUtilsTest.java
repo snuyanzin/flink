@@ -37,8 +37,8 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertSame;
 
 /** Tests for the {@link HighAvailabilityServicesUtils} class. */
 public class HighAvailabilityServicesUtilsTest extends TestLogger {

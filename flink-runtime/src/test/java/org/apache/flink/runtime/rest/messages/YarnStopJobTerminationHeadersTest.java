@@ -23,9 +23,9 @@ import org.apache.flink.util.TestLogger;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link YarnStopJobTerminationHeaders}. */
 public class YarnStopJobTerminationHeadersTest extends TestLogger {

@@ -35,8 +35,8 @@ import org.mockito.ArgumentCaptor;
 import java.util.UUID;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;

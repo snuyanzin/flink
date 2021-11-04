@@ -37,8 +37,8 @@ import static org.apache.flink.configuration.TaskManagerOptions.NETWORK_MEMORY_M
 import static org.apache.flink.configuration.TaskManagerOptions.NETWORK_MEMORY_MIN;
 import static org.apache.flink.configuration.TaskManagerOptions.TASK_HEAP_MEMORY;
 import static org.apache.flink.configuration.TaskManagerOptions.TASK_OFF_HEAP_MEMORY;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 /** Tests the initialization of TaskExecutorMemoryConfiguration. */
 public class TaskExecutorMemoryConfigurationTest extends TestLogger {

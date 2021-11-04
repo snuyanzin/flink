@@ -55,10 +55,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import static org.apache.flink.metrics.prometheus.PrometheusReporterFactory.ARG_PORT;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Basic test for {@link PrometheusReporter}. */
 public class PrometheusReporterTest extends TestLogger {

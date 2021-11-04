@@ -31,10 +31,10 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Collections;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for the {@link ContinuousFileSplitEnumerator}. */
 public class ContinuousFileSplitEnumeratorTest {

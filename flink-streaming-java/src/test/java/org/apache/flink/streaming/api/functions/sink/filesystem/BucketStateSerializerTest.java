@@ -48,9 +48,9 @@ import java.util.stream.Collectors;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.iterableWithSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for the {@link BucketStateSerializer} that verify we can still read snapshots written using

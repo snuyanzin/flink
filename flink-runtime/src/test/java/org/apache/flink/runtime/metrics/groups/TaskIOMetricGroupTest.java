@@ -24,10 +24,10 @@ import org.apache.flink.runtime.executiongraph.IOMetrics;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link TaskIOMetricGroup}. */
 public class TaskIOMetricGroupTest {

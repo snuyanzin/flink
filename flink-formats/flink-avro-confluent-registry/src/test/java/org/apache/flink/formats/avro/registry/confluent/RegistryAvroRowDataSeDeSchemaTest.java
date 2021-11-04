@@ -52,10 +52,10 @@ import java.util.Random;
 import static org.apache.flink.core.testutils.FlinkMatchers.containsCause;
 import static org.apache.flink.formats.avro.utils.AvroTestUtils.writeRecord;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for {@link AvroRowDataDeserializationSchema} and {@link AvroRowDataSerializationSchema} for

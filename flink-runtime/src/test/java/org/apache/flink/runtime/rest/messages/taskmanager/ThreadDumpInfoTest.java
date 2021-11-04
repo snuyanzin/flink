@@ -23,8 +23,8 @@ import org.apache.flink.runtime.rest.messages.RestResponseMarshallingTestBase;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 /** Test for (un)marshalling of the {@link ThreadDumpInfo}. */
 public class ThreadDumpInfoTest extends RestResponseMarshallingTestBase<ThreadDumpInfo> {

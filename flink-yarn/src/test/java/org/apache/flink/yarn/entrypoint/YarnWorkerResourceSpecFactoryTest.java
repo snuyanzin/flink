@@ -27,8 +27,8 @@ import org.apache.flink.yarn.configuration.YarnConfigOptions;
 
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Tests for {@link YarnWorkerResourceSpecFactory}. */
 public class YarnWorkerResourceSpecFactoryTest extends TestLogger {

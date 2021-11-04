@@ -36,10 +36,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test for {@link JobExecutionResultResponseBody}. */
 @RunWith(Parameterized.class)

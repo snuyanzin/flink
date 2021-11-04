@@ -61,9 +61,9 @@ import java.util.concurrent.RunnableFuture;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for the unified savepoint format. They verify you can switch a state backend through a

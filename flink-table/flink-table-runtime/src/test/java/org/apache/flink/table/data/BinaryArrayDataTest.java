@@ -45,8 +45,8 @@ import java.time.LocalDateTime;
 
 import static org.apache.flink.table.data.StringData.fromString;
 import static org.apache.flink.table.utils.RawValueDataAsserter.equivalent;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /** Test of {@link BinaryArrayData} and {@link BinaryArrayWriter}. */

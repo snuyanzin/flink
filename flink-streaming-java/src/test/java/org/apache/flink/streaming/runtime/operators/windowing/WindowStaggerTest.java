@@ -22,10 +22,10 @@ import org.apache.flink.streaming.api.windowing.assigners.WindowStagger;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link WindowStagger}. */
 public class WindowStaggerTest {

@@ -30,9 +30,9 @@ import org.junit.Test;
 
 import java.util.Collections;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link SlotManagerUtils}. */
 public class SlotManagerUtilsTest extends TestLogger {

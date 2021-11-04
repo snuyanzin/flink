@@ -44,9 +44,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link TaskExecutorToResourceManagerConnection}. */
 public class TaskExecutorToResourceManagerConnectionTest extends TestLogger {

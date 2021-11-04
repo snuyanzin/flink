@@ -43,8 +43,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.time.Duration;
 
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 
 /** Tests for the {@link ZooKeeperJobGraphStoreWatcher}. */
 public class ZooKeeperJobGraphStoreWatcherTest extends TestLogger {

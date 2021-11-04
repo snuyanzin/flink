@@ -37,9 +37,9 @@ import java.util.function.BiConsumer;
 
 import static org.apache.flink.runtime.executiongraph.ExecutionGraphTestUtils.createRandomExecutionVertexId;
 import static org.apache.flink.runtime.scheduler.SharedSlotTestingUtils.createExecutionSlotSharingGroup;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test suite for {@link SharingPhysicalSlotRequestBulk}. */
 public class SharingPhysicalSlotRequestBulkTest extends TestLogger {

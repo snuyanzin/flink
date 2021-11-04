@@ -29,8 +29,8 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.apache.flink.runtime.executiongraph.ExecutionGraphTestUtils.createRandomExecutionVertexId;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 
 /** Tests for {@link DefaultSyncPreferredLocationsRetriever}. */
 public class DefaultSyncPreferredLocationsRetrieverTest extends TestLogger {

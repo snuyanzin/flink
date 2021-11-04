@@ -24,9 +24,9 @@ import org.apache.flink.shaded.netty4.io.netty.buffer.ByteBuf;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link IntermediateResultPartitionID}. */
 public class IntermediateResultPartitionIDTest {

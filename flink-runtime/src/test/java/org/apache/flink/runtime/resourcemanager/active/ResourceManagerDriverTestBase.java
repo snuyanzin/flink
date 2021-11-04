@@ -38,8 +38,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Common test cases for implementations of {@link ResourceManagerDriver}. */
 public abstract class ResourceManagerDriverTestBase<WorkerType extends ResourceIDRetrievable>

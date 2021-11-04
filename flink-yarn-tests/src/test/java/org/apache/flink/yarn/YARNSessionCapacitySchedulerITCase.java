@@ -85,11 +85,11 @@ import java.util.stream.Collectors;
 import static junit.framework.TestCase.assertTrue;
 import static org.apache.flink.util.Preconditions.checkState;
 import static org.apache.flink.yarn.util.TestUtils.getTestJarPath;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /**

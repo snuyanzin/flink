@@ -51,8 +51,8 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Test the election of a new JobManager leader. */
 public class ZooKeeperLeaderElectionITCase extends TestLogger {

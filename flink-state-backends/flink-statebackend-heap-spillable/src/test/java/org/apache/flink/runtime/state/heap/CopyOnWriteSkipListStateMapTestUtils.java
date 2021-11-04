@@ -54,11 +54,11 @@ import static org.apache.flink.runtime.state.heap.CopyOnWriteSkipListStateMap.DE
 import static org.apache.flink.runtime.state.heap.CopyOnWriteSkipListStateMap.DEFAULT_MAX_KEYS_TO_DELETE_ONE_TIME;
 import static org.apache.flink.runtime.state.heap.SkipListUtils.NIL_NODE;
 import static org.apache.flink.runtime.state.testutils.StateEntryMatcher.entry;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Utils for CopyOnWriteSkipListStateMap test. */

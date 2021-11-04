@@ -34,9 +34,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 /** Tests for the {@link RocksDBOperationUtils}. */

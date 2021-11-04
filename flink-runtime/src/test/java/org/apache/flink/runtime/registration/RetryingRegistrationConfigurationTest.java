@@ -27,8 +27,8 @@ import org.junit.Test;
 
 import java.time.Duration;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Tests for the {@link RetryingRegistrationConfiguration}. */
 public class RetryingRegistrationConfigurationTest extends TestLogger {

@@ -41,8 +41,8 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Tests for leader election. */
 @RunWith(Parameterized.class)

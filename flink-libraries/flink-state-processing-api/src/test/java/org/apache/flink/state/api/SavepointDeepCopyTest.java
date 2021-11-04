@@ -53,9 +53,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.configuration.CheckpointingOptions.FS_SMALL_FILE_THRESHOLD;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.isIn;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test the savepoint deep copy. */
 @RunWith(value = Parameterized.class)

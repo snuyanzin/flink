@@ -36,8 +36,8 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsEmptyCollection.empty;
 
 /**
  * Tests for the {@link DefaultSlotTracker.SlotStatusStateReconciler}. Tests all state transitions

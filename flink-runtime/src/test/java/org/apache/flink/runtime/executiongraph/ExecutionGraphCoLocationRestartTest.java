@@ -42,9 +42,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 import static org.apache.flink.api.common.JobStatus.FINISHED;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests that co-location constraints work as expected in the case of task restarts. */
 public class ExecutionGraphCoLocationRestartTest {

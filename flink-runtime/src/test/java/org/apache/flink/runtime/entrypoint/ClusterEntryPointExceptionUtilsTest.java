@@ -22,8 +22,8 @@ import org.apache.flink.util.TestLogger;
 
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /**
  * ClusterEntryPointExceptionUtilsTest checks whether the OOM message enrichment works as expected.

@@ -61,8 +61,8 @@ import static org.apache.flink.streaming.connectors.kinesis.table.RowDataKinesis
 import static org.apache.flink.table.factories.utils.FactoryMocks.createTableSink;
 import static org.apache.flink.table.factories.utils.FactoryMocks.createTableSource;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test for {@link KinesisDynamicSource} and {@link KinesisDynamicSink} created by {@link

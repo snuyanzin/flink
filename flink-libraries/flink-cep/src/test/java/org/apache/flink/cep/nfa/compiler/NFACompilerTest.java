@@ -45,9 +45,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.apache.flink.cep.utils.NFAUtils.compile;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for {@link NFACompiler}. */

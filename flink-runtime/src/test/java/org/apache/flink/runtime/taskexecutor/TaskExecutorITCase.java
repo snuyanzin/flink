@@ -52,8 +52,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Integration tests for the {@link TaskExecutor}. */
 public class TaskExecutorITCase extends TestLogger {

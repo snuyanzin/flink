@@ -31,11 +31,11 @@ import org.junit.rules.ExpectedException;
 import java.time.Duration;
 
 import static org.apache.flink.table.runtime.operators.window.WindowTestUtils.timeWindow;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for {@link CumulativeWindowAssigner}. */

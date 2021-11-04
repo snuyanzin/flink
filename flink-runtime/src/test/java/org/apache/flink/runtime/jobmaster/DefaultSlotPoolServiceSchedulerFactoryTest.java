@@ -28,9 +28,9 @@ import org.apache.flink.util.TestLogger;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link DefaultSlotPoolServiceSchedulerFactory}. */
 public class DefaultSlotPoolServiceSchedulerFactoryTest extends TestLogger {

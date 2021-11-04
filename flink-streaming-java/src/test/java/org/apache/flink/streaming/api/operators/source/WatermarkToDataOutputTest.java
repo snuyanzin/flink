@@ -23,8 +23,8 @@ import org.apache.flink.streaming.runtime.watermarkstatus.WatermarkStatus;
 
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 
 /** Unit tests for the {@link WatermarkToDataOutput}. */
 public class WatermarkToDataOutputTest {

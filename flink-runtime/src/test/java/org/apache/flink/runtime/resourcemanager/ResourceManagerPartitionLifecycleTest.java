@@ -50,9 +50,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the partition-lifecycle logic in the {@link ResourceManager}. */
 public class ResourceManagerPartitionLifecycleTest extends TestLogger {

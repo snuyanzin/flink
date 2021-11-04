@@ -21,9 +21,9 @@ package org.apache.flink.streaming.util;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.metrics.MetricGroup;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * A mocked {@link SerializationSchema} that verifies that {@link

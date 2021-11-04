@@ -67,8 +67,8 @@ import java.util.List;
 
 import static org.apache.flink.util.CollectionUtil.iteratorToList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 /**
  * Integration test for {@link RuntimeExecutionMode#BATCH} execution on the DataStream API.

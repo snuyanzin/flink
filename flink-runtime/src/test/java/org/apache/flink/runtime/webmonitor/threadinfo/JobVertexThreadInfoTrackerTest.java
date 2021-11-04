@@ -65,9 +65,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for the {@link JobVertexThreadInfoTracker}. */

@@ -25,11 +25,11 @@ import org.junit.Test;
 
 import java.util.Properties;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link EntrypointClusterConfigurationParserFactory}. */
 public class EntrypointClusterConfigurationParserFactoryTest extends TestLogger {

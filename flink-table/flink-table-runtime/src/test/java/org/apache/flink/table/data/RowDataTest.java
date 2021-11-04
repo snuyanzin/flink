@@ -42,10 +42,10 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import static org.apache.flink.table.utils.RawValueDataAsserter.equivalent;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Test for {@link RowData}s. */

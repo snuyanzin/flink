@@ -48,8 +48,8 @@ import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.isRow
 import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.isTimeAttribute;
 import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDataType;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertFalse;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 

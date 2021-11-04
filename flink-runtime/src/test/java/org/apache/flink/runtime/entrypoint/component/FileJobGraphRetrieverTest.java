@@ -45,8 +45,8 @@ import java.util.List;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static org.apache.flink.runtime.entrypoint.component.FileJobGraphRetriever.JOB_GRAPH_FILE_PATH;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 
 /** Tests for the {@link FileJobGraphRetriever}. */
 public class FileJobGraphRetrieverTest {

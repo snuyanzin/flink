@@ -33,8 +33,8 @@ import org.junit.Test;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests for {@link StreamingJobGraphGenerator} on different {@link GlobalStreamExchangeMode}

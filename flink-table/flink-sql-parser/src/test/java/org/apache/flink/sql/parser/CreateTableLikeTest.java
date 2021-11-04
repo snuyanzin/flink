@@ -41,8 +41,8 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 
 /** Tests for parsing and validating {@link SqlTableLike} clause. */
 public class CreateTableLikeTest {

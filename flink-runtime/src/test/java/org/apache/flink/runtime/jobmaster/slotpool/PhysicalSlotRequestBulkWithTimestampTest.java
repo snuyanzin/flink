@@ -25,8 +25,8 @@ import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Tests for {@link PhysicalSlotRequestBulkWithTimestamp}. */
 public class PhysicalSlotRequestBulkWithTimestampTest extends TestLogger {

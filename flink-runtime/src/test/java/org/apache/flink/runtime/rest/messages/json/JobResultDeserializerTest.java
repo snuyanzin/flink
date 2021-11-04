@@ -29,9 +29,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.module.Si
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link JobResultDeserializer}. */
 public class JobResultDeserializerTest extends TestLogger {

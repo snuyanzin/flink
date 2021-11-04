@@ -33,8 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 
 /** Tests for {@link StreamSink}. */
 public class StreamSinkOperatorTest extends TestLogger {

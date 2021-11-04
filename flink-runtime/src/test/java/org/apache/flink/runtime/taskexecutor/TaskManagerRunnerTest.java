@@ -38,11 +38,11 @@ import javax.annotation.Nonnull;
 import java.net.InetAddress;
 import java.util.concurrent.CompletableFuture;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link TaskManagerRunner}. */
 public class TaskManagerRunnerTest extends TestLogger {

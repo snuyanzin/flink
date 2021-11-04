@@ -24,8 +24,8 @@ import org.junit.Test;
 
 import static org.apache.flink.runtime.jobmaster.slotpool.PhysicalSlotTestUtils.createPhysicalSlot;
 import static org.apache.flink.runtime.jobmaster.slotpool.PhysicalSlotTestUtils.occupyPhysicalSlot;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 /** Tests whether the slot occupation state of {@link AllocatedSlot} is correctly. */
 public class AllocatedSlotOccupationTest extends TestLogger {

@@ -28,8 +28,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.apache.flink.runtime.state.StateUtil.discardStateFuture;
 import static org.apache.flink.util.concurrent.FutureUtils.completedExceptionally;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 /** Tests for {@link StateUtil}. */
 public class StateUtilTest {

@@ -45,8 +45,8 @@ import org.junit.rules.ExpectedException;
 import java.io.IOException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for {@link AvroSchemaConverter}. */

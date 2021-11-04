@@ -50,11 +50,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link JobVertexWatermarksHandler}. */
 public class JobVertexWatermarksHandlerTest {

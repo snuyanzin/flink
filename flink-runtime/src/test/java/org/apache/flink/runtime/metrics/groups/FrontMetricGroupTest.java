@@ -30,8 +30,8 @@ import org.junit.Test;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 
 /** Tests for {@link FrontMetricGroup}. */
 public class FrontMetricGroupTest {

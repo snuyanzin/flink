@@ -81,12 +81,12 @@ import static org.apache.flink.table.data.StringData.fromString;
 import static org.apache.flink.table.data.util.DataFormatTestUtil.MyObj;
 import static org.apache.flink.table.data.util.MapDataUtil.convertToJavaMap;
 import static org.apache.flink.table.utils.RawValueDataAsserter.equivalent;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Test of {@link BinaryRowData} and {@link BinaryRowWriter}. */

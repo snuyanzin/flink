@@ -49,8 +49,8 @@ import static org.apache.flink.streaming.connectors.kafka.table.KafkaTableTestUt
 import static org.apache.flink.streaming.connectors.kafka.table.KafkaTableTestUtils.readLines;
 import static org.apache.flink.table.api.config.ExecutionConfigOptions.TABLE_EXEC_SOURCE_IDLE_TIMEOUT;
 import static org.apache.flink.table.utils.TableTestMatchers.deepEqualTo;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /** Basic IT cases for the Kafka table source and sink. */

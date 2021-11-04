@@ -21,9 +21,9 @@ package org.apache.flink.runtime.rest.handler.async;
 import org.apache.flink.runtime.rest.messages.RestResponseMarshallingTestBase;
 import org.apache.flink.runtime.rest.messages.TriggerId;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Marshalling test for {@link TriggerResponse}. */
 public class TriggerResponseTest extends RestResponseMarshallingTestBase<TriggerResponse> {

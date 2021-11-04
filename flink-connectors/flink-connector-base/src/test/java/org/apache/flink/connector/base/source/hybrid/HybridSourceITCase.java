@@ -47,8 +47,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /** MiniCluster-based integration test for the {@link HybridSource}. */
 public class HybridSourceITCase extends TestLogger {

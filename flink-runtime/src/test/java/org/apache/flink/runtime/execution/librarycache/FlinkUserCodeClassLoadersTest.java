@@ -37,13 +37,13 @@ import static org.apache.flink.util.FlinkUserCodeClassLoader.NOOP_EXCEPTION_HAND
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.isA;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for classloading and class loader utilities. */
 public class FlinkUserCodeClassLoadersTest extends TestLogger {

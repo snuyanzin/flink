@@ -37,11 +37,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.apache.flink.yarn.YarnTestUtils.isHadoopVersionGreaterThanOrEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 

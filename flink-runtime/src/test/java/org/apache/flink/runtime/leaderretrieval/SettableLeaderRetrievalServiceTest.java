@@ -25,8 +25,8 @@ import org.apache.flink.util.TestLogger;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 /** Tests for {@link SettableLeaderRetrievalService}. */
 public class SettableLeaderRetrievalServiceTest extends TestLogger {

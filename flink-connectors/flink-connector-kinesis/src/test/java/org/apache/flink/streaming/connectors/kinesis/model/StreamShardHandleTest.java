@@ -19,10 +19,10 @@ package org.apache.flink.streaming.connectors.kinesis.model;
 
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test for methods in the {@link StreamShardHandle} class. */
 public class StreamShardHandleTest {

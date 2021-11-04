@@ -58,11 +58,11 @@ import static org.apache.flink.metrics.testutils.MetricMatchers.isCounter;
 import static org.apache.flink.metrics.testutils.MetricMatchers.isGauge;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests whether all provided metrics of a {@link Source} are of the expected values (FLIP-33). */
 public class SourceMetricsITCase extends TestLogger {

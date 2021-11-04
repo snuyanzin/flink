@@ -38,9 +38,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link ResultPartitionDeploymentDescriptor}. */
 public class ResultPartitionDeploymentDescriptorTest extends TestLogger {

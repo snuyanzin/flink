@@ -58,8 +58,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.apache.flink.util.ExceptionUtils.findThrowable;
 import static org.apache.flink.util.ExceptionUtils.findThrowableWithMessage;
-import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringStartsWith.startsWith;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 

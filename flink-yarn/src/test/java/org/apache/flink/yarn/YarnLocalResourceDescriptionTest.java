@@ -27,8 +27,8 @@ import org.apache.hadoop.yarn.api.records.LocalResourceVisibility;
 import org.junit.Test;
 
 import static org.apache.flink.core.testutils.CommonTestUtils.assertThrows;
-import static org.hamcrest.core.Is.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 /** Tests for the {@link YarnLocalResourceDescriptor}. */
 public class YarnLocalResourceDescriptionTest extends TestLogger {
