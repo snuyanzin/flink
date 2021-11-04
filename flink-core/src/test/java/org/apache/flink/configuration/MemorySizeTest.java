@@ -26,9 +26,9 @@ import java.io.IOException;
 
 import static org.apache.flink.configuration.MemorySize.MemoryUnit.MEGA_BYTES;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Tests for the {@link MemorySize} class. */

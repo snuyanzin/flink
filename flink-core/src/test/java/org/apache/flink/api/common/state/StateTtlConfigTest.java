@@ -28,10 +28,10 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link StateTtlConfig}. */
 public class StateTtlConfigTest {

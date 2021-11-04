@@ -25,8 +25,8 @@ import org.junit.runners.Parameterized;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for the {@link MemorySegment} in off-heap mode using unsafe memory. */

@@ -25,8 +25,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 
 /** Test utils for metric reporters. */
 public class MetricReporterTestUtils {

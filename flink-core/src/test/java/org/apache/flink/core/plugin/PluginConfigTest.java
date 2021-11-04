@@ -34,9 +34,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link PluginConfig} utility class. */
 public class PluginConfigTest extends TestLogger {

@@ -28,9 +28,9 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link Transformation}. */
 public class TransformationTest extends TestLogger {

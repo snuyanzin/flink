@@ -29,6 +29,7 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
@@ -37,7 +38,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 

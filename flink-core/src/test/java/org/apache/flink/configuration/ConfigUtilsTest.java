@@ -26,10 +26,10 @@ import java.util.List;
 
 import static org.apache.flink.configuration.ConfigOptions.key;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests the {@link ConfigUtils} methods. */
 public class ConfigUtilsTest {

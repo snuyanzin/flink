@@ -40,9 +40,9 @@ import javax.annotation.Nonnull;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Tests for the over sized response message handling of the {@link AkkaRpcActor}. */
