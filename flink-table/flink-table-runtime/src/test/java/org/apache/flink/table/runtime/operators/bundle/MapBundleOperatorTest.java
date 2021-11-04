@@ -36,7 +36,7 @@ import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link MapBundleOperator}. */
 public class MapBundleOperatorTest {

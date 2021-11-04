@@ -41,7 +41,7 @@ import static org.apache.flink.table.api.Expressions.row;
 import static org.apache.flink.table.expressions.ApiExpressionUtils.objectToExpression;
 import static org.apache.flink.table.expressions.ApiExpressionUtils.unwrapFromApi;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for converting an object to a {@link Expression} via {@link

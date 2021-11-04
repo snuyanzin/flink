@@ -53,7 +53,7 @@ import static org.apache.flink.table.api.DataTypes.ROW;
 import static org.apache.flink.table.api.DataTypes.STRING;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link CanalJsonSerializationSchema} and {@link CanalJsonDeserializationSchema}. */
 public class CanalJsonSerDeSchemaTest {

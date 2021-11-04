@@ -54,7 +54,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.apache.flink.core.testutils.FlinkMatchers.futureWillCompleteExceptionally;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test for the (failure handling of the) delivery of Operator Events. */
 public class TaskExecutorOperatorEventHandlingTest extends TestLogger {

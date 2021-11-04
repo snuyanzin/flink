@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link KvStateClientProxyImpl}. */
 public class KvStateClientProxyImplTest extends TestLogger {

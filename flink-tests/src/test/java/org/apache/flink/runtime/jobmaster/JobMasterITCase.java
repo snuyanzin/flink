@@ -39,7 +39,7 @@ import org.apache.flink.util.TestLogger;
 import org.junit.Test;
 
 import static org.apache.flink.core.testutils.FlinkMatchers.containsMessage;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Integration tests for the {@link JobMaster}. */

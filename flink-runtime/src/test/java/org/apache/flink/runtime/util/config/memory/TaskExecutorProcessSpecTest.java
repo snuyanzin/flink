@@ -30,7 +30,7 @@ import java.util.Collections;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link TaskExecutorProcessSpec}. */
 public class TaskExecutorProcessSpecTest extends TestLogger {

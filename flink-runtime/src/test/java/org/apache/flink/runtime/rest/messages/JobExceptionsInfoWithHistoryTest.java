@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests that the {@link JobExceptionsInfoWithHistory} can be marshalled and unmarshalled. */
 public class JobExceptionsInfoWithHistoryTest

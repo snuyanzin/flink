@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link SlotSharingSlotAllocator}. */
 public class SlotSharingSlotAllocatorTest extends TestLogger {

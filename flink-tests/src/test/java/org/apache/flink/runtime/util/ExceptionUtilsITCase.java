@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link ExceptionUtils} which require to spawn JVM process and set JVM memory args. */
 public class ExceptionUtilsITCase extends TestLogger {

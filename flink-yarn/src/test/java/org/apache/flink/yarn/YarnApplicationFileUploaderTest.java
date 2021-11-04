@@ -41,7 +41,7 @@ import java.util.Set;
 
 import static org.apache.flink.core.testutils.CommonTestUtils.assertThrows;
 import static org.apache.flink.yarn.YarnTestUtils.generateFilesInDirectory;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link YarnApplicationFileUploader}. */
 public class YarnApplicationFileUploaderTest extends TestLogger {

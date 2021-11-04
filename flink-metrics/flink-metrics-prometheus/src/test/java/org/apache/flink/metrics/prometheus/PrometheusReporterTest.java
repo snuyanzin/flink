@@ -58,7 +58,7 @@ import static org.apache.flink.metrics.prometheus.PrometheusReporterFactory.ARG_
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Basic test for {@link PrometheusReporter}. */
 public class PrometheusReporterTest extends TestLogger {

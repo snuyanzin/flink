@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
 
 import static org.apache.flink.core.testutils.FlinkMatchers.containsCause;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Base class for testing {@link InputTypeStrategy}. */
 @RunWith(Parameterized.class)

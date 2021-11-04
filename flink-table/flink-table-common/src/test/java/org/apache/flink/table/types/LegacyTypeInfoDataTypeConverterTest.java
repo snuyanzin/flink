@@ -42,7 +42,7 @@ import java.util.List;
 
 import static org.apache.flink.table.api.DataTypes.FIELD;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link LegacyTypeInfoDataTypeConverter}. */
 @RunWith(Parameterized.class)

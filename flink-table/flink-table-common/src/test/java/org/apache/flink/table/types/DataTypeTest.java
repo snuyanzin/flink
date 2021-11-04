@@ -51,7 +51,7 @@ import static org.apache.flink.table.api.DataTypes.YEAR;
 import static org.apache.flink.table.types.TypeTestingUtils.hasConversionClass;
 import static org.apache.flink.table.types.TypeTestingUtils.hasNullability;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test for {@link DataType}. */
 public class DataTypeTest {

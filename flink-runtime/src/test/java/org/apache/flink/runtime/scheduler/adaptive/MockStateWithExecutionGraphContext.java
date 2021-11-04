@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 class MockStateWithExecutionGraphContext implements StateWithExecutionGraph.Context, AutoCloseable {
 

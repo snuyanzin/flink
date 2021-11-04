@@ -36,7 +36,7 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link ZooKeeperCheckpointIDCounter} in a ZooKeeper ensemble. */
 public final class ZKCheckpointIDCounterMultiServersTest extends TestLogger {

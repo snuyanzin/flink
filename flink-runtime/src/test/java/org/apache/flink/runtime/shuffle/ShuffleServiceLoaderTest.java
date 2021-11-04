@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import static org.apache.flink.runtime.shuffle.ShuffleServiceOptions.SHUFFLE_SERVICE_FACTORY_CLASS;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test suite for {@link ShuffleServiceLoader} utility. */
 public class ShuffleServiceLoaderTest extends TestLogger {

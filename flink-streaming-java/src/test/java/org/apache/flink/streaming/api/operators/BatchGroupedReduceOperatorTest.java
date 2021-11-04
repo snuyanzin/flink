@@ -34,7 +34,7 @@ import java.util.ArrayDeque;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests {@link BatchGroupedReduceOperator}. */
 public class BatchGroupedReduceOperatorTest extends TestLogger {

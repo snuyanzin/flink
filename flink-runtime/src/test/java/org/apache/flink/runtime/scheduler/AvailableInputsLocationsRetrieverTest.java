@@ -28,7 +28,7 @@ import java.util.Collection;
 import static org.apache.flink.runtime.executiongraph.ExecutionGraphTestUtils.createRandomExecutionVertexId;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link AvailableInputsLocationsRetriever}. */
 public class AvailableInputsLocationsRetrieverTest extends TestLogger {

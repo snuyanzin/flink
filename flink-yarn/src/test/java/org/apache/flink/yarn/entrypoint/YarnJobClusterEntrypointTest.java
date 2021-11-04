@@ -26,7 +26,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Tests for {@link YarnJobClusterEntrypoint}. */

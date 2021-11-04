@@ -64,7 +64,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link TaskExecutor TaskExecutor's} slot lifetime and its dependencies. */
 public class TaskExecutorSlotLifetimeTest extends TestLogger {

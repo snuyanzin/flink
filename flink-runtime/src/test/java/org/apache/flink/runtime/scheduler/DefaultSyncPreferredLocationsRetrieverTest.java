@@ -30,7 +30,7 @@ import java.util.Optional;
 
 import static org.apache.flink.runtime.executiongraph.ExecutionGraphTestUtils.createRandomExecutionVertexId;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link DefaultSyncPreferredLocationsRetriever}. */
 public class DefaultSyncPreferredLocationsRetrieverTest extends TestLogger {

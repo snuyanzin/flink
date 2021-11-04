@@ -60,7 +60,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.apache.flink.yarn.util.TestUtils.getTestJarPath;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test cases which ensure that the Yarn containers are started with the correct settings. */
 public class YarnConfigurationITCase extends YarnTestBase {

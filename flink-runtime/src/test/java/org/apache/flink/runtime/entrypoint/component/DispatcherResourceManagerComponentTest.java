@@ -37,7 +37,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.apache.flink.core.testutils.FlinkMatchers.containsCause;
 import static org.apache.flink.core.testutils.FlinkMatchers.willNotComplete;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link DispatcherResourceManagerComponent}. */
 public class DispatcherResourceManagerComponentTest extends TestLogger {

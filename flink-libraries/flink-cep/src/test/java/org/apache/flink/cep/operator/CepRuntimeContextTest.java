@@ -53,7 +53,7 @@ import static org.apache.flink.cep.utils.CepOperatorBuilder.createOperatorForNFA
 import static org.apache.flink.cep.utils.EventBuilder.event;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;

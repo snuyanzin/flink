@@ -48,7 +48,7 @@ import static org.apache.flink.metrics.prometheus.PrometheusReporterTest.pollMet
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Test for {@link PrometheusReporter} that registers several instances of the same metric for

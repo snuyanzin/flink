@@ -47,7 +47,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Abstract test base for implementations of {@link KeyGroupPartitioner}. */
 public abstract class KeyGroupPartitionerTestBase<T> extends TestLogger {

@@ -53,7 +53,7 @@ import java.util.Arrays;
 
 import static org.apache.flink.table.expressions.ApiExpressionUtils.valueLiteral;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test for {@link ExpressionConverter}. */
 public class ExpressionConverterTest {

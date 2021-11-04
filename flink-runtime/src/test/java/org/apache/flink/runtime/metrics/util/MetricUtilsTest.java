@@ -53,7 +53,7 @@ import static org.apache.flink.runtime.metrics.util.MetricUtils.METRIC_GROUP_FLI
 import static org.apache.flink.runtime.metrics.util.MetricUtils.METRIC_GROUP_MANAGED_MEMORY;
 import static org.apache.flink.runtime.metrics.util.MetricUtils.METRIC_GROUP_MEMORY;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link MetricUtils} class. */
 public class MetricUtilsTest extends TestLogger {

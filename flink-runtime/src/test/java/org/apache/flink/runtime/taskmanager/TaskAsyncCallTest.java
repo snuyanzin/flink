@@ -71,7 +71,7 @@ import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 /** Testing asynchronous call of {@link Task}. */

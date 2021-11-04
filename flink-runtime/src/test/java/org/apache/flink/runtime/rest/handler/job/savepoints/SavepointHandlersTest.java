@@ -57,7 +57,7 @@ import static org.apache.flink.runtime.rest.handler.job.savepoints.SavepointTest
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Test for {@link SavepointHandlers}. */

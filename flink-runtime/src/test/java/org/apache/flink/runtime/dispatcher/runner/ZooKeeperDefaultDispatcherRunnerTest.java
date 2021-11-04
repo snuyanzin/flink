@@ -77,7 +77,7 @@ import java.util.concurrent.ForkJoinPool;
 
 import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the interaction between the {@link DefaultDispatcherRunner} and ZooKeeper. */
 public class ZooKeeperDefaultDispatcherRunnerTest extends TestLogger {

@@ -53,7 +53,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Abstract test base for the Arrow source function processing. */
 public abstract class ArrowSourceFunctionTestBase {

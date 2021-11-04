@@ -53,7 +53,7 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Tests for the {@link DefaultExecutionGraphFactory}. */

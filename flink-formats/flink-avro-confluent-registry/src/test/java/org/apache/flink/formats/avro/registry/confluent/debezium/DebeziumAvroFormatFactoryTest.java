@@ -45,7 +45,7 @@ import static junit.framework.TestCase.assertEquals;
 import static org.apache.flink.table.factories.utils.FactoryMocks.createTableSink;
 import static org.apache.flink.table.factories.utils.FactoryMocks.createTableSource;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link DebeziumAvroFormatFactory}. */
 public class DebeziumAvroFormatFactoryTest extends TestLogger {

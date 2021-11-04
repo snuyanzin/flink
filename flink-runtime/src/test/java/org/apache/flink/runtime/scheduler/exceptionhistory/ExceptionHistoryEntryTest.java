@@ -37,7 +37,7 @@ import java.util.Optional;
 import static org.apache.flink.runtime.scheduler.exceptionhistory.ArchivedTaskManagerLocationMatcher.isArchivedTaskManagerLocation;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** {@code ExceptionHistoryEntryTest} tests the creation of {@link ExceptionHistoryEntry}. */
 public class ExceptionHistoryEntryTest extends TestLogger {

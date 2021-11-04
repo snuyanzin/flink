@@ -41,7 +41,7 @@ import java.util.Optional;
 
 import static org.apache.flink.table.types.utils.DataTypeFactoryMock.dummyRaw;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link TypeInfoDataTypeConverter}. */
 @RunWith(Parameterized.class)

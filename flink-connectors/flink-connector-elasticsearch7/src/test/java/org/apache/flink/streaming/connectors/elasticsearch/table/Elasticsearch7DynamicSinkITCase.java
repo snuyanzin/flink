@@ -64,7 +64,7 @@ import java.util.Map;
 import static org.apache.flink.streaming.connectors.elasticsearch.table.TestContext.context;
 import static org.apache.flink.table.api.Expressions.row;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** IT tests for {@link Elasticsearch7DynamicSink}. */
 public class Elasticsearch7DynamicSinkITCase extends TestLogger {

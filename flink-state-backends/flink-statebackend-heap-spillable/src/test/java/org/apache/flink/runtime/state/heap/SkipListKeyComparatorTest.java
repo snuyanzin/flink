@@ -39,7 +39,7 @@ import java.io.IOException;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link SkipListKeyComparator}. */
 public class SkipListKeyComparatorTest extends TestLogger {

@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** End-to-end test for the HBase connectors. */
 @RunWith(Parameterized.class)

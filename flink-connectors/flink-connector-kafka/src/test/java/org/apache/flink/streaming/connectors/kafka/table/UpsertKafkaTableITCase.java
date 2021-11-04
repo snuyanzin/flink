@@ -42,7 +42,7 @@ import static org.apache.flink.streaming.connectors.kafka.table.KafkaTableTestUt
 import static org.apache.flink.streaming.connectors.kafka.table.KafkaTableTestUtils.waitingExpectedResults;
 import static org.apache.flink.table.planner.factories.TestValuesTableFactory.changelogRow;
 import static org.apache.flink.table.utils.TableTestMatchers.deepEqualTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Upsert-kafka IT cases. */
 @RunWith(Parameterized.class)

@@ -23,7 +23,7 @@ import org.apache.flink.table.examples.utils.ExampleOutputTestBase;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test for {@link UpdatingTopCityExample}. */
 public class UpdatingTopCityExampleITCase extends ExampleOutputTestBase {

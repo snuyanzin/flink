@@ -41,7 +41,7 @@ import java.util.function.Function;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link CreatingExecutionGraph} state. */
 public class CreatingExecutionGraphTest extends TestLogger {

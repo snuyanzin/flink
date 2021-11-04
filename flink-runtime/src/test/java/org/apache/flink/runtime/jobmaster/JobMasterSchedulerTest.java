@@ -50,7 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the JobMaster scheduler interaction. */
 public class JobMasterSchedulerTest extends TestLogger {

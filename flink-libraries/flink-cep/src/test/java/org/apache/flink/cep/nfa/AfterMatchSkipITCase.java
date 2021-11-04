@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.apache.flink.cep.utils.NFATestUtilities.comparePatterns;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** IT tests covering {@link AfterMatchSkipStrategy}. */
 public class AfterMatchSkipITCase extends TestLogger {

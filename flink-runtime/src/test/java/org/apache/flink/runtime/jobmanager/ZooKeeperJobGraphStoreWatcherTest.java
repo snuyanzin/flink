@@ -44,7 +44,7 @@ import org.junit.rules.TemporaryFolder;
 import java.time.Duration;
 
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link ZooKeeperJobGraphStoreWatcher}. */
 public class ZooKeeperJobGraphStoreWatcherTest extends TestLogger {

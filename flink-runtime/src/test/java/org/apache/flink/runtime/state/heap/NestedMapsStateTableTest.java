@@ -34,7 +34,7 @@ import java.util.List;
 
 import static org.apache.flink.runtime.state.testutils.StateEntryMatcher.entry;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link NestedMapsStateTable}. */
 public class NestedMapsStateTableTest {

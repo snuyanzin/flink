@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 import static org.apache.flink.runtime.clusterframework.types.ResourceID.generate;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link DefaultExecutionDeploymentReconciler}. */
 public class DefaultExecutionDeploymentReconcilerTest extends TestLogger {

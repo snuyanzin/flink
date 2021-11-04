@@ -58,7 +58,7 @@ import java.util.function.Supplier;
 
 import static org.apache.flink.core.testutils.FlinkMatchers.containsCause;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link TypeInferenceExtractor}. */
 @RunWith(Parameterized.class)

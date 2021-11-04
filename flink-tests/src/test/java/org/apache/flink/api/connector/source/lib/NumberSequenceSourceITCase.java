@@ -36,7 +36,7 @@ import java.util.stream.LongStream;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * An integration test for the sources based on iterators.

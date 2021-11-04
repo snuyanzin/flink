@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.flink.table.types.logical.utils.LogicalTypeCasts.supportsAvoidingCast;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for {@link LogicalTypeCasts#supportsAvoidingCast(LogicalType, LogicalType)}. */

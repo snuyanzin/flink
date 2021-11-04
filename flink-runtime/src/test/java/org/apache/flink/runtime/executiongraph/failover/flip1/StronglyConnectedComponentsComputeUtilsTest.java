@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
 
 import static org.apache.flink.runtime.executiongraph.failover.flip1.StronglyConnectedComponentsComputeUtils.computeStronglyConnectedComponents;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link StronglyConnectedComponentsComputeUtils}. */
 public class StronglyConnectedComponentsComputeUtilsTest extends TestLogger {

@@ -50,7 +50,7 @@ import static org.apache.flink.streaming.connectors.kinesis.config.ConsumerConfi
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** IT cases for using Kinesis consumer/producer based on Kinesalite. */
 @Ignore("See FLINK-23528")

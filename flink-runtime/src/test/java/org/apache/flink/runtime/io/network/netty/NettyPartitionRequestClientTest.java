@@ -45,7 +45,7 @@ import static org.apache.flink.runtime.io.network.partition.InputChannelTestUtil
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for {@link NettyPartitionRequestClient}. */

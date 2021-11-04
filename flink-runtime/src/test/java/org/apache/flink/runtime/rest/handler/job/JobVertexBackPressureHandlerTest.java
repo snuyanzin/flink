@@ -54,7 +54,7 @@ import static org.apache.flink.runtime.rest.messages.JobVertexBackPressureInfo.V
 import static org.apache.flink.runtime.rest.messages.JobVertexBackPressureInfo.VertexBackPressureLevel.OK;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link JobVertexBackPressureHandler}. */
 public class JobVertexBackPressureHandlerTest {

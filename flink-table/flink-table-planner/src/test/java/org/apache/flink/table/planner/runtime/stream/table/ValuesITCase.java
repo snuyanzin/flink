@@ -49,7 +49,7 @@ import static org.apache.flink.table.api.Expressions.call;
 import static org.apache.flink.table.api.Expressions.range;
 import static org.apache.flink.table.api.Expressions.withColumns;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** End to end tests for {@link org.apache.flink.table.api.TableEnvironment#fromValues}. */
 public class ValuesITCase extends StreamingTestBase {

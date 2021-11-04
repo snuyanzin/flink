@@ -35,7 +35,7 @@ import java.util.concurrent.Future;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Test base class with common tests for the {@link CheckpointIDCounter} implementations. */
 public abstract class CheckpointIDCounterTestBase extends TestLogger {

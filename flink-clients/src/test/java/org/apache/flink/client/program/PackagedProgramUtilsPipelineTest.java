@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Tests for {@link PackagedProgramUtils} methods that should be executed for {@link

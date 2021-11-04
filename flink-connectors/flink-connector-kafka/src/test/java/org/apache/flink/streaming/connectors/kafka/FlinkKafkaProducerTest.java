@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link FlinkKafkaProducer}. */
 public class FlinkKafkaProducerTest {

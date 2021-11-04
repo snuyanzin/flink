@@ -50,7 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests which verify the cluster behaviour in case of leader changes. */
 public class LeaderChangeClusterComponentsTest extends TestLogger {

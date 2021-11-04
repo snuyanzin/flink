@@ -45,7 +45,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.apache.flink.formats.utils.DeserializationSchemaMatcher.whenDeserializedWith;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.internal.matchers.ThrowableCauseMatcher.hasCause;
 import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 

@@ -40,7 +40,7 @@ import static org.apache.flink.runtime.scheduler.adaptive.ExecutingTest.createFa
 import static org.apache.flink.runtime.scheduler.adaptive.WaitingForResourcesTest.assertNonNull;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link StopWithSavepoint} state. */
 public class StopWithSavepointTest extends TestLogger {

@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * {@code RootExceptionHistoryEntryTest} tests the creation of {@link RootExceptionHistoryEntry}.

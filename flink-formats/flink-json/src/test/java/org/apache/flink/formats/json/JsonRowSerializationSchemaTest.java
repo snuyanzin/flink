@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.apache.flink.formats.utils.SerializationSchemaMatcher.whenSerializedWith;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link JsonRowSerializationSchema}. */
 public class JsonRowSerializationSchemaTest {

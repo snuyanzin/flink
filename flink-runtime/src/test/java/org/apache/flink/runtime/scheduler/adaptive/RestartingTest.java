@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 
 import static org.apache.flink.runtime.scheduler.adaptive.WaitingForResourcesTest.assertNonNull;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link Restarting} state of the {@link AdaptiveScheduler}. */
 public class RestartingTest extends TestLogger {

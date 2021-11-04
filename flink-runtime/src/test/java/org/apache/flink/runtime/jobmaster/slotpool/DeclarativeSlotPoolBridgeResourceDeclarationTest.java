@@ -42,7 +42,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static org.apache.flink.runtime.jobmaster.slotpool.DeclarativeSlotPoolBridgeTest.createAllocatedSlot;
 import static org.apache.flink.runtime.jobmaster.slotpool.DeclarativeSlotPoolBridgeTest.createDeclarativeSlotPoolBridge;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link DeclarativeSlotPoolBridge}. */
 public class DeclarativeSlotPoolBridgeResourceDeclarationTest extends TestLogger {

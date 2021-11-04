@@ -29,7 +29,7 @@ import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Marshalling tests for the {@link SavepointInfo}. */
 @RunWith(Parameterized.class)

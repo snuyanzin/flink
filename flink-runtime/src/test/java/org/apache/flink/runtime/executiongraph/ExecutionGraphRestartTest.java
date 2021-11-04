@@ -58,7 +58,7 @@ import java.util.function.Consumer;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests the restart behaviour of the {@link ExecutionGraph}. */
 public class ExecutionGraphRestartTest extends TestLogger {

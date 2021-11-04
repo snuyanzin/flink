@@ -26,7 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link SettableLeaderRetrievalService}. */
 public class SettableLeaderRetrievalServiceTest extends TestLogger {

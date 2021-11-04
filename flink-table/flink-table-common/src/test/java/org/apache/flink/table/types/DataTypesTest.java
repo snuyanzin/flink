@@ -106,7 +106,7 @@ import static org.apache.flink.table.types.utils.DataTypeFactoryMock.dummyRaw;
 import static org.apache.flink.table.types.utils.LogicalTypeDataTypeConverter.toDataType;
 import static org.apache.flink.table.types.utils.LogicalTypeDataTypeConverter.toLogicalType;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link DataTypes} and {@link LogicalTypeDataTypeConverter}. */
 @RunWith(Parameterized.class)

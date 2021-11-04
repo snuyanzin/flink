@@ -57,7 +57,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** End-to-end test for SQL client using Avro Confluent Registry format. */
 @Category(value = {TravisGroup1.class})

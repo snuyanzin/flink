@@ -34,7 +34,7 @@ import java.io.IOException;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for the {@link FsCheckpointStreamFactory}. */
 public class FsCheckpointStreamFactoryTest {

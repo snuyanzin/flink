@@ -25,7 +25,7 @@ import org.junit.runners.Parameterized;
 import java.time.Duration;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link TimeUtils#formatWithHighestUnit(Duration)}. */
 @RunWith(Parameterized.class)

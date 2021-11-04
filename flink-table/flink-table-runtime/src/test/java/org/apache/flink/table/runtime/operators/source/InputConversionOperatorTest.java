@@ -34,7 +34,7 @@ import org.junit.Test;
 import javax.annotation.Nullable;
 
 import static org.apache.flink.core.testutils.FlinkMatchers.containsMessage;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link InputConversionOperator}. */
 public class InputConversionOperatorTest {

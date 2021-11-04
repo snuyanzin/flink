@@ -31,7 +31,7 @@ import org.junit.Test;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link JobResultDeserializer}. */
 public class JobResultDeserializerTest extends TestLogger {

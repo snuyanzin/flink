@@ -69,7 +69,7 @@ import java.util.function.Function;
 import static org.apache.flink.core.testutils.FlinkMatchers.containsCause;
 import static org.apache.flink.table.types.utils.DataTypeFactoryMock.dummyRaw;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link DataTypeExtractor}. */
 @RunWith(Parameterized.class)

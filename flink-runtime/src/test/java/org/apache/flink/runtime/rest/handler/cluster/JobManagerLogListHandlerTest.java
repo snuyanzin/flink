@@ -52,7 +52,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Unit tests for {@link JobManagerLogListHandler}. */
 public class JobManagerLogListHandlerTest extends TestLogger {

@@ -39,7 +39,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Common test cases for implementations of {@link ResourceManagerDriver}. */
 public abstract class ResourceManagerDriverTestBase<WorkerType extends ResourceIDRetrievable>

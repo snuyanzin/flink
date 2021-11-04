@@ -41,7 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for the {@link DefaultDeclareResourceRequirementServiceConnectionManager}. */
 public class DefaultDeclareResourceRequirementServiceConnectionManagerTest extends TestLogger {

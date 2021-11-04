@@ -42,7 +42,7 @@ import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for leader election. */
 @RunWith(Parameterized.class)

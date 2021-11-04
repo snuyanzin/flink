@@ -33,7 +33,7 @@ import org.junit.Test;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Integration tests for job scheduling. */
 public class JobExecutionITCase extends TestLogger {

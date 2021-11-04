@@ -29,7 +29,7 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Tests for {@link RestartTimeGauge}. */
 public class RestartTimeGaugeTest extends TestLogger {

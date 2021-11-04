@@ -89,7 +89,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.apache.flink.table.types.logical.LogicalTypeRoot.INTEGER;
 import static org.apache.flink.table.utils.RawValueDataAsserter.equivalent;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /** Random test for sort code generator. */
 public class SortCodeGeneratorTest {

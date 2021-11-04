@@ -33,7 +33,7 @@ import static org.apache.flink.table.runtime.operators.window.WindowTestUtils.ti
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for {@link TumblingWindowAssigner}. */
