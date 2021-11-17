@@ -24,6 +24,7 @@ import org.apache.flink.util.FlinkException;
 import org.apache.flink.util.OperatingSystem;
 import org.apache.flink.util.concurrent.FutureUtils;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -193,11 +194,13 @@ class BlobCacheDeleteTest {
         }
     }
 
+    @Disabled("fails in docker with root")
     @Test
     void testDeleteTransientLocalFailsNoJob() throws IOException, InterruptedException {
         testDeleteTransientLocalFails(null);
     }
 
+    @Disabled("fails in docker with root")
     @Test
     void testDeleteTransientLocalFailsForJob() throws IOException, InterruptedException {
         testDeleteTransientLocalFails(new JobID());

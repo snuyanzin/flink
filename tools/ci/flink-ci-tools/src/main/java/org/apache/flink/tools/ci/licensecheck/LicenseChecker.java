@@ -39,10 +39,20 @@ public class LicenseChecker {
         LOG.warn(
                 "THIS UTILITY IS ONLY CHECKING FOR COMMON LICENSING MISTAKES. A MANUAL CHECK OF THE NOTICE FILES, DEPLOYED ARTIFACTS, ETC. IS STILL NEEDED!");
 
-        int severeIssueCount = NoticeFileChecker.run(new File(args[0]), Paths.get(args[1]));
+        final int severeIssueCountByNoticeFileChecker =
+                NoticeFileChecker.run(new File(args[0]), Paths.get(args[1]));
+        LOG.info(
+                "Severe issues reported by {}: {}",
+                NoticeFileChecker.class.getSimpleName(),
+                severeIssueCountByNoticeFileChecker);
 
-        severeIssueCount += JarFileChecker.checkPath(Paths.get(args[2]));
-
+        final int severeIssueCountByJarFileChecker = JarFileChecker.checkPath(Paths.get(args[2]));
+        LOG.info(
+                "Severe issues reported by {}: {}",
+                JarFileChecker.class.getSimpleName(),
+                severeIssueCountByJarFileChecker);
+        final int severeIssueCount =
+                severeIssueCountByNoticeFileChecker + severeIssueCountByJarFileChecker;
         if (severeIssueCount > 0) {
             LOG.warn("Found a total of {} severe license issues", severeIssueCount);
 
