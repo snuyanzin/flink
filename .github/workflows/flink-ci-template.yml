@@ -1,0 +1,455 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: "Build and Test Apache Flink"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "defines environment variables for downstream scripts"
+        required: true
+        type: string
+      jdk-version:
+        description: "the jdk version to use"
+        required: true
+        type: number
+    secrets:
+      s3_bucket:
+        required: false
+      s3_access_key:
+        required: false
+      s3_secret_key:
+        required: false
+      glue_schema_access_key:
+        required: false
+      glue_schema_secret_key:
+        required: false
+
+permissions: read-all
+
+env:
+  # The working directory within the Docker container is set to /__w which is mapped to the runner
+  # directory /home/runner/work.
+  MAVEN_REPO_FOLDER: /__w/flink/flink/.m2/repository
+  MAVEN_ARGS: -Dmaven.repo.local=/__w/flink/flink/.m2/repository
+  FLINK_ARTIFACT_DIR: /root/
+  FLINK_ARTIFACT_FILENAME: flink_artifacts.tar.gz
+  DOCKER_IMAGES_CACHE_FOLDER: /root/.docker-cache
+  # The checkout directory needs to be changed for the Composite Github action usages below as
+  # well, if this env variable is modified
+  CHECKOUT_MOUNT_DIR: ${{ github.workspace }}/flink-checkout
+  CHECKOUT_DIR: /root/flink
+
+jobs:
+  qa:
+    name: "Basic QA"
+    runs-on: ubuntu-latest
+    container:
+      image: chesnay/flink-ci:java_8_11_17_maven_386_v2
+      options: --init
+
+    steps:
+    - name: "Set JDK version"
+      run: |
+        echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
+        echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
+
+    - name: "Flink Checkout"
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+    - name: "Codestyle"
+      run: |
+        ${{ inputs.environment }} ./tools/ci/validate.sh "checkstyle:check spotless:check -T2" || exit $?
+
+    - name: "License Headers"
+      if: (success() || failure())
+      run: |
+        ${{ inputs.environment }} ./tools/ci/validate.sh "org.apache.rat:apache-rat-plugin:check -N" || exit $?
+
+  compile:
+    name: "Compile"
+    runs-on: ubuntu-latest
+    container:
+      image: chesnay/flink-ci:java_8_11_17_maven_386_v2
+      options: --init
+    timeout-minutes: 240
+    outputs:
+      stringified-workflow-name: ${{ steps.workflow-prep-step.outputs.stringified-workflow-name }}
+    steps:
+      - name: "Stringify workflow name"
+        id: workflow-prep-step
+        run: |
+          stringified_workflow_name=$(echo "${{ github.workflow }}" | tr -C '[:alnum:]._' '-' |  tr '[:upper:]' '[:lower:]' | sed -e 's/--*/-/g' -e 's/^-*//g' -e 's/-*$//g')
+          echo "stringified-workflow-name=${stringified_workflow_name}" >> $GITHUB_OUTPUT
+
+      - name: "Set JDK version"
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
+          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
+
+      - name: "Flink Checkout"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: ${{ env.CHECKOUT_MOUNT_DIR }}
+
+      - name: "Setup Maven package cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.MAVEN_REPO_FOLDER }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: "Copy"
+        working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
+        run: |
+          mkdir -p ${{ env.CHECKOUT_DIR }}
+          # mv doesn't work out-of-the-box with hidden files (i.e. file name starts with a dot). 
+          # Using find is a workaround to achieve the same.
+          find . -mindepth 1 -maxdepth 1 -exec mv {} ${{ env.CHECKOUT_DIR }}/{} \;
+
+      - name: "Compile Flink"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: |
+          ${{ inputs.environment }} ./tools/ci/validate.sh "test-compile -Dflink.markBundledAsOptional=false -Dfast" || exit $?
+
+      - name: "Collect build artifacts"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: |
+          ./tools/azure-pipelines/create_build_artifact.sh -f ${{ env.FLINK_ARTIFACT_DIR }}/${{ env.FLINK_ARTIFACT_FILENAME }}
+
+      - name: "Upload artifacts to make them available in downstream jobs"
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts-${{ steps.workflow-prep-step.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}${{ env.FLINK_ARTIFACT_FILENAME }}
+          if-no-files-found: error
+
+  packaging:
+    name: "Test packaging/licensing"
+    needs: compile
+    runs-on: ubuntu-latest
+    container:
+      image: chesnay/flink-ci:java_8_11_17_maven_386_v2
+      options: --init
+
+    steps:
+      - name: "Set JDK version"
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
+          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
+
+      - name: "Flink Checkout"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: ${{ env.CHECKOUT_MOUNT_DIR }}
+
+      - name: "Setup Maven package cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.MAVEN_REPO_FOLDER }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: "Copy"
+        working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
+        run: |
+          mkdir -p ${{ env.CHECKOUT_DIR }}
+          # mv doesn't work out-of-the-box with hidden files (i.e. file name starts with a dot). 
+          # Using find is a workaround to achieve the same.
+          find . -mindepth 1 -maxdepth 1 -exec mv {} ${{ env.CHECKOUT_DIR }}/{} \;
+
+      - name: "Download build artifacts from compile job"
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}
+
+      - name: "Unpack build artifact"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: |
+          ./tools/azure-pipelines/unpack_build_artifact.sh -f ${{ env.FLINK_ARTIFACT_DIR }}/${{ env.FLINK_ARTIFACT_FILENAME }} -t .
+
+      - name: "Test"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: |
+          ${{ inputs.environment }} ./tools/ci/compile_ci.sh || exit $?
+
+  test:
+    name: "Test (module: ${{ matrix.module }})"
+    needs: compile
+    runs-on: ubuntu-latest
+    container:
+      image: chesnay/flink-ci:java_8_11_17_maven_386_v2
+      options: --init
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: core
+            stringified-module-name: core
+          - module: python
+            stringified-module-name: python
+          - module: table
+            stringified-module-name: table
+          - module: connect_1
+            stringified-module-name: connect_1
+          - module: connect_2
+            stringified-module-name: connect_2
+          - module: tests
+            stringified-module-name: tests
+          - module: misc
+            stringified-module-name: misc
+
+    steps:
+      - name: "Set JDK version"
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
+          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
+
+      - name: "Flink Checkout"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: ${{ env.CHECKOUT_MOUNT_DIR }}
+
+      - name: "Setup Maven package cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.MAVEN_REPO_FOLDER }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: "Copy"
+        working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
+        run: |
+          mkdir -p ${{ env.CHECKOUT_DIR }}
+          # mv doesn't work out-of-the-box with hidden files (i.e. file name starts with a dot). 
+          # Using find is a workaround to achieve the same.
+          find . -mindepth 1 -maxdepth 1 -exec mv {} ${{ env.CHECKOUT_DIR }}/{} \;
+
+      - name: "Set coredump pattern"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: sudo sysctl -w kernel.core_pattern=core.%p
+
+      - name: "Download build artifacts from compile job"
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}
+
+      - name: "Unpack build artifact"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: |
+          ./tools/azure-pipelines/unpack_build_artifact.sh -f ${{ env.FLINK_ARTIFACT_DIR }}${{ env.FLINK_ARTIFACT_FILENAME }} -t .
+
+      - name: "Try loading Docker images from Cache"
+        id: docker-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.DOCKER_IMAGES_CACHE_FOLDER }}
+          key: ${{ matrix.module }}-docker-${{ runner.os }}-${{ hashFiles('**/cache_docker_images.sh', '**/flink-test-utils-parent/**/DockerImageVersions.java') }}
+          restore-keys: ${{ matrix.module }}-docker-${{ runner.os }}
+
+      - name: "Load Docker images if not present in cache, yet"
+        if: ${{ !cancelled() && !steps.docker-cache.cache.hit }}
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: ./tools/azure-pipelines/cache_docker_images.sh -f ${{ env.DOCKER_IMAGES_CACHE_FOLDER }} load
+
+      - name: "Test - ${{ matrix.module }}"
+        id: test-run
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        env:
+          IT_CASE_S3_BUCKET: ${{ secrets.s3_bucket }}
+          IT_CASE_S3_ACCESS_KEY: ${{ secrets.s3_access_key }}
+          IT_CASE_S3_SECRET_KEY: ${{ secrets.s3_secret_key }}
+          IT_CASE_GLUE_SCHEMA_ACCESS_KEY: ${{ secrets.glue_schema_access_key }}
+          IT_CASE_GLUE_SCHEMA_SECRET_KEY: ${{ secrets.glue_schema_secret_key }}
+        # timeout-minutes: 240
+        run: |
+          ${{ inputs.environment }} ./tools/azure-pipelines/uploading_watchdog.sh \
+              -a ${{ github.job }} \
+              -d ${{ env.FLINK_ARTIFACT_DIR }} \
+              -t 480 \
+              ./tools/ci/test_controller.sh ${{ matrix.module }}
+
+      - name: "Post-process build artifacts"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: find ${{ steps.test-run.outputs.debug-files-output-dir }} -type f -exec rename 's/[:<>|*?]/-/' {} \;
+
+      - name: "Upload build artifacts"
+        uses: actions/upload-artifact@v3
+        if: ${{ failure() && steps.test-run.outputs.debug-files-output-dir }} != ''
+        with:
+          name: logs-test-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}-${{ matrix.stringified-module-name }}-${{ steps.test-run.outputs.debug-files-name }}
+          path: ${{ steps.test-run.outputs.debug-files-output-dir }}
+
+      - name: "Save Docker images to cache"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        if: ${{ !cancelled() && (failure() || !steps.docker-cache.cache.hit) }}
+        run: ./tools/azure-pipelines/cache_docker_images.sh -f ${{ env.DOCKER_IMAGES_CACHE_FOLDER }} save
+
+  e2e-prereq-check:
+    name: "Check: Code modified"
+    needs: compile
+    runs-on: ubuntu-latest
+    container:
+      image: chesnay/flink-ci:java_8_11_17_maven_386_v2
+      options: --init
+    outputs:
+      skip-e2e: ${{ steps.docs-only-pr-check.skip-e2e }}
+    steps:
+      - name: "Flink Checkout"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: ${{ env.CHECKOUT_MOUNT_DIR }}
+
+      # Skip e2e test execution if this is a documentation only pull request (master / release builds will still be checked regularly)
+      - name: "Check if it's a docs-only PR (i.e. e2e tests can be skipped)"
+        id: docs-only-pr-check
+        working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
+        run: |
+          source ./tools/azure-pipelines/build_properties.sh
+          if is_docs_only_pullrequest; then
+            echo "This is a documentation-only change. Skipping e2e execution."
+            echo "skip-e2e=true" >> $GITHUB_OUTPUT
+          else
+            echo "This is a regular CI build. Continuing ..."
+          fi
+        shell: bash
+
+  e2e:
+    name: "E2E (group ${{ matrix.group }})"
+    needs: [compile, e2e-prereq-check]
+    runs-on: ubuntu-latest
+    container:
+      image: chesnay/flink-ci:java_8_11_17_maven_386_v2
+      options: --init
+    if: ${{ needs.e2e-prereq-check.outputs.skip-e2e != 'true' }}
+    # timeout-minutes: 310
+    env:
+      E2E_CACHE_FOLDER: /root/.e2e-cache
+      E2E_TARBALL_CACHE: /root/.e2e-tarbal-cache
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [1, 2]
+
+    steps:
+      - name: "Set JDK version"
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
+          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
+
+      - name: "Flink Checkout"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          path: ${{ env.CHECKOUT_MOUNT_DIR }}
+
+      - name: "Setup Maven package cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.MAVEN_REPO_FOLDER }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: "Copy"
+        working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
+        run: |
+          mkdir -p ${{ env.CHECKOUT_DIR }}
+          # mv doesn't work out-of-the-box with hidden files (i.e. file name starts with a dot). 
+          # Using find is a workaround to achieve the same.
+          find . -mindepth 1 -maxdepth 1 -exec mv {} ${{ env.CHECKOUT_DIR }}/{} \;
+
+      - name: "Download build artifacts from compile job"
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}
+
+      - name: "Unpack build artifact"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: ./tools/azure-pipelines/unpack_build_artifact.sh -f ${{ env.FLINK_ARTIFACT_DIR }}/${{ env.FLINK_ARTIFACT_FILENAME }} -t ${{ env.CHECKOUT_DIR }}
+
+      # the cache task does not create directories on a cache miss, and can later fail when trying to tar the directory if the test haven't created it
+      # this may for example happen if a given directory is only used by a subset of tests, which are run in a different 'group'
+      - name: "Create cache directories"
+        run: |
+          mkdir -p ${{ env.E2E_CACHE_FOLDER }}
+          mkdir -p ${{ env.E2E_TARBALL_CACHE }}
+          mkdir -p ${{ env.DOCKER_IMAGES_CACHE_FOLDER }}
+
+      - name: "Load E2E files from Cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.E2E_CACHE_FOLDER }}
+          key: e2e-cache-${{ matrix.group }}-${{ hashFiles('**/flink-end-to-end-tests/**/*.java', '!**/avro/**') }}
+
+      - name: "Load E2E artifacts from Cache"
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.E2E_TARBALL_CACHE }}
+          key: e2e-artifact-cache-${{ matrix.group }}-${{ hashFiles('**/flink-end-to-end-tests/**/*.sh') }}
+          restore-keys: e2e-artifact-cache-${{ matrix.group }}
+
+      - name: "Try loading Docker images from Cache"
+        id: docker-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.DOCKER_IMAGES_CACHE_FOLDER }}
+          key: e2e-${{ matrix.group }}-docker-${{ runner.os }}-${{ hashFiles('**/cache_docker_images.sh', '**/flink-test-utils-parent/**/DockerImageVersions.java') }}
+
+      - name: "Load Docker images if not present in Cache, yet"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        if: ${{ !cancelled() && !steps.docker-cache.cache.hit }}
+        run: ./tools/azure-pipelines/cache_docker_images.sh -f ${{ env.DOCKER_IMAGES_CACHE_FOLDER }} load
+
+      - name: "Build Flink"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        run: ${{ inputs.environment }} ./tools/ci/validate.sh "install -DskipTests -Dfast $PROFILE -Pskip-webui-build"
+
+      - name: "Run E2E Tests"
+        id: test-run
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        env:
+          IT_CASE_S3_BUCKET: ${{ secrets.s3_bucket }}
+          IT_CASE_S3_ACCESS_KEY: ${{ secrets.s3_access_key }}
+          IT_CASE_S3_SECRET_KEY: ${{ secrets.s3_secret_key }}
+          IT_CASE_GLUE_SCHEMA_ACCESS_KEY: ${{ secrets.glue_schema_access_key }}
+          IT_CASE_GLUE_SCHEMA_SECRET_KEY: ${{ secrets.glue_schema_secret_key }}
+        # timeout-minutes: 310
+        run: |
+          ${{ inputs.environment }} FLINK_DIR=`pwd`/build-target ./tools/azure-pipelines/uploading_watchdog.sh \
+            -a ${{ github.job }} \
+            -d ${{ env.FLINK_ARTIFACT_DIR }} \
+            -t 310 \
+            flink-end-to-end-tests/run-nightly-tests.sh ${{ matrix.group }}
+
+      - name: "Upload Logs"
+        uses: actions/upload-artifact@v3
+        if: ${{ failure() && steps.test-run.outputs.debug-files-output-dir }} != ''
+        with:
+          name: logs-e2e-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}-${{ matrix.group }}-${{ steps.test-run.outputs.debug-files-name }}
+          path: ${{ steps.test-run.outputs.debug-files-output-dir }}
+
+      - name: "Save Docker images to Cache"
+        working-directory: ${{ env.CHECKOUT_DIR }}
+        if: ${{ !cancelled() && (failure() || !steps.docker-cache.cache.hit) }}
+        run: ./tools/azure-pipelines/cache_docker_images.sh -f ${{ env.DOCKER_IMAGES_CACHE_FOLDER }} save

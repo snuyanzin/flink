@@ -55,7 +55,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 
 /** Recovery tests for {@link TaskExecutor}. */
-class TaskExecutorRecoveryTest {
+class TaskExecutorRecoveryITCase {
     private final TestingRpcServiceExtension rpcServiceExtension = new TestingRpcServiceExtension();
 
     @RegisterExtension

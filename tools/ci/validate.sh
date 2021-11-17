@@ -17,15 +17,22 @@
 # limitations under the License.
 ################################################################################
 
-function prepare_debug_files {
-	MODULE=$@
-	export DEBUG_FILES_OUTPUT_DIR="$AGENT_TEMPDIRECTORY/debug_files"
-	export DEBUG_FILES_NAME="$(echo $MODULE | tr -c '[:alnum:]\n\r' '_')-$(date +%s)"
-	# make environment variables available in AzureCI workflow configurations
-	echo "##vso[task.setvariable variable=DEBUG_FILES_OUTPUT_DIR]$DEBUG_FILES_OUTPUT_DIR"
-	echo "##vso[task.setvariable variable=DEBUG_FILES_NAME]$DEBUG_FILES_NAME"
-	# make environment variables available in Github Actions workflow configuration
-  echo "::set-output name=debug-files-output-dir::${DEBUG_FILES_OUTPUT_DIR}"
-  echo "::set-output name=debug-files-name::${DEBUG_FILES_NAME}"
-	mkdir -p $DEBUG_FILES_OUTPUT_DIR || { echo "FAILURE: cannot create debug files directory '${DEBUG_FILES_OUTPUT_DIR}'." ; exit 1; }
-}
+#
+# This file contains tooling for validating Flink
+#
+
+HERE="`dirname \"$0\"`"             # relative
+HERE="`( cd \"$HERE\" && pwd )`"    # absolutized and normalized
+if [ -z "$HERE" ] ; then
+    exit 1  # fail
+fi
+CI_DIR="$HERE/../ci"
+
+# source required ci scripts
+source "${CI_DIR}/maven-utils.sh"
+
+echo "Maven version:"
+run_mvn -version
+
+run_mvn ${1}
+

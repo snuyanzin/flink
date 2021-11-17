@@ -17,26 +17,38 @@
 # limitations under the License.
 ################################################################################
 
+while getopts "f:t:" o; do
+    case "${o}" in
+        f)
+            FLINK_ARTIFACT_DIR=${OPTARG};;
+        t)
+            TARGET_FOLDER_PARAMETER="-C ${OPTARG}";;
+        *)
+          # no special treatment of invalid parameters necessary
+          ;;
+    esac
+done
+shift $((OPTIND-1))
 
 if ! [ -e $FLINK_ARTIFACT_DIR ]; then
-    echo "Cached flink dir $FLINK_ARTIFACT_DIR does not exist. Exiting build."
+    echo "Cached flink archive $FLINK_ARTIFACT_DIR does not exist. Exiting build."
     exit 1
 fi
 
-echo "Merging cache"
-cp -RT "$FLINK_ARTIFACT_DIR" "."
+echo "Extracting build artifacts"
+tar -xzf ${FLINK_ARTIFACT_DIR} ${TARGET_FOLDER_PARAMETER}
 
 echo "Adjusting timestamps"
 # adjust timestamps of proto file to avoid re-generation
-find . -type f -name '*.proto' | xargs touch
+find . -type f -name '*.proto' | xargs --no-run-if-empty touch
 # wait a bit for better odds of different timestamps
 sleep 5
 
 # adjust timestamps to prevent recompilation
-find . -type f -name '*.java' | xargs touch
-find . -type f -name '*.scala' | xargs touch
+find . -type f -name '*.java' | xargs --no-run-if-empty touch
+find . -type f -name '*.scala' | xargs --no-run-if-empty touch
 # wait a bit for better odds of different timestamps
 sleep 5
-find . -type f -name '*.class' | xargs touch
-find . -type f -name '*.timestamp' | xargs touch
+find . -type f -name '*.class' | xargs --no-run-if-empty touch
+find . -type f -name '*.timestamp' | xargs --no-run-if-empty touch
 
