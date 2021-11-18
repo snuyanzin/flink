@@ -280,7 +280,8 @@ public class CliClient implements AutoCloseable {
         return getAndExecuteStatements(lineReader, mode, null);
     }
 
-    private boolean getAndExecuteStatements(LineReader lineReader, ExecutionMode mode, PromptHandler promptHandler) {
+    private boolean getAndExecuteStatements(
+            LineReader lineReader, ExecutionMode mode, PromptHandler promptHandler) {
         // begin reading loop
         boolean exitOnFailure = !mode.equals(ExecutionMode.INTERACTIVE_EXECUTION);
         isRunning = true;
@@ -292,11 +293,12 @@ public class CliClient implements AutoCloseable {
             Optional<Operation> parsedOperation = Optional.empty();
             try {
                 // read a statement from terminal and parse it
-                String line = lineReader.readLine(
-                        promptHandler == null ? prompt : promptHandler.getPrompt(),
-                        promptHandler == null ? prompt : promptHandler.getRightPrompt(),
-                        inputTransformer,
-                        null);
+                String line =
+                        lineReader.readLine(
+                                promptHandler == null ? prompt : promptHandler.getPrompt(),
+                                promptHandler == null ? prompt : promptHandler.getRightPrompt(),
+                                inputTransformer,
+                                null);
                 if (line.trim().isEmpty()) {
                     continue;
                 }
@@ -565,7 +567,7 @@ public class CliClient implements AutoCloseable {
 
         if (resultDesc.isTableauMode()) {
             try (CliTableauResultView tableauResultView =
-                         new CliTableauResultView(terminal, executor, sessionId, resultDesc)) {
+                    new CliTableauResultView(terminal, executor, sessionId, resultDesc)) {
                 tableauResultView.displayResults();
             }
         } else {
