@@ -66,7 +66,7 @@ public class SqlClientOptions {
                                                     AttributedStyle.GREEN))
                                     .append("Flink SQL")
                                     .style(AttributedStyle.DEFAULT)
-                                    .append(">")
+                                    .append("> ")
                                     .toAnsi())
                     .withDescription(
                             "Determine what pattern will be used for prompt at the start of the line.");
