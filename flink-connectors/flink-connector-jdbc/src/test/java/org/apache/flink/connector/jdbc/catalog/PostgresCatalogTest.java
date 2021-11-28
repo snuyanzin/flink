@@ -20,13 +20,19 @@ package org.apache.flink.connector.jdbc.catalog;
 
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.catalog.CatalogBaseTable;
+import org.apache.flink.table.catalog.CatalogDatabaseImpl;
 import org.apache.flink.table.catalog.ObjectPath;
+import org.apache.flink.table.catalog.exceptions.DatabaseAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.DatabaseNotExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 
+import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -36,6 +42,7 @@ import static org.junit.Assert.assertTrue;
 /** Test for {@link PostgresCatalog}. */
 public class PostgresCatalogTest extends PostgresCatalogTestBase {
 
+    @Rule public ExpectedException exceptionRule = ExpectedException.none();
     // ------ databases ------
 
     @Test
@@ -57,6 +64,25 @@ public class PostgresCatalogTest extends PostgresCatalogTestBase {
         assertFalse(catalog.databaseExists("nonexistent"));
 
         assertTrue(catalog.databaseExists(PostgresCatalog.DEFAULT_DATABASE));
+    }
+
+    @Test
+    public void createDb() throws Exception {
+        String dbName = "db4pgtest";
+        assertFalse(catalog.databaseExists(dbName));
+        catalog.createDatabase(
+                dbName, new CatalogDatabaseImpl(Collections.emptyMap(), null), false);
+        assertTrue(catalog.databaseExists(dbName));
+        Assert.assertThrows(
+                String.format("Database %s exists in Catalog %s.", dbName, catalog.getName()),
+                DatabaseAlreadyExistException.class,
+                () ->
+                        catalog.createDatabase(
+                                dbName,
+                                new CatalogDatabaseImpl(Collections.emptyMap(), null),
+                                false));
+        catalog.dropDatabase(dbName, false);
+        assertFalse(catalog.databaseExists(dbName));
     }
 
     // ------ tables ------
@@ -174,5 +200,12 @@ public class PostgresCatalogTest extends PostgresCatalogTestBase {
                         new ObjectPath(PostgresCatalog.DEFAULT_DATABASE, TABLE_SERIAL_TYPE));
 
         assertEquals(getSerialTable().schema, table.getUnresolvedSchema());
+    }
+
+    @Test
+    public void testDatabaseExists() {
+        assertTrue(catalog.databaseExists(PostgresCatalog.DEFAULT_DATABASE));
+        assertTrue(catalog.databaseExists(TEST_DB));
+        assertFalse(catalog.databaseExists("_non_existing_db_"));
     }
 }

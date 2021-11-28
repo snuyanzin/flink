@@ -21,13 +21,15 @@ package org.apache.flink.connector.jdbc.catalog;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.constraints.UniqueConstraint;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.CatalogDatabase;
 import org.apache.flink.table.catalog.CatalogDatabaseImpl;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.ObjectPath;
+import org.apache.flink.table.catalog.UniqueConstraint;
 import org.apache.flink.table.catalog.exceptions.CatalogException;
+import org.apache.flink.table.catalog.exceptions.DatabaseAlreadyExistException;
+import org.apache.flink.table.catalog.exceptions.DatabaseNotEmptyException;
 import org.apache.flink.table.catalog.exceptions.DatabaseNotExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.types.DataType;
@@ -36,6 +38,7 @@ import org.apache.flink.table.types.logical.DecimalType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -43,6 +46,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,6 +55,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.PASSWORD;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.TABLE_NAME;
@@ -105,15 +111,15 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
 
         try (Connection conn = DriverManager.getConnection(defaultUrl, username, pwd)) {
 
-            PreparedStatement ps = conn.prepareStatement("SELECT datname FROM pg_database;");
-
+            PreparedStatement ps =
+                    conn.prepareStatement(
+                            "SELECT datname FROM pg_database WHERE NOT(datname = ANY(?));");
+            Array array = ps.getConnection().createArrayOf("varchar", builtinDatabases.toArray());
+            ps.setArray(1, array);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                String dbName = rs.getString(1);
-                if (!builtinDatabases.contains(dbName)) {
-                    pgDatabases.add(rs.getString(1));
-                }
+                pgDatabases.add(rs.getString(1));
             }
 
             return pgDatabases;
@@ -133,6 +139,41 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
         }
     }
 
+    @Override
+    public void createDatabase(String name, CatalogDatabase database, boolean ignoreIfExists)
+            throws DatabaseAlreadyExistException, CatalogException {
+        if (databaseExists(name)) {
+            if (!ignoreIfExists) {
+                throw new DatabaseAlreadyExistException(getName(), name);
+            }
+        } else {
+            try (Connection conn = DriverManager.getConnection(baseUrl, username, pwd)) {
+                Statement st = conn.createStatement();
+                st.execute("CREATE DATABASE " + name + ";");
+            } catch (Exception e) {
+                throw new CatalogException(
+                        String.format("Failed listing database in catalog %s", getName()), e);
+            }
+        }
+    }
+
+    @Override
+    public void dropDatabase(String name, boolean ignoreIfNotExists, boolean cascade)
+            throws DatabaseNotExistException, DatabaseNotEmptyException, CatalogException {
+        if (!databaseExists(name)) {
+            if (!ignoreIfNotExists) {
+                throw new DatabaseNotExistException(getName(), name);
+            }
+        } else {
+            try (Connection conn = DriverManager.getConnection(baseUrl, username, pwd)) {
+                Statement st = conn.createStatement();
+                st.execute("DROP DATABASE " + name + ";");
+            } catch (Exception e) {
+                throw new CatalogException(
+                        String.format("Failed listing database in catalog %s", getName()), e);
+            }
+        }
+    }
     // ------ tables ------
 
     @Override
@@ -142,42 +183,23 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
             throw new DatabaseNotExistException(getName(), databaseName);
         }
 
-        // get all schemas
         try (Connection conn = DriverManager.getConnection(baseUrl + databaseName, username, pwd)) {
             PreparedStatement ps =
-                    conn.prepareStatement("SELECT schema_name FROM information_schema.schemata;");
-
+                    conn.prepareStatement(
+                            "SELECT schemata.schema_name, tables.table_name "
+                                    + "  FROM information_schema.schemata,"
+                                    + "       information_schema.tables "
+                                    + " WHERE NOT(schema_name = ANY(?)) "
+                                    + "   AND schemata.schema_name = tables.table_schema "
+                                    // TODO: should be only base table?
+                                    + "   AND tables.table_type in ('BASE TABLE') "
+                                    + " ORDER BY schemata.schema_name, tables.table_name;");
+            Array array = ps.getConnection().createArrayOf("varchar", builtinSchemas.toArray());
+            ps.setArray(1, array);
             ResultSet rs = ps.executeQuery();
-
-            List<String> schemas = new ArrayList<>();
-
-            while (rs.next()) {
-                String pgSchema = rs.getString(1);
-                if (!builtinSchemas.contains(pgSchema)) {
-                    schemas.add(pgSchema);
-                }
-            }
-
             List<String> tables = new ArrayList<>();
-
-            for (String schema : schemas) {
-                PreparedStatement stmt =
-                        conn.prepareStatement(
-                                "SELECT * \n"
-                                        + "FROM information_schema.tables \n"
-                                        + "WHERE table_type = 'BASE TABLE' \n"
-                                        + "    AND table_schema = ? \n"
-                                        + "ORDER BY table_type, table_name;");
-
-                stmt.setString(1, schema);
-
-                ResultSet rstables = stmt.executeQuery();
-
-                while (rstables.next()) {
-                    // position 1 is database name, position 2 is schema name, position 3 is table
-                    // name
-                    tables.add(schema + "." + rstables.getString(3));
-                }
+            while (rs.next()) {
+                tables.add(rs.getString(1) + "." + rs.getString(2));
             }
 
             return tables;
@@ -382,5 +404,22 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
 
         return tables.contains(
                 PostgresTablePath.fromFlinkTableName(tablePath.getObjectName()).getFullPath());
+    }
+
+    private <T> T doInsideConnection(
+            Function<Connection, T> function,
+            Supplier<? extends RuntimeException> exceptionSupplier,
+            String url) {
+        try (Connection conn = DriverManager.getConnection(url, username, pwd)) {
+            return function.apply(conn);
+        } catch (Exception e) {
+            throw exceptionSupplier.get();
+        }
+    }
+
+    private <T> T doInsideConnection(
+            Function<Connection, T> function,
+            Supplier<? extends RuntimeException> exceptionSupplier) {
+        return doInsideConnection(function, exceptionSupplier, baseUrl);
     }
 }
