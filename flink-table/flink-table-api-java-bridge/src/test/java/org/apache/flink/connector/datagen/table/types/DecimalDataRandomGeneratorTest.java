@@ -35,7 +35,7 @@ class DecimalDataRandomGeneratorTest {
             for (int scale = 0; scale <= precision; scale++) {
                 DecimalDataRandomGenerator gen =
                         new DecimalDataRandomGenerator(
-                                precision, scale, Double.MIN_VALUE, Double.MAX_VALUE);
+                                precision, scale, Double.MIN_VALUE, Double.MAX_VALUE, 0);
 
                 DecimalData value = gen.next();
                 assertThat(value)
@@ -96,7 +96,7 @@ class DecimalDataRandomGeneratorTest {
 
                 DecimalDataRandomGenerator gen =
                         new DecimalDataRandomGenerator(
-                                precision, scale, min.doubleValue(), max.doubleValue());
+                                precision, scale, min.doubleValue(), max.doubleValue(), 0);
                 DecimalData result = gen.next();
 
                 assertThat(result)
