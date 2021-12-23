@@ -20,13 +20,18 @@ package org.apache.flink.table.client.cli;
 
 import org.jline.utils.AttributedStyle;
 
-/** test. */
+/** Highlight style. */
 public class SyntaxHighlightStyle {
 
-    /** test. */
+    /** Built-in styles. */
     public enum BuiltInStyle {
         DEFAULT(null, null, null, null, null, null, null, null),
         DARK(BOLD_BLUE, WHITE, ITALIC_GREEN, ITALIC_GREEN, BOLD_GREEN, YELLOW, RED, MAGENTA),
+        DRACULA(BOLD_MAGENTA, WHITE, ITALIC_CYAN, ITALIC_CYAN, BOLD_CYAN, YELLOW, GREEN, RED),
+        SOLARIZED(BOLD_YELLOW, BLUE, ITALIC_BRIGHT, ITALIC_BRIGHT, BOLD_BRIGHT, CYAN, GREEN, RED),
+        VS2010(BOLD_BLUE, WHITE, ITALIC_GREEN, ITALIC_GREEN, BOLD_GREEN, BRIGHT, RED, MAGENTA),
+        OBSIDIAN(
+                BOLD_GREEN, WHITE, ITALIC_BRIGHT, ITALIC_BRIGHT, BOLD_BRIGHT, YELLOW, RED, MAGENTA),
         LIGHT(BOLD_RED, WHITE, ITALIC_CYAN, ITALIC_CYAN, BOLD_CYAN, YELLOW, GREEN, MAGENTA);
         private final SyntaxHighlightStyle style;
 

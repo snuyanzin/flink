@@ -98,6 +98,11 @@ public class SqlMultiLineParser extends DefaultParser {
                         case SINGLE_QUOTE:
                         case SQL_IDENTIFIER:
                         case HINT_START:
+                            handleWord(words, currentWord, state, i);
+                            if (rawWordCursor >= 0 && rawWordLength < 0) {
+                                rawWordLength = i - rawWordStart;
+                            }
+                            rawWordStart = i + 1;
                             state[i] = tokenType.nextState(state[i]);
                             state[i + 1] = state[i];
                             currentWord.append(c);
@@ -145,6 +150,13 @@ public class SqlMultiLineParser extends DefaultParser {
                 case SQL_IDENTIFIER_QUOTED:
                     state[i + 1] = tokenType.nextState(state[i]);
                     currentWord.append(c);
+                    if (state[i + 1] == State.DEFAULT) {
+                        handleWord(words, currentWord, state, i);
+                        if (rawWordCursor >= 0 && rawWordLength < 0) {
+                            rawWordLength = i - rawWordStart;
+                        }
+                        rawWordStart = i + 1;
+                    }
                     break;
 
                 case HINT:
@@ -389,8 +401,28 @@ public class SqlMultiLineParser extends DefaultParser {
             return;
         }
         String word = currentWord.toString();
-        if (SqlAbstractParserImpl.getSql92ReservedWords().contains(word.toUpperCase(Locale.ROOT))) {
-            Arrays.fill(states, pos - word.length(), pos, State.KEYWORD);
+        int start = 0;
+        if (pos > 0 && states[pos - 1] == State.DEFAULT) {
+            while (start < word.length()) {
+                while (start < word.length() && !Character.isLetter(word.charAt(start))) {
+                    start++;
+                }
+                int end = start;
+                while (end < word.length()
+                        && (Character.isLetter(word.charAt(end)) || word.charAt(end) == '_')) {
+                    end++;
+                }
+                String keyWord = end == start ? "" : word.substring(start, end);
+                if (SqlAbstractParserImpl.getSql92ReservedWords()
+                        .contains(keyWord.toUpperCase(Locale.ROOT))) {
+                    Arrays.fill(
+                            states,
+                            pos + start - word.length(),
+                            pos + start - word.length() + keyWord.length(),
+                            State.KEYWORD);
+                }
+                start = end;
+            }
         }
         words.add(word);
         currentWord.setLength(0);
