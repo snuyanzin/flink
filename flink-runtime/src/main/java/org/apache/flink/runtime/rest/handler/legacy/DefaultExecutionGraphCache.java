@@ -95,7 +95,7 @@ public class DefaultExecutionGraphCache implements ExecutionGraphCache {
             } else {
                 successfulUpdate = cachedExecutionGraphs.replace(jobId, oldEntry, newEntry);
                 // cancel potentially outstanding futures
-                oldEntry.getExecutionGraphInfoFuture().cancel(false);
+                // oldEntry.getExecutionGraphInfoFuture().cancel(false);
             }
 
             if (successfulUpdate) {
