@@ -24,6 +24,7 @@ package org.apache.flink.util;
  * as well as to provide a central file to use as a key when caching testing Docker files.
  */
 public class DockerImageVersions {
+    public static final String OPENSEARCH_1 = "opensearchproject/opensearch:1.2.4";
 
     public static final String ELASTICSEARCH_7 =
             "docker.elastic.co/elasticsearch/elasticsearch:7.15.2";
