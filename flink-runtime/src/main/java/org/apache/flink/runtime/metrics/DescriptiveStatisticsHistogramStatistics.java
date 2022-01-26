@@ -155,7 +155,7 @@ public class DescriptiveStatisticsHistogramStatistics extends HistogramStatistic
         }
 
         double getPercentile(double p) {
-            return percentilesImpl.evaluate(p);
+            return percentilesImpl.getData() == null ? Double.NaN : percentilesImpl.evaluate(p);
         }
 
         double[] getValues() {
