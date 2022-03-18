@@ -20,6 +20,7 @@ package org.apache.flink.table.planner.functions;
 
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
+import org.apache.flink.util.CollectionUtil;
 
 import org.junit.runners.Parameterized;
 
@@ -27,12 +28,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.apache.flink.table.api.DataTypes.BIGINT;
 import static org.apache.flink.table.api.DataTypes.BOOLEAN;
@@ -46,6 +44,7 @@ import static org.apache.flink.table.api.DataTypes.TIME;
 import static org.apache.flink.table.api.DataTypes.TIMESTAMP;
 import static org.apache.flink.table.api.Expressions.$;
 import static org.apache.flink.table.api.Expressions.map;
+import static org.apache.flink.util.CollectionUtil.entry;
 
 /** Test {@link BuiltInFunctionDefinitions#MAP} and its return type. */
 public class MapFunctionITCase extends BuiltInFunctionTestBase {
@@ -98,7 +97,8 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                                 $("f2").minus($("f1")),
                                                 $("f3").minus($("f0"))),
                                         "MAP[f0 + f1, f2 * f2, f2 - f1, f3 - f0]",
-                                        mapOf(entry(1 + 2, 3 * 3), entry(3 - 2, 4 - 1)),
+                                        CollectionUtil.map(
+                                                entry(1 + 2, 3 * 3), entry(3 - 2, 4 - 1)),
                                         DataTypes.MAP(INT().notNull(), INT().notNull()).notNull()),
                                 resultSpec(
                                         map(
@@ -107,7 +107,7 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                                 $("f2"),
                                                 $("f3").cast(BIGINT().notNull())),
                                         "MAP[f0, CAST(f1 AS BIGINT), f2, CAST(f3 AS BIGINT)]",
-                                        mapOf(entry(1, 2L), entry(3, 4L)),
+                                        CollectionUtil.map(entry(1, 2L), entry(3, 4L)),
                                         DataTypes.MAP(INT().notNull(), BIGINT().notNull())
                                                 .notNull()),
                                 resultSpec(
@@ -123,7 +123,7 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                                 $("f2"),
                                                 $("f3").cast(FLOAT().notNull())),
                                         "MAP[f0, CAST(f1 AS DOUBLE), f2, CAST(f3 AS FLOAT)]",
-                                        mapOf(entry(1, 2d), entry(3, 4.0)),
+                                        CollectionUtil.map(entry(1, 2d), entry(3, 4.0)),
                                         DataTypes.MAP(INT().notNull(), DOUBLE().notNull())
                                                 .notNull()),
                                 resultSpec(
@@ -170,7 +170,7 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                 resultSpec(
                                         map($("f0"), $("f2"), $("f1"), $("f3")),
                                         "MAP[f0, f2, f1, f3]",
-                                        mapOf(
+                                        CollectionUtil.map(
                                                 entry(TEST_DATE_1, TEST_TIME_1),
                                                 entry(TEST_DATE_2, TEST_TIME_2)),
                                         DataTypes.MAP(DATE().notNull(), TIME().notNull())
@@ -178,26 +178,10 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                 resultSpec(
                                         map($("f2"), $("f4"), $("f3"), $("f5")),
                                         "MAP[f2, f4, f3, f5]",
-                                        mapOf(
+                                        CollectionUtil.map(
                                                 entry(TEST_TIME_1, TEST_DATE_TIME_1),
                                                 entry(TEST_TIME_2, TEST_DATE_TIME_2)),
                                         DataTypes.MAP(TIME().notNull(), TIMESTAMP().notNull())
                                                 .notNull())));
-    }
-
-    @SafeVarargs
-    private static <K, V> Map<K, V> mapOf(Map.Entry<K, V>... entries) {
-        if (entries == null) {
-            return Collections.emptyMap();
-        }
-        Map<K, V> map = new HashMap<>();
-        for (Map.Entry<K, V> entry : entries) {
-            map.put(entry.getKey(), entry.getValue());
-        }
-        return map;
-    }
-
-    private static <K, V> Map.Entry<K, V> entry(K k, V v) {
-        return new AbstractMap.SimpleImmutableEntry<>(k, v);
     }
 }
