@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.Period;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +40,10 @@ import static org.apache.flink.table.api.DataTypes.DECIMAL;
 import static org.apache.flink.table.api.DataTypes.DOUBLE;
 import static org.apache.flink.table.api.DataTypes.FLOAT;
 import static org.apache.flink.table.api.DataTypes.INT;
+import static org.apache.flink.table.api.DataTypes.INTERVAL;
 import static org.apache.flink.table.api.DataTypes.MAP;
+import static org.apache.flink.table.api.DataTypes.MONTH;
+import static org.apache.flink.table.api.DataTypes.STRING;
 import static org.apache.flink.table.api.DataTypes.TIME;
 import static org.apache.flink.table.api.DataTypes.TIMESTAMP;
 import static org.apache.flink.table.api.Expressions.$;
@@ -54,6 +58,10 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
     private static final LocalTime TEST_TIME_2 = LocalTime.of(14, 15, 16);
     private static final LocalDateTime TEST_DATE_TIME_1 = LocalDateTime.of(1985, 11, 4, 17, 18, 19);
     private static final LocalDateTime TEST_DATE_TIME_2 = LocalDateTime.of(2018, 7, 26, 14, 15, 16);
+    private static final String A = "a";
+    private static final String B = "b";
+    private static final int INTERVAL_1 = -123;
+    private static final Integer INTERVAL_NULL = null;
 
     @Parameterized.Parameters(name = "{index}: {0}")
     public static List<TestSpec> testData() {
@@ -182,6 +190,24 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                                 entry(TEST_TIME_1, TEST_DATE_TIME_1),
                                                 entry(TEST_TIME_2, TEST_DATE_TIME_2)),
                                         DataTypes.MAP(TIME().notNull(), TIMESTAMP().notNull())
+                                                .notNull())),
+                TestSpec.forFunction(BuiltInFunctionDefinitions.MAP)
+                        .onFieldsWithData(A, B, INTERVAL_1, INTERVAL_NULL)
+                        .andDataTypes(
+                                STRING().notNull(),
+                                STRING().notNull(),
+                                INTERVAL(MONTH()),
+                                INTERVAL(MONTH()).nullable())
+                        .testResult(
+                                resultSpec(
+                                        map($("f0"), $("f2"), $("f1"), $("f3")),
+                                        "MAP[f0, f2, f1, f3]",
+                                        CollectionUtil.map(
+                                                entry(A, Period.ofMonths(INTERVAL_1)),
+                                                entry(B, INTERVAL_NULL)),
+                                        DataTypes.MAP(
+                                                        STRING().notNull(),
+                                                        INTERVAL(MONTH()).nullable())
                                                 .notNull())));
     }
 }
