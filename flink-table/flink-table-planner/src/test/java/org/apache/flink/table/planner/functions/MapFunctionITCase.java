@@ -22,16 +22,13 @@ import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.util.CollectionUtil;
 
-import org.junit.runners.Parameterized;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Period;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.stream.Stream;
 
 import static org.apache.flink.table.api.DataTypes.BIGINT;
 import static org.apache.flink.table.api.DataTypes.BOOLEAN;
@@ -63,10 +60,10 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
     private static final int INTERVAL_1 = -123;
     private static final Integer INTERVAL_NULL = null;
 
-    @Parameterized.Parameters(name = "{index}: {0}")
-    public static List<TestSpec> testData() {
-        return Arrays.asList(
-                TestSpec.forFunction(BuiltInFunctionDefinitions.MAP)
+    @Override
+    Stream<TestSetSpec> getTestSetSpecs() {
+        return Stream.of(
+                TestSetSpec.forFunction(BuiltInFunctionDefinitions.MAP)
                         .onFieldsWithData(
                                 1,
                                 2,
@@ -159,7 +156,7 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                                                         DataTypes.INT().notNull())
                                                                 .notNull())
                                                 .notNull())),
-                TestSpec.forFunction(BuiltInFunctionDefinitions.MAP)
+                TestSetSpec.forFunction(BuiltInFunctionDefinitions.MAP)
                         .onFieldsWithData(
                                 TEST_DATE_1,
                                 TEST_DATE_2,
@@ -191,7 +188,7 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                                                 entry(TEST_TIME_2, TEST_DATE_TIME_2)),
                                         DataTypes.MAP(TIME().notNull(), TIMESTAMP().notNull())
                                                 .notNull())),
-                TestSpec.forFunction(BuiltInFunctionDefinitions.MAP)
+                TestSetSpec.forFunction(BuiltInFunctionDefinitions.MAP)
                         .onFieldsWithData(A, B, INTERVAL_1, INTERVAL_NULL)
                         .andDataTypes(
                                 STRING().notNull(),
