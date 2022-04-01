@@ -91,7 +91,10 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
                 final Object[] array = (Object[]) Array.newInstance(elementClass, in.length);
                 for (int i = 0; i < in.length; i++) {
                     array[i] =
-                            elementConverter.deserialize(((PGobject) in[i]).getValue().getBytes());
+                            elementConverter.deserialize(
+                                    in[i] instanceof byte[]
+                                            ? in[i]
+                                            : ((PGobject) in[i]).getValue().getBytes());
                 }
                 return new GenericArrayData(array);
             };
