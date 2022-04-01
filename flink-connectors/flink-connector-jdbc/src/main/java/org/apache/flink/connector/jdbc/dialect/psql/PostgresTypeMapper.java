@@ -49,6 +49,8 @@ public class PostgresTypeMapper implements JdbcDialectTypeMapper {
     // float <=> float8
     // boolean <=> bool
     // decimal <=> numeric
+    private static final String PG_SMALLSERIAL = "smallserial";
+    private static final String PG_SMALLSERIAL_ARRAY = "_smallserial";
     private static final String PG_SERIAL = "serial";
     private static final String PG_BIGSERIAL = "bigserial";
     private static final String PG_BYTEA = "bytea";
@@ -102,7 +104,9 @@ public class PostgresTypeMapper implements JdbcDialectTypeMapper {
             case PG_BYTEA_ARRAY:
                 return DataTypes.ARRAY(DataTypes.BYTES());
             case PG_SMALLINT:
+            case PG_SMALLSERIAL:
                 return DataTypes.SMALLINT();
+            case PG_SMALLSERIAL_ARRAY:
             case PG_SMALLINT_ARRAY:
                 return DataTypes.ARRAY(DataTypes.SMALLINT());
             case PG_INTEGER:
