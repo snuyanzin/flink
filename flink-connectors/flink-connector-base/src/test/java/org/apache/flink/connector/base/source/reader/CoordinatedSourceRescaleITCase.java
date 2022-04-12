@@ -32,13 +32,11 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.util.TestLogger;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.annotation.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,23 +53,19 @@ public class CoordinatedSourceRescaleITCase extends TestLogger {
     public static final String CREATED_CHECKPOINT = "successfully created checkpoint";
     public static final String RESTORED_CHECKPOINT = "successfully restored checkpoint";
 
-    @Rule public final TemporaryFolder temp = new TemporaryFolder();
-
     @Test
-    public void testDownscaling() throws Exception {
-        final File checkpointDir = temp.newFolder();
-        final File lastCheckpoint = generateCheckpoint(checkpointDir, 7);
-        resumeCheckpoint(checkpointDir, lastCheckpoint, 3);
+    public void testDownscaling(@TempDir Path temp) throws Exception {
+        final Path lastCheckpoint = generateCheckpoint(temp, 7);
+        resumeCheckpoint(temp, lastCheckpoint, 3);
     }
 
     @Test
-    public void testUpscaling() throws Exception {
-        final File checkpointDir = temp.newFolder();
-        final File lastCheckpoint = generateCheckpoint(checkpointDir, 3);
-        resumeCheckpoint(checkpointDir, lastCheckpoint, 7);
+    public void testUpscaling(@TempDir Path temp) throws Exception {
+        final Path lastCheckpoint = generateCheckpoint(temp, 3);
+        resumeCheckpoint(temp, lastCheckpoint, 7);
     }
 
-    private File generateCheckpoint(File checkpointDir, int p) throws IOException {
+    private Path generateCheckpoint(Path checkpointDir, int p) throws IOException {
         final StreamExecutionEnvironment env = createEnv(checkpointDir, null, p);
 
         try {
@@ -79,9 +73,8 @@ public class CoordinatedSourceRescaleITCase extends TestLogger {
             throw new AssertionError("No checkpoint");
         } catch (Exception e) {
             assertThat(e, FlinkMatchers.containsMessage(CREATED_CHECKPOINT));
-            return Files.find(checkpointDir.toPath(), 2, this::isCompletedCheckpoint)
+            return Files.find(checkpointDir, 2, this::isCompletedCheckpoint)
                     .max(Comparator.comparing(Path::toString))
-                    .map(Path::toFile)
                     .orElseThrow(() -> new IllegalStateException("Cannot generate checkpoint", e));
         }
     }
@@ -92,7 +85,7 @@ public class CoordinatedSourceRescaleITCase extends TestLogger {
                 && Files.exists(path.resolve(METADATA_FILE_NAME));
     }
 
-    private void resumeCheckpoint(File checkpointDir, File restoreCheckpoint, int p) {
+    private void resumeCheckpoint(Path checkpointDir, Path restoreCheckpoint, int p) {
         final StreamExecutionEnvironment env = createEnv(checkpointDir, restoreCheckpoint, p);
 
         try {
@@ -104,13 +97,16 @@ public class CoordinatedSourceRescaleITCase extends TestLogger {
     }
 
     private StreamExecutionEnvironment createEnv(
-            File checkpointDir, @Nullable File restoreCheckpoint, int p) {
+            Path checkpointDir, @Nullable Path restoreCheckpoint, int p) {
         Configuration conf = new Configuration();
         conf.setString(
-                CheckpointingOptions.CHECKPOINTS_DIRECTORY, checkpointDir.toURI().toString());
+                CheckpointingOptions.CHECKPOINTS_DIRECTORY,
+                checkpointDir.toFile().toURI().toString());
         conf.set(TaskManagerOptions.MEMORY_SEGMENT_SIZE, MemorySize.parse("4kb"));
         if (restoreCheckpoint != null) {
-            conf.set(SavepointConfigOptions.SAVEPOINT_PATH, restoreCheckpoint.toURI().toString());
+            conf.set(
+                    SavepointConfigOptions.SAVEPOINT_PATH,
+                    restoreCheckpoint.toFile().toURI().toString());
         }
         conf.setInteger(TaskManagerOptions.NUM_TASK_SLOTS, p);
 

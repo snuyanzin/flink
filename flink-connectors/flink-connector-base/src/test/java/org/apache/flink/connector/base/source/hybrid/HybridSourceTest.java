@@ -25,13 +25,12 @@ import org.apache.flink.api.connector.source.mocks.MockSourceSplit;
 import org.apache.flink.connector.base.source.reader.mocks.MockBaseSource;
 import org.apache.flink.connector.base.source.reader.mocks.MockSplitEnumerator;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /** Tests for {@link HybridSource}. */
 public class HybridSourceTest {
@@ -44,13 +43,13 @@ public class HybridSourceTest {
                 HybridSource.builder(new MockBaseSource(1, 1, Boundedness.BOUNDED))
                         .addSource(new MockBaseSource(1, 1, Boundedness.BOUNDED))
                         .build();
-        assertEquals(Boundedness.BOUNDED, source.getBoundedness());
+        assertThat(Boundedness.BOUNDED).isEqualTo(source.getBoundedness());
 
         source =
                 HybridSource.builder(new MockBaseSource(1, 1, Boundedness.BOUNDED))
                         .addSource(new MockBaseSource(1, 1, Boundedness.CONTINUOUS_UNBOUNDED))
                         .build();
-        assertEquals(Boundedness.CONTINUOUS_UNBOUNDED, source.getBoundedness());
+        assertThat(Boundedness.CONTINUOUS_UNBOUNDED).isEqualTo(source.getBoundedness());
 
         try {
             HybridSource.builder(new MockBaseSource(1, 1, Boundedness.CONTINUOUS_UNBOUNDED))
@@ -82,7 +81,7 @@ public class HybridSourceTest {
                                 new MockBaseSource(1, 1, Boundedness.BOUNDED))
                         .addSource(sourceFactory, Boundedness.BOUNDED)
                         .build();
-        assertNotNull(source);
+        assertThat(source).isNotNull();
     }
 
     private static class ExtendedMockSplitEnumerator extends MockSplitEnumerator {
@@ -110,6 +109,6 @@ public class HybridSourceTest {
                                 new MockBaseSource(1, 1, Boundedness.BOUNDED))
                         .addSource(sourceFactory, Boundedness.BOUNDED)
                         .build();
-        assertNotNull(source);
+        assertThat(source).isNotNull();
     }
 }

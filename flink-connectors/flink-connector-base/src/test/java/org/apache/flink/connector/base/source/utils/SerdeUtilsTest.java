@@ -21,7 +21,7 @@ package org.apache.flink.connector.base.source.utils;
 import org.apache.flink.connector.base.source.reader.mocks.TestingSourceSplit;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

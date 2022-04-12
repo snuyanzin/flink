@@ -18,7 +18,7 @@
 
 package org.apache.flink.connector.base.sink.writer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
