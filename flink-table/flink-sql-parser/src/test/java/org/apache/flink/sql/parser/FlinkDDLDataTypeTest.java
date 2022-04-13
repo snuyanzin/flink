@@ -52,8 +52,9 @@ import org.apache.calcite.test.MockSqlOperatorTable;
 import org.apache.calcite.test.catalog.MockCatalogReaderSimple;
 import org.apache.calcite.util.SourceStringReader;
 import org.apache.calcite.util.Util;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runners.Parameterized;
 
 import javax.annotation.Nullable;
@@ -61,21 +62,20 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.of;
 
 /** Tests for all the supported Flink DDL data types. */
-@RunWith(Parameterized.class)
 public class FlinkDDLDataTypeTest {
     private static final Fixture FIXTURE = new Fixture(TestFactory.INSTANCE.getTypeFactory());
     private static final String DDL_FORMAT =
             "create table t1 (\n" + "  f0 %s\n" + ") with (\n" + "  'k1' = 'v1'\n" + ")";
 
-    @Parameterized.Parameters(name = "{index}: {0}")
-    public static List<TestItem> testData() {
-        return Arrays.asList(
+    public static Stream<Arguments> testData() {
+        return Stream.of(
                 createTestItem("CHAR", nullable(FIXTURE.char1Type), "CHAR"),
                 createTestItem("CHAR NOT NULL", FIXTURE.char1Type, "CHAR NOT NULL"),
                 createTestItem("CHAR   NOT \t\nNULL", FIXTURE.char1Type, "CHAR NOT NULL"),
@@ -322,7 +322,7 @@ public class FlinkDDLDataTypeTest {
                                 + ".*"));
     }
 
-    private static TestItem createTestItem(Object... args) {
+    private static Arguments createTestItem(Object... args) {
         assertThat(args.length).isGreaterThanOrEqualTo(2);
         final String testExpr = (String) args[0];
         TestItem testItem = TestItem.fromTestExpr(testExpr);
@@ -334,27 +334,30 @@ public class FlinkDDLDataTypeTest {
         if (args.length == 3) {
             testItem.withExpectedUnparsed((String) args[2]);
         }
-        return testItem;
+        return of(testItem);
     }
 
     @Parameterized.Parameter public TestItem testItem;
 
-    @Test
-    public void testDataTypeParsing() {
+    @ParameterizedTest
+    @MethodSource("testData")
+    public void testDataTypeParsing(TestItem testItem) {
         if (testItem.expectedType != null) {
             checkType(testItem.testExpr, testItem.expectedType);
         }
     }
 
-    @Test
-    public void testThrowsError() {
+    @ParameterizedTest
+    @MethodSource("testData")
+    public void testThrowsError(TestItem testItem) {
         if (testItem.expectedError != null) {
             checkFails(testItem.testExpr, testItem.expectedError);
         }
     }
 
-    @Test
-    public void testDataTypeUnparsing() {
+    @ParameterizedTest
+    @MethodSource("testData")
+    public void testDataTypeUnparsing(TestItem testItem) {
         if (testItem.expectedUnparsed != null) {
             checkUnparseTo(testItem.testExpr, testItem.expectedUnparsed);
         }
