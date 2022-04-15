@@ -24,13 +24,13 @@ import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.testutils.ClassLoaderUtils;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * This test validates that the Kryo-based serializer handles classes with custom class loaders
@@ -46,13 +46,13 @@ public class KryoSerializerClassLoadingTest extends SerializerTestBase<Object> {
 
     private ClassLoader originalClassLoader;
 
-    @Before
+    @BeforeEach
     public void setupClassLoader() {
         originalClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(OUTSIDE_CLASS_LOADING.getClassLoader());
     }
 
-    @After
+    @AfterEach
     public void restoreOriginalClassLoader() {
         Thread.currentThread().setContextClassLoader(originalClassLoader);
     }

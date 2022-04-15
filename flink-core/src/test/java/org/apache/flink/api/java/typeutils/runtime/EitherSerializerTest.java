@@ -33,16 +33,15 @@ import org.apache.flink.types.Either;
 import org.apache.flink.types.LongValue;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static junit.framework.TestCase.assertSame;
 import static org.apache.flink.types.Either.Left;
 import static org.apache.flink.types.Either.Right;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class EitherSerializerTest {
 
@@ -177,12 +176,12 @@ public class EitherSerializerTest {
         Either<LongValue, DoubleValue> copy2 = eitherSerializer.copy(left, copy1);
 
         // validate reference equality
-        assertSame(right, copy1);
-        assertSame(copy0, copy2);
+        assertThat(right).isSameAs(copy1);
+        assertThat(copy0).isSameAs(copy2);
 
         // validate reference equality of contained objects
-        assertSame(right.right(), copy1.right());
-        assertSame(copy0.left(), copy2.left());
+        assertThat(right.right()).isSameAs(copy1.right());
+        assertThat(copy0.left()).isSameAs(copy2.left());
     }
 
     @Test
@@ -214,12 +213,12 @@ public class EitherSerializerTest {
         Either<LongValue, DoubleValue> copy2 = eitherSerializer.deserialize(copy1, in);
 
         // validate reference equality
-        assertSame(right, copy1);
-        assertSame(copy0, copy2);
+        assertThat(right).isSameAs(copy1);
+        assertThat(copy0).isSameAs(copy2);
 
         // validate reference equality of contained objects
-        assertSame(right.right(), copy1.right());
-        assertSame(copy0.left(), copy2.left());
+        assertThat(right.right()).isSameAs(copy1.right());
+        assertThat(copy0.left()).isSameAs(copy2.left());
     }
 
     /**
@@ -227,7 +226,7 @@ public class EitherSerializerTest {
      * that the type of the created instance is the same as the type class parameter. Since we
      * arbitrarily create always create a Left instance we override this test.
      */
-    @Ignore("Prevents this class from being considered a test class by JUnit.")
+    @Disabled("Prevents this class from being considered a test class by JUnit.")
     private class EitherSerializerTestInstance<T> extends SerializerTestInstance<T> {
 
         public EitherSerializerTestInstance(
@@ -242,10 +241,10 @@ public class EitherSerializerTest {
                 TypeSerializer<T> serializer = getSerializer();
 
                 T instance = serializer.createInstance();
-                assertNotNull("The created instance must not be null.", instance);
+                assertThat(instance).as("The created instance must not be null.").isNotNull();
 
                 Class<T> type = getTypeClass();
-                assertNotNull("The test is corrupt: type class is null.", type);
+                assertThat(type).as("The test is corrupt: type class is null.").isNotNull();
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();

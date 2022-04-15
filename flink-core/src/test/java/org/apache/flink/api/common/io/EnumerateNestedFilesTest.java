@@ -25,31 +25,34 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.testutils.TestFileUtils;
 import org.apache.flink.types.IntValue;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class EnumerateNestedFilesTest {
 
-    @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir private java.nio.file.Path tempFolder;
 
     protected Configuration config;
 
     private DummyFileInputFormat format;
 
-    @Before
+    @BeforeEach
     public void setup() {
         this.config = new Configuration();
         format = new DummyFileInputFormat();
     }
 
-    @After
+    @AfterEach
     public void setdown() throws Exception {
         if (this.format != null) {
             this.format.close();
@@ -67,10 +70,10 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             FileInputSplit[] splits = format.createInputSplits(1);
-            Assert.assertEquals(1, splits.length);
+            assertThat(splits.length).isEqualTo(1);
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 
@@ -81,7 +84,10 @@ public class EnumerateNestedFilesTest {
             String firstLevelDir = TestFileUtils.randomFileName();
             String secondLevelDir = TestFileUtils.randomFileName();
 
-            File insideNestedDir = tempFolder.newFolder(firstLevelDir, secondLevelDir);
+            File insideNestedDir =
+                    Files.createDirectories(
+                                    Paths.get(tempFolder.toString(), firstLevelDir, secondLevelDir))
+                            .toFile();
             File nestedDir = insideNestedDir.getParentFile();
 
             // create a file in the first-level and two files in the nested dir
@@ -94,10 +100,10 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             FileInputSplit[] splits = format.createInputSplits(1);
-            Assert.assertEquals(3, splits.length);
+            assertThat(splits.length).isEqualTo(3);
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 
@@ -108,7 +114,10 @@ public class EnumerateNestedFilesTest {
             String firstLevelDir = TestFileUtils.randomFileName();
             String secondLevelDir = TestFileUtils.randomFileName();
 
-            File insideNestedDir = tempFolder.newFolder(firstLevelDir, secondLevelDir);
+            File insideNestedDir =
+                    Files.createDirectories(
+                                    Paths.get(tempFolder.toString(), firstLevelDir, secondLevelDir))
+                            .toFile();
             File nestedDir = insideNestedDir.getParentFile();
 
             // create a file in the first-level and two files in the nested dir
@@ -121,10 +130,10 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             FileInputSplit[] splits = format.createInputSplits(1);
-            Assert.assertEquals(1, splits.length);
+            assertThat(splits).hasSize(1);
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 
@@ -137,7 +146,13 @@ public class EnumerateNestedFilesTest {
             String thirdLevelDir = TestFileUtils.randomFileName();
 
             File nestedNestedDir =
-                    tempFolder.newFolder(firstLevelDir, secondLevelDir, thirdLevelDir);
+                    Files.createDirectories(
+                                    Paths.get(
+                                            tempFolder.toString(),
+                                            firstLevelDir,
+                                            secondLevelDir,
+                                            thirdLevelDir))
+                            .toFile();
             File insideNestedDir = nestedNestedDir.getParentFile();
             File nestedDir = insideNestedDir.getParentFile();
 
@@ -153,10 +168,10 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             FileInputSplit[] splits = format.createInputSplits(1);
-            Assert.assertEquals(4, splits.length);
+            assertThat(splits).hasSize(4);
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 
@@ -169,10 +184,25 @@ public class EnumerateNestedFilesTest {
             String firstNestedNestedDir = TestFileUtils.randomFileName();
             String secondNestedNestedDir = TestFileUtils.randomFileName();
 
-            File testDir = tempFolder.newFolder(rootDir);
-            tempFolder.newFolder(rootDir, nestedDir);
-            File nestedNestedDir1 = tempFolder.newFolder(rootDir, nestedDir, firstNestedNestedDir);
-            File nestedNestedDir2 = tempFolder.newFolder(rootDir, nestedDir, secondNestedNestedDir);
+            File testDir =
+                    Files.createDirectory(Paths.get(tempFolder.toString(), rootDir)).toFile();
+            Files.createDirectory(Paths.get(tempFolder.toString(), rootDir, nestedDir));
+            File nestedNestedDir1 =
+                    Files.createDirectory(
+                                    Paths.get(
+                                            tempFolder.toString(),
+                                            rootDir,
+                                            nestedDir,
+                                            firstNestedNestedDir))
+                            .toFile();
+            File nestedNestedDir2 =
+                    Files.createDirectory(
+                                    Paths.get(
+                                            tempFolder.toString(),
+                                            rootDir,
+                                            nestedDir,
+                                            secondNestedNestedDir))
+                            .toFile();
 
             // create files in second level
             TestFileUtils.createTempFileInDirectory(nestedNestedDir1.getAbsolutePath(), "paella");
@@ -185,10 +215,10 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             FileInputSplit[] splits = format.createInputSplits(1);
-            Assert.assertEquals(4, splits.length);
+            assertThat(splits).hasSize(4);
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 
@@ -203,13 +233,24 @@ public class EnumerateNestedFilesTest {
             String thirdLevelFilterDir = "_" + TestFileUtils.randomFileName();
 
             File nestedNestedDirFiltered =
-                    tempFolder.newFolder(
-                            firstLevelDir, secondLevelDir, thirdLevelDir, thirdLevelFilterDir);
+                    Files.createDirectories(
+                                    Paths.get(
+                                            tempFolder.toString(),
+                                            firstLevelDir,
+                                            secondLevelDir,
+                                            thirdLevelDir,
+                                            thirdLevelFilterDir))
+                            .toFile();
             File nestedNestedDir = nestedNestedDirFiltered.getParentFile();
             File insideNestedDir = nestedNestedDir.getParentFile();
             File nestedDir = insideNestedDir.getParentFile();
             File insideNestedDirFiltered =
-                    tempFolder.newFolder(firstLevelDir, secondLevelFilterDir);
+                    Files.createDirectories(
+                                    Paths.get(
+                                            tempFolder.toString(),
+                                            firstLevelDir,
+                                            secondLevelFilterDir))
+                            .toFile();
             File filteredFile = new File(nestedDir, "_IWillBeFiltered");
             filteredFile.createNewFile();
 
@@ -232,10 +273,10 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             FileInputSplit[] splits = format.createInputSplits(1);
-            Assert.assertEquals(4, splits.length);
+            assertThat(splits).hasSize(4);
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 
@@ -246,7 +287,10 @@ public class EnumerateNestedFilesTest {
             String firstLevelDir = TestFileUtils.randomFileName();
             String secondLevelDir = TestFileUtils.randomFileName();
 
-            File insideNestedDir = tempFolder.newFolder(firstLevelDir, secondLevelDir);
+            File insideNestedDir =
+                    Files.createDirectories(
+                                    Paths.get(tempFolder.toString(), firstLevelDir, secondLevelDir))
+                            .toFile();
             File nestedDir = insideNestedDir.getParentFile();
 
             // create a file in the nested dir
@@ -257,11 +301,12 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             BaseStatistics stats = format.getStatistics(null);
-            Assert.assertEquals(
-                    "The file size from the statistics is wrong.", SIZE, stats.getTotalInputSize());
+            assertThat(stats.getTotalInputSize())
+                    .as("The file size from the statistics is wrong.")
+                    .isEqualTo(SIZE);
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 
@@ -278,8 +323,15 @@ public class EnumerateNestedFilesTest {
             String secondLevelDir = TestFileUtils.randomFileName();
             String secondLevelDir2 = TestFileUtils.randomFileName();
 
-            File insideNestedDir = tempFolder.newFolder(firstLevelDir, secondLevelDir);
-            File insideNestedDir2 = tempFolder.newFolder(firstLevelDir, secondLevelDir2);
+            File insideNestedDir =
+                    Files.createDirectories(
+                                    Paths.get(tempFolder.toString(), firstLevelDir, secondLevelDir))
+                            .toFile();
+            File insideNestedDir2 =
+                    Files.createDirectories(
+                                    Paths.get(
+                                            tempFolder.toString(), firstLevelDir, secondLevelDir2))
+                            .toFile();
             File nestedDir = insideNestedDir.getParentFile();
 
             // create a file in the first-level and two files in the nested dir
@@ -293,25 +345,23 @@ public class EnumerateNestedFilesTest {
             format.configure(this.config);
 
             BaseStatistics stats = format.getStatistics(null);
-            Assert.assertEquals(
-                    "The file size from the statistics is wrong.",
-                    TOTAL,
-                    stats.getTotalInputSize());
+            assertThat(stats.getTotalInputSize())
+                    .as("The file size from the statistics is wrong.")
+                    .isEqualTo(TOTAL);
 
             /* Now invalidate the cache and check again */
             Thread.sleep(1000); // accuracy of file modification times is rather low
             TestFileUtils.createTempFileInDirectory(insideNestedDir.getAbsolutePath(), 42L);
 
             BaseStatistics stats2 = format.getStatistics(stats);
-            Assert.assertNotEquals(stats2, stats);
-            Assert.assertEquals(
-                    "The file size from the statistics is wrong.",
-                    TOTAL + 42L,
-                    stats2.getTotalInputSize());
+            assertThat(stats2).isNotEqualTo(stats);
+            assertThat(stats2.getTotalInputSize())
+                    .as("The file size from the statistics is wrong.")
+                    .isEqualTo(TOTAL + 42L);
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+            fail(ex.getMessage());
         }
     }
 

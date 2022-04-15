@@ -19,8 +19,6 @@
 package org.apache.flink.core.memory;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.nio.ByteBuffer;
 
@@ -31,12 +29,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /** Tests for the {@link MemorySegment} in off-heap mode using direct memory. */
-@RunWith(Parameterized.class)
 public class OffHeapDirectMemorySegmentTest extends MemorySegmentTestBase {
-
-    public OffHeapDirectMemorySegmentTest(int pageSize) {
-        super(pageSize);
-    }
 
     @Override
     MemorySegment createSegment(int size) {

@@ -26,12 +26,12 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
 import org.apache.flink.types.Value;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests runtime context access from inside an RichInputFormat class */
 public class RichInputFormatTest {
@@ -49,7 +49,7 @@ public class RichInputFormatTest {
                         new HashMap<String, Accumulator<?, ?>>(),
                         UnregisteredMetricsGroup.createOperatorMetricGroup()));
 
-        assertEquals(inputFormat.getRuntimeContext().getIndexOfThisSubtask(), 1);
-        assertEquals(inputFormat.getRuntimeContext().getNumberOfParallelSubtasks(), 3);
+        assertThat(inputFormat.getRuntimeContext().getIndexOfThisSubtask()).isEqualTo(1);
+        assertThat(inputFormat.getRuntimeContext().getNumberOfParallelSubtasks()).isEqualTo(3);
     }
 }

@@ -18,16 +18,16 @@
 
 package org.apache.flink.api.common.accumulators;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LongMinimumTest {
 
     @Test
     public void testGet() {
         LongMinimum min = new LongMinimum();
-        assertEquals(Long.MAX_VALUE, min.getLocalValue().longValue());
+        assertThat(min.getLocalValue().longValue()).isEqualTo(Long.MAX_VALUE);
     }
 
     @Test
@@ -36,10 +36,10 @@ public class LongMinimumTest {
         long value = 9876543210L;
 
         min.add(value);
-        assertEquals(value, min.getLocalValue().longValue());
+        assertThat(min.getLocalValue().longValue()).isEqualTo(value);
 
         min.resetLocal();
-        assertEquals(Long.MAX_VALUE, min.getLocalValue().longValue());
+        assertThat(min.getLocalValue().longValue()).isEqualTo(Long.MAX_VALUE);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class LongMinimumTest {
         min.add(-9876543210L);
         min.add(-1234567890);
 
-        assertEquals(-9876543210L, min.getLocalValue().longValue());
+        assertThat(min.getLocalValue().longValue()).isEqualTo(-9876543210L);
     }
 
     @Test
@@ -63,10 +63,10 @@ public class LongMinimumTest {
         min2.add(5678909876543210123L);
 
         min2.merge(min1);
-        assertEquals(1234567890987654321L, min2.getLocalValue().longValue());
+        assertThat(min2.getLocalValue().longValue()).isEqualTo(1234567890987654321L);
 
         min1.merge(min2);
-        assertEquals(1234567890987654321L, min1.getLocalValue().longValue());
+        assertThat(min1.getLocalValue().longValue()).isEqualTo(1234567890987654321L);
     }
 
     @Test
@@ -77,6 +77,6 @@ public class LongMinimumTest {
         min.add(value);
 
         LongMinimum clone = min.clone();
-        assertEquals(value, clone.getLocalValue().longValue());
+        assertThat(clone.getLocalValue().longValue()).isEqualTo(value);
     }
 }

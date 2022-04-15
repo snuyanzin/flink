@@ -21,25 +21,34 @@ package org.apache.flink.api.common.eventtime;
 import org.apache.flink.api.common.eventtime.WatermarksWithIdleness.IdlenessTimer;
 import org.apache.flink.util.clock.ManualClock;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Test for the {@link WatermarksWithIdleness} class. */
 public class WatermarksWithIdlenessTest {
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testZeroTimeout() {
-        new WatermarksWithIdleness<>(new AscendingTimestampsWatermarks<>(), Duration.ZERO);
+        assertThatThrownBy(
+                        () ->
+                                new WatermarksWithIdleness<>(
+                                        new AscendingTimestampsWatermarks<>(), Duration.ZERO))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNegativeTimeout() {
-        new WatermarksWithIdleness<>(new AscendingTimestampsWatermarks<>(), Duration.ofMillis(-1L));
+        assertThatThrownBy(
+                        () ->
+                                new WatermarksWithIdleness<>(
+                                        new AscendingTimestampsWatermarks<>(),
+                                        Duration.ofMillis(-1L)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -47,7 +56,7 @@ public class WatermarksWithIdlenessTest {
         final ManualClock clock = new ManualClock(System.nanoTime());
         final IdlenessTimer timer = new IdlenessTimer(clock, Duration.ofMillis(10));
 
-        assertFalse(timer.checkIfIdle());
+        assertThat(timer.checkIfIdle()).isFalse();
     }
 
     @Test
@@ -57,7 +66,7 @@ public class WatermarksWithIdlenessTest {
         timer.checkIfIdle(); // start timer
 
         clock.advanceTime(11, MILLISECONDS);
-        assertTrue(timer.checkIfIdle());
+        assertThat(timer.checkIfIdle()).isTrue();
     }
 
     @Test
@@ -65,9 +74,9 @@ public class WatermarksWithIdlenessTest {
         final ManualClock clock = new ManualClock(System.nanoTime());
         final IdlenessTimer timer = createTimerAndMakeIdle(clock, Duration.ofMillis(122));
 
-        assertTrue(timer.checkIfIdle());
+        assertThat(timer.checkIfIdle()).isTrue();
         clock.advanceTime(100, MILLISECONDS);
-        assertTrue(timer.checkIfIdle());
+        assertThat(timer.checkIfIdle()).isTrue();
     }
 
     @Test
@@ -76,7 +85,7 @@ public class WatermarksWithIdlenessTest {
         final IdlenessTimer timer = createTimerAndMakeIdle(clock, Duration.ofMillis(10));
 
         timer.activity();
-        assertFalse(timer.checkIfIdle());
+        assertThat(timer.checkIfIdle()).isFalse();
     }
 
     @Test
@@ -86,12 +95,12 @@ public class WatermarksWithIdlenessTest {
 
         // active again
         timer.activity();
-        assertFalse(timer.checkIfIdle());
+        assertThat(timer.checkIfIdle()).isFalse();
 
         // idle again
         timer.checkIfIdle(); // start timer
         clock.advanceTime(Duration.ofMillis(123));
-        assertTrue(timer.checkIfIdle());
+        assertThat(timer.checkIfIdle()).isTrue();
     }
 
     private static IdlenessTimer createTimerAndMakeIdle(ManualClock clock, Duration idleTimeout) {
@@ -99,7 +108,7 @@ public class WatermarksWithIdlenessTest {
 
         timer.checkIfIdle(); // start timer
         clock.advanceTime(Duration.ofMillis(idleTimeout.toMillis() + 1));
-        assertTrue(timer.checkIfIdle()); // rigger timer
+        assertThat(timer.checkIfIdle()).isTrue(); // rigger timer
 
         return timer;
     }

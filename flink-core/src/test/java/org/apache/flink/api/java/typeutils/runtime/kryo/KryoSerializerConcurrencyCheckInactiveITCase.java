@@ -20,10 +20,10 @@ package org.apache.flink.api.java.typeutils.runtime.kryo;
 
 import org.apache.flink.util.TestLogger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * A test that validates that the concurrency checks in the Kryo Serializer are not hard coded to
@@ -61,9 +61,10 @@ public class KryoSerializerConcurrencyCheckInactiveITCase extends TestLogger {
             assertionError = true;
         }
 
-        assertTrue(
-                "testConcurrentUseOfSerializer() should have failed if "
-                        + "concurrency checks are off by default",
-                assertionError);
+        assertThat(assertionError)
+                .as(
+                        "testConcurrentUseOfSerializer() should have failed if "
+                                + "concurrency checks are off by default")
+                .isTrue();
     }
 }

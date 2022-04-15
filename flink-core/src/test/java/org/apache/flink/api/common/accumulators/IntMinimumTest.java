@@ -18,16 +18,16 @@
 
 package org.apache.flink.api.common.accumulators;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class IntMinimumTest {
 
     @Test
     public void testGet() {
         IntMinimum min = new IntMinimum();
-        assertEquals(Integer.MAX_VALUE, min.getLocalValue().intValue());
+        assertThat(min.getLocalValue().intValue()).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -36,10 +36,10 @@ public class IntMinimumTest {
         int value = 13;
 
         min.add(value);
-        assertEquals(value, min.getLocalValue().intValue());
+        assertThat(min.getLocalValue().intValue()).isEqualTo(value);
 
         min.resetLocal();
-        assertEquals(Integer.MAX_VALUE, min.getLocalValue().intValue());
+        assertThat(min.getLocalValue().intValue()).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class IntMinimumTest {
         min.add(-987);
         min.add(-123);
 
-        assertEquals(-987, min.getLocalValue().intValue());
+        assertThat(min.getLocalValue().intValue()).isEqualTo(-987);
     }
 
     @Test
@@ -63,10 +63,10 @@ public class IntMinimumTest {
         min2.add(5678);
 
         min2.merge(min1);
-        assertEquals(1234, min2.getLocalValue().intValue());
+        assertThat(min2.getLocalValue().intValue()).isEqualTo(1234);
 
         min1.merge(min2);
-        assertEquals(1234, min1.getLocalValue().intValue());
+        assertThat(min1.getLocalValue().intValue()).isEqualTo(1234);
     }
 
     @Test
@@ -77,6 +77,6 @@ public class IntMinimumTest {
         min.add(value);
 
         IntMinimum clone = min.clone();
-        assertEquals(value, clone.getLocalValue().intValue());
+        assertThat(clone.getLocalValue().intValue()).isEqualTo(value);
     }
 }

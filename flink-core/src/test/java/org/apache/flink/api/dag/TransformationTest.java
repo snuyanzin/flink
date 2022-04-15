@@ -22,22 +22,21 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.core.memory.ManagedMemoryUseCase;
 import org.apache.flink.util.TestLogger;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Tests for {@link Transformation}. */
 public class TransformationTest extends TestLogger {
 
     private Transformation<Void> transformation;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         transformation = new TestTransformation<>("t", null, 1);
     }
@@ -48,34 +47,48 @@ public class TransformationTest extends TestLogger {
                 ManagedMemoryUseCase.OPERATOR, 123);
         transformation.declareManagedMemoryUseCaseAtSlotScope(ManagedMemoryUseCase.STATE_BACKEND);
         assertThat(
-                transformation
-                        .getManagedMemoryOperatorScopeUseCaseWeights()
-                        .get(ManagedMemoryUseCase.OPERATOR),
-                is(123));
-        assertThat(
-                transformation.getManagedMemorySlotScopeUseCases(),
-                contains(ManagedMemoryUseCase.STATE_BACKEND));
+                        transformation
+                                .getManagedMemoryOperatorScopeUseCaseWeights()
+                                .get(ManagedMemoryUseCase.OPERATOR))
+                .isEqualTo(123);
+        assertThat(transformation.getManagedMemorySlotScopeUseCases())
+                .contains(ManagedMemoryUseCase.STATE_BACKEND);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDeclareManagedMemoryOperatorScopeUseCaseFailWrongScope() {
-        transformation.declareManagedMemoryUseCaseAtOperatorScope(ManagedMemoryUseCase.PYTHON, 123);
+        assertThatThrownBy(
+                        () ->
+                                transformation.declareManagedMemoryUseCaseAtOperatorScope(
+                                        ManagedMemoryUseCase.PYTHON, 123))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDeclareManagedMemoryOperatorScopeUseCaseFailZeroWeight() {
-        transformation.declareManagedMemoryUseCaseAtOperatorScope(ManagedMemoryUseCase.OPERATOR, 0);
+        assertThatThrownBy(
+                        () ->
+                                transformation.declareManagedMemoryUseCaseAtOperatorScope(
+                                        ManagedMemoryUseCase.OPERATOR, 0))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDeclareManagedMemoryOperatorScopeUseCaseFailNegativeWeight() {
-        transformation.declareManagedMemoryUseCaseAtOperatorScope(
-                ManagedMemoryUseCase.OPERATOR, -1);
+        assertThatThrownBy(
+                        () ->
+                                transformation.declareManagedMemoryUseCaseAtOperatorScope(
+                                        ManagedMemoryUseCase.OPERATOR, -1))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testDeclareManagedMemorySlotScopeUseCaseFailWrongScope() {
-        transformation.declareManagedMemoryUseCaseAtSlotScope(ManagedMemoryUseCase.OPERATOR);
+        assertThatThrownBy(
+                        () ->
+                                transformation.declareManagedMemoryUseCaseAtSlotScope(
+                                        ManagedMemoryUseCase.OPERATOR))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     /** A test implementation of {@link Transformation}. */

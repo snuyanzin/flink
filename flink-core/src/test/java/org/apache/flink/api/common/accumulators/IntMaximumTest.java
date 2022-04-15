@@ -18,16 +18,16 @@
 
 package org.apache.flink.api.common.accumulators;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class IntMaximumTest {
 
     @Test
     public void testGet() {
         IntMaximum max = new IntMaximum();
-        assertEquals(Integer.MIN_VALUE, max.getLocalValue().intValue());
+        assertThat(max.getLocalValue().intValue()).isEqualTo(Integer.MIN_VALUE);
     }
 
     @Test
@@ -36,10 +36,10 @@ public class IntMaximumTest {
         int value = 13;
 
         max.add(value);
-        assertEquals(value, max.getLocalValue().intValue());
+        assertThat(max.getLocalValue().intValue()).isEqualTo(value);
 
         max.resetLocal();
-        assertEquals(Integer.MIN_VALUE, max.getLocalValue().intValue());
+        assertThat(max.getLocalValue().intValue()).isEqualTo(Integer.MIN_VALUE);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class IntMaximumTest {
         max.add(-987);
         max.add(-123);
 
-        assertEquals(9876, max.getLocalValue().intValue());
+        assertThat(max.getLocalValue().intValue()).isEqualTo(9876);
     }
 
     @Test
@@ -63,10 +63,10 @@ public class IntMaximumTest {
         max2.add(5678);
 
         max2.merge(max1);
-        assertEquals(5678, max2.getLocalValue().intValue());
+        assertThat(max2.getLocalValue().intValue()).isEqualTo(5678);
 
         max1.merge(max2);
-        assertEquals(5678, max1.getLocalValue().intValue());
+        assertThat(max1.getLocalValue().intValue()).isEqualTo(5678);
     }
 
     @Test
@@ -77,6 +77,6 @@ public class IntMaximumTest {
         max.add(value);
 
         IntMaximum clone = max.clone();
-        assertEquals(value, clone.getLocalValue().intValue());
+        assertThat(clone.getLocalValue().intValue()).isEqualTo(value);
     }
 }

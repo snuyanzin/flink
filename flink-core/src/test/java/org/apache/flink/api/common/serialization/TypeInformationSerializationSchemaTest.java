@@ -23,15 +23,15 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.core.testutils.CommonTestUtils;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 /** Tests for {@link TypeInformationSerializationSchema}. */
 public class TypeInformationSerializationSchemaTest {
@@ -54,7 +54,7 @@ public class TypeInformationSerializationSchemaTest {
             for (MyPOJO val : types) {
                 byte[] serialized = schema.serialize(val);
                 MyPOJO deser = schema.deserialize(serialized);
-                assertEquals(val, deser);
+                assertThat(val).isEqualTo(deser);
             }
         } catch (Exception e) {
             e.printStackTrace();

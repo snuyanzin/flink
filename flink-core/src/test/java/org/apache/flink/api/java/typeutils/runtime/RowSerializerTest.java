@@ -31,8 +31,8 @@ import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.types.RowUtils;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
@@ -223,7 +223,7 @@ public class RowSerializerTest {
         return row;
     }
 
-    @Ignore("Prevents this class from being considered a test class by JUnit.")
+    @Disabled("Prevents this class from being considered a test class by JUnit.")
     private class RowSerializerTestInstance extends SerializerTestInstance<Row> {
 
         RowSerializerTestInstance(TypeSerializer<Row> serializer, Row... testData) {

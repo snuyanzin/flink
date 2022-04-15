@@ -26,13 +26,15 @@ import org.apache.flink.testutils.TestFileSystem;
 import org.apache.flink.testutils.TestFileUtils;
 import org.apache.flink.types.IntValue;
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
+import java.nio.file.Path;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class DelimitedInputFormatSamplingTest {
 
@@ -64,7 +66,7 @@ public class DelimitedInputFormatSamplingTest {
 
     private static Configuration CONFIG;
 
-    @ClassRule public static TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir private Path tempFolder;
 
     private static File testTempFolder;
 
@@ -72,10 +74,9 @@ public class DelimitedInputFormatSamplingTest {
     //  Setup
     // ========================================================================
 
-    @BeforeClass
+    @BeforeAll
     public static void initialize() {
         try {
-            testTempFolder = tempFolder.newFolder();
             // make sure we do 4 samples
             CONFIG =
                     TestConfigUtils.loadGlobalConf(
@@ -87,7 +88,7 @@ public class DelimitedInputFormatSamplingTest {
                             testTempFolder);
 
         } catch (Throwable t) {
-            Assert.fail("Could not load the global configuration.");
+            fail("Could not load the global configuration.");
         }
     }
 
@@ -107,10 +108,9 @@ public class DelimitedInputFormatSamplingTest {
 
             TestFileSystem.resetStreamOpenCounter();
             format.getStatistics(null);
-            Assert.assertEquals(
-                    "Wrong number of samples taken.",
-                    DEFAULT_NUM_SAMPLES,
-                    TestFileSystem.getNumtimeStreamOpened());
+            assertThat(TestFileSystem.getNumtimeStreamOpened())
+                    .as("Wrong number of samples taken.")
+                    .isEqualTo(DEFAULT_NUM_SAMPLES);
 
             TestDelimitedInputFormat format2 = new TestDelimitedInputFormat(CONFIG);
             format2.setFilePath(tempFile.replace("file", "test"));
@@ -119,12 +119,13 @@ public class DelimitedInputFormatSamplingTest {
 
             TestFileSystem.resetStreamOpenCounter();
             format2.getStatistics(null);
-            Assert.assertEquals(
-                    "Wrong number of samples taken.", 8, TestFileSystem.getNumtimeStreamOpened());
+            assertThat(TestFileSystem.getNumtimeStreamOpened())
+                    .as("Wrong number of samples taken.")
+                    .isEqualTo(8);
 
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -142,10 +143,9 @@ public class DelimitedInputFormatSamplingTest {
 
             TestFileSystem.resetStreamOpenCounter();
             format.getStatistics(null);
-            Assert.assertEquals(
-                    "Wrong number of samples taken.",
-                    DEFAULT_NUM_SAMPLES,
-                    TestFileSystem.getNumtimeStreamOpened());
+            assertThat(TestFileSystem.getNumtimeStreamOpened())
+                    .as("Wrong number of samples taken.")
+                    .isEqualTo(DEFAULT_NUM_SAMPLES);
 
             TestDelimitedInputFormat format2 = new TestDelimitedInputFormat(CONFIG);
             format2.setFilePath(tempFile.replace("file", "test"));
@@ -154,12 +154,13 @@ public class DelimitedInputFormatSamplingTest {
 
             TestFileSystem.resetStreamOpenCounter();
             format2.getStatistics(null);
-            Assert.assertEquals(
-                    "Wrong number of samples taken.", 8, TestFileSystem.getNumtimeStreamOpened());
+            assertThat(TestFileSystem.getNumtimeStreamOpened())
+                    .as("Wrong number of samples taken.")
+                    .isEqualTo(8);
 
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -176,17 +177,18 @@ public class DelimitedInputFormatSamplingTest {
 
             final int numLines = TEST_DATA_1_LINES;
             final float avgWidth = ((float) TEST_DATA1.length()) / TEST_DATA_1_LINES;
-            Assert.assertTrue(
-                    "Wrong record count.",
-                    stats.getNumberOfRecords() < numLines + 1
-                            & stats.getNumberOfRecords() > numLines - 1);
-            Assert.assertTrue(
-                    "Wrong avg record size.",
-                    stats.getAverageRecordWidth() < avgWidth + 1
-                            & stats.getAverageRecordWidth() > avgWidth - 1);
+            assertThat(
+                            stats.getNumberOfRecords() < numLines + 1
+                                    & stats.getNumberOfRecords() > numLines - 1)
+                    .as("Wrong record count.")
+                    .isTrue();
+            assertThat(
+                            stats.getAverageRecordWidth() < avgWidth + 1
+                                    & stats.getAverageRecordWidth() > avgWidth - 1)
+                    .as("Wrong avg record size.");
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -229,15 +231,15 @@ public class DelimitedInputFormatSamplingTest {
                                 + ", "
                                 + maxNumLines
                                 + ").");
-                Assert.fail("Wrong record count.");
+                fail("Wrong record count.");
             }
             if (!(stats.getAverageRecordWidth() <= maxAvgWidth
                     & stats.getAverageRecordWidth() >= minAvgWidth)) {
-                Assert.fail("Wrong avg record size.");
+                fail("Wrong avg record size.");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -259,17 +261,19 @@ public class DelimitedInputFormatSamplingTest {
             final int numLines = TEST_DATA_1_LINES;
             final float avgWidth = ((float) testData.length()) / TEST_DATA_1_LINES;
 
-            Assert.assertTrue(
-                    "Wrong record count.",
-                    stats.getNumberOfRecords() < numLines + 1
-                            & stats.getNumberOfRecords() > numLines - 1);
-            Assert.assertTrue(
-                    "Wrong avg record size.",
-                    stats.getAverageRecordWidth() < avgWidth + 1
-                            & stats.getAverageRecordWidth() > avgWidth - 1);
+            assertThat(
+                            stats.getNumberOfRecords() < numLines + 1
+                                    & stats.getNumberOfRecords() > numLines - 1)
+                    .as("Wrong record count.")
+                    .isTrue();
+            assertThat(
+                            stats.getAverageRecordWidth() < avgWidth + 1
+                                    & stats.getAverageRecordWidth() > avgWidth - 1)
+                    .as("Wrong avg record size.")
+                    .isTrue();
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -278,18 +282,19 @@ public class DelimitedInputFormatSamplingTest {
         try {
             final String tempFile =
                     TestFileUtils.createTempFile(
-                            2 * OptimizerOptions.DELIMITED_FORMAT_MAX_SAMPLE_LEN.defaultValue());
+                            2L * OptimizerOptions.DELIMITED_FORMAT_MAX_SAMPLE_LEN.defaultValue());
             final Configuration conf = new Configuration();
 
             final TestDelimitedInputFormat format = new TestDelimitedInputFormat(CONFIG);
             format.setFilePath(tempFile);
             format.configure(conf);
 
-            Assert.assertNull(
-                    "Expected exception due to overly long record.", format.getStatistics(null));
+            assertThat(format.getStatistics(null))
+                    .as("Expected exception due to overly long record.")
+                    .isNull();
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 
@@ -305,10 +310,9 @@ public class DelimitedInputFormatSamplingTest {
 
             TestFileSystem.resetStreamOpenCounter();
             BaseStatistics stats = format.getStatistics(null);
-            Assert.assertEquals(
-                    "Wrong number of samples taken.",
-                    DEFAULT_NUM_SAMPLES,
-                    TestFileSystem.getNumtimeStreamOpened());
+            assertThat(TestFileSystem.getNumtimeStreamOpened())
+                    .as("Wrong number of samples taken.")
+                    .isEqualTo(DEFAULT_NUM_SAMPLES);
 
             final TestDelimitedInputFormat format2 = new TestDelimitedInputFormat(CONFIG);
             format2.setFilePath("test://" + tempFile);
@@ -316,15 +320,16 @@ public class DelimitedInputFormatSamplingTest {
 
             TestFileSystem.resetStreamOpenCounter();
             BaseStatistics stats2 = format2.getStatistics(stats);
-            Assert.assertTrue(
-                    "Using cached statistics should cicumvent sampling.",
-                    0 == TestFileSystem.getNumtimeStreamOpened());
-            Assert.assertTrue(
-                    "Using cached statistics should cicumvent sampling.", stats == stats2);
+            assertThat(TestFileSystem.getNumtimeStreamOpened())
+                    .as("Using cached statistics should cicumvent sampling.")
+                    .isEqualTo(0);
+            assertThat(stats)
+                    .as("Using cached statistics should cicumvent sampling.")
+                    .isEqualTo(stats2);
 
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail(e.getMessage());
+            fail(e.getMessage());
         }
     }
 

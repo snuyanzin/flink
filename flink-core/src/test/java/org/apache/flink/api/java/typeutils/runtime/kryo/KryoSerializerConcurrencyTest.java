@@ -28,13 +28,13 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.Serializable;
 
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * This tests that the {@link KryoSerializer} properly fails when accessed by two threads
@@ -83,11 +83,11 @@ public class KryoSerializerConcurrencyTest {
         String copyWithOriginal = original.copy(testString).content;
         String copyWithDuplicate = duplicate.copy(testString).content;
 
-        Assert.assertTrue(copyWithOriginal.startsWith(testString.content));
-        Assert.assertTrue(copyWithDuplicate.startsWith(testString.content));
+        assertThat(copyWithOriginal.startsWith(testString.content)).isTrue();
+        assertThat(copyWithDuplicate.startsWith(testString.content)).isTrue();
 
         // check that both serializer instances have appended a different identity hash
-        Assert.assertNotEquals(copyWithOriginal, copyWithDuplicate);
+        assertThat(copyWithOriginal).isNotEqualTo(copyWithDuplicate);
     }
 
     @Test

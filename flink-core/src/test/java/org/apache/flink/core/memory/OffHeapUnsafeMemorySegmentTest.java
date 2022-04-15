@@ -19,8 +19,6 @@
 package org.apache.flink.core.memory;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,12 +28,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for the {@link MemorySegment} in off-heap mode using unsafe memory. */
-@RunWith(Parameterized.class)
 public class OffHeapUnsafeMemorySegmentTest extends MemorySegmentTestBase {
-
-    public OffHeapUnsafeMemorySegmentTest(int pageSize) {
-        super(pageSize);
-    }
 
     @Override
     MemorySegment createSegment(int size) {

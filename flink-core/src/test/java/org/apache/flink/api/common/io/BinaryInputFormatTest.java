@@ -24,12 +24,14 @@ import org.apache.flink.core.fs.FileInputSplit;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.types.Record;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class BinaryInputFormatTest {
 
@@ -73,13 +75,18 @@ public class BinaryInputFormatTest {
 
         FileInputSplit[] inputSplits = inputFormat.createInputSplits(numBlocks);
 
-        Assert.assertEquals("Returns requested numbers of splits.", numBlocks, inputSplits.length);
-        Assert.assertEquals(
-                "1. split has block size length.", blockSize, inputSplits[0].getLength());
-        Assert.assertEquals(
-                "2. split has block size length.", blockSize, inputSplits[1].getLength());
-        Assert.assertEquals(
-                "3. split has block size length.", blockSize, inputSplits[2].getLength());
+        assertThat(numBlocks)
+                .as("Returns requested numbers of splits.")
+                .isEqualTo(inputSplits.length);
+        assertThat(blockSize)
+                .as("1. split has block size length.")
+                .isEqualTo(inputSplits[0].getLength());
+        assertThat(blockSize)
+                .as("2. split has block size length.")
+                .isEqualTo(inputSplits[1].getLength());
+        assertThat(blockSize)
+                .as("3. split has block size length.")
+                .isEqualTo(inputSplits[2].getLength());
     }
 
     @Test
@@ -106,23 +113,23 @@ public class BinaryInputFormatTest {
         int numSplitsFile1 = 0;
         int numSplitsFile2 = 0;
 
-        Assert.assertEquals(
-                "Returns requested numbers of splits.", numBlocksTotal, inputSplits.length);
+        assertThat(numBlocksTotal)
+                .as("Returns requested numbers of splits.")
+                .isEqualTo(inputSplits.length);
         for (int i = 0; i < inputSplits.length; i++) {
-            Assert.assertEquals(
-                    String.format("%d. split has block size length.", i),
-                    blockSize,
-                    inputSplits[i].getLength());
+            assertThat(blockSize)
+                    .as(String.format("%d. split has block size length.", i))
+                    .isEqualTo(inputSplits[i].getLength());
             if (inputSplits[i].getPath().toString().equals(pathFile1)) {
                 numSplitsFile1++;
             } else if (inputSplits[i].getPath().toString().equals(pathFile2)) {
                 numSplitsFile2++;
             } else {
-                Assert.fail("Split does not belong to any input file.");
+                fail("Split does not belong to any input file.");
             }
         }
-        Assert.assertEquals(numBlocks1, numSplitsFile1);
-        Assert.assertEquals(numBlocks2, numSplitsFile2);
+        assertThat(numBlocks1).isEqualTo(numSplitsFile1);
+        assertThat(numBlocks2).isEqualTo(numSplitsFile2);
     }
 
     @Test
@@ -134,7 +141,7 @@ public class BinaryInputFormatTest {
         format.configure(new Configuration());
 
         BaseStatistics stats = format.getStatistics(null);
-        Assert.assertNull("The file statistics should be null.", stats);
+        assertThat(stats).as("The file statistics should be null.").isNull();
     }
 
     @Test
@@ -154,10 +161,9 @@ public class BinaryInputFormatTest {
         inputFormat.setBlockSize(blockSize);
 
         BaseStatistics stats = inputFormat.getStatistics(null);
-        Assert.assertEquals(
-                "The file size statistics is wrong",
-                blockSize * (numBlocks1 + numBlocks2),
-                stats.getTotalInputSize());
+        assertThat(blockSize * (numBlocks1 + numBlocks2))
+                .as("The file size statistics is wrong")
+                .isEqualTo(stats.getTotalInputSize());
     }
 
     /** Creates a temp file with a certain number of blocks of a certain size. */

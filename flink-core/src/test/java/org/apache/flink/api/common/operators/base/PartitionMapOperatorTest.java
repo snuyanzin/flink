@@ -32,7 +32,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,9 +41,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 @SuppressWarnings("serial")
 public class PartitionMapOperatorTest implements java.io.Serializable {
@@ -62,9 +61,9 @@ public class PartitionMapOperatorTest implements java.io.Serializable {
                         public void open(Configuration parameters) throws Exception {
                             opened.set(true);
                             RuntimeContext ctx = getRuntimeContext();
-                            assertEquals(0, ctx.getIndexOfThisSubtask());
-                            assertEquals(1, ctx.getNumberOfParallelSubtasks());
-                            assertEquals(taskName, ctx.getTaskName());
+                            assertThat(ctx.getIndexOfThisSubtask()).isEqualTo(0);
+                            assertThat(ctx.getNumberOfParallelSubtasks()).isEqualTo(1);
+                            assertThat(ctx.getTaskName()).isEqualTo(taskName);
                         }
 
                         @Override
@@ -120,11 +119,11 @@ public class PartitionMapOperatorTest implements java.io.Serializable {
                                     UnregisteredMetricsGroup.createOperatorMetricGroup()),
                             executionConfig);
 
-            assertEquals(asList(1, 2, 3, 4, 5, 6), resultMutableSafe);
-            assertEquals(asList(1, 2, 3, 4, 5, 6), resultRegular);
+            assertThat(resultMutableSafe).isEqualTo(asList(1, 2, 3, 4, 5, 6));
+            assertThat(resultRegular).isEqualTo(asList(1, 2, 3, 4, 5, 6));
 
-            assertTrue(opened.get());
-            assertTrue(closed.get());
+            assertThat(opened.get()).isTrue();
+            assertThat(closed.get()).isTrue();
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
