@@ -20,26 +20,23 @@ package org.apache.flink.table.api;
 
 import org.apache.flink.configuration.Configuration;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Tests for {@link TableConfig}. */
-public class TableConfigTest {
-
-    @Rule public ExpectedException expectedException = ExpectedException.none();
+class TableConfigTest {
 
     private static TableConfig configByMethod = TableConfig.getDefault();
     private static TableConfig configByConfiguration = TableConfig.getDefault();
     private static Configuration configuration = new Configuration();
 
     @Test
-    public void testSetAndGetSqlDialect() {
+    void testSetAndGetSqlDialect() {
         configuration.setString("table.sql-dialect", "HIVE");
         configByConfiguration.addConfiguration(configuration);
         configByMethod.setSqlDialect(SqlDialect.HIVE);
@@ -49,7 +46,7 @@ public class TableConfigTest {
     }
 
     @Test
-    public void testSetAndGetMaxGeneratedCodeLength() {
+    void testSetAndGetMaxGeneratedCodeLength() {
         configuration.setString("table.generated-code.max-length", "5000");
         configByConfiguration.addConfiguration(configuration);
         configByMethod.setMaxGeneratedCodeLength(5000);
@@ -60,7 +57,7 @@ public class TableConfigTest {
     }
 
     @Test
-    public void testSetAndGetLocalTimeZone() {
+    void testSetAndGetLocalTimeZone() {
         configuration.setString("table.local-time-zone", "Asia/Shanghai");
         configByConfiguration.addConfiguration(configuration);
         configByMethod.setLocalTimeZone(ZoneId.of("Asia/Shanghai"));
@@ -77,41 +74,41 @@ public class TableConfigTest {
     }
 
     @Test
-    public void testSetInvalidLocalTimeZone() {
-        expectedException.expectMessage(
-                "The supported Zone ID is either a full name such as 'America/Los_Angeles',"
-                        + " or a custom timezone id such as 'GMT-08:00', but configured Zone ID is 'UTC-10:00'.");
-        configByMethod.setLocalTimeZone(ZoneId.of("UTC-10:00"));
+    void testSetInvalidLocalTimeZone() {
+        assertThatThrownBy(() -> configByMethod.setLocalTimeZone(ZoneId.of("UTC-10:00")))
+                .hasMessage(
+                        "The supported Zone ID is either a full name such as 'America/Los_Angeles',"
+                                + " or a custom timezone id such as 'GMT-08:00', but configured Zone ID is 'UTC-10:00'.");
     }
 
     @Test
-    public void testInvalidGmtLocalTimeZone() {
-        expectedException.expectMessage("Invalid ID for offset-based ZoneId: GMT-8:00");
-        configByMethod.setLocalTimeZone(ZoneId.of("GMT-8:00"));
+    void testInvalidGmtLocalTimeZone() {
+        assertThatThrownBy(() -> configByMethod.setLocalTimeZone(ZoneId.of("GMT-8:00")))
+                .hasMessage("Invalid ID for offset-based ZoneId: GMT-8:00");
     }
 
     @Test
-    public void testGetInvalidLocalTimeZone() {
+    void testGetInvalidLocalTimeZone() {
         configuration.setString("table.local-time-zone", "UTC+8");
         configByConfiguration.addConfiguration(configuration);
-        expectedException.expectMessage(
-                "The supported Zone ID is either a full name such as 'America/Los_Angeles',"
-                        + " or a custom timezone id such as 'GMT-08:00', but configured Zone ID is 'UTC+8'.");
-        configByConfiguration.getLocalTimeZone();
+        assertThatThrownBy(() -> configByConfiguration.getLocalTimeZone())
+                .hasMessage(
+                        "The supported Zone ID is either a full name such as 'America/Los_Angeles',"
+                                + " or a custom timezone id such as 'GMT-08:00', but configured Zone ID is 'UTC+8'.");
     }
 
     @Test
-    public void testGetInvalidAbbreviationLocalTimeZone() {
+    void testGetInvalidAbbreviationLocalTimeZone() {
         configuration.setString("table.local-time-zone", "PST");
         configByConfiguration.addConfiguration(configuration);
-        expectedException.expectMessage(
-                "The supported Zone ID is either a full name such as 'America/Los_Angeles',"
-                        + " or a custom timezone id such as 'GMT-08:00', but configured Zone ID is 'PST'.");
-        configByConfiguration.getLocalTimeZone();
+        assertThatThrownBy(() -> configByConfiguration.getLocalTimeZone())
+                .hasMessage(
+                        "The supported Zone ID is either a full name such as 'America/Los_Angeles',"
+                                + " or a custom timezone id such as 'GMT-08:00', but configured Zone ID is 'PST'.");
     }
 
     @Test
-    public void testSetAndGetIdleStateRetention() {
+    void testSetAndGetIdleStateRetention() {
         configuration.setString("table.exec.state.ttl", "1 h");
         configByConfiguration.addConfiguration(configuration);
         configByMethod.setIdleStateRetention(Duration.ofHours(1));
