@@ -1153,8 +1153,7 @@ public abstract class CatalogTest {
     public void testGetTableStats_TableNotExistException() throws Exception {
         catalog.createDatabase(db1, createDb(), false);
         assertThatThrownBy(() -> catalog.getTableStatistics(path1))
-                .isInstanceOf(
-                        org.apache.flink.table.catalog.exceptions.TableNotExistException.class);
+                .isInstanceOf(TableNotExistException.class);
     }
 
     @Test
