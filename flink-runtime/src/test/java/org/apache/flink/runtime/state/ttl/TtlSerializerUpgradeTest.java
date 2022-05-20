@@ -28,27 +28,18 @@ import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.apache.flink.runtime.state.ttl.TtlStateFactory.TtlSerializer;
 
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import static org.apache.flink.runtime.state.ttl.TtlValueMatchers.ttlValue;
 import static org.hamcrest.Matchers.is;
 
 /** State migration test for {@link TtlSerializer}. */
-@RunWith(Parameterized.class)
 public class TtlSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<TtlValue<String>, TtlValue<String>> {
 
-    public TtlSerializerUpgradeTest(
-            TestSpecification<TtlValue<String>, TtlValue<String>> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -60,7 +51,7 @@ public class TtlSerializerUpgradeTest
                             TtlSerializerVerifier.class));
         }
 
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     // ----------------------------------------------------------------------------------------------

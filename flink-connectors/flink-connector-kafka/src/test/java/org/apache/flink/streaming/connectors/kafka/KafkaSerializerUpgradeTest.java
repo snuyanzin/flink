@@ -26,14 +26,12 @@ import org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase;
 import org.apache.flink.streaming.connectors.kafka.internals.FlinkKafkaInternalProducer;
 
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
@@ -41,15 +39,9 @@ import static org.hamcrest.Matchers.is;
  * A {@link TypeSerializerUpgradeTestBase} for {@link FlinkKafkaProducer.TransactionStateSerializer}
  * and {@link FlinkKafkaProducer.ContextStateSerializer}.
  */
-@RunWith(Parameterized.class)
 public class KafkaSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public KafkaSerializerUpgradeTest(TestSpecification<Object, Object> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -66,7 +58,7 @@ public class KafkaSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Ob
                             ContextStateSerializerSetup.class,
                             ContextStateSerializerVerifier.class));
         }
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     // ----------------------------------------------------------------------------------------------

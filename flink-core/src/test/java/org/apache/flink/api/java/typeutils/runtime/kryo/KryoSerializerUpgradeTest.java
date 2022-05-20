@@ -31,11 +31,9 @@ import org.apache.flink.api.java.typeutils.runtime.kryo.KryoPojosForMigrationTes
 
 import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import static org.apache.flink.api.common.typeutils.TypeSerializerMatchers.hasSameCompatibilityAs;
 import static org.apache.flink.api.common.typeutils.TypeSerializerSchemaCompatibility.compatibleWithReconfiguredSerializer;
@@ -43,15 +41,9 @@ import static org.hamcrest.Matchers.is;
 
 /** Tests migrations for {@link KryoSerializerSnapshot}. */
 @SuppressWarnings("WeakerAccess")
-@RunWith(Parameterized.class)
 public class KryoSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public KryoSerializerUpgradeTest(TestSpecification<Object, Object> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -80,7 +72,7 @@ public class KryoSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Obj
                             KryoCustomTypeSerializerChangedRegistrationOrderVerifier.class));
         }
 
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     // ----------------------------------------------------------------------------------------------

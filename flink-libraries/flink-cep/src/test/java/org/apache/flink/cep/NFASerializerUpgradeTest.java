@@ -33,25 +33,17 @@ import org.apache.flink.cep.nfa.sharedbuffer.SharedBufferNode;
 import org.apache.flink.cep.nfa.sharedbuffer.SharedBufferNodeSerializer;
 
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /** Migration tests for NFA-related serializers. */
-@RunWith(Parameterized.class)
 public class NFASerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public NFASerializerUpgradeTest(TestSpecification<Object, Object> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -86,7 +78,7 @@ public class NFASerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Obje
                             NFAStateSerializerVerifier.class));
         }
 
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     // ----------------------------------------------------------------------------------------------
