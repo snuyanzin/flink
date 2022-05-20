@@ -27,11 +27,9 @@ import org.apache.flink.api.common.typeutils.base.IntSerializer;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
 
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import scala.util.Either;
 import scala.util.Right;
@@ -39,19 +37,12 @@ import scala.util.Right;
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link ScalaEitherSerializerSnapshot}. */
-@RunWith(Parameterized.class)
 public class ScalaEitherSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<Either<Integer, String>, Either<Integer, String>> {
 
     private static final String SPEC_NAME = "scala-either-serializer";
 
-    public ScalaEitherSerializerUpgradeTest(
-            TestSpecification<Either<Integer, String>, Either<Integer, String>> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -62,7 +53,7 @@ public class ScalaEitherSerializerUpgradeTest
                             EitherSerializerSetup.class,
                             EitherSerializerVerifier.class));
         }
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     // ----------------------------------------------------------------------------------------------

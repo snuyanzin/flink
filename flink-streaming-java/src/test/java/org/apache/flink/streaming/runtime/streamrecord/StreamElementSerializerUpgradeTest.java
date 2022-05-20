@@ -26,27 +26,18 @@ import org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
 
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import static org.apache.flink.streaming.util.StreamRecordMatchers.streamRecord;
 import static org.hamcrest.Matchers.is;
 
 /** Migration tests for {@link StreamElementSerializer}. */
-@RunWith(Parameterized.class)
 public class StreamElementSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<StreamElement, StreamElement> {
 
-    public StreamElementSerializerUpgradeTest(
-            TestSpecification<StreamElement, StreamElement> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -58,7 +49,7 @@ public class StreamElementSerializerUpgradeTest
                             StreamElementVerifier.class));
         }
 
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     // ----------------------------------------------------------------------------------------------

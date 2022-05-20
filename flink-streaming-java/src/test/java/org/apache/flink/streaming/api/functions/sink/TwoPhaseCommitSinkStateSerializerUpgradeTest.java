@@ -26,35 +26,23 @@ import org.apache.flink.api.common.typeutils.base.IntSerializer;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
 
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /**
  * A {@link TypeSerializerUpgradeTestBase} for {@link TwoPhaseCommitSinkFunction.StateSerializer}.
  */
-@RunWith(Parameterized.class)
 public class TwoPhaseCommitSinkStateSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<
                 TwoPhaseCommitSinkFunction.State<Integer, String>,
                 TwoPhaseCommitSinkFunction.State<Integer, String>> {
 
-    public TwoPhaseCommitSinkStateSerializerUpgradeTest(
-            TestSpecification<
-                            TwoPhaseCommitSinkFunction.State<Integer, String>,
-                            TwoPhaseCommitSinkFunction.State<Integer, String>>
-                    testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -65,7 +53,7 @@ public class TwoPhaseCommitSinkStateSerializerUpgradeTest
                             TwoPhaseCommitSinkStateSerializerSetup.class,
                             TwoPhaseCommitSinkStateSerializerVerifier.class));
         }
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     public static TypeSerializer<TwoPhaseCommitSinkFunction.State<Integer, String>>

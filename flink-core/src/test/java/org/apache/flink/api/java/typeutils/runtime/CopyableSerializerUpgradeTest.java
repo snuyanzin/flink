@@ -31,27 +31,18 @@ import org.apache.flink.types.CopyableValue;
 import org.hamcrest.Matcher;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link CopyableValueSerializer}. */
-@RunWith(Parameterized.class)
 public class CopyableSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<SimpleCopyable, SimpleCopyable> {
 
-    public CopyableSerializerUpgradeTest(
-            TestSpecification<SimpleCopyable, SimpleCopyable> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -61,7 +52,7 @@ public class CopyableSerializerUpgradeTest
                             CopyableSerializerSetup.class,
                             CopyableSerializerVerifier.class));
         }
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     /** A simple copyable value for migration tests. */

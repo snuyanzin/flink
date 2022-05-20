@@ -21,23 +21,14 @@ package org.apache.flink.api.common.typeutils.base.array;
 import org.apache.flink.FlinkVersion;
 import org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 /** Migration tests for primitive array type serializers' snapshots. */
-@RunWith(Parameterized.class)
 public class PrimitiveArraySerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<Object, Object> {
-    public PrimitiveArraySerializerUpgradeTest(
-            TestSpecification<Object, Object> testSpecification) {
-        super(testSpecification);
-    }
 
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -114,6 +105,6 @@ public class PrimitiveArraySerializerUpgradeTest
                                     .PrimitiveStringArrayVerifier.class));
         }
 
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 }

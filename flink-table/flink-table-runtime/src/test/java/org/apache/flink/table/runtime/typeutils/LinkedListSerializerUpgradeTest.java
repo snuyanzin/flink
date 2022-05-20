@@ -27,27 +27,17 @@ import org.apache.flink.api.common.typeutils.base.LongSerializer;
 import org.apache.flink.util.FlinkRuntimeException;
 
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.util.Collection;
 import java.util.LinkedList;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link LinkedListSerializer}. */
-@RunWith(Parameterized.class)
 public class LinkedListSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<LinkedList<Long>, LinkedList<Long>> {
 
-    public LinkedListSerializerUpgradeTest(
-            TestSpecification<LinkedList<Long>, LinkedList<Long>> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
         return FlinkVersion.rangeOf(FlinkVersion.v1_13, CURRENT_VERSION).stream()
                 .map(
                         version -> {
@@ -60,8 +50,7 @@ public class LinkedListSerializerUpgradeTest
                             } catch (Exception e) {
                                 throw new FlinkRuntimeException(e);
                             }
-                        })
-                .collect(Collectors.toList());
+                        });
     }
 
     public static TypeSerializer<LinkedList<Long>> createLinkedListSerializer() {

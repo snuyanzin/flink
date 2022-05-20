@@ -27,30 +27,21 @@ import org.apache.flink.api.java.typeutils.runtime.WritableSerializerUpgradeTest
 
 import org.apache.hadoop.io.Writable;
 import org.hamcrest.Matcher;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link WritableSerializer}. */
-@RunWith(Parameterized.class)
 public class WritableSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<WritableName, WritableName> {
 
-    public WritableSerializerUpgradeTest(
-            TestSpecification<WritableName, WritableName> testSpecification) {
-        super(testSpecification);
-    }
-
-    @Parameterized.Parameters(name = "Test Specification = {0}")
-    public static Collection<TestSpecification<?, ?>> testSpecifications() throws Exception {
+    public Stream<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -61,7 +52,7 @@ public class WritableSerializerUpgradeTest
                             WritableSerializerSetup.class,
                             WritableSerializerVerifier.class));
         }
-        return testSpecifications;
+        return testSpecifications.stream();
     }
 
     /** A dummy class that is used in this test. */
