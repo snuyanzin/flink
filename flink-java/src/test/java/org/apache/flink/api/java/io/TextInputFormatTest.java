@@ -225,7 +225,7 @@ public class TextInputFormatTest extends TestLogger {
         inputFormat.configure(parameters);
 
         FileInputSplit[] splits = inputFormat.createInputSplits(1);
-        assertThat(splits.length).as("expected at least one input split").isGreaterThanOrEqualTo(1);
+        assertThat(splits).as("expected at least one input split").isNotEmpty();
 
         inputFormat.open(splits[0]);
         try {

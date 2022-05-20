@@ -22,8 +22,10 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Assert;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link SelectByMaxFunction} and {@link SelectByMinFunction}. */
 public class SelectByFunctionsTest {
@@ -58,16 +60,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0});
 
         try {
-            Assert.assertSame(
-                    "SelectByMax must return bigger tuple",
-                    bigger,
-                    maxByTuple.reduce(smaller, bigger));
-            Assert.assertSame(
-                    "SelectByMax must return bigger tuple",
-                    bigger,
-                    maxByTuple.reduce(bigger, smaller));
+            assertThat(maxByTuple.reduce(smaller, bigger))
+                    .as("SelectByMax must return bigger tuple")
+                    .isSameAs(bigger);
+            assertThat(maxByTuple.reduce(bigger, smaller))
+                    .as("SelectByMax must return bigger tuple")
+                    .isSameAs(bigger);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -85,16 +85,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0, 3});
 
         try {
-            Assert.assertSame(
-                    "SelectByMax must return the first given tuple",
-                    specialCaseBigger,
-                    maxByTuple.reduce(specialCaseBigger, bigger));
-            Assert.assertSame(
-                    "SelectByMax must return the first given tuple",
-                    bigger,
-                    maxByTuple.reduce(bigger, specialCaseBigger));
+            assertThat(maxByTuple.reduce(specialCaseBigger, bigger))
+                    .as("SelectByMax must return the first given tuple")
+                    .isSameAs(specialCaseBigger);
+            assertThat(maxByTuple.reduce(bigger, specialCaseBigger))
+                    .as("SelectByMax must return the first given tuple")
+                    .isSameAs(bigger);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -106,16 +104,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0, 2, 1, 4, 3});
 
         try {
-            Assert.assertSame(
-                    "SelectByMax must return bigger tuple",
-                    bigger,
-                    maxByTuple.reduce(specialCaseBigger, bigger));
-            Assert.assertSame(
-                    "SelectByMax must return bigger tuple",
-                    bigger,
-                    maxByTuple.reduce(bigger, specialCaseBigger));
+            assertThat(maxByTuple.reduce(specialCaseBigger, bigger))
+                    .as("SelectByMax must return bigger tuple")
+                    .isSameAs(bigger);
+            assertThat(maxByTuple.reduce(bigger, specialCaseBigger))
+                    .as("SelectByMax must return bigger tuple")
+                    .isSameAs(bigger);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -127,16 +123,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0, 1, 2, 3, 4});
 
         try {
-            Assert.assertSame(
-                    "SelectByMax must return bigger tuple",
-                    bigger,
-                    maxByTuple.reduce(smaller, bigger));
-            Assert.assertSame(
-                    "SelectByMax must return bigger tuple",
-                    bigger,
-                    maxByTuple.reduce(bigger, smaller));
+            assertThat(maxByTuple.reduce(smaller, bigger))
+                    .as("SelectByMax must return bigger tuple")
+                    .isSameAs(bigger);
+            assertThat(maxByTuple.reduce(bigger, smaller))
+                    .as("SelectByMax must return bigger tuple")
+                    .isSameAs(bigger);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -148,16 +142,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0});
 
         try {
-            Assert.assertSame(
-                    "SelectByMax must return bigger tuple",
-                    bigger,
-                    maxByTuple.reduce(bigger, bigger));
-            Assert.assertSame(
-                    "SelectByMax must return smaller tuple",
-                    smaller,
-                    maxByTuple.reduce(smaller, smaller));
+            assertThat(maxByTuple.reduce(bigger, bigger))
+                    .as("SelectByMax must return bigger tuple")
+                    .isSameAs(bigger);
+            assertThat(maxByTuple.reduce(smaller, smaller))
+                    .as("SelectByMax must return smaller tuple")
+                    .isSameAs(smaller);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -174,16 +166,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0});
 
         try {
-            Assert.assertSame(
-                    "SelectByMin must return smaller tuple",
-                    smaller,
-                    minByTuple.reduce(smaller, bigger));
-            Assert.assertSame(
-                    "SelectByMin must return smaller tuple",
-                    smaller,
-                    minByTuple.reduce(bigger, smaller));
+            assertThat(minByTuple.reduce(smaller, bigger))
+                    .as("SelectByMin must return smaller tuple")
+                    .isSameAs(smaller);
+            assertThat(minByTuple.reduce(bigger, smaller))
+                    .as("SelectByMin must return smaller tuple")
+                    .isSameAs(smaller);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -199,16 +189,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0, 3});
 
         try {
-            Assert.assertSame(
-                    "SelectByMin must return the first given tuple",
-                    specialCaseBigger,
-                    minByTuple.reduce(specialCaseBigger, bigger));
-            Assert.assertSame(
-                    "SelectByMin must return the first given tuple",
-                    bigger,
-                    minByTuple.reduce(bigger, specialCaseBigger));
+            assertThat(minByTuple.reduce(specialCaseBigger, bigger))
+                    .as("SelectByMin must return the first given tuple")
+                    .isSameAs(specialCaseBigger);
+            assertThat(minByTuple.reduce(bigger, specialCaseBigger))
+                    .as("SelectByMin must return the first given tuple")
+                    .isSameAs(bigger);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -223,16 +211,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0, 2, 1, 4, 3});
 
         try {
-            Assert.assertSame(
-                    "SelectByMin must return smaller tuple",
-                    smaller,
-                    minByTuple.reduce(specialCaseSmaller, smaller));
-            Assert.assertSame(
-                    "SelectByMin must return smaller tuple",
-                    smaller,
-                    minByTuple.reduce(smaller, specialCaseSmaller));
+            assertThat(minByTuple.reduce(specialCaseSmaller, smaller))
+                    .as("SelectByMin must return smaller tuple")
+                    .isSameAs(smaller);
+            assertThat(minByTuple.reduce(smaller, specialCaseSmaller))
+                    .as("SelectByMin must return smaller tuple")
+                    .isSameAs(smaller);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 
@@ -244,16 +230,14 @@ public class SelectByFunctionsTest {
                         tupleTypeInfo, new int[] {0, 1, 2, 3, 4});
 
         try {
-            Assert.assertSame(
-                    "SelectByMin must return smaller tuple",
-                    smaller,
-                    minByTuple.reduce(smaller, bigger));
-            Assert.assertSame(
-                    "SelectByMin must return smaller tuple",
-                    smaller,
-                    minByTuple.reduce(bigger, smaller));
+            assertThat(minByTuple.reduce(smaller, bigger))
+                    .as("SelectByMin must return smaller tuple")
+                    .isSameAs(smaller);
+            assertThat(minByTuple.reduce(bigger, smaller))
+                    .as("SelectByMin must return smaller tuple")
+                    .isSameAs(smaller);
         } catch (Exception e) {
-            Assert.fail("No exception should be thrown while comparing both tuples");
+            fail("No exception should be thrown while comparing both tuples");
         }
     }
 }
