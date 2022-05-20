@@ -24,7 +24,7 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,10 +33,10 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link PlanGenerator}. */
-public class PlanGeneratorTest {
+class PlanGeneratorTest {
 
     @Test
-    public void testGenerate() {
+    void testGenerate() {
 
         final String fileA = "fileA";
         final String fileB = "fileB";

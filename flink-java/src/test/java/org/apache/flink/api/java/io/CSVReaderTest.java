@@ -40,7 +40,7 @@ import org.apache.flink.types.ShortValue;
 import org.apache.flink.types.StringValue;
 import org.apache.flink.types.Value;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -49,17 +49,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for the CSV reader builder. */
-public class CSVReaderTest {
+class CSVReaderTest {
 
     @Test
-    public void testIgnoreHeaderConfigure() {
+    void testIgnoreHeaderConfigure() {
         CsvReader reader = getCsvReader();
         reader.ignoreFirstLine();
         assertThat(reader.skipFirstLineAsHeader).isTrue();
     }
 
     @Test
-    public void testIgnoreInvalidLinesConfigure() {
+    void testIgnoreInvalidLinesConfigure() {
         CsvReader reader = getCsvReader();
         assertThat(reader.ignoreInvalidLines).isFalse();
         reader.ignoreInvalidLines();
@@ -67,7 +67,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testIgnoreComments() {
+    void testIgnoreComments() {
         CsvReader reader = getCsvReader();
         assertThat(reader.commentPrefix).isNull();
         reader.ignoreComments("#");
@@ -75,7 +75,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testCharset() {
+    void testCharset() {
         CsvReader reader = getCsvReader();
         assertThat(reader.getCharset()).isEqualTo("UTF-8");
         reader.setCharset("US-ASCII");
@@ -83,7 +83,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testIncludeFieldsDense() {
+    void testIncludeFieldsDense() {
         CsvReader reader = getCsvReader();
         reader.includeFields(true, true, true);
         assertThat(reader.includedMask).containsExactly(true, true, true);
@@ -106,7 +106,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testIncludeFieldsSparse() {
+    void testIncludeFieldsSparse() {
         CsvReader reader = getCsvReader();
         reader.includeFields(false, true, true, false, false, true, false, false);
         assertThat(reader.includedMask).containsExactly(false, true, true, false, false, true);
@@ -133,7 +133,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testIllegalCharInStringMask() {
+    void testIllegalCharInStringMask() {
         CsvReader reader = getCsvReader();
 
         assertThatThrownBy(() -> reader.includeFields("1t0Tfht"))
@@ -142,7 +142,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testIncludeFieldsErrorWhenExcludingAll() {
+    void testIncludeFieldsErrorWhenExcludingAll() {
         CsvReader reader = getCsvReader();
 
         assertThatThrownBy(() -> reader.includeFields(false, false, false, false, false, false))
@@ -167,14 +167,14 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testReturnType() throws Exception {
+    void testReturnType() throws Exception {
         CsvReader reader = getCsvReader();
         DataSource<Item> items = reader.tupleType(Item.class);
         assertThat(items.getType().getTypeClass()).isSameAs(Item.class);
     }
 
     @Test
-    public void testFieldTypes() throws Exception {
+    void testFieldTypes() throws Exception {
         CsvReader reader = getCsvReader();
         DataSource<Item> items = reader.tupleType(Item.class);
 
@@ -196,7 +196,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testSubClass() throws Exception {
+    void testSubClass() throws Exception {
         CsvReader reader = getCsvReader();
         DataSource<SubItem> sitems = reader.tupleType(SubItem.class);
         TypeInformation<?> info = sitems.getType();
@@ -219,7 +219,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testSubClassWithPartialsInHierarchie() throws Exception {
+    void testSubClassWithPartialsInHierarchie() throws Exception {
         CsvReader reader = getCsvReader();
         DataSource<FinalItem> sitems = reader.tupleType(FinalItem.class);
         TypeInformation<?> info = sitems.getType();
@@ -253,7 +253,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testUnsupportedPartialitem() throws Exception {
+    void testUnsupportedPartialitem() throws Exception {
         CsvReader reader = getCsvReader();
 
         assertThatThrownBy(() -> reader.tupleType(PartialItem.class))
@@ -262,7 +262,7 @@ public class CSVReaderTest {
     }
 
     @Test
-    public void testWithValueType() throws Exception {
+    void testWithValueType() throws Exception {
         CsvReader reader = getCsvReader();
         DataSource<
                         Tuple8<
@@ -290,18 +290,20 @@ public class CSVReaderTest {
         assertThat(info.getTypeClass()).isEqualTo(Tuple8.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testWithInvalidValueType1() throws Exception {
+    @Test
+    void testWithInvalidValueType1() {
         CsvReader reader = getCsvReader();
         // CsvReader doesn't support CharValue
-        reader.types(CharValue.class);
+        assertThatThrownBy(() -> reader.types(CharValue.class))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testWithInvalidValueType2() throws Exception {
+    @Test
+    void testWithInvalidValueType2() {
         CsvReader reader = getCsvReader();
         // CsvReader doesn't support custom Value type
-        reader.types(ValueItem.class);
+        assertThatThrownBy(() -> reader.types(ValueItem.class))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     private static CsvReader getCsvReader() {

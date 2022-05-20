@@ -34,7 +34,7 @@ import java.util.List;
  * @param <R> the type of the results of the aggregation
  * @param <A> the aggregator to use
  */
-public abstract class AggregateCombineHarness<T, R, A extends Aggregator<T, R>> {
+abstract class AggregateCombineHarness<T, R, A extends Aggregator<T, R>> {
 
     /**
      * Compare results from different runs of aggregate/combine to make sure they are the same.

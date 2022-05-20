@@ -23,11 +23,9 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileInputSplit;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
-import org.apache.flink.util.TestLogger;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,18 +42,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link TextInputFormat}. */
-public class TextInputFormatTest extends TestLogger {
+class TextInputFormatTest {
 
-    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir private java.nio.file.Path temporaryFolder;
 
     @Test
-    public void testSimpleRead() throws IOException {
+    void testSimpleRead() throws IOException {
         final String first = "First line";
         final String second = "Second line";
 
         // create input file
         File tempFile =
-                File.createTempFile("TextInputFormatTest", "tmp", temporaryFolder.getRoot());
+                File.createTempFile(
+                        "TextInputFormatTest", "tmp", temporaryFolder.getParent().toFile());
         tempFile.setWritable(true);
 
         try (PrintStream ps = new PrintStream(tempFile)) {
@@ -87,14 +87,14 @@ public class TextInputFormatTest extends TestLogger {
     }
 
     @Test
-    public void testNestedFileRead() throws IOException {
+    void testNestedFileRead() throws IOException {
         String[] dirs = new String[] {"first", "second"};
         List<String> expectedFiles = new ArrayList<>();
 
-        File parentDir = temporaryFolder.getRoot();
+        File parentDir = temporaryFolder.toFile();
         for (String dir : dirs) {
             // create input file
-            File tmpDir = temporaryFolder.newFolder(dir);
+            File tmpDir = Files.createDirectory(temporaryFolder.resolve(dir)).toFile();
 
             File tempFile = File.createTempFile("TextInputFormatTest", ".tmp", tmpDir);
 
@@ -136,7 +136,7 @@ public class TextInputFormatTest extends TestLogger {
      * removed.
      */
     @Test
-    public void testRemovingTrailingCR() throws IOException {
+    void testRemovingTrailingCR() throws IOException {
 
         testRemovingTrailingCR("\n", "\n");
         testRemovingTrailingCR("\r\n", "\n");
@@ -151,8 +151,7 @@ public class TextInputFormatTest extends TestLogger {
         String content = first + lineBreaker + second + lineBreaker;
 
         // create input file
-        File tempFile =
-                File.createTempFile("TextInputFormatTest", "tmp", temporaryFolder.getRoot());
+        File tempFile = File.createTempFile("TextInputFormatTest", "tmp", temporaryFolder.toFile());
         tempFile.setWritable(true);
 
         try (OutputStreamWriter wrt = new OutputStreamWriter(new FileOutputStream(tempFile))) {
@@ -191,7 +190,7 @@ public class TextInputFormatTest extends TestLogger {
     }
 
     @Test
-    public void testCompressedRead() throws IOException {
+    void testCompressedRead() throws IOException {
         TextInputFormat.registerInflaterInputStreamFactory(
                 "compressed",
                 new InflaterInputStreamFactory<InputStream>() {
@@ -211,8 +210,7 @@ public class TextInputFormatTest extends TestLogger {
 
         // create input file
         File tempFile =
-                File.createTempFile(
-                        "TextInputFormatTest", ".compressed", temporaryFolder.getRoot());
+                File.createTempFile("TextInputFormatTest", ".compressed", temporaryFolder.toFile());
         tempFile.setWritable(true);
 
         try (PrintStream ps = new PrintStream(tempFile)) {

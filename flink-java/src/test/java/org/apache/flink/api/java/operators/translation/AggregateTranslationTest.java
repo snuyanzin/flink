@@ -29,16 +29,16 @@ import org.apache.flink.api.java.io.DiscardingOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of aggregations. */
-public class AggregateTranslationTest {
+class AggregateTranslationTest {
 
     @Test
-    public void translateAggregate() {
+    void translateAggregate() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);

@@ -24,17 +24,17 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.Operator;
 import org.apache.flink.api.java.typeutils.ValueTypeInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link Operator}. */
-public class OperatorTest {
+class OperatorTest {
 
     @Test
-    public void testConfigurationOfParallelism() {
+    void testConfigurationOfParallelism() {
         Operator operator = new MockOperator();
 
         // verify explicit change in parallelism
@@ -51,7 +51,7 @@ public class OperatorTest {
     }
 
     @Test
-    public void testConfigurationOfResource() throws Exception {
+    void testConfigurationOfResource() throws Exception {
         Operator operator = new MockOperator();
 
         Method opMethod =

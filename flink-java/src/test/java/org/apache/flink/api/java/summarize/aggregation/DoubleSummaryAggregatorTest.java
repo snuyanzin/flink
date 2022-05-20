@@ -20,13 +20,13 @@ package org.apache.flink.api.java.summarize.aggregation;
 
 import org.apache.flink.api.java.summarize.NumericColumnSummary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link DoubleSummaryAggregator}. */
-public class DoubleSummaryAggregatorTest {
+class DoubleSummaryAggregatorTest {
 
     /**
      * Use some values from Anscombe's Quartet for testing.
@@ -36,7 +36,7 @@ public class DoubleSummaryAggregatorTest {
      * <p>https://en.wikipedia.org/wiki/Anscombe%27s_quartet
      */
     @Test
-    public void testAnscomesQuartetXValues() throws Exception {
+    void testAnscomesQuartetXValues() {
 
         final Double[] q1x = {10.0, 8.0, 13.0, 9.0, 11.0, 14.0, 6.0, 4.0, 12.0, 7.0, 5.0};
         final Double[] q4x = {8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 19.0, 8.0, 8.0, 8.0};
@@ -63,7 +63,7 @@ public class DoubleSummaryAggregatorTest {
      * <p>https://en.wikipedia.org/wiki/Anscombe%27s_quartet
      */
     @Test
-    public void testAnscomesQuartetYValues() throws Exception {
+    void testAnscomesQuartetYValues() {
         final Double[] q1y = {8.04, 6.95, 7.58, 8.81, 8.33, 9.96, 7.24, 4.26, 10.84, 4.82, 5.68};
         final Double[] q2y = {9.14, 8.14, 8.74, 8.77, 9.26, 8.1, 6.13, 3.1, 9.13, 7.26, 4.74};
         final Double[] q3y = {7.46, 6.77, 12.74, 7.11, 7.81, 8.84, 6.08, 5.39, 8.15, 6.42, 5.73};
@@ -88,7 +88,7 @@ public class DoubleSummaryAggregatorTest {
     }
 
     @Test
-    public void testIsNan() throws Exception {
+    void testIsNan() {
         DoubleSummaryAggregator ag = new DoubleSummaryAggregator();
         assertThat(ag.isNan(-1.0)).isFalse();
         assertThat(ag.isNan(0.0)).isFalse();
@@ -99,7 +99,7 @@ public class DoubleSummaryAggregatorTest {
     }
 
     @Test
-    public void testIsInfinite() throws Exception {
+    void testIsInfinite() {
         DoubleSummaryAggregator ag = new DoubleSummaryAggregator();
         assertThat(ag.isInfinite(-1.0)).isFalse();
         assertThat(ag.isInfinite(0.0)).isFalse();
@@ -111,7 +111,7 @@ public class DoubleSummaryAggregatorTest {
     }
 
     @Test
-    public void testMean() throws Exception {
+    void testMean() {
         assertThat(summarize(0.0, 100.0).getMean()).isEqualTo(50.0);
         assertThat(summarize(0.0, 0.0, 100.0).getMean()).isCloseTo(33.333333, within(0.00001));
         assertThat(summarize(0.0, 0.0, 100.0, 100.0).getMean()).isEqualTo(50.0);
@@ -120,7 +120,7 @@ public class DoubleSummaryAggregatorTest {
     }
 
     @Test
-    public void testSum() throws Exception {
+    void testSum() {
         assertThat(summarize(0.0, 100.0).getSum().doubleValue()).isEqualTo(100.0);
         assertThat(summarize(1.0, 2.0, 3.0, 4.0, 5.0).getSum().doubleValue()).isEqualTo(15);
         assertThat(summarize(-100.0, 0.0, 100.0, null).getSum().doubleValue()).isEqualTo(0);
@@ -129,7 +129,7 @@ public class DoubleSummaryAggregatorTest {
     }
 
     @Test
-    public void testMax() throws Exception {
+    void testMax() {
         assertThat(summarize(-1000.0, 0.0, 1.0, 50.0, 999.0, 1001.0).getMax().doubleValue())
                 .isEqualTo(1001.0);
         assertThat(
@@ -151,7 +151,7 @@ public class DoubleSummaryAggregatorTest {
     }
 
     @Test
-    public void testMin() throws Exception {
+    void testMin() {
         assertThat(summarize(-1000.0, 0.0, 1.0, 50.0, 999.0, 1001.0).getMin().doubleValue())
                 .isEqualTo(-1000);
         assertThat(

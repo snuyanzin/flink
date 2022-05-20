@@ -22,22 +22,23 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileInputSplit;
 import org.apache.flink.core.fs.Path;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link PrimitiveInputFormat}. */
-public class PrimitiveInputFormatTest {
+class PrimitiveInputFormatTest {
 
     private static final Path PATH = new Path("an/ignored/file/");
 
     @Test
-    public void testStringInput() {
+    void testStringInput() {
         try {
             final String fileContent = "abc||def||||";
             final FileInputSplit split = createInputSplit(fileContent);
@@ -70,7 +71,7 @@ public class PrimitiveInputFormatTest {
     }
 
     @Test
-    public void testIntegerInput() throws IOException {
+    void testIntegerInput() throws IOException {
         try {
             final String fileContent = "111|222|";
             final FileInputSplit split = createInputSplit(fileContent);
@@ -97,7 +98,7 @@ public class PrimitiveInputFormatTest {
     }
 
     @Test
-    public void testDoubleInputLinewise() throws IOException {
+    void testDoubleInputLinewise() throws IOException {
         try {
             final String fileContent = "1.21\n2.23\n";
             final FileInputSplit split = createInputSplit(fileContent);
@@ -124,7 +125,7 @@ public class PrimitiveInputFormatTest {
     }
 
     @Test
-    public void testRemovingTrailingCR() {
+    void testRemovingTrailingCR() {
         try {
             String first = "First line";
             String second = "Second line";
@@ -149,8 +150,8 @@ public class PrimitiveInputFormatTest {
         }
     }
 
-    @Test(expected = IOException.class)
-    public void testFailingInput() throws IOException {
+    @Test
+    void testFailingInput() throws IOException {
 
         final String fileContent = "111|222|asdf|17";
         final FileInputSplit split = createInputSplit(fileContent);
@@ -168,7 +169,8 @@ public class PrimitiveInputFormatTest {
         result = format.nextRecord(result);
         assertThat(result).isEqualTo(Integer.valueOf(222));
 
-        result = format.nextRecord(result);
+        final Integer finalResult = result;
+        assertThatThrownBy(() -> format.nextRecord(finalResult)).isInstanceOf(IOException.class);
     }
 
     private FileInputSplit createInputSplit(String content) throws IOException {

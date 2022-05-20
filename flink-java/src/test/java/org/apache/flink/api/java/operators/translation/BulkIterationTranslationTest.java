@@ -28,7 +28,7 @@ import org.apache.flink.api.java.io.DiscardingOutputFormat;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.tuple.Tuple3;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,10 +37,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * as {@link DeltaIterationTranslationTest}.
  */
 @SuppressWarnings("serial")
-public class BulkIterationTranslationTest implements java.io.Serializable {
+class BulkIterationTranslationTest implements java.io.Serializable {
 
     @Test
-    public void testCorrectTranslation() {
+    void testCorrectTranslation() {
         final String jobName = "Test JobName";
 
         final int numIterations = 13;

@@ -20,16 +20,16 @@ package org.apache.flink.api.java.summarize.aggregation;
 
 import org.apache.flink.api.java.summarize.NumericColumnSummary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ShortSummaryAggregator}. */
-public class ShortSummaryAggregatorTest {
+class ShortSummaryAggregatorTest {
 
     @Test
-    public void testIsNan() throws Exception {
+    void testIsNan() {
         ShortSummaryAggregator ag = new ShortSummaryAggregator();
         // always false for Short
         assertThat(ag.isNan((short) -1)).isFalse();
@@ -41,7 +41,7 @@ public class ShortSummaryAggregatorTest {
     }
 
     @Test
-    public void testIsInfinite() throws Exception {
+    void testIsInfinite() {
         ShortSummaryAggregator ag = new ShortSummaryAggregator();
         // always false for Short
         assertThat(ag.isInfinite((short) -1)).isFalse();
@@ -53,7 +53,7 @@ public class ShortSummaryAggregatorTest {
     }
 
     @Test
-    public void testMean() throws Exception {
+    void testMean() {
         assertThat(summarize(0, 100).getMean()).isEqualTo(50.0);
         assertThat(summarize(0, 0, 100).getMean()).isCloseTo(33.333333, within(0.00001));
         assertThat(summarize(0, 0, 100, 100).getMean()).isEqualTo(50.0);
@@ -62,7 +62,7 @@ public class ShortSummaryAggregatorTest {
     }
 
     @Test
-    public void testSum() throws Exception {
+    void testSum() {
         assertThat(summarize(0, 100).getSum().shortValue()).isEqualTo((short) 100);
         assertThat(summarize(1, 2, 3, 4, 5).getSum().shortValue()).isEqualTo((short) 15);
         assertThat(summarize(-100, 0, 100, null).getSum().shortValue()).isEqualTo((short) 0);
@@ -71,7 +71,7 @@ public class ShortSummaryAggregatorTest {
     }
 
     @Test
-    public void testMax() throws Exception {
+    void testMax() {
         assertThat(summarize(-1000, 0, 1, 50, 999, 1001).getMax().shortValue())
                 .isEqualTo((short) 1001);
         assertThat(summarize((int) Short.MIN_VALUE, -1000, 0).getMax().shortValue())
@@ -87,7 +87,7 @@ public class ShortSummaryAggregatorTest {
     }
 
     @Test
-    public void testMin() throws Exception {
+    void testMin() {
         assertThat(summarize(-1000, 0, 1, 50, 999, 1001).getMin().shortValue())
                 .isEqualTo((short) -1000);
         assertThat(summarize((int) Short.MIN_VALUE, -1000, 0).getMin().shortValue())

@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ValueSummaryAggregator.IntegerValueSummaryAggregator}. */
-public class IntegerValueSummaryAggregatorTest extends IntegerSummaryAggregatorTest {
+class IntegerValueSummaryAggregatorTest extends IntegerSummaryAggregatorTest {
 
     @Override
     protected NumericColumnSummary<Integer> summarize(Integer... values) {

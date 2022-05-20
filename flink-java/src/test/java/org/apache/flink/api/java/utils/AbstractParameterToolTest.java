@@ -22,54 +22,51 @@ import org.apache.flink.api.java.ClosureCleaner;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.InstantiationUtil;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 /** Base class for tests for {@link ParameterTool}. */
 public abstract class AbstractParameterToolTest {
 
-    @Rule public TemporaryFolder tmp = new TemporaryFolder();
-
-    @Rule public final ExpectedException exception = ExpectedException.none();
-
+    @TempDir protected Path tmp;
     // Test parser
 
     @Test
-    public void testThrowExceptionIfParameterIsNotPrefixed() {
-        exception.expect(IllegalArgumentException.class);
-        exception.expectMessage(
-                "Error parsing arguments '[a]' on 'a'. Please prefix keys with -- or -.");
-
-        createParameterToolFromArgs(new String[] {"a"});
+    void testThrowExceptionIfParameterIsNotPrefixed() {
+        assertThatThrownBy(() -> createParameterToolFromArgs(new String[] {"a"}))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(
+                        "Error parsing arguments '[a]' on 'a'. Please prefix keys with -- or -.");
     }
 
     @Test
-    public void testNoVal() {
+    void testNoVal() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-berlin"});
         assertThat(parameter.getNumberOfParameters()).isEqualTo(1);
         assertThat(parameter.has("berlin")).isTrue();
     }
 
     @Test
-    public void testNoValDouble() {
+    void testNoValDouble() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"--berlin"});
         assertThat(parameter.getNumberOfParameters()).isEqualTo(1);
         assertThat(parameter.has("berlin")).isTrue();
     }
 
     @Test
-    public void testMultipleNoVal() {
+    void testMultipleNoVal() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(
                         new String[] {"--a", "--b", "--c", "--d", "--e", "--f"});
@@ -83,7 +80,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testMultipleNoValMixed() {
+    void testMultipleNoValMixed() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"--a", "-b", "-c", "-d", "--e", "--f"});
         assertThat(parameter.getNumberOfParameters()).isEqualTo(6);
@@ -96,26 +93,24 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testEmptyVal() {
-        exception.expect(IllegalArgumentException.class);
-        exception.expectMessage("The input [--a, -b, --] contains an empty argument");
-
-        createParameterToolFromArgs(new String[] {"--a", "-b", "--"});
+    void testEmptyVal() {
+        assertThatThrownBy(() -> createParameterToolFromArgs(new String[] {"--a", "-b", "--"}))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("The input [--a, -b, --] contains an empty argument");
     }
 
     @Test
-    public void testEmptyValShort() {
-        exception.expect(IllegalArgumentException.class);
-        exception.expectMessage("The input [--a, -b, -] contains an empty argument");
-
-        createParameterToolFromArgs(new String[] {"--a", "-b", "-"});
+    void testEmptyValShort() {
+        assertThatThrownBy(() -> createParameterToolFromArgs(new String[] {"--a", "-b", "-"}))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("The input [--a, -b, -] contains an empty argument");
     }
 
     // Test unrequested
     // Boolean
 
     @Test
-    public void testUnrequestedBoolean() {
+    void testUnrequestedBoolean() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"-boolean", "true"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("boolean");
@@ -130,7 +125,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedBooleanWithDefaultValue() {
+    void testUnrequestedBooleanWithDefaultValue() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"-boolean", "true"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("boolean");
@@ -145,7 +140,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedBooleanWithMissingValue() {
+    void testUnrequestedBooleanWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-boolean"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("boolean");
 
@@ -156,7 +151,7 @@ public abstract class AbstractParameterToolTest {
     // Byte
 
     @Test
-    public void testUnrequestedByte() {
+    void testUnrequestedByte() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-byte", "1"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("byte");
 
@@ -170,7 +165,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedByteWithDefaultValue() {
+    void testUnrequestedByteWithDefaultValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-byte", "1"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("byte");
 
@@ -184,20 +179,19 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedByteWithMissingValue() {
+    void testUnrequestedByteWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-byte"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("byte");
 
-        exception.expect(RuntimeException.class);
-        exception.expectMessage("For input string: \"__NO_VALUE_KEY\"");
-
-        parameter.getByte("byte");
+        assertThatThrownBy(() -> parameter.getByte("byte"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("For input string: \"__NO_VALUE_KEY\"");
     }
 
     // Short
 
     @Test
-    public void testUnrequestedShort() {
+    void testUnrequestedShort() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-short", "2"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("short");
 
@@ -211,7 +205,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedShortWithDefaultValue() {
+    void testUnrequestedShortWithDefaultValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-short", "2"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("short");
 
@@ -225,20 +219,19 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedShortWithMissingValue() {
+    void testUnrequestedShortWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-short"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("short");
 
-        exception.expect(RuntimeException.class);
-        exception.expectMessage("For input string: \"__NO_VALUE_KEY\"");
-
-        parameter.getShort("short");
+        assertThatThrownBy(() -> parameter.getShort("short"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("For input string: \"__NO_VALUE_KEY\"");
     }
 
     // Int
 
     @Test
-    public void testUnrequestedInt() {
+    void testUnrequestedInt() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-int", "4"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("int");
 
@@ -252,7 +245,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedIntWithDefaultValue() {
+    void testUnrequestedIntWithDefaultValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-int", "4"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("int");
 
@@ -266,20 +259,19 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedIntWithMissingValue() {
+    void testUnrequestedIntWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-int"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("int");
 
-        exception.expect(RuntimeException.class);
-        exception.expectMessage("For input string: \"__NO_VALUE_KEY\"");
-
-        parameter.getInt("int");
+        assertThatThrownBy(() -> parameter.getInt("int"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("For input string: \"__NO_VALUE_KEY\"");
     }
 
     // Long
 
     @Test
-    public void testUnrequestedLong() {
+    void testUnrequestedLong() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-long", "8"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("long");
 
@@ -293,7 +285,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedLongWithDefaultValue() {
+    void testUnrequestedLongWithDefaultValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-long", "8"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("long");
 
@@ -307,20 +299,19 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedLongWithMissingValue() {
+    void testUnrequestedLongWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-long"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("long");
 
-        exception.expect(RuntimeException.class);
-        exception.expectMessage("For input string: \"__NO_VALUE_KEY\"");
-
-        parameter.getLong("long");
+        assertThatThrownBy(() -> parameter.getLong("long"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("For input string: \"__NO_VALUE_KEY\"");
     }
 
     // Float
 
     @Test
-    public void testUnrequestedFloat() {
+    void testUnrequestedFloat() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-float", "4"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("float");
 
@@ -334,7 +325,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedFloatWithDefaultValue() {
+    void testUnrequestedFloatWithDefaultValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-float", "4"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("float");
 
@@ -348,20 +339,19 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedFloatWithMissingValue() {
+    void testUnrequestedFloatWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-float"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("float");
 
-        exception.expect(RuntimeException.class);
-        exception.expectMessage("For input string: \"__NO_VALUE_KEY\"");
-
-        parameter.getFloat("float");
+        assertThatThrownBy(() -> parameter.getFloat("float"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("For input string: \"__NO_VALUE_KEY\"");
     }
 
     // Double
 
     @Test
-    public void testUnrequestedDouble() {
+    void testUnrequestedDouble() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"-double", "8"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("double");
@@ -376,7 +366,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedDoubleWithDefaultValue() {
+    void testUnrequestedDoubleWithDefaultValue() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"-double", "8"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("double");
@@ -391,20 +381,19 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedDoubleWithMissingValue() {
+    void testUnrequestedDoubleWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-double"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("double");
 
-        exception.expect(RuntimeException.class);
-        exception.expectMessage("For input string: \"__NO_VALUE_KEY\"");
-
-        parameter.getDouble("double");
+        assertThatThrownBy(() -> parameter.getDouble("double"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("For input string: \"__NO_VALUE_KEY\"");
     }
 
     // String
 
     @Test
-    public void testUnrequestedString() {
+    void testUnrequestedString() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"-string", "∞"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("string");
@@ -419,7 +408,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedStringWithDefaultValue() {
+    void testUnrequestedStringWithDefaultValue() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"-string", "∞"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("string");
@@ -434,7 +423,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedStringWithMissingValue() {
+    void testUnrequestedStringWithMissingValue() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-string"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("string");
 
@@ -445,7 +434,7 @@ public abstract class AbstractParameterToolTest {
     // Additional methods
 
     @Test
-    public void testUnrequestedHas() {
+    void testUnrequestedHas() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {"-boolean"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("boolean");
 
@@ -459,7 +448,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedRequired() {
+    void testUnrequestedRequired() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(new String[] {"-required", "∞"});
         assertThat(parameter.getUnrequestedParameters()).containsExactly("required");
@@ -474,7 +463,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedMultiple() {
+    void testUnrequestedMultiple() {
         AbstractParameterTool parameter =
                 createParameterToolFromArgs(
                         new String[] {
@@ -532,7 +521,7 @@ public abstract class AbstractParameterToolTest {
     }
 
     @Test
-    public void testUnrequestedUnknown() {
+    void testUnrequestedUnknown() {
         AbstractParameterTool parameter = createParameterToolFromArgs(new String[] {});
         assertThat(parameter.getUnrequestedParameters()).isEmpty();
 
@@ -586,7 +575,7 @@ public abstract class AbstractParameterToolTest {
 
             // -------- test the default file creation ------------
             try {
-                final String pathToFile = tmp.newFile().getAbsolutePath();
+                final String pathToFile = Files.createTempFile(tmp, "", "").toString();
                 parameterTool.createPropertiesFile(pathToFile);
                 final Properties defaultProps = new Properties();
                 try (FileInputStream fis = new FileInputStream(pathToFile)) {

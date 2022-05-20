@@ -36,7 +36,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 
@@ -46,10 +46,10 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of delta iterations. */
 @SuppressWarnings("serial")
-public class DeltaIterationTranslationTest implements java.io.Serializable {
+class DeltaIterationTranslationTest implements java.io.Serializable {
 
     @Test
-    public void testCorrectTranslation() {
+    void testCorrectTranslation() {
         try {
             final String jobName = "Test JobName";
             final String iterationName = "Test Name";
@@ -178,7 +178,7 @@ public class DeltaIterationTranslationTest implements java.io.Serializable {
     }
 
     @Test
-    public void testRejectWhenSolutionSetKeysDontMatchJoin() {
+    void testRejectWhenSolutionSetKeysDontMatchJoin() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
@@ -220,7 +220,7 @@ public class DeltaIterationTranslationTest implements java.io.Serializable {
     }
 
     @Test
-    public void testRejectWhenSolutionSetKeysDontMatchCoGroup() {
+    void testRejectWhenSolutionSetKeysDontMatchCoGroup() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 

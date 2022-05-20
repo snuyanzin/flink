@@ -20,16 +20,16 @@ package org.apache.flink.api.java.summarize.aggregation;
 
 import org.apache.flink.api.java.summarize.NumericColumnSummary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link IntegerSummaryAggregator}. */
-public class IntegerSummaryAggregatorTest {
+class IntegerSummaryAggregatorTest {
 
     @Test
-    public void testIsNan() throws Exception {
+    void testIsNan() {
         IntegerSummaryAggregator ag = new IntegerSummaryAggregator();
         // always false for Integer
         assertThat(ag.isNan(-1)).isFalse();
@@ -41,7 +41,7 @@ public class IntegerSummaryAggregatorTest {
     }
 
     @Test
-    public void testIsInfinite() throws Exception {
+    void testIsInfinite() {
         IntegerSummaryAggregator ag = new IntegerSummaryAggregator();
         // always false for Integer
         assertThat(ag.isInfinite(-1)).isFalse();
@@ -53,7 +53,7 @@ public class IntegerSummaryAggregatorTest {
     }
 
     @Test
-    public void testMean() throws Exception {
+    void testMean() {
         assertThat(summarize(0, 100).getMean()).isEqualTo(50.0);
         assertThat(summarize(0, 0, 100).getMean()).isCloseTo(33.333333, within(0.00001));
         assertThat(summarize(0, 0, 100, 100).getMean()).isEqualTo(50.0);
@@ -62,7 +62,7 @@ public class IntegerSummaryAggregatorTest {
     }
 
     @Test
-    public void testSum() throws Exception {
+    void testSum() {
         assertThat(summarize(0, 100).getSum().intValue()).isEqualTo(100);
         assertThat(summarize(1, 2, 3, 4, 5).getSum().intValue()).isEqualTo(15);
         assertThat(summarize(-100, 0, 100, null).getSum().intValue()).isEqualTo(0);
@@ -71,7 +71,7 @@ public class IntegerSummaryAggregatorTest {
     }
 
     @Test
-    public void testMax() throws Exception {
+    void testMax() {
         assertThat(summarize(-1000, 0, 1, 50, 999, 1001).getMax().intValue()).isEqualTo(1001);
         assertThat(summarize(Integer.MIN_VALUE, -1000, 0).getMax().intValue()).isEqualTo(0);
         assertThat(summarize(1, 8, 7, 6, 9, 10, 2, 3, 5, 0, 11, -2, 3).getMax().intValue())
@@ -85,7 +85,7 @@ public class IntegerSummaryAggregatorTest {
     }
 
     @Test
-    public void testMin() throws Exception {
+    void testMin() {
         assertThat(summarize(-1000, 0, 1, 50, 999, 1001).getMin().intValue()).isEqualTo(-1000);
         assertThat(summarize(Integer.MIN_VALUE, -1000, 0).getMin().intValue())
                 .isEqualTo(Integer.MIN_VALUE);

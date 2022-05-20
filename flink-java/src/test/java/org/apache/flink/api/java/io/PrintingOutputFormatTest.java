@@ -17,9 +17,9 @@
 
 package org.apache.flink.api.java.io;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -27,7 +27,7 @@ import java.io.PrintStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for the {@link PrintingOutputFormat}. */
-public class PrintingOutputFormatTest {
+class PrintingOutputFormatTest {
 
     private final PrintStream originalSystemOut = System.out;
     private final PrintStream originalSystemErr = System.err;
@@ -37,14 +37,14 @@ public class PrintingOutputFormatTest {
 
     private final String line = System.lineSeparator();
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         System.setOut(new PrintStream(arrayOutputStream));
         System.setErr(new PrintStream(arrayErrorStream));
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         if (System.out != originalSystemOut) {
             System.out.close();
         }
@@ -56,7 +56,7 @@ public class PrintingOutputFormatTest {
     }
 
     @Test
-    public void testPrintOutputFormatStdOut() throws Exception {
+    void testPrintOutputFormatStdOut() throws Exception {
         PrintingOutputFormat<String> printSink = new PrintingOutputFormat<>();
         printSink.open(0, 1);
 
@@ -68,7 +68,7 @@ public class PrintingOutputFormatTest {
     }
 
     @Test
-    public void testPrintOutputFormatStdErr() throws Exception {
+    void testPrintOutputFormatStdErr() throws Exception {
         PrintingOutputFormat<String> printSink = new PrintingOutputFormat<>(true);
         printSink.open(0, 1);
 
@@ -80,7 +80,7 @@ public class PrintingOutputFormatTest {
     }
 
     @Test
-    public void testPrintOutputFormatWithPrefix() throws Exception {
+    void testPrintOutputFormatWithPrefix() throws Exception {
         PrintingOutputFormat<String> printSink = new PrintingOutputFormat<>();
         printSink.open(1, 2);
 
@@ -92,7 +92,7 @@ public class PrintingOutputFormatTest {
     }
 
     @Test
-    public void testPrintOutputFormatWithIdentifierAndPrefix() throws Exception {
+    void testPrintOutputFormatWithIdentifierAndPrefix() throws Exception {
         PrintingOutputFormat<String> printSink = new PrintingOutputFormat<>("mySink", false);
         printSink.open(1, 2);
 
@@ -104,7 +104,7 @@ public class PrintingOutputFormatTest {
     }
 
     @Test
-    public void testPrintOutputFormatWithIdentifierButNoPrefix() throws Exception {
+    void testPrintOutputFormatWithIdentifierButNoPrefix() throws Exception {
         PrintingOutputFormat<String> printSink = new PrintingOutputFormat<>("mySink", false);
         printSink.open(0, 1);
 

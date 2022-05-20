@@ -30,17 +30,17 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of co-group sort. */
 @SuppressWarnings({"serial", "unchecked"})
-public class CoGroupSortTranslationTest implements java.io.Serializable {
+class CoGroupSortTranslationTest implements java.io.Serializable {
 
     @Test
-    public void testGroupSortTuples() {
+    void testGroupSortTuples() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
@@ -93,7 +93,7 @@ public class CoGroupSortTranslationTest implements java.io.Serializable {
     }
 
     @Test
-    public void testSortTuplesAndPojos() {
+    void testSortTuplesAndPojos() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 

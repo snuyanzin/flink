@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ValueSummaryAggregator.ShortValueSummaryAggregator}. */
-public class ShortValueSummaryAggregatorTest extends ShortSummaryAggregatorTest {
+class ShortValueSummaryAggregatorTest extends ShortSummaryAggregatorTest {
 
     /** Helper method for summarizing a list of values. */
     protected NumericColumnSummary<Short> summarize(Integer... values) {

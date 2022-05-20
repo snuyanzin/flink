@@ -23,9 +23,9 @@ import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +38,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Tests for {@link CsvOutputFormat}. */
-public class CsvOutputFormatTest {
+class CsvOutputFormatTest {
 
     private String path = null;
 
-    @Before
-    public void createFile() throws Exception {
+    @BeforeEach
+    void createFile() throws Exception {
         path = File.createTempFile("csv_output_test_file", ".csv").getAbsolutePath();
     }
 
     @Test
-    public void testNullAllow() throws Exception {
+    void testNullAllow() throws Exception {
         final CsvOutputFormat<Tuple3<String, String, Integer>> csvOutputFormat =
                 new CsvOutputFormat<>(new Path(path));
         try {
@@ -69,7 +69,7 @@ public class CsvOutputFormatTest {
     }
 
     @Test
-    public void testNullDisallowOnDefault() throws Exception {
+    void testNullDisallowOnDefault() throws Exception {
         final CsvOutputFormat<Tuple3<String, String, Integer>> csvOutputFormat =
                 new CsvOutputFormat<>(new Path(path));
         try {
@@ -87,8 +87,8 @@ public class CsvOutputFormatTest {
         }
     }
 
-    @After
-    public void cleanUp() throws IOException {
+    @AfterEach
+    void cleanUp() throws IOException {
         Files.deleteIfExists(Paths.get(path));
     }
 }

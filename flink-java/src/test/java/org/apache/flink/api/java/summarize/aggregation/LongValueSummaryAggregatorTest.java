@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ValueSummaryAggregator.LongValueSummaryAggregator}. */
-public class LongValueSummaryAggregatorTest extends LongSummaryAggregatorTest {
+class LongValueSummaryAggregatorTest extends LongSummaryAggregatorTest {
 
     /** Helper method for summarizing a list of values. */
     @Override

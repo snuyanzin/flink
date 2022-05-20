@@ -22,16 +22,16 @@ import org.apache.flink.api.common.Plan;
 import org.apache.flink.api.common.operators.GenericDataSinkBase;
 import org.apache.flink.api.java.io.DiscardingOutputFormat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for multiple invocations of a plan. */
-public class MultipleInvokationsTest {
+class MultipleInvokationsTest {
 
     @Test
-    public void testMultipleInvocationsGetPlan() {
+    void testMultipleInvocationsGetPlan() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 

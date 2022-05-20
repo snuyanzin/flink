@@ -26,17 +26,17 @@ import org.apache.flink.types.LongValue;
 import org.apache.flink.types.ShortValue;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link SummaryAggregatorFactory}. */
-public class SummaryAggregatorFactoryTest {
+class SummaryAggregatorFactoryTest {
 
     @Test
-    public void testCreate() throws Exception {
+    void testCreate() throws Exception {
         // supported primitive types
         assertThat(SummaryAggregatorFactory.create(String.class).getClass())
                 .isEqualTo(StringSummaryAggregator.class);

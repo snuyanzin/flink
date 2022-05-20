@@ -24,7 +24,7 @@ import org.apache.flink.types.BooleanValue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link ValueSummaryAggregator.BooleanValueSummaryAggregator}. */
-public class BooleanValueSummaryAggregatorTest extends BooleanSummaryAggregatorTest {
+class BooleanValueSummaryAggregatorTest extends BooleanSummaryAggregatorTest {
 
     /**
      * Helper method for summarizing a list of values.

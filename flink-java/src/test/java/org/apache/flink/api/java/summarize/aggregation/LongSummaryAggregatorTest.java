@@ -20,16 +20,16 @@ package org.apache.flink.api.java.summarize.aggregation;
 
 import org.apache.flink.api.java.summarize.NumericColumnSummary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link LongSummaryAggregator}. */
-public class LongSummaryAggregatorTest {
+class LongSummaryAggregatorTest {
 
     @Test
-    public void testIsNan() throws Exception {
+    void testIsNan() {
         LongSummaryAggregator ag = new LongSummaryAggregator();
         // always false for Long
         assertThat(ag.isNan(-1L)).isFalse();
@@ -41,7 +41,7 @@ public class LongSummaryAggregatorTest {
     }
 
     @Test
-    public void testIsInfinite() throws Exception {
+    void testIsInfinite() {
         LongSummaryAggregator ag = new LongSummaryAggregator();
         // always false for Long
         assertThat(ag.isInfinite(-1L)).isFalse();
@@ -53,7 +53,7 @@ public class LongSummaryAggregatorTest {
     }
 
     @Test
-    public void testMean() throws Exception {
+    void testMean() {
         assertThat(summarize(0L, 100L).getMean()).isEqualTo(50.0);
         assertThat(summarize(0L, 0L, 100L).getMean()).isCloseTo(33.333333, within(0.00001));
         assertThat(summarize(0L, 0L, 100L, 100L).getMean()).isEqualTo(50.0);
@@ -62,7 +62,7 @@ public class LongSummaryAggregatorTest {
     }
 
     @Test
-    public void testSum() throws Exception {
+    void testSum() {
         assertThat(summarize(0L, 100L).getSum().longValue()).isEqualTo(100L);
         assertThat(summarize(1L, 2L, 3L, 4L, 5L).getSum().longValue()).isEqualTo(15L);
         assertThat(summarize(-100L, 0L, 100L, null).getSum().longValue()).isEqualTo(0L);
@@ -71,7 +71,7 @@ public class LongSummaryAggregatorTest {
     }
 
     @Test
-    public void testMax() throws Exception {
+    void testMax() {
         assertThat(summarize(-1000L, 0L, 1L, 50L, 999L, 1001L).getMax().longValue())
                 .isEqualTo(1001L);
         assertThat(
@@ -88,7 +88,7 @@ public class LongSummaryAggregatorTest {
     }
 
     @Test
-    public void testMin() throws Exception {
+    void testMin() {
         assertThat(summarize(-1000L, 0L, 1L, 50L, 999L, 1001L).getMin().longValue())
                 .isEqualTo(-1000L);
         assertThat(

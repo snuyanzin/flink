@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ValueSummaryAggregator.DoubleValueSummaryAggregator}. */
-public class DoubleValueSummaryAggregatorTest extends DoubleSummaryAggregatorTest {
+class DoubleValueSummaryAggregatorTest extends DoubleSummaryAggregatorTest {
 
     /**
      * Helper method for summarizing a list of values.

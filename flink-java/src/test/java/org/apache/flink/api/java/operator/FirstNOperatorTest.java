@@ -26,7 +26,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#first(int)}. */
-public class FirstNOperatorTest {
+class FirstNOperatorTest {
 
     // TUPLE DATA
 
@@ -51,7 +51,7 @@ public class FirstNOperatorTest {
                     BasicTypeInfo.INT_TYPE_INFO);
 
     @Test
-    public void testUngroupedFirstN() {
+    void testUngroupedFirstN() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -83,7 +83,7 @@ public class FirstNOperatorTest {
     }
 
     @Test
-    public void testGroupedFirstN() {
+    void testGroupedFirstN() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -115,7 +115,7 @@ public class FirstNOperatorTest {
     }
 
     @Test
-    public void testGroupedSortedFirstN() {
+    void testGroupedSortedFirstN() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =

@@ -35,7 +35,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.types.parser.FieldParser;
 import org.apache.flink.types.parser.StringParser;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,7 +53,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /** Tests for {@link CsvInputFormat}. */
-public class CsvInputFormatTest {
+class CsvInputFormatTest {
 
     private static final Path PATH = new Path("an/ignored/file/");
 
@@ -63,13 +63,13 @@ public class CsvInputFormatTest {
     private static final String SECOND_PART = "That is the second part";
 
     @Test
-    public void testSplitCsvInputStreamInLargeBuffer() throws Exception {
+    void testSplitCsvInputStreamInLargeBuffer() throws Exception {
         testSplitCsvInputStream(1024 * 1024, false, false);
         testSplitCsvInputStream(1024 * 1024, false, true);
     }
 
     @Test
-    public void testSplitCsvInputStreamInSmallBuffer() throws Exception {
+    void testSplitCsvInputStreamInSmallBuffer() throws Exception {
         testSplitCsvInputStream(2, false, false);
         testSplitCsvInputStream(1024 * 1024, false, true);
     }
@@ -193,12 +193,12 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void ignoreInvalidLinesAndGetOffsetInLargeBuffer() {
+    void ignoreInvalidLinesAndGetOffsetInLargeBuffer() {
         ignoreInvalidLines(1024 * 1024);
     }
 
     @Test
-    public void ignoreInvalidLinesAndGetOffsetInSmallBuffer() {
+    void ignoreInvalidLinesAndGetOffsetInSmallBuffer() {
         ignoreInvalidLines(2);
     }
 
@@ -259,7 +259,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void ignoreSingleCharPrefixComments() {
+    void ignoreSingleCharPrefixComments() {
         try {
             final String fileContent =
                     "#description of the data\n"
@@ -304,7 +304,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void ignoreMultiCharPrefixComments() {
+    void ignoreMultiCharPrefixComments() {
         try {
 
             final String fileContent =
@@ -350,7 +350,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void readStringFields() {
+    void readStringFields() {
         try {
             final String fileContent = "abc|def|ghijk\nabc||hhg\n|||";
             final FileInputSplit split = createTempFile(fileContent);
@@ -395,7 +395,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void readMixedQuotedStringFields() {
+    void readMixedQuotedStringFields() {
         try {
             final String fileContent = "@a|b|c@|def|@ghijk@\nabc||@|hhg@\n|||";
             final FileInputSplit split = createTempFile(fileContent);
@@ -441,7 +441,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void readStringFieldsWithTrailingDelimiters() {
+    void readStringFieldsWithTrailingDelimiters() {
         try {
             final String fileContent = "abc|-def|-ghijk\nabc|-|-hhg\n|-|-|-\n";
             final FileInputSplit split = createTempFile(fileContent);
@@ -485,7 +485,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testTailingEmptyFields() throws Exception {
+    void testTailingEmptyFields() throws Exception {
         final String fileContent =
                 "aa,bb,cc\n"
                         + // ok
@@ -540,7 +540,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testIntegerFields() throws IOException {
+    void testIntegerFields() throws IOException {
         try {
             final String fileContent = "111|222|333|444|555\n666|777|888|999|000|\n";
             final FileInputSplit split = createTempFile(fileContent);
@@ -589,7 +589,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testEmptyFields() throws IOException {
+    void testEmptyFields() throws IOException {
         try {
             final String fileContent =
                     "|0|0|0|0|0|\n"
@@ -650,7 +650,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testDoubleFields() throws IOException {
+    void testDoubleFields() throws IOException {
         try {
             final String fileContent = "11.1|22.2|33.3|44.4|55.5\n66.6|77.7|88.8|99.9|00.0|\n";
             final FileInputSplit split = createTempFile(fileContent);
@@ -695,7 +695,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testReadFirstN() throws IOException {
+    void testReadFirstN() throws IOException {
         try {
             final String fileContent = "111|222|333|444|555|\n666|777|888|999|000|\n";
             final FileInputSplit split = createTempFile(fileContent);
@@ -731,7 +731,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testReadSparseWithNullFieldsForTypes() throws IOException {
+    void testReadSparseWithNullFieldsForTypes() throws IOException {
         try {
             final String fileContent =
                     "111|x|222|x|333|x|444|x|555|x|666|x|777|x|888|x|999|x|000|x|\n"
@@ -775,7 +775,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testReadSparseWithPositionSetter() throws IOException {
+    void testReadSparseWithPositionSetter() throws IOException {
         try {
             final String fileContent =
                     "111|222|333|444|555|666|777|888|999|000|\n000|999|888|777|666|555|444|333|222|111|";
@@ -816,7 +816,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testReadSparseWithMask() throws IOException {
+    void testReadSparseWithMask() throws IOException {
         try {
             final String fileContent =
                     "111&&222&&333&&444&&555&&666&&777&&888&&999&&000&&\n"
@@ -860,7 +860,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testParseStringErrors() throws Exception {
+    void testParseStringErrors() throws Exception {
         StringParser stringParser = new StringParser();
         stringParser.enableQuotedStringParsing((byte) '"');
 
@@ -967,7 +967,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testWindowsLineEndRemoval() {
+    void testWindowsLineEndRemoval() {
 
         // Check typical use case -- linux file is correct and it is set up to linux (\n)
         this.testRemovingTrailingCR("\n", "\n");
@@ -1057,7 +1057,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testPojoType() throws Exception {
+    void testPojoType() throws Exception {
         File tempFile = File.createTempFile("CsvReaderPojoType", "tmp");
         tempFile.deleteOnExit();
         tempFile.setWritable(true);
@@ -1082,7 +1082,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testPojoTypeWithPrivateField() throws Exception {
+    void testPojoTypeWithPrivateField() throws Exception {
         File tempFile = File.createTempFile("CsvReaderPojoType", "tmp");
         tempFile.deleteOnExit();
         tempFile.setWritable(true);
@@ -1121,7 +1121,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testPojoTypeWithTrailingEmptyFields() throws Exception {
+    void testPojoTypeWithTrailingEmptyFields() throws Exception {
         final String fileContent = "123,,3.123,,\n456,BBB,3.23,,";
         final FileInputSplit split = createTempFile(fileContent);
 
@@ -1151,7 +1151,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testPojoTypeWithMappingInformation() throws Exception {
+    void testPojoTypeWithMappingInformation() throws Exception {
         File tempFile = File.createTempFile("CsvReaderPojoType", "tmp");
         tempFile.deleteOnExit();
         tempFile.setWritable(true);
@@ -1179,7 +1179,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testPojoTypeWithPartialFieldInCSV() throws Exception {
+    void testPojoTypeWithPartialFieldInCSV() throws Exception {
         File tempFile = File.createTempFile("CsvReaderPojoType", "tmp");
         tempFile.deleteOnExit();
         tempFile.setWritable(true);
@@ -1207,7 +1207,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testPojoTypeWithMappingInfoAndPartialField() throws Exception {
+    void testPojoTypeWithMappingInfoAndPartialField() throws Exception {
         File tempFile = File.createTempFile("CsvReaderPojoType", "tmp");
         tempFile.deleteOnExit();
         tempFile.setWritable(true);
@@ -1240,7 +1240,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testPojoTypeWithInvalidFieldMapping() throws Exception {
+    void testPojoTypeWithInvalidFieldMapping() throws Exception {
         File tempFile = File.createTempFile("CsvReaderPojoType", "tmp");
         tempFile.deleteOnExit();
         tempFile.setWritable(true);
@@ -1275,7 +1275,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testQuotedStringParsingWithIncludeFields() throws Exception {
+    void testQuotedStringParsingWithIncludeFields() throws Exception {
         final String fileContent =
                 "\"20:41:52-1-3-2015\"|\"Re: Taskmanager memory error in Eclipse\"|"
                         + "\"Blahblah <blah@blahblah.org>\"|\"blaaa|\"blubb\"";
@@ -1312,7 +1312,7 @@ public class CsvInputFormatTest {
     }
 
     @Test
-    public void testQuotedStringParsingWithEscapedQuotes() throws Exception {
+    void testQuotedStringParsingWithEscapedQuotes() throws Exception {
         final String fileContent = "\"\\\"Hello\\\" World\"|\"We are\\\" young\"";
 
         final File tempFile = File.createTempFile("CsvReaderQuotedString", "tmp");
@@ -1349,7 +1349,7 @@ public class CsvInputFormatTest {
      * @throws Exception
      */
     @Test
-    public void testPojoSubclassType() throws Exception {
+    void testPojoSubclassType() throws Exception {
         final String fileContent = "t1,foobar,tweet2\nt2,barfoo,tweet2";
 
         final File tempFile = File.createTempFile("CsvReaderPOJOSubclass", "tmp");

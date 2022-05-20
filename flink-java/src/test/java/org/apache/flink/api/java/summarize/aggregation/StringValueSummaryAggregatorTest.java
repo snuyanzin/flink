@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ValueSummaryAggregator.StringValueSummaryAggregator}. */
-public class StringValueSummaryAggregatorTest extends StringSummaryAggregatorTest {
+class StringValueSummaryAggregatorTest extends StringSummaryAggregatorTest {
 
     /**
      * Helper method for summarizing a list of values.

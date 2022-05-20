@@ -37,17 +37,17 @@ import org.apache.flink.api.java.typeutils.ValueTypeInfo;
 import org.apache.flink.types.LongValue;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of reduce operation. */
 @SuppressWarnings("serial")
-public class ReduceTranslationTests implements java.io.Serializable {
+class ReduceTranslationTests implements java.io.Serializable {
 
     @Test
-    public void translateNonGroupedReduce() {
+    void translateNonGroupedReduce() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);
@@ -95,7 +95,7 @@ public class ReduceTranslationTests implements java.io.Serializable {
     }
 
     @Test
-    public void translateGroupedReduceNoMapper() {
+    void translateGroupedReduceNoMapper() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);
@@ -143,7 +143,7 @@ public class ReduceTranslationTests implements java.io.Serializable {
     }
 
     @Test
-    public void translateGroupedReduceWithkeyExtractor() {
+    void translateGroupedReduceWithkeyExtractor() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);

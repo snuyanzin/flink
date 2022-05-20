@@ -18,13 +18,13 @@
 
 package org.apache.flink.api.java.summarize.aggregation;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link CompensatedSum}. */
-public class CompensatedSumTest {
+class CompensatedSumTest {
 
     /**
      * When adding a series of numbers the order of the numbers should not impact the results.
@@ -34,7 +34,7 @@ public class CompensatedSumTest {
      * our Kahan Summation is working.
      */
     @Test
-    public void testAdd1() throws Exception {
+    void testAdd1() {
         final CompensatedSum smallSum = new CompensatedSum(0.001, 0.0);
         final CompensatedSum largeSum = new CompensatedSum(1000, 0.0);
 
@@ -68,7 +68,7 @@ public class CompensatedSumTest {
     }
 
     @Test
-    public void testDelta() throws Exception {
+    void testDelta() {
         CompensatedSum compensatedResult1 = new CompensatedSum(0.001, 0.0);
         for (int i = 0; i < 10; i++) {
             compensatedResult1 = compensatedResult1.add(0.001);

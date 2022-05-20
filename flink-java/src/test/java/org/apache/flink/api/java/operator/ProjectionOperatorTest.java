@@ -24,7 +24,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#project(int...)}. */
-public class ProjectionOperatorTest {
+class ProjectionOperatorTest {
 
     // TUPLE DATA
 
@@ -53,7 +53,7 @@ public class ProjectionOperatorTest {
     private final List<Long> emptyLongData = new ArrayList<Long>();
 
     @Test
-    public void testFieldsProjection() {
+    void testFieldsProjection() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -88,7 +88,7 @@ public class ProjectionOperatorTest {
     }
 
     @Test
-    public void testProjectionTypes() {
+    void testProjectionTypes() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -110,7 +110,7 @@ public class ProjectionOperatorTest {
     }
 
     @Test
-    public void testProjectionWithoutTypes() {
+    void testProjectionWithoutTypes() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =

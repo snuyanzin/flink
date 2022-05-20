@@ -30,7 +30,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link DataSet#reduce(ReduceFunction)}. */
 @SuppressWarnings("serial")
-public class ReduceOperatorTest {
+class ReduceOperatorTest {
 
     private final List<Tuple5<Integer, Long, String, Long, Integer>> emptyTupleData =
             new ArrayList<Tuple5<Integer, Long, String, Long, Integer>>();
@@ -53,7 +53,7 @@ public class ReduceOperatorTest {
                     BasicTypeInfo.INT_TYPE_INFO);
 
     @Test
-    public void testSemanticPropsWithKeySelector1() {
+    void testSemanticPropsWithKeySelector1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -82,7 +82,7 @@ public class ReduceOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector2() {
+    void testSemanticPropsWithKeySelector2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -113,7 +113,7 @@ public class ReduceOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector3() {
+    void testSemanticPropsWithKeySelector3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -144,7 +144,7 @@ public class ReduceOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector4() {
+    void testSemanticPropsWithKeySelector4() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =

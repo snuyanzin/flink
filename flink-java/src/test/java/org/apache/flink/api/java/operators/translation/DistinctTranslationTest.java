@@ -35,7 +35,7 @@ import org.apache.flink.api.java.typeutils.ValueTypeInfo;
 import org.apache.flink.types.LongValue;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -46,10 +46,10 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of distinct operation. */
 @SuppressWarnings("serial")
-public class DistinctTranslationTest {
+class DistinctTranslationTest {
 
     @Test
-    public void translateDistinctPlain() {
+    void translateDistinctPlain() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);
@@ -86,7 +86,7 @@ public class DistinctTranslationTest {
     }
 
     @Test
-    public void translateDistinctPlain2() {
+    void translateDistinctPlain2() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);
@@ -121,7 +121,7 @@ public class DistinctTranslationTest {
     }
 
     @Test
-    public void translateDistinctPosition() {
+    void translateDistinctPosition() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);
@@ -158,7 +158,7 @@ public class DistinctTranslationTest {
     }
 
     @Test
-    public void translateDistinctKeySelector() {
+    void translateDistinctKeySelector() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);
@@ -219,7 +219,7 @@ public class DistinctTranslationTest {
     }
 
     @Test
-    public void translateDistinctExpressionKey() {
+    void translateDistinctExpressionKey() {
         try {
             final int parallelism = 8;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);

@@ -32,7 +32,7 @@ import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link DataSet#combineGroup(GroupCombineFunction)}. */
 @SuppressWarnings("serial")
-public class GroupCombineOperatorTest {
+class GroupCombineOperatorTest {
 
     private final List<Tuple5<Integer, Long, String, Long, Integer>> emptyTupleData =
             new ArrayList<Tuple5<Integer, Long, String, Long, Integer>>();
@@ -55,7 +55,7 @@ public class GroupCombineOperatorTest {
                     BasicTypeInfo.INT_TYPE_INFO);
 
     @Test
-    public void testSemanticPropsWithKeySelector1() {
+    void testSemanticPropsWithKeySelector1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -88,7 +88,7 @@ public class GroupCombineOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector2() {
+    void testSemanticPropsWithKeySelector2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -124,7 +124,7 @@ public class GroupCombineOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector3() {
+    void testSemanticPropsWithKeySelector3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -158,7 +158,7 @@ public class GroupCombineOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector4() {
+    void testSemanticPropsWithKeySelector4() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -195,7 +195,7 @@ public class GroupCombineOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector5() {
+    void testSemanticPropsWithKeySelector5() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -229,7 +229,7 @@ public class GroupCombineOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector6() {
+    void testSemanticPropsWithKeySelector6() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -266,7 +266,7 @@ public class GroupCombineOperatorTest {
     }
 
     @Test
-    public void testSemanticPropsWithKeySelector7() {
+    void testSemanticPropsWithKeySelector7() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =

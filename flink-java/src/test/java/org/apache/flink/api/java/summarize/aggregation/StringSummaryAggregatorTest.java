@@ -20,16 +20,16 @@ package org.apache.flink.api.java.summarize.aggregation;
 
 import org.apache.flink.api.java.summarize.StringColumnSummary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link StringSummaryAggregator}. */
-public class StringSummaryAggregatorTest {
+class StringSummaryAggregatorTest {
 
     @Test
-    public void testMixedGroup() {
+    void testMixedGroup() {
         StringColumnSummary summary =
                 summarize("abc", "", null, "  ", "defghi", "foo", null, null, "", " ");
         assertThat(summary.getTotalCount()).isEqualTo(10);
@@ -42,7 +42,7 @@ public class StringSummaryAggregatorTest {
     }
 
     @Test
-    public void testAllNullStrings() {
+    void testAllNullStrings() {
         StringColumnSummary summary = summarize(null, null, null, null);
         assertThat(summary.getTotalCount()).isEqualTo(4);
         assertThat(summary.getNullCount()).isEqualTo(4);
@@ -54,7 +54,7 @@ public class StringSummaryAggregatorTest {
     }
 
     @Test
-    public void testAllWithValues() {
+    void testAllWithValues() {
         StringColumnSummary summary = summarize("cat", "hat", "dog", "frog");
         assertThat(summary.getTotalCount()).isEqualTo(4);
         assertThat(summary.getNullCount()).isEqualTo(0);

@@ -31,7 +31,7 @@ import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.Visitor;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -42,10 +42,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test proper automated assignment of the transformation's name, if not set by the user. */
 @SuppressWarnings("serial")
-public class NamesTest implements Serializable {
+class NamesTest implements Serializable {
 
     @Test
-    public void testDefaultName() {
+    void testDefaultName() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         DataSet<String> strs = env.fromCollection(Arrays.asList("a", "b"));
@@ -67,7 +67,7 @@ public class NamesTest implements Serializable {
     }
 
     @Test
-    public void testGivenName() {
+    void testGivenName() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         DataSet<String> strs = env.fromCollection(Arrays.asList("a", "b"));
@@ -87,7 +87,7 @@ public class NamesTest implements Serializable {
     }
 
     @Test
-    public void testJoinWith() {
+    void testJoinWith() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         List<Tuple1<String>> strLi = new ArrayList<Tuple1<String>>();

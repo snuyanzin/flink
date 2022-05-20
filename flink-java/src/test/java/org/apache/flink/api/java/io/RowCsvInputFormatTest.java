@@ -30,8 +30,8 @@ import org.apache.flink.types.Row;
 import org.apache.flink.types.parser.FieldParser;
 import org.apache.flink.types.parser.StringParser;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 /** Tests for {@link RowCsvInputFormat}. */
-public class RowCsvInputFormatTest {
+class RowCsvInputFormatTest {
 
     private static final Path PATH = new Path("an/ignored/file/");
 
@@ -57,7 +57,7 @@ public class RowCsvInputFormatTest {
     private static final String SECOND_PART = "That is the second part";
 
     @Test
-    public void ignoreInvalidLines() throws Exception {
+    void ignoreInvalidLines() throws Exception {
         String fileContent =
                 "#description of the data\n"
                         + "header1|header2|header3|\n"
@@ -156,7 +156,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void ignoreSingleCharPrefixComments() throws Exception {
+    void ignoreSingleCharPrefixComments() throws Exception {
         String fileContent =
                 "#description of the data\n"
                         + "#successive commented line\n"
@@ -197,7 +197,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void ignoreMultiCharPrefixComments() throws Exception {
+    void ignoreMultiCharPrefixComments() throws Exception {
         String fileContent =
                 "//description of the data\n"
                         + "//successive commented line\n"
@@ -237,7 +237,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void readStringFields() throws Exception {
+    void readStringFields() throws Exception {
         String fileContent = "abc|def|ghijk\nabc||hhg\n|||\n||";
 
         FileInputSplit split = createTempFile(fileContent);
@@ -285,7 +285,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void readMixedQuotedStringFields() throws Exception {
+    void readMixedQuotedStringFields() throws Exception {
         String fileContent = "@a|b|c@|def|@ghijk@\nabc||@|hhg@\n|||\n";
 
         FileInputSplit split = createTempFile(fileContent);
@@ -328,7 +328,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void readStringFieldsWithTrailingDelimiters() throws Exception {
+    void readStringFieldsWithTrailingDelimiters() throws Exception {
         String fileContent = "abc|-def|-ghijk\nabc|-|-hhg\n|-|-|-\n";
 
         FileInputSplit split = createTempFile(fileContent);
@@ -371,7 +371,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testTailingEmptyFields() throws Exception {
+    void testTailingEmptyFields() throws Exception {
         String fileContent =
                 "abc|-def|-ghijk\n"
                         + "abc|-def|-\n"
@@ -434,7 +434,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testIntegerFields() throws Exception {
+    void testIntegerFields() throws Exception {
         String fileContent = "111|222|333|444|555\n666|777|888|999|000|\n";
 
         FileInputSplit split = createTempFile(fileContent);
@@ -478,7 +478,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testEmptyFields() throws Exception {
+    void testEmptyFields() throws Exception {
         String fileContent =
                 ",,,,,,,,\n"
                         + ",,,,,,,\n"
@@ -522,7 +522,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testDoubleFields() throws Exception {
+    void testDoubleFields() throws Exception {
         String fileContent = "11.1|22.2|33.3|44.4|55.5\n66.6|77.7|88.8|99.9|00.0|\n";
 
         FileInputSplit split = createTempFile(fileContent);
@@ -565,7 +565,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testReadFirstN() throws Exception {
+    void testReadFirstN() throws Exception {
         String fileContent = "111|222|333|444|555|\n666|777|888|999|000|\n";
 
         FileInputSplit split = createTempFile(fileContent);
@@ -596,7 +596,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testReadSparseWithNullFieldsForTypes() throws Exception {
+    void testReadSparseWithNullFieldsForTypes() throws Exception {
         String fileContent =
                 "111|x|222|x|333|x|444|x|555|x|666|x|777|x|888|x|999|x|000|x|\n"
                         + "000|x|999|x|888|x|777|x|666|x|555|x|444|x|333|x|222|x|111|x|";
@@ -635,7 +635,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testReadSparseWithPositionSetter() throws Exception {
+    void testReadSparseWithPositionSetter() throws Exception {
         String fileContent =
                 "111|222|333|444|555|666|777|888|999|000|\n"
                         + "000|999|888|777|666|555|444|333|222|111|";
@@ -674,7 +674,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testReadSparseWithMask() throws Exception {
+    void testReadSparseWithMask() throws Exception {
         String fileContent =
                 "111&&222&&333&&444&&555&&666&&777&&888&&999&&000&&\n"
                         + "000&&999&&888&&777&&666&&555&&444&&333&&222&&111&&";
@@ -713,7 +713,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testParseStringErrors() throws Exception {
+    void testParseStringErrors() throws Exception {
         StringParser stringParser = new StringParser();
 
         stringParser.enableQuotedStringParsing((byte) '"');
@@ -738,8 +738,8 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    @Ignore("Test disabled because we do not support double-quote escaped quotes right now.")
-    public void testParserCorrectness() throws Exception {
+    @Disabled("Test disabled because we do not support double-quote escaped quotes right now.")
+    void testParserCorrectness() throws Exception {
         // RFC 4180 Compliance Test content
         // Taken from http://en.wikipedia.org/wiki/Comma-separated_values#Example
         String fileContent =
@@ -813,7 +813,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testWindowsLineEndRemoval() throws Exception {
+    void testWindowsLineEndRemoval() throws Exception {
 
         // check typical use case -- linux file is correct and it is set up to linux(\n)
         testRemovingTrailingCR("\n", "\n");
@@ -833,7 +833,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testQuotedStringParsingWithIncludeFields() throws Exception {
+    void testQuotedStringParsingWithIncludeFields() throws Exception {
         String fileContent =
                 "\"20:41:52-1-3-2015\"|\"Re: Taskmanager memory error in Eclipse\"|"
                         + "\"Blahblah <blah@blahblah.org>\"|\"blaaa|\"blubb\"";
@@ -867,7 +867,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testQuotedStringParsingWithEscapedQuotes() throws Exception {
+    void testQuotedStringParsingWithEscapedQuotes() throws Exception {
         String fileContent = "\"\\\"Hello\\\" World\"|\"We are\\\" young\"";
         File tempFile = File.createTempFile("CsvReaderQuotedString", "tmp");
         tempFile.deleteOnExit();
@@ -898,7 +898,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testSqlTimeFields() throws Exception {
+    void testSqlTimeFields() throws Exception {
         String fileContent =
                 "1990-10-14|02:42:25|1990-10-14 02:42:25.123|1990-1-4 2:2:5\n"
                         + "1990-10-14|02:42:25|1990-10-14 02:42:25.123|1990-1-4 2:2:5.3\n";
@@ -940,7 +940,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testScanOrder() throws Exception {
+    void testScanOrder() throws Exception {
         String fileContent =
                 // first row
                 "111|222|333|444|555|666|777|888|999|000|\n"
@@ -981,7 +981,7 @@ public class RowCsvInputFormatTest {
     }
 
     @Test
-    public void testEmptyProjection() throws Exception {
+    void testEmptyProjection() throws Exception {
         String fileContent = "111|222|333\n" + "000|999|888";
         FileInputSplit split = createTempFile(fileContent);
 

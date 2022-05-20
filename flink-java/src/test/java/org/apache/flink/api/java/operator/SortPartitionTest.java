@@ -31,16 +31,17 @@ import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#sortPartition(int, Order)}. */
-public class SortPartitionTest {
+class SortPartitionTest {
 
     // TUPLE DATA
     private final List<Tuple5<Integer, Long, String, Long, Integer>> emptyTupleData =
@@ -70,7 +71,7 @@ public class SortPartitionTest {
             new ArrayList<Tuple4<Integer, Long, CustomType, Long[]>>();
 
     @Test
-    public void testSortPartitionPositionKeys1() {
+    void testSortPartitionPositionKeys1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -85,7 +86,7 @@ public class SortPartitionTest {
     }
 
     @Test
-    public void testSortPartitionPositionKeys2() {
+    void testSortPartitionPositionKeys2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -99,30 +100,38 @@ public class SortPartitionTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testSortPartitionWithPositionKeys3() {
+    @Test
+    void testSortPartitionWithPositionKeys3() {
+        assertThatThrownBy(
+                        () -> {
+                            final ExecutionEnvironment env =
+                                    ExecutionEnvironment.getExecutionEnvironment();
+                            DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                                    env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
-
-        // must not work
-        tupleDs.sortPartition(2, Order.ASCENDING);
-    }
-
-    @Test(expected = InvalidProgramException.class)
-    public void testSortPartitionWithPositionKeys4() {
-
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
-
-        // must not work
-        tupleDs.sortPartition(3, Order.ASCENDING);
+                            // must not work
+                            tupleDs.sortPartition(2, Order.ASCENDING);
+                        })
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
-    public void testSortPartitionExpressionKeys1() {
+    void testSortPartitionWithPositionKeys4() {
+        assertThatThrownBy(
+                        () -> {
+                            final ExecutionEnvironment env =
+                                    ExecutionEnvironment.getExecutionEnvironment();
+                            DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                                    env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
+
+                            // must not work
+                            tupleDs.sortPartition(3, Order.ASCENDING);
+                        })
+                .isInstanceOf(InvalidProgramException.class);
+    }
+
+    @Test
+    void testSortPartitionExpressionKeys1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -137,7 +146,7 @@ public class SortPartitionTest {
     }
 
     @Test
-    public void testSortPartitionExpressionKeys2() {
+    void testSortPartitionExpressionKeys2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
@@ -152,30 +161,38 @@ public class SortPartitionTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testSortPartitionWithExpressionKeys3() {
+    @Test
+    void testSortPartitionWithExpressionKeys3() {
+        assertThatThrownBy(
+                        () -> {
+                            final ExecutionEnvironment env =
+                                    ExecutionEnvironment.getExecutionEnvironment();
+                            DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                                    env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
-
-        // must not work
-        tupleDs.sortPartition("f2.nested", Order.ASCENDING);
-    }
-
-    @Test(expected = InvalidProgramException.class)
-    public void testSortPartitionWithExpressionKeys4() {
-
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
-
-        // must not work
-        tupleDs.sortPartition("f3", Order.ASCENDING);
+                            // must not work
+                            tupleDs.sortPartition("f2.nested", Order.ASCENDING);
+                        })
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
-    public void testSortPartitionWithKeySelector1() {
+    void testSortPartitionWithExpressionKeys4() {
+        assertThatThrownBy(
+                        () -> {
+                            final ExecutionEnvironment env =
+                                    ExecutionEnvironment.getExecutionEnvironment();
+                            DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                                    env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
+
+                            // must not work
+                            tupleDs.sortPartition("f3", Order.ASCENDING);
+                        })
+                .isInstanceOf(InvalidProgramException.class);
+    }
+
+    @Test
+    void testSortPartitionWithKeySelector1() {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
                 env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
@@ -196,46 +213,61 @@ public class SortPartitionTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testSortPartitionWithKeySelector2() {
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
+    @Test
+    void testSortPartitionWithKeySelector2() {
+        assertThatThrownBy(
+                        () -> {
+                            final ExecutionEnvironment env =
+                                    ExecutionEnvironment.getExecutionEnvironment();
+                            DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                                    env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
-        // must not work
-        tupleDs.sortPartition(
-                new KeySelector<Tuple4<Integer, Long, CustomType, Long[]>, Long[]>() {
-                    @Override
-                    public Long[] getKey(Tuple4<Integer, Long, CustomType, Long[]> value)
-                            throws Exception {
-                        return value.f3;
-                    }
-                },
-                Order.ASCENDING);
-    }
-
-    @Test(expected = InvalidProgramException.class)
-    public void testSortPartitionWithKeySelector3() {
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
-
-        // must not work
-        tupleDs.sortPartition("f1", Order.ASCENDING)
-                .sortPartition(
-                        new KeySelector<Tuple4<Integer, Long, CustomType, Long[]>, CustomType>() {
-                            @Override
-                            public CustomType getKey(
-                                    Tuple4<Integer, Long, CustomType, Long[]> value)
-                                    throws Exception {
-                                return value.f2;
-                            }
-                        },
-                        Order.ASCENDING);
+                            // must not work
+                            tupleDs.sortPartition(
+                                    new KeySelector<
+                                            Tuple4<Integer, Long, CustomType, Long[]>, Long[]>() {
+                                        @Override
+                                        public Long[] getKey(
+                                                Tuple4<Integer, Long, CustomType, Long[]> value)
+                                                throws Exception {
+                                            return value.f3;
+                                        }
+                                    },
+                                    Order.ASCENDING);
+                        })
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
-    public void testSortPartitionWithKeySelector4() {
+    void testSortPartitionWithKeySelector3() {
+        assertThatThrownBy(
+                        () -> {
+                            final ExecutionEnvironment env =
+                                    ExecutionEnvironment.getExecutionEnvironment();
+                            DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                                    env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
+
+                            // must not work
+                            tupleDs.sortPartition("f1", Order.ASCENDING)
+                                    .sortPartition(
+                                            new KeySelector<
+                                                    Tuple4<Integer, Long, CustomType, Long[]>,
+                                                    CustomType>() {
+                                                @Override
+                                                public CustomType getKey(
+                                                        Tuple4<Integer, Long, CustomType, Long[]>
+                                                                value)
+                                                        throws Exception {
+                                                    return value.f2;
+                                                }
+                                            },
+                                            Order.ASCENDING);
+                        })
+                .isInstanceOf(InvalidProgramException.class);
+    }
+
+    @Test
+    void testSortPartitionWithKeySelector4() {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
                 env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
@@ -257,24 +289,32 @@ public class SortPartitionTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testSortPartitionWithKeySelector5() {
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
+    @Test
+    void testSortPartitionWithKeySelector5() {
+        assertThatThrownBy(
+                        () -> {
+                            final ExecutionEnvironment env =
+                                    ExecutionEnvironment.getExecutionEnvironment();
+                            DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                                    env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
-        // must not work
-        tupleDs.sortPartition(
-                        new KeySelector<Tuple4<Integer, Long, CustomType, Long[]>, CustomType>() {
-                            @Override
-                            public CustomType getKey(
-                                    Tuple4<Integer, Long, CustomType, Long[]> value)
-                                    throws Exception {
-                                return value.f2;
-                            }
-                        },
-                        Order.ASCENDING)
-                .sortPartition("f1", Order.ASCENDING);
+                            // must not work
+                            tupleDs.sortPartition(
+                                            new KeySelector<
+                                                    Tuple4<Integer, Long, CustomType, Long[]>,
+                                                    CustomType>() {
+                                                @Override
+                                                public CustomType getKey(
+                                                        Tuple4<Integer, Long, CustomType, Long[]>
+                                                                value)
+                                                        throws Exception {
+                                                    return value.f2;
+                                                }
+                                            },
+                                            Order.ASCENDING)
+                                    .sortPartition("f1", Order.ASCENDING);
+                        })
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     /** Custom data type, for testing purposes. */

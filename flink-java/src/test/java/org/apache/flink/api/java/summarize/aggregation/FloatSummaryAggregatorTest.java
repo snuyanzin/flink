@@ -20,13 +20,13 @@ package org.apache.flink.api.java.summarize.aggregation;
 
 import org.apache.flink.api.java.summarize.NumericColumnSummary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link FloatSummaryAggregator}. */
-public class FloatSummaryAggregatorTest {
+class FloatSummaryAggregatorTest {
 
     /**
      * Use some values from Anscombe's Quartet for testing.
@@ -36,7 +36,7 @@ public class FloatSummaryAggregatorTest {
      * <p>https://en.wikipedia.org/wiki/Anscombe%27s_quartet
      */
     @Test
-    public void testAnscomesQuartetXValues() throws Exception {
+    void testAnscomesQuartetXValues() {
 
         final Float[] q1x = {10.0f, 8.0f, 13.0f, 9.0f, 11.0f, 14.0f, 6.0f, 4.0f, 12.0f, 7.0f, 5.0f};
         final Float[] q4x = {8.0f, 8.0f, 8.0f, 8.0f, 8.0f, 8.0f, 8.0f, 19.0f, 8.0f, 8.0f, 8.0f};
@@ -63,7 +63,7 @@ public class FloatSummaryAggregatorTest {
      * <p>https://en.wikipedia.org/wiki/Anscombe%27s_quartet
      */
     @Test
-    public void testAnscomesQuartetYValues() throws Exception {
+    void testAnscomesQuartetYValues() {
         final Float[] q1y = {
             8.04f, 6.95f, 7.58f, 8.81f, 8.33f, 9.96f, 7.24f, 4.26f, 10.84f, 4.82f, 5.68f
         };
@@ -96,7 +96,7 @@ public class FloatSummaryAggregatorTest {
     }
 
     @Test
-    public void testIsNan() throws Exception {
+    void testIsNan() {
         FloatSummaryAggregator ag = new FloatSummaryAggregator();
         assertThat(ag.isNan(-1.0f)).isFalse();
         assertThat(ag.isNan(0.0f)).isFalse();
@@ -107,7 +107,7 @@ public class FloatSummaryAggregatorTest {
     }
 
     @Test
-    public void testIsInfinite() throws Exception {
+    void testIsInfinite() {
         FloatSummaryAggregator ag = new FloatSummaryAggregator();
         assertThat(ag.isInfinite(-1.0f)).isFalse();
         assertThat(ag.isInfinite(0.0f)).isFalse();
@@ -119,7 +119,7 @@ public class FloatSummaryAggregatorTest {
     }
 
     @Test
-    public void testMean() throws Exception {
+    void testMean() {
         assertThat(summarize(0.0f, 100.0f).getMean()).isEqualTo(50.0);
         assertThat(summarize(0.0f, 0.0f, 100.0f).getMean()).isCloseTo(33.333333, within(0.00001));
         assertThat(summarize(0.0f, 0.0f, 100.0f, 100.0f).getMean()).isEqualTo(50.0);
@@ -128,7 +128,7 @@ public class FloatSummaryAggregatorTest {
     }
 
     @Test
-    public void testSum() throws Exception {
+    void testSum() {
         assertThat(summarize(0.0f, 100.0f).getSum().floatValue()).isEqualTo(100.0f);
         assertThat(summarize(1.0f, 2.0f, 3.0f, 4.0f, 5.0f).getSum().floatValue()).isEqualTo(15f);
         assertThat(summarize(-100.0f, 0.0f, 100.0f, null).getSum().floatValue()).isEqualTo(0f);
@@ -137,7 +137,7 @@ public class FloatSummaryAggregatorTest {
     }
 
     @Test
-    public void testMax() throws Exception {
+    void testMax() {
         assertThat(summarize(-1000.0f, 0.0f, 1.0f, 50.0f, 999.0f, 1001.0f).getMax().floatValue())
                 .isEqualTo(1001.0f);
         assertThat(
@@ -163,7 +163,7 @@ public class FloatSummaryAggregatorTest {
     }
 
     @Test
-    public void testMin() throws Exception {
+    void testMin() {
         assertThat(summarize(-1000.0f, 0.0f, 1.0f, 50.0f, 999.0f, 1001.0f).getMin().floatValue())
                 .isEqualTo(-1000);
         assertThat(

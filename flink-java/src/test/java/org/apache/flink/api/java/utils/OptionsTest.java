@@ -18,31 +18,30 @@
 
 package org.apache.flink.api.java.utils;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for the Options utility class. */
 @Deprecated
-public class OptionsTest {
-
-    @Rule public ExpectedException expectedException = ExpectedException.none();
+class OptionsTest {
 
     @Test
-    public void testChoicesWithInvalidDefaultValue() throws RequiredParametersException {
-        expectedException.expect(RequiredParametersException.class);
-        expectedException.expectMessage(
-                "Default value d is not in the list of valid values for option choices");
-
-        Option option = new Option("choices").choices("a", "b", "c");
-        option.defaultValue("d");
+    void testChoicesWithInvalidDefaultValue() {
+        assertThatThrownBy(
+                        () -> {
+                            Option option = new Option("choices").choices("a", "b", "c");
+                            option.defaultValue("d");
+                        })
+                .isInstanceOf(RequiredParametersException.class)
+                .hasMessage(
+                        "Default value d is not in the list of valid values for option choices");
     }
 
     @Test
-    public void testChoicesWithValidDefaultValue() {
+    void testChoicesWithValidDefaultValue() {
         Option option = null;
         try {
             option = new Option("choices").choices("a", "b", "c");
@@ -55,23 +54,25 @@ public class OptionsTest {
     }
 
     @Test
-    public void testChoicesWithInvalidDefautlValue() throws RequiredParametersException {
-        expectedException.expect(RequiredParametersException.class);
-        expectedException.expectMessage(
-                "Valid values for option choices do not contain defined default value x");
-
-        Option option = new Option("choices").defaultValue("x");
-        option.choices("a", "b");
+    void testChoicesWithInvalidDefautlValue() {
+        assertThatThrownBy(
+                        () -> {
+                            Option option = new Option("choices").defaultValue("x");
+                            option.choices("a", "b");
+                        })
+                .isInstanceOf(RequiredParametersException.class)
+                .hasMessage(
+                        "Valid values for option choices do not contain defined default value x");
     }
 
     @Test
-    public void testIsCastableToDefinedTypeWithDefaultType() {
+    void testIsCastableToDefinedTypeWithDefaultType() {
         Option option = new Option("name");
         assertThat(option.isCastableToDefinedType("some value")).isTrue();
     }
 
     @Test
-    public void testIsCastableToDefinedTypeWithMatchingTypes() {
+    void testIsCastableToDefinedTypeWithMatchingTypes() {
         // Integer
         Option option = new Option("name").type(OptionType.INTEGER);
         assertThat(option.isCastableToDefinedType("15")).isTrue();
@@ -86,7 +87,7 @@ public class OptionsTest {
     }
 
     @Test
-    public void testIsCastableToDefinedTypeWithNonMatchingTypes() {
+    void testIsCastableToDefinedTypeWithNonMatchingTypes() {
         // Integer
         Option option = new Option("name").type(OptionType.INTEGER);
         assertThat(option.isCastableToDefinedType("true")).isFalse();

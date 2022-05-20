@@ -18,19 +18,20 @@
 
 package org.apache.flink.api.java.utils;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link MultipleParameterTool}. */
-public class MultipleParameterToolTest extends AbstractParameterToolTest {
+class MultipleParameterToolTest extends AbstractParameterToolTest {
 
     @Test
-    public void testFromCliArgsWithMultipleParameters() {
+    void testFromCliArgsWithMultipleParameters() {
         MultipleParameterTool parameter =
                 (MultipleParameterTool)
                         createParameterToolFromArgs(
@@ -62,13 +63,13 @@ public class MultipleParameterToolTest extends AbstractParameterToolTest {
         assertThat(parameter.getByte("maxByte")).isEqualTo((byte) 127);
         assertThat(parameter.getShort("negativeShort")).isEqualTo((short) -1024);
 
-        exception.expect(IllegalStateException.class);
-        exception.expectMessage("Key multi should has only one value");
-        parameter.get("multi");
+        assertThatThrownBy(() -> parameter.get("multi"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Key multi should has only one value.");
     }
 
     @Test
-    public void testUnrequestedMultiParameter() {
+    void testUnrequestedMultiParameter() {
         MultipleParameterTool parameter =
                 (MultipleParameterTool)
                         createParameterToolFromArgs(
@@ -85,7 +86,7 @@ public class MultipleParameterToolTest extends AbstractParameterToolTest {
     }
 
     @Test
-    public void testMerged() {
+    void testMerged() {
         MultipleParameterTool parameter1 =
                 (MultipleParameterTool)
                         createParameterToolFromArgs(

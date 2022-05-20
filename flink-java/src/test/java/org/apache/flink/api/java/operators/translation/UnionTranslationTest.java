@@ -34,17 +34,17 @@ import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.types.LongValue;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of union operation. */
 @SuppressWarnings("serial")
-public class UnionTranslationTest {
+class UnionTranslationTest {
 
     @Test
-    public void translateUnion2Group() {
+    void translateUnion2Group() {
         try {
             final int parallelism = 4;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);
@@ -93,7 +93,7 @@ public class UnionTranslationTest {
     }
 
     @Test
-    public void translateUnion3SortedGroup() {
+    void translateUnion3SortedGroup() {
         try {
             final int parallelism = 4;
             ExecutionEnvironment env = ExecutionEnvironment.createLocalEnvironment(parallelism);

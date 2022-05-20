@@ -22,17 +22,17 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests concerning type extraction by ExecutionEnvironment methods. */
 @SuppressWarnings("serial")
-public class TypeExtractionTest {
+class TypeExtractionTest {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
-    public void testFunctionWithMissingGenericsAndReturns() {
+    void testFunctionWithMissingGenericsAndReturns() {
 
         RichMapFunction function =
                 new RichMapFunction() {
@@ -55,7 +55,7 @@ public class TypeExtractionTest {
     }
 
     @Test
-    public void testGetterSetterWithVertex() {
+    void testGetterSetterWithVertex() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         env.fromElements(new VertexTyped(0L, 3.0), new VertexTyped(1L, 1.0));
     }

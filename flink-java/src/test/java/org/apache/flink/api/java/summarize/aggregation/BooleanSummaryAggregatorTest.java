@@ -20,12 +20,12 @@ package org.apache.flink.api.java.summarize.aggregation;
 
 import org.apache.flink.api.java.summarize.BooleanColumnSummary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link BooleanSummaryAggregator}. */
-public class BooleanSummaryAggregatorTest {
+class BooleanSummaryAggregatorTest {
 
     @Test
     public void testMixedGroup() {

@@ -28,7 +28,7 @@ import org.apache.flink.core.io.GenericInputSplit;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link CollectionInputFormat}. */
-public class CollectionInputFormatTest {
+class CollectionInputFormatTest {
 
     private static class ElementType {
         private final int id;
@@ -86,7 +86,7 @@ public class CollectionInputFormatTest {
     }
 
     @Test
-    public void testSerializability() {
+    void testSerializability() {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                 ObjectOutputStream out = new ObjectOutputStream(buffer)) {
 
@@ -136,7 +136,7 @@ public class CollectionInputFormatTest {
     }
 
     @Test
-    public void testSerializabilityStrings() {
+    void testSerializabilityStrings() {
 
         final String[] data =
                 new String[] {
@@ -214,7 +214,7 @@ public class CollectionInputFormatTest {
     }
 
     @Test
-    public void testSerializationFailure() {
+    void testSerializationFailure() {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                 ObjectOutputStream out = new ObjectOutputStream(buffer)) {
             // a mock serializer that fails when writing
@@ -238,7 +238,7 @@ public class CollectionInputFormatTest {
     }
 
     @Test
-    public void testDeserializationFailure() {
+    void testDeserializationFailure() {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                 ObjectOutputStream out = new ObjectOutputStream(buffer)) {
             // a mock serializer that fails when writing
@@ -261,7 +261,7 @@ public class CollectionInputFormatTest {
     }
 
     @Test
-    public void testToStringOnSmallCollection() {
+    void testToStringOnSmallCollection() {
         ArrayList<ElementType> smallList = new ArrayList<>();
         smallList.add(new ElementType(1));
         smallList.add(new ElementType(2));
@@ -272,7 +272,7 @@ public class CollectionInputFormatTest {
     }
 
     @Test
-    public void testToStringOnBigCollection() {
+    void testToStringOnBigCollection() {
         ArrayList<ElementType> list = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             list.add(new ElementType(i));

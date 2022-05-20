@@ -27,7 +27,7 @@ import org.apache.flink.api.java.aggregation.UnsupportedAggregationTypeException
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#aggregate(Aggregations, int)}. */
-public class AggregateOperatorTest {
+class AggregateOperatorTest {
 
     // TUPLE DATA
 
@@ -55,7 +55,7 @@ public class AggregateOperatorTest {
     private final List<Long> emptyLongData = new ArrayList<Long>();
 
     @Test
-    public void testFieldsAggregate() {
+    void testFieldsAggregate() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -91,7 +91,7 @@ public class AggregateOperatorTest {
     }
 
     @Test
-    public void testAggregationTypes() {
+    void testAggregationTypes() {
         try {
             final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
             DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =

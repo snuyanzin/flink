@@ -31,16 +31,17 @@ import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#groupBy(int...)}. */
-public class GroupingTest {
+class GroupingTest {
 
     // TUPLE DATA
     private final List<Tuple5<Integer, Long, String, Long, Integer>> emptyTupleData =
@@ -73,7 +74,7 @@ public class GroupingTest {
             new ArrayList<Tuple2<byte[], byte[]>>();
 
     @Test
-    public void testGroupByKeyFields1() {
+    void testGroupByKeyFields1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -87,18 +88,18 @@ public class GroupingTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupByKeyFields2() {
+    @Test
+    void testGroupByKeyFields2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         DataSet<Long> longDs = env.fromCollection(emptyLongData, BasicTypeInfo.LONG_TYPE_INFO);
         // should not work: groups on basic type
-        longDs.groupBy(0);
+        assertThatThrownBy(() -> longDs.groupBy(0)).isInstanceOf(InvalidProgramException.class);
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupByKeyFields3() {
+    @Test
+    void testGroupByKeyFields3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
@@ -106,33 +107,33 @@ public class GroupingTest {
 
         DataSet<CustomType> customDs = env.fromCollection(customTypeData);
         // should not work: groups on custom type
-        customDs.groupBy(0);
+        assertThatThrownBy(() -> customDs.groupBy(0)).isInstanceOf(InvalidProgramException.class);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testGroupByKeyFields4() {
+    @Test
+    void testGroupByKeyFields4() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
                 env.fromCollection(emptyTupleData, tupleTypeInfo);
 
         // should not work, key out of tuple bounds
-        tupleDs.groupBy(5);
+        assertThatThrownBy(() -> tupleDs.groupBy(5)).isInstanceOf(IndexOutOfBoundsException.class);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testGroupByKeyFields5() {
+    @Test
+    void testGroupByKeyFields5() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
                 env.fromCollection(emptyTupleData, tupleTypeInfo);
 
         // should not work, negative field position
-        tupleDs.groupBy(-1);
+        assertThatThrownBy(() -> tupleDs.groupBy(-1)).isInstanceOf(IndexOutOfBoundsException.class);
     }
 
     @Test
-    public void testGroupByKeyFieldsOnPrimitiveArray() {
+    void testGroupByKeyFieldsOnPrimitiveArray() {
         this.byteArrayData.add(new Tuple2(new byte[] {0}, new byte[] {1}));
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -141,7 +142,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupByKeyExpressions1() {
+    void testGroupByKeyExpressions1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
@@ -157,18 +158,19 @@ public class GroupingTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupByKeyExpressions2() {
+    @Test
+    void testGroupByKeyExpressions2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         DataSet<Long> longDs = env.fromCollection(emptyLongData, BasicTypeInfo.LONG_TYPE_INFO);
         // should not work: groups on basic type
-        longDs.groupBy("myInt");
+        assertThatThrownBy(() -> longDs.groupBy("myInt"))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupByKeyExpressions3() {
+    @Test
+    void testGroupByKeyExpressions3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
@@ -176,21 +178,25 @@ public class GroupingTest {
 
         DataSet<CustomType> customDs = env.fromCollection(customTypeData);
         // should not work: tuple selector on custom type
-        customDs.groupBy(0);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testGroupByKeyExpressions4() {
-
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<CustomType> ds = env.fromCollection(customTypeData);
-
-        // should not work, key out of tuple bounds
-        ds.groupBy("myNonExistent");
+        assertThatThrownBy(() -> customDs.groupBy(0)).isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
-    public void testGroupByKeyExpressions1Nested() {
+    void testGroupByKeyExpressions4() {
+
+        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        assertThatThrownBy(
+                        () -> {
+                            DataSet<CustomType> ds = env.fromCollection(customTypeData);
+
+                            // should not work, key out of tuple bounds
+                            ds.groupBy("myNonExistent");
+                        })
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void testGroupByKeyExpressions1Nested() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
@@ -206,19 +212,23 @@ public class GroupingTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGroupByKeyExpressions2Nested() {
+    @Test
+    void testGroupByKeyExpressions2Nested() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<CustomType> ds = env.fromCollection(customTypeData);
+        assertThatThrownBy(
+                        () -> {
+                            DataSet<CustomType> ds = env.fromCollection(customTypeData);
 
-        // should not work, key out of tuple bounds
-        ds.groupBy("nested.myNonExistent");
+                            // should not work, key out of tuple bounds
+                            ds.groupBy("nested.myNonExistent");
+                        })
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     @SuppressWarnings("serial")
-    public void testGroupByKeySelector1() {
+    void testGroupByKeySelector1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         this.customTypeData.add(new CustomType());
@@ -241,7 +251,7 @@ public class GroupingTest {
 
     @Test
     @SuppressWarnings("serial")
-    public void testGroupByKeySelector2() {
+    void testGroupByKeySelector2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         this.customTypeData.add(new CustomType());
@@ -263,7 +273,7 @@ public class GroupingTest {
 
     @Test
     @SuppressWarnings("serial")
-    public void testGroupByKeySelector3() {
+    void testGroupByKeySelector3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         this.customTypeData.add(new CustomType());
@@ -285,7 +295,7 @@ public class GroupingTest {
 
     @Test
     @SuppressWarnings("serial")
-    public void testGroupByKeySelector4() {
+    void testGroupByKeySelector4() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         this.customTypeData.add(new CustomType());
@@ -306,26 +316,29 @@ public class GroupingTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
+    @Test
     @SuppressWarnings("serial")
-    public void testGroupByKeySelector5() {
+    void testGroupByKeySelector5() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         this.customTypeData.add(new CustomType());
 
         DataSet<CustomType> customDs = env.fromCollection(customTypeData);
         // should not work
-        customDs.groupBy(
-                new KeySelector<GroupingTest.CustomType, CustomType2>() {
-                    @Override
-                    public CustomType2 getKey(CustomType value) {
-                        return new CustomType2();
-                    }
-                });
+        assertThatThrownBy(
+                        () ->
+                                customDs.groupBy(
+                                        new KeySelector<GroupingTest.CustomType, CustomType2>() {
+                                            @Override
+                                            public CustomType2 getKey(CustomType value) {
+                                                return new CustomType2();
+                                            }
+                                        }))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
-    public void testGroupSortKeyFields1() {
+    void testGroupSortKeyFields1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -339,60 +352,66 @@ public class GroupingTest {
         }
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testGroupSortKeyFields2() {
+    @Test
+    void testGroupSortKeyFields2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
                 env.fromCollection(emptyTupleData, tupleTypeInfo);
 
         // should not work, field index out of bounds
-        tupleDs.groupBy(0).sortGroup(5, Order.ASCENDING);
+        assertThatThrownBy(() -> tupleDs.groupBy(0).sortGroup(5, Order.ASCENDING))
+                .isInstanceOf(IndexOutOfBoundsException.class);
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortKeyFields3() {
+    @Test
+    void testGroupSortKeyFields3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Long> longDs = env.fromCollection(emptyLongData, BasicTypeInfo.LONG_TYPE_INFO);
 
         // should not work: sorted groups on groupings by key selectors
-        longDs.groupBy(
-                        new KeySelector<Long, Long>() {
-                            private static final long serialVersionUID = 1L;
+        assertThatThrownBy(
+                        () ->
+                                longDs.groupBy(
+                                                new KeySelector<Long, Long>() {
+                                                    private static final long serialVersionUID = 1L;
 
-                            @Override
-                            public Long getKey(Long value) {
-                                return value;
-                            }
-                        })
-                .sortGroup(0, Order.ASCENDING);
-    }
-
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortKeyFields4() {
-
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
-
-        // should not work
-        tupleDs.groupBy(0).sortGroup(2, Order.ASCENDING);
-    }
-
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortKeyFields5() {
-
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
-                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
-
-        // should not work
-        tupleDs.groupBy(0).sortGroup(3, Order.ASCENDING);
+                                                    @Override
+                                                    public Long getKey(Long value) {
+                                                        return value;
+                                                    }
+                                                })
+                                        .sortGroup(0, Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
-    public void testChainedGroupSortKeyFields() {
+    void testGroupSortKeyFields4() {
+
+        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
+
+        // should not work
+        assertThatThrownBy(() -> tupleDs.groupBy(0).sortGroup(2, Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
+    }
+
+    @Test
+    void testGroupSortKeyFields5() {
+
+        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
+                env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
+
+        // should not work
+        assertThatThrownBy(() -> tupleDs.groupBy(0).sortGroup(3, Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
+    }
+
+    @Test
+    void testChainedGroupSortKeyFields() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
@@ -407,7 +426,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupSortByKeyExpression1() {
+    void testGroupSortByKeyExpression1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
@@ -422,7 +441,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupSortByKeyExpression2() {
+    void testGroupSortByKeyExpression2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
@@ -437,7 +456,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupSortByKeyExpression3() {
+    void testGroupSortByKeyExpression3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
@@ -453,42 +472,49 @@ public class GroupingTest {
         }
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortByKeyExpression4() {
+    @Test
+    void testGroupSortByKeyExpression4() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
                 env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
         // should not work
-        tupleDs.groupBy("f0").sortGroup("f2", Order.ASCENDING);
+        assertThatThrownBy(() -> tupleDs.groupBy("f0").sortGroup("f2", Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortByKeyExpression5() {
+    @Test
+    void testGroupSortByKeyExpression5() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
                 env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
         // should not work
-        tupleDs.groupBy("f0").sortGroup("f1", Order.ASCENDING).sortGroup("f2", Order.ASCENDING);
+        assertThatThrownBy(
+                        () ->
+                                tupleDs.groupBy("f0")
+                                        .sortGroup("f1", Order.ASCENDING)
+                                        .sortGroup("f2", Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortByKeyExpression6() {
+    @Test
+    void testGroupSortByKeyExpression6() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
                 env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
         // should not work
-        tupleDs.groupBy("f0").sortGroup("f3", Order.ASCENDING);
+        assertThatThrownBy(() -> tupleDs.groupBy("f0").sortGroup("f3", Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @SuppressWarnings("serial")
     @Test
-    public void testGroupSortByKeySelector1() {
+    void testGroupSortByKeySelector1() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
@@ -515,92 +541,131 @@ public class GroupingTest {
     }
 
     @SuppressWarnings("serial")
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortByKeySelector2() {
+    @Test
+    void testGroupSortByKeySelector2() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
                 env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
         // should not work
-        tupleDs.groupBy(
-                        new KeySelector<Tuple4<Integer, Long, CustomType, Long[]>, Long>() {
-                            @Override
-                            public Long getKey(Tuple4<Integer, Long, CustomType, Long[]> value)
-                                    throws Exception {
-                                return value.f1;
-                            }
-                        })
-                .sortGroup(
-                        new KeySelector<Tuple4<Integer, Long, CustomType, Long[]>, CustomType>() {
-                            @Override
-                            public CustomType getKey(
-                                    Tuple4<Integer, Long, CustomType, Long[]> value)
-                                    throws Exception {
-                                return value.f2;
-                            }
-                        },
-                        Order.ASCENDING);
+        assertThatThrownBy(
+                        () ->
+                                tupleDs.groupBy(
+                                                new KeySelector<
+                                                        Tuple4<Integer, Long, CustomType, Long[]>,
+                                                        Long>() {
+                                                    @Override
+                                                    public Long getKey(
+                                                            Tuple4<
+                                                                            Integer,
+                                                                            Long,
+                                                                            CustomType,
+                                                                            Long[]>
+                                                                    value)
+                                                            throws Exception {
+                                                        return value.f1;
+                                                    }
+                                                })
+                                        .sortGroup(
+                                                new KeySelector<
+                                                        Tuple4<Integer, Long, CustomType, Long[]>,
+                                                        CustomType>() {
+                                                    @Override
+                                                    public CustomType getKey(
+                                                            Tuple4<
+                                                                            Integer,
+                                                                            Long,
+                                                                            CustomType,
+                                                                            Long[]>
+                                                                    value)
+                                                            throws Exception {
+                                                        return value.f2;
+                                                    }
+                                                },
+                                                Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @SuppressWarnings("serial")
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupSortByKeySelector3() {
+    @Test
+    void testGroupSortByKeySelector3() {
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Long, CustomType, Long[]>> tupleDs =
                 env.fromCollection(tupleWithCustomData, tupleWithCustomInfo);
 
         // should not work
-        tupleDs.groupBy(
-                        new KeySelector<Tuple4<Integer, Long, CustomType, Long[]>, Long>() {
-                            @Override
-                            public Long getKey(Tuple4<Integer, Long, CustomType, Long[]> value)
-                                    throws Exception {
-                                return value.f1;
-                            }
-                        })
-                .sortGroup(
-                        new KeySelector<Tuple4<Integer, Long, CustomType, Long[]>, Long[]>() {
-                            @Override
-                            public Long[] getKey(Tuple4<Integer, Long, CustomType, Long[]> value)
-                                    throws Exception {
-                                return value.f3;
-                            }
-                        },
-                        Order.ASCENDING);
+        assertThatThrownBy(
+                        () ->
+                                tupleDs.groupBy(
+                                                new KeySelector<
+                                                        Tuple4<Integer, Long, CustomType, Long[]>,
+                                                        Long>() {
+                                                    @Override
+                                                    public Long getKey(
+                                                            Tuple4<
+                                                                            Integer,
+                                                                            Long,
+                                                                            CustomType,
+                                                                            Long[]>
+                                                                    value)
+                                                            throws Exception {
+                                                        return value.f1;
+                                                    }
+                                                })
+                                        .sortGroup(
+                                                new KeySelector<
+                                                        Tuple4<Integer, Long, CustomType, Long[]>,
+                                                        Long[]>() {
+                                                    @Override
+                                                    public Long[] getKey(
+                                                            Tuple4<
+                                                                            Integer,
+                                                                            Long,
+                                                                            CustomType,
+                                                                            Long[]>
+                                                                    value)
+                                                            throws Exception {
+                                                        return value.f3;
+                                                    }
+                                                },
+                                                Order.ASCENDING))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
-    public void testGroupingAtomicType() {
+    void testGroupingAtomicType() {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Integer> dataSet = env.fromElements(0, 1, 1, 2, 0, 0);
 
         dataSet.groupBy("*");
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupAtomicTypeWithInvalid1() {
+    @Test
+    void testGroupAtomicTypeWithInvalid1() {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Integer> dataSet = env.fromElements(0, 1, 2, 3);
 
-        dataSet.groupBy("*", "invalidField");
+        assertThatThrownBy(() -> dataSet.groupBy("*", "invalidField"))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupAtomicTypeWithInvalid2() {
+    @Test
+    void testGroupAtomicTypeWithInvalid2() {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Integer> dataSet = env.fromElements(0, 1, 2, 3);
 
-        dataSet.groupBy("invalidField");
+        assertThatThrownBy(() -> dataSet.groupBy("invalidField"))
+                .isInstanceOf(InvalidProgramException.class);
     }
 
-    @Test(expected = InvalidProgramException.class)
-    public void testGroupAtomicTypeWithInvalid3() {
+    @Test
+    void testGroupAtomicTypeWithInvalid3() {
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<ArrayList<Integer>> dataSet = env.fromElements(new ArrayList<Integer>());
 
-        dataSet.groupBy("*");
+        assertThatThrownBy(() -> dataSet.groupBy("*")).isInstanceOf(InvalidProgramException.class);
     }
 
     /** Custom data type, for testing purposes. */

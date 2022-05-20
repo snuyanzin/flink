@@ -18,7 +18,7 @@
 
 package org.apache.flink.api.java.utils;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -45,12 +46,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ParameterTool}. */
-public class ParameterToolTest extends AbstractParameterToolTest {
+class ParameterToolTest extends AbstractParameterToolTest {
 
     // ----- Parser tests -----------------
 
     @Test
-    public void testFromCliArgs() {
+    void testFromCliArgs() {
         ParameterTool parameter =
                 (ParameterTool)
                         createParameterToolFromArgs(
@@ -79,8 +80,8 @@ public class ParameterToolTest extends AbstractParameterToolTest {
     }
 
     @Test
-    public void testFromPropertiesFile() throws IOException {
-        File propertiesFile = tmp.newFile();
+    void testFromPropertiesFile() throws IOException {
+        File propertiesFile = Files.createTempFile(tmp, null, null).toFile();
         Properties props = new Properties();
         props.setProperty("input", "myInput");
         props.setProperty("expectedCount", "15");
@@ -104,7 +105,7 @@ public class ParameterToolTest extends AbstractParameterToolTest {
     }
 
     @Test
-    public void testFromMapOrProperties() {
+    void testFromMapOrProperties() {
         Properties props = new Properties();
         props.setProperty("input", "myInput");
         props.setProperty("expectedCount", "15");
@@ -115,7 +116,7 @@ public class ParameterToolTest extends AbstractParameterToolTest {
 
     /** This is mainly meant to be used with -D arguments against the JVM. */
     @Test
-    public void testSystemProperties() {
+    void testSystemProperties() {
         System.setProperty("input", "myInput");
         System.setProperty("expectedCount", "15");
         ParameterTool parameter = ParameterTool.fromSystemProperties();
@@ -123,7 +124,7 @@ public class ParameterToolTest extends AbstractParameterToolTest {
     }
 
     @Test
-    public void testMerged() {
+    void testMerged() {
         ParameterTool parameter1 =
                 (ParameterTool) createParameterToolFromArgs(new String[] {"--input", "myInput"});
         System.setProperty("expectedCount", "15");
@@ -134,7 +135,7 @@ public class ParameterToolTest extends AbstractParameterToolTest {
 
     /** Tests that we can concurrently serialize and access the ParameterTool. See FLINK-7943 */
     @Test
-    public void testConcurrentExecutionConfigSerialization()
+    void testConcurrentExecutionConfigSerialization()
             throws ExecutionException, InterruptedException {
 
         final int numInputs = 10;
