@@ -28,7 +28,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link Operator}. */
 public class OperatorTest {
@@ -41,13 +41,13 @@ public class OperatorTest {
         int parallelism = 36;
         operator.setParallelism(parallelism);
 
-        assertEquals(parallelism, operator.getParallelism());
+        assertThat(operator.getParallelism()).isEqualTo(parallelism);
 
         // verify that parallelism is reset to default flag value
         parallelism = ExecutionConfig.PARALLELISM_DEFAULT;
         operator.setParallelism(parallelism);
 
-        assertEquals(parallelism, operator.getParallelism());
+        assertThat(operator.getParallelism()).isEqualTo(parallelism);
     }
 
     @Test
@@ -64,8 +64,8 @@ public class OperatorTest {
         ResourceSpec preferredResources = ResourceSpec.newBuilder(2.0, 200).build();
         opMethod.invoke(operator, minResources, preferredResources);
 
-        assertEquals(minResources, operator.getMinResources());
-        assertEquals(preferredResources, operator.getPreferredResources());
+        assertThat(operator.getMinResources()).isEqualTo(minResources);
+        assertThat(operator.getPreferredResources()).isEqualTo(preferredResources);
     }
 
     private class MockOperator extends Operator {

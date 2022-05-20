@@ -36,8 +36,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link CollectionExecutor} with iterations. */
 @SuppressWarnings("serial")
@@ -58,8 +58,8 @@ public class CollectionExecutionIterationTest implements java.io.Serializable {
 
             env.execute();
 
-            assertEquals(1, collected.size());
-            assertEquals(56, collected.get(0).intValue());
+            assertThat(collected).hasSize(1);
+            assertThat(collected.get(0).intValue()).isEqualTo(56);
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -91,8 +91,8 @@ public class CollectionExecutionIterationTest implements java.io.Serializable {
 
             env.execute();
 
-            assertEquals(1, collected.size());
-            assertEquals(56, collected.get(0).intValue());
+            assertThat(collected).hasSize(1);
+            assertThat(collected.get(0).intValue()).isEqualTo(56);
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -172,7 +172,7 @@ public class CollectionExecutionIterationTest implements java.io.Serializable {
 
             // verify that both tuple fields are now the same
             for (Tuple2<Integer, Integer> t : collected) {
-                assertEquals(t.f0, t.f1);
+                assertThat(t.f1).isEqualTo(t.f0);
             }
         } catch (Exception e) {
             e.printStackTrace();

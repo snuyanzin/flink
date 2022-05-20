@@ -30,13 +30,14 @@ import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.types.Row;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#maxBy(int...)}. */
 public class MaxByOperatorTest {
@@ -65,7 +66,7 @@ public class MaxByOperatorTest {
         try {
             tupleDs.maxBy(4, 0, 1, 2, 3);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -143,7 +144,7 @@ public class MaxByOperatorTest {
         try {
             groupDs.maxBy(4, 0, 1, 2, 3);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 

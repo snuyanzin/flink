@@ -31,13 +31,14 @@ import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.Visitor;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test proper automated assignment of the transformation's name, if not set by the user. */
 @SuppressWarnings("serial")
@@ -62,7 +63,7 @@ public class NamesTest implements Serializable {
                         })
                 .output(new DiscardingOutputFormat<String>());
         Plan plan = env.createProgramPlan();
-        testForName("Filter at testDefaultName(NamesTest.java:54)", plan);
+        testForName("Filter at testDefaultName(NamesTest.java:55)", plan);
     }
 
     @Test
@@ -113,12 +114,12 @@ public class NamesTest implements Serializable {
         Plan plan = env.createProgramPlan();
         plan.accept(
                 new Visitor<Operator<?>>() {
+
                     @Override
                     public boolean preVisit(Operator<?> visitable) {
                         if (visitable instanceof InnerJoinOperatorBase) {
-                            Assert.assertEquals(
-                                    "Join at testJoinWith(NamesTest.java:101)",
-                                    visitable.getName());
+                            assertThat(visitable.getName())
+                                    .isEqualTo("Join at testJoinWith(NamesTest.java:102)");
                         }
                         return true;
                     }
@@ -131,12 +132,13 @@ public class NamesTest implements Serializable {
     private static void testForName(final String expected, Plan plan) {
         plan.accept(
                 new Visitor<Operator<?>>() {
+
                     @Override
                     public boolean preVisit(Operator<?> visitable) {
                         if (visitable instanceof PlanFilterOperator<?>) {
                             // cast is actually not required. Its just a check for the right element
                             PlanFilterOperator<?> filterOp = (PlanFilterOperator<?>) visitable;
-                            Assert.assertEquals(expected, filterOp.getName());
+                            assertThat(filterOp.getName()).isEqualTo(expected);
                         }
                         return true;
                     }

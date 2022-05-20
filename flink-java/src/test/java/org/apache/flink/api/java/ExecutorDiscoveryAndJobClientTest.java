@@ -31,8 +31,7 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests the {@link PipelineExecutorFactory} discovery in the {@link ExecutionEnvironment} and the
@@ -59,7 +58,7 @@ public class ExecutorDiscoveryAndJobClientTest {
 
         final JobExecutionResult result = executeTestJobBasedOnConfig(configuration);
 
-        assertThat(result.isJobExecutionResult(), is(attached));
+        assertThat(result.isJobExecutionResult()).isEqualTo(attached);
     }
 
     private JobExecutionResult executeTestJobBasedOnConfig(final Configuration configuration)

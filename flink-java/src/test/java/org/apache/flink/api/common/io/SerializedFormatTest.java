@@ -26,12 +26,13 @@ import org.apache.flink.types.IntValue;
 import org.apache.flink.types.Record;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for serialized formats. */
 @RunWith(Parameterized.class)
@@ -95,10 +96,10 @@ public class SerializedFormatTest extends SequentialFormatTestBase<Record> {
 
     @Override
     protected void checkEquals(Record expected, Record actual) {
-        Assert.assertEquals(expected.getNumFields(), actual.getNumFields());
-        Assert.assertEquals(
-                expected.getField(0, IntValue.class), actual.getField(0, IntValue.class));
-        Assert.assertEquals(
-                expected.getField(1, StringValue.class), actual.getField(1, StringValue.class));
+        assertThat(actual.getNumFields()).isEqualTo(expected.getNumFields());
+        assertThat(actual.getField(0, IntValue.class))
+                .isEqualTo(expected.getField(0, IntValue.class));
+        assertThat((CharSequence) actual.getField(1, StringValue.class))
+                .isEqualTo(expected.getField(1, StringValue.class));
     }
 }

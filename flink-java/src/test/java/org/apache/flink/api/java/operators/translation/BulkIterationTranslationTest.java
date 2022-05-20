@@ -30,7 +30,7 @@ import org.apache.flink.api.java.tuple.Tuple3;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Simple test for validating the parallelism of a bulk iteration. This test is not as comprehensive
@@ -80,9 +80,9 @@ public class BulkIterationTranslationTest implements java.io.Serializable {
         BulkIterationBase<?> iteration =
                 (BulkIterationBase<?>) p.getDataSinks().iterator().next().getInput();
 
-        assertEquals(jobName, p.getJobName());
-        assertEquals(defaultParallelism, p.getDefaultParallelism());
-        assertEquals(iterationParallelism, iteration.getParallelism());
+        assertThat(p.getJobName()).isEqualTo(jobName);
+        assertThat(p.getDefaultParallelism()).isEqualTo(defaultParallelism);
+        assertThat(iteration.getParallelism()).isEqualTo(iterationParallelism);
     }
 
     // --------------------------------------------------------------------------------------------

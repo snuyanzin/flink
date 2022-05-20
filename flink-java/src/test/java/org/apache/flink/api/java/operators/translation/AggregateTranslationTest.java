@@ -31,9 +31,8 @@ import org.apache.flink.types.StringValue;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of aggregations. */
 public class AggregateTranslationTest {
@@ -64,13 +63,12 @@ public class AggregateTranslationTest {
                     (GroupReduceOperatorBase<?, ?, ?>) sink.getInput();
 
             // check keys
-            assertEquals(1, reducer.getKeyColumns(0).length);
-            assertEquals(0, reducer.getKeyColumns(0)[0]);
+            assertThat(reducer.getKeyColumns(0)).containsExactly(0);
 
-            assertEquals(-1, reducer.getParallelism());
-            assertTrue(reducer.isCombinable());
+            assertThat(reducer.getParallelism()).isEqualTo(-1);
+            assertThat(reducer.isCombinable()).isTrue();
 
-            assertTrue(reducer.getInput() instanceof GenericDataSourceBase<?, ?>);
+            assertThat(reducer.getInput()).isInstanceOf(GenericDataSourceBase.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();

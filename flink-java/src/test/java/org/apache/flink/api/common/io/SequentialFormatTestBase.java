@@ -28,7 +28,6 @@ import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 import org.apache.flink.util.TestLogger;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
@@ -40,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test base for {@link BinaryInputFormat} and {@link BinaryOutputFormat}. */
 public abstract class SequentialFormatTestBase<T> extends TestLogger {
@@ -104,18 +105,18 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
                 sameFileSplits.add(inputSplits[splitIndex]);
             }
 
-            Assert.assertEquals(this.getExpectedBlockCount(fileIndex), sameFileSplits.size());
+            assertThat(sameFileSplits).hasSize(this.getExpectedBlockCount(fileIndex));
 
             long lastBlockLength =
                     this.rawDataSizes[fileIndex] % (this.blockSize - getInfoSize()) + getInfoSize();
             for (int index = 0; index < sameFileSplits.size(); index++) {
-                Assert.assertEquals(this.blockSize * index, sameFileSplits.get(index).getStart());
+                assertThat(sameFileSplits.get(index).getStart()).isEqualTo(this.blockSize * index);
                 if (index < sameFileSplits.size() - 1) {
-                    Assert.assertEquals(this.blockSize, sameFileSplits.get(index).getLength());
+                    assertThat(sameFileSplits.get(index).getLength()).isEqualTo(this.blockSize);
                 }
             }
-            Assert.assertEquals(
-                    lastBlockLength, sameFileSplits.get(sameFileSplits.size() - 1).getLength());
+            assertThat(sameFileSplits.get(sameFileSplits.size() - 1).getLength())
+                    .isEqualTo(lastBlockLength);
         }
     }
 
@@ -148,7 +149,7 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
                 }
             }
         }
-        Assert.assertEquals(this.numberOfTuples, readCount);
+        assertThat(readCount).isEqualTo(this.numberOfTuples);
     }
 
     /** Tests the statistics of the given format. */
@@ -156,7 +157,7 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
     public void checkStatistics() {
         BinaryInputFormat<T> input = this.createInputFormat();
         BaseStatistics statistics = input.getStatistics(null);
-        Assert.assertEquals(this.numberOfTuples, statistics.getNumberOfRecords());
+        assertThat(statistics.getNumberOfRecords()).isEqualTo(this.numberOfTuples);
     }
 
     @After
@@ -224,7 +225,7 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
                     (this.getExpectedBlockCount(fileIndex) - 1) * this.blockSize
                             + getInfoSize()
                             + lastBlockLength;
-            Assert.assertEquals(expectedLength, files[fileIndex].length());
+            assertThat(files[fileIndex]).hasSize(expectedLength);
         }
     }
 

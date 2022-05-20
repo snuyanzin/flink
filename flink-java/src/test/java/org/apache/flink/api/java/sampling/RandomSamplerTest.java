@@ -35,8 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This test suite try to verify whether all the random samplers work as we expected, which mainly
@@ -188,9 +187,10 @@ public class RandomSamplerTest {
     public void testReservoirSamplerSampledSize2() {
         RandomSampler<Double> sampler = new ReservoirSamplerWithoutReplacement<Double>(20000);
         Iterator<Double> sampled = sampler.sample(source.iterator());
-        assertTrue(
-                "ReservoirSamplerWithoutReplacement sampled output size should not beyond the source size.",
-                getSize(sampled) == SOURCE_SIZE);
+        assertThat(getSize(sampled))
+                .as(
+                        "ReservoirSamplerWithoutReplacement sampled output size should not beyond the source size.")
+                .isEqualTo(SOURCE_SIZE);
     }
 
     @Test
@@ -252,7 +252,7 @@ public class RandomSamplerTest {
             sampler = new ReservoirSamplerWithoutReplacement<Double>(numSample);
         }
         Iterator<Double> sampled = sampler.sample(source.iterator());
-        assertEquals(numSample, getSize(sampled));
+        assertThat(getSize(sampled)).isEqualTo(numSample);
     }
 
     /*
@@ -273,10 +273,12 @@ public class RandomSamplerTest {
             totalSampledSize += getSize(sampler.sample(source.iterator()));
         }
         double resultFraction = totalSampledSize / ((double) SOURCE_SIZE * sampleCount);
-        assertTrue(
-                String.format(
-                        "expected fraction: %f, result fraction: %f", fraction, resultFraction),
-                Math.abs((resultFraction - fraction) / fraction) < 0.2);
+        assertThat(Math.abs((resultFraction - fraction) / fraction))
+                .as(
+                        String.format(
+                                "expected fraction: %f, result fraction: %f",
+                                fraction, resultFraction))
+                .isLessThan(0.2);
     }
 
     /*
@@ -287,8 +289,9 @@ public class RandomSamplerTest {
         Set<Double> set = new HashSet<>();
         while (values.hasNext()) {
             double next = values.next();
-            assertTrue(
-                    "Sampler returned duplicate element (" + next + "). Set=" + set, set.add(next));
+            assertThat(set.add(next))
+                    .as("Sampler returned duplicate element (" + next + "). Set=" + set)
+                    .isTrue();
         }
     }
 
@@ -382,13 +385,17 @@ public class RandomSamplerTest {
         double pValue = ksTest.kolmogorovSmirnovStatistic(sampled, defaultSampler);
         double dValue = getDValue(sampled.length, defaultSampler.length);
         if (expectSuccess) {
-            assertTrue(
-                    String.format("KS test result with p value(%f), d value(%f)", pValue, dValue),
-                    pValue <= dValue);
+            assertThat(pValue)
+                    .as(
+                            String.format(
+                                    "KS test result with p value(%f), d value(%f)", pValue, dValue))
+                    .isLessThanOrEqualTo(dValue);
         } else {
-            assertTrue(
-                    String.format("KS test result with p value(%f), d value(%f)", pValue, dValue),
-                    pValue > dValue);
+            assertThat(pValue)
+                    .as(
+                            String.format(
+                                    "KS test result with p value(%f), d value(%f)", pValue, dValue))
+                    .isGreaterThan(dValue);
         }
     }
 

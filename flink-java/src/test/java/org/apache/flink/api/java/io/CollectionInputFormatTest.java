@@ -42,10 +42,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link CollectionInputFormat}. */
 public class CollectionInputFormatTest {
@@ -114,8 +113,7 @@ public class CollectionInputFormatTest {
 
             Object serializationResult = in.readObject();
 
-            assertNotNull(serializationResult);
-            assertTrue(serializationResult instanceof CollectionInputFormat<?>);
+            assertThat(serializationResult).isInstanceOf(CollectionInputFormat.class);
 
             @SuppressWarnings("unchecked")
             CollectionInputFormat<ElementType> result =
@@ -129,7 +127,7 @@ public class CollectionInputFormatTest {
                 ElementType expectedElement = inputFormat.nextRecord(null);
                 ElementType actualElement = result.nextRecord(null);
 
-                assertEquals(expectedElement, actualElement);
+                assertThat(actualElement).isEqualTo(expectedElement);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -197,7 +195,7 @@ public class CollectionInputFormatTest {
             ObjectInputStream ois = new ObjectInputStream(bais);
             Object result = ois.readObject();
 
-            assertTrue(result instanceof CollectionInputFormat);
+            assertThat(result).isInstanceOf(CollectionInputFormat.class);
 
             int i = 0;
             @SuppressWarnings("unchecked")
@@ -205,10 +203,10 @@ public class CollectionInputFormatTest {
             in.open(new GenericInputSplit(0, 1));
 
             while (!in.reachedEnd()) {
-                assertEquals(data[i++], in.nextRecord(""));
+                assertThat(in.nextRecord("")).isEqualTo(data[i++]);
             }
 
-            assertEquals(data.length, i);
+            assertThat(i).isEqualTo(data.length);
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -255,12 +253,7 @@ public class CollectionInputFormatTest {
             ByteArrayInputStream bais = new ByteArrayInputStream(buffer.toByteArray());
             ObjectInputStream in = new ObjectInputStream(bais);
 
-            try {
-                in.readObject();
-                fail("should throw an exception");
-            } catch (Exception e) {
-                assertTrue(e.getCause() instanceof TestException);
-            }
+            assertThatThrownBy(in::readObject).hasCauseInstanceOf(TestException.class);
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -275,7 +268,7 @@ public class CollectionInputFormatTest {
         CollectionInputFormat<ElementType> inputFormat =
                 new CollectionInputFormat<>(smallList, new TestSerializer(true, false));
 
-        assertEquals("[ElementType{id=1}, ElementType{id=2}]", inputFormat.toString());
+        assertThat(inputFormat).hasToString("[ElementType{id=1}, ElementType{id=2}]");
     }
 
     @Test
@@ -287,10 +280,10 @@ public class CollectionInputFormatTest {
         CollectionInputFormat<ElementType> inputFormat =
                 new CollectionInputFormat<>(list, new TestSerializer(true, false));
 
-        assertEquals(
-                "[ElementType{id=0}, ElementType{id=1}, ElementType{id=2}, "
-                        + "ElementType{id=3}, ElementType{id=4}, ElementType{id=5}, ...]",
-                inputFormat.toString());
+        assertThat(inputFormat)
+                .hasToString(
+                        "[ElementType{id=0}, ElementType{id=1}, ElementType{id=2}, "
+                                + "ElementType{id=3}, ElementType{id=4}, ElementType{id=5}, ...]");
     }
 
     private static class TestException extends IOException {

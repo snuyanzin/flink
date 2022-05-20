@@ -40,9 +40,9 @@ import org.junit.Test;
 
 import java.util.Iterator;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of delta iterations. */
 @SuppressWarnings("serial")
@@ -114,8 +114,8 @@ public class DeltaIterationTranslationTest implements java.io.Serializable {
             Plan p = env.createProgramPlan(jobName);
 
             // ------------- validate the plan ----------------
-            assertEquals(jobName, p.getJobName());
-            assertEquals(defaultParallelism, p.getDefaultParallelism());
+            assertThat(p.getJobName()).isEqualTo(jobName);
+            assertThat(p.getDefaultParallelism()).isEqualTo(defaultParallelism);
 
             // validate the iteration
             GenericDataSinkBase<?> sink1, sink2;
@@ -128,13 +128,13 @@ public class DeltaIterationTranslationTest implements java.io.Serializable {
             DeltaIterationBase<?, ?> iteration = (DeltaIterationBase<?, ?>) sink1.getInput();
 
             // check that multi consumer translation works for iterations
-            assertEquals(iteration, sink2.getInput());
+            assertThat(sink2.getInput()).isEqualTo(iteration);
 
             // check the basic iteration properties
-            assertEquals(numIterations, iteration.getMaximumNumberOfIterations());
-            assertArrayEquals(iterationKeys, iteration.getSolutionSetKeyFields());
-            assertEquals(iterationParallelism, iteration.getParallelism());
-            assertEquals(iterationName, iteration.getName());
+            assertThat(iteration.getMaximumNumberOfIterations()).isEqualTo(numIterations);
+            assertThat(iteration.getSolutionSetKeyFields()).isEqualTo(iterationKeys);
+            assertThat(iteration.getParallelism()).isEqualTo(iterationParallelism);
+            assertThat(iteration.getName()).isEqualTo(iterationName);
 
             MapOperatorBase<?, ?, ?> nextWorksetMapper =
                     (MapOperatorBase<?, ?, ?>) iteration.getNextWorkset();
@@ -145,33 +145,31 @@ public class DeltaIterationTranslationTest implements java.io.Serializable {
             MapOperatorBase<?, ?, ?> worksetMapper =
                     (MapOperatorBase<?, ?, ?>) worksetSelfJoin.getFirstInput();
 
-            assertEquals(
-                    IdentityMapper.class, worksetMapper.getUserCodeWrapper().getUserCodeClass());
-            assertEquals(
-                    NextWorksetMapper.class,
-                    nextWorksetMapper.getUserCodeWrapper().getUserCodeClass());
+            assertThat(worksetMapper.getUserCodeWrapper().getUserCodeClass())
+                    .isEqualTo(IdentityMapper.class);
+            assertThat(nextWorksetMapper.getUserCodeWrapper().getUserCodeClass())
+                    .isEqualTo(NextWorksetMapper.class);
             if (solutionSetJoin.getUserCodeWrapper().getUserCodeObject()
                     instanceof WrappingFunction) {
                 WrappingFunction<?> wf =
                         (WrappingFunction<?>)
                                 solutionSetJoin.getUserCodeWrapper().getUserCodeObject();
-                assertEquals(SolutionWorksetJoin.class, wf.getWrappedFunction().getClass());
+                assertThat(wf.getWrappedFunction().getClass()).isEqualTo(SolutionWorksetJoin.class);
             } else {
-                assertEquals(
-                        SolutionWorksetJoin.class,
-                        solutionSetJoin.getUserCodeWrapper().getUserCodeClass());
+                assertThat(solutionSetJoin.getUserCodeWrapper().getUserCodeClass())
+                        .isEqualTo(SolutionWorksetJoin.class);
             }
 
-            assertEquals(beforeNextWorksetMap, nextWorksetMapper.getName());
+            assertThat(nextWorksetMapper.getName()).isEqualTo(beforeNextWorksetMap);
 
-            assertEquals(
-                    aggregatorName,
-                    iteration
-                            .getAggregators()
-                            .getAllRegisteredAggregators()
-                            .iterator()
-                            .next()
-                            .getName());
+            assertThat(
+                            iteration
+                                    .getAggregators()
+                                    .getAllRegisteredAggregators()
+                                    .iterator()
+                                    .next()
+                                    .getName())
+                    .isEqualTo(aggregatorName);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
@@ -195,19 +193,25 @@ public class DeltaIterationTranslationTest implements java.io.Serializable {
             DeltaIteration<Tuple3<Double, Long, String>, Tuple2<Double, String>> iteration =
                     initialSolutionSet.iterateDelta(initialWorkSet, 10, 1);
 
-            try {
-                iteration.getWorkset().join(iteration.getSolutionSet()).where(1).equalTo(2);
-                fail("Accepted invalid program.");
-            } catch (InvalidProgramException e) {
-                // all good!
-            }
+            assertThatThrownBy(
+                            () ->
+                                    iteration
+                                            .getWorkset()
+                                            .join(iteration.getSolutionSet())
+                                            .where(1)
+                                            .equalTo(2))
+                    .withFailMessage("Accepted invalid program.")
+                    .isInstanceOf(InvalidProgramException.class);
 
-            try {
-                iteration.getSolutionSet().join(iteration.getWorkset()).where(2).equalTo(1);
-                fail("Accepted invalid program.");
-            } catch (InvalidProgramException e) {
-                // all good!
-            }
+            assertThatThrownBy(
+                            () ->
+                                    iteration
+                                            .getSolutionSet()
+                                            .join(iteration.getWorkset())
+                                            .where(2)
+                                            .equalTo(1))
+                    .withFailMessage("Accepted invalid program.")
+                    .isInstanceOf(InvalidProgramException.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
@@ -231,29 +235,27 @@ public class DeltaIterationTranslationTest implements java.io.Serializable {
             DeltaIteration<Tuple3<Double, Long, String>, Tuple2<Double, String>> iteration =
                     initialSolutionSet.iterateDelta(initialWorkSet, 10, 1);
 
-            try {
-                iteration
-                        .getWorkset()
-                        .coGroup(iteration.getSolutionSet())
-                        .where(1)
-                        .equalTo(2)
-                        .with(new SolutionWorksetCoGroup1());
-                fail("Accepted invalid program.");
-            } catch (InvalidProgramException e) {
-                // all good!
-            }
+            assertThatThrownBy(
+                            () ->
+                                    iteration
+                                            .getWorkset()
+                                            .coGroup(iteration.getSolutionSet())
+                                            .where(1)
+                                            .equalTo(2)
+                                            .with(new SolutionWorksetCoGroup1()))
+                    .withFailMessage("Accepted invalid program.")
+                    .isInstanceOf(InvalidProgramException.class);
 
-            try {
-                iteration
-                        .getSolutionSet()
-                        .coGroup(iteration.getWorkset())
-                        .where(2)
-                        .equalTo(1)
-                        .with(new SolutionWorksetCoGroup2());
-                fail("Accepted invalid program.");
-            } catch (InvalidProgramException e) {
-                // all good!
-            }
+            assertThatThrownBy(
+                            () ->
+                                    iteration
+                                            .getSolutionSet()
+                                            .coGroup(iteration.getWorkset())
+                                            .where(2)
+                                            .equalTo(1)
+                                            .with(new SolutionWorksetCoGroup2()))
+                    .withFailMessage("Accepted invalid program.")
+                    .isInstanceOf(InvalidProgramException.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();

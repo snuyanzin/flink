@@ -31,9 +31,7 @@ import org.apache.flink.api.java.tuple.Tuple3;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests the precedence of semantic properties: annotation > API. */
 public class SemanticPropertiesPrecedenceTest {
@@ -56,12 +54,12 @@ public class SemanticPropertiesPrecedenceTest {
         FieldSet fw1 = semantics.getForwardingTargetFields(0, 0);
         FieldSet fw2 = semantics.getForwardingTargetFields(0, 1);
         FieldSet fw3 = semantics.getForwardingTargetFields(0, 2);
-        assertNotNull(fw1);
-        assertNotNull(fw2);
-        assertNotNull(fw3);
-        assertTrue(fw1.contains(0));
-        assertFalse(fw2.contains(1));
-        assertFalse(fw3.contains(2));
+        assertThat(fw1).isNotNull();
+        assertThat(fw2).isNotNull();
+        assertThat(fw3).isNotNull();
+        assertThat(fw1).contains(0);
+        assertThat(fw2).doesNotContain(1);
+        assertThat(fw3).doesNotContain(2);
     }
 
     @Test
@@ -83,12 +81,12 @@ public class SemanticPropertiesPrecedenceTest {
         FieldSet fw1 = semantics.getForwardingTargetFields(0, 0);
         FieldSet fw2 = semantics.getForwardingTargetFields(0, 1);
         FieldSet fw3 = semantics.getForwardingTargetFields(0, 2);
-        assertNotNull(fw1);
-        assertNotNull(fw2);
-        assertNotNull(fw3);
-        assertTrue(fw1.contains(0));
-        assertFalse(fw2.contains(1));
-        assertFalse(fw3.contains(2));
+        assertThat(fw1).isNotNull();
+        assertThat(fw2).isNotNull();
+        assertThat(fw3).isNotNull();
+        assertThat(fw1).contains(0);
+        assertThat(fw2).doesNotContain(1);
+        assertThat(fw3).doesNotContain(2);
     }
 
     // --------------------------------------------------------------------------------------------

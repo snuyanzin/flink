@@ -35,7 +35,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link DataSet#reduce(ReduceFunction)}. */
 @SuppressWarnings("serial")
@@ -64,28 +64,21 @@ public class ReduceOperatorTest {
 
         SemanticProperties semProps = reduceOp.getSemanticProperties();
 
-        assertTrue(semProps.getForwardingTargetFields(0, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).contains(4));
-        assertTrue(semProps.getForwardingTargetFields(0, 3).size() == 2);
-        assertTrue(semProps.getForwardingTargetFields(0, 3).contains(1));
-        assertTrue(semProps.getForwardingTargetFields(0, 3).contains(3));
-        assertTrue(semProps.getForwardingTargetFields(0, 4).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 4).contains(2));
-        assertTrue(semProps.getForwardingTargetFields(0, 5).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 6).size() == 0);
+        assertThat(semProps.getForwardingTargetFields(0, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 2)).containsExactly(4);
+        assertThat(semProps.getForwardingTargetFields(0, 3)).containsExactlyInAnyOrder(1, 3);
+        assertThat(semProps.getForwardingTargetFields(0, 4)).containsExactly(2);
+        assertThat(semProps.getForwardingTargetFields(0, 5)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 6)).isEmpty();
 
-        assertTrue(semProps.getForwardingSourceField(0, 0) < 0);
-        assertTrue(semProps.getForwardingSourceField(0, 1) == 3);
-        assertTrue(semProps.getForwardingSourceField(0, 2) == 4);
-        assertTrue(semProps.getForwardingSourceField(0, 3) == 3);
-        assertTrue(semProps.getForwardingSourceField(0, 4) == 2);
+        assertThat(semProps.getForwardingSourceField(0, 0)).isLessThan(0);
+        assertThat(semProps.getForwardingSourceField(0, 1)).isEqualTo(3);
+        assertThat(semProps.getForwardingSourceField(0, 2)).isEqualTo(4);
+        assertThat(semProps.getForwardingSourceField(0, 3)).isEqualTo(3);
+        assertThat(semProps.getForwardingSourceField(0, 4)).isEqualTo(2);
 
-        assertTrue(semProps.getReadFields(0).size() == 3);
-        assertTrue(semProps.getReadFields(0).contains(2));
-        assertTrue(semProps.getReadFields(0).contains(5));
-        assertTrue(semProps.getReadFields(0).contains(6));
+        assertThat(semProps.getReadFields(0)).containsExactlyInAnyOrder(2, 5, 6);
     }
 
     @Test
@@ -102,28 +95,21 @@ public class ReduceOperatorTest {
 
         SemanticProperties semProps = reduceOp.getSemanticProperties();
 
-        assertTrue(semProps.getForwardingTargetFields(0, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).contains(4));
-        assertTrue(semProps.getForwardingTargetFields(0, 3).size() == 2);
-        assertTrue(semProps.getForwardingTargetFields(0, 3).contains(1));
-        assertTrue(semProps.getForwardingTargetFields(0, 3).contains(3));
-        assertTrue(semProps.getForwardingTargetFields(0, 4).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 4).contains(2));
-        assertTrue(semProps.getForwardingTargetFields(0, 5).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 6).size() == 0);
+        assertThat(semProps.getForwardingTargetFields(0, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 2)).containsExactly(4);
+        assertThat(semProps.getForwardingTargetFields(0, 3)).containsExactlyInAnyOrder(1, 3);
+        assertThat(semProps.getForwardingTargetFields(0, 4)).containsExactly(2);
+        assertThat(semProps.getForwardingTargetFields(0, 5)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 6)).isEmpty();
 
-        assertTrue(semProps.getForwardingSourceField(0, 0) < 0);
-        assertTrue(semProps.getForwardingSourceField(0, 1) == 3);
-        assertTrue(semProps.getForwardingSourceField(0, 2) == 4);
-        assertTrue(semProps.getForwardingSourceField(0, 3) == 3);
-        assertTrue(semProps.getForwardingSourceField(0, 4) == 2);
+        assertThat(semProps.getForwardingSourceField(0, 0)).isLessThan(0);
+        assertThat(semProps.getForwardingSourceField(0, 1)).isEqualTo(3);
+        assertThat(semProps.getForwardingSourceField(0, 2)).isEqualTo(4);
+        assertThat(semProps.getForwardingSourceField(0, 3)).isEqualTo(3);
+        assertThat(semProps.getForwardingSourceField(0, 4)).isEqualTo(2);
 
-        assertTrue(semProps.getReadFields(0).size() == 3);
-        assertTrue(semProps.getReadFields(0).contains(2));
-        assertTrue(semProps.getReadFields(0).contains(5));
-        assertTrue(semProps.getReadFields(0).contains(6));
+        assertThat(semProps.getReadFields(0)).containsExactlyInAnyOrder(2, 5, 6);
     }
 
     @Test
@@ -140,25 +126,21 @@ public class ReduceOperatorTest {
 
         SemanticProperties semProps = reduceOp.getSemanticProperties();
 
-        assertTrue(semProps.getForwardingTargetFields(0, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 3).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 4).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 4).contains(2));
-        assertTrue(semProps.getForwardingTargetFields(0, 5).size() == 2);
-        assertTrue(semProps.getForwardingTargetFields(0, 5).contains(1));
-        assertTrue(semProps.getForwardingTargetFields(0, 5).contains(3));
-        assertTrue(semProps.getForwardingTargetFields(0, 6).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 6).contains(0));
+        assertThat(semProps.getForwardingTargetFields(0, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 2)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 3)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 4)).containsExactly(2);
+        assertThat(semProps.getForwardingTargetFields(0, 5)).containsExactlyInAnyOrder(1, 3);
+        assertThat(semProps.getForwardingTargetFields(0, 6)).containsExactly(0);
 
-        assertTrue(semProps.getForwardingSourceField(0, 0) == 6);
-        assertTrue(semProps.getForwardingSourceField(0, 1) == 5);
-        assertTrue(semProps.getForwardingSourceField(0, 2) == 4);
-        assertTrue(semProps.getForwardingSourceField(0, 3) == 5);
-        assertTrue(semProps.getForwardingSourceField(0, 4) < 0);
+        assertThat(semProps.getForwardingSourceField(0, 0)).isEqualTo(6);
+        assertThat(semProps.getForwardingSourceField(0, 1)).isEqualTo(5);
+        assertThat(semProps.getForwardingSourceField(0, 2)).isEqualTo(4);
+        assertThat(semProps.getForwardingSourceField(0, 3)).isEqualTo(5);
+        assertThat(semProps.getForwardingSourceField(0, 4)).isLessThan(0);
 
-        assertTrue(semProps.getReadFields(0) == null);
+        assertThat(semProps.getReadFields(0)).isNull();
     }
 
     @Test
@@ -173,24 +155,21 @@ public class ReduceOperatorTest {
 
         SemanticProperties semProps = reduceOp.getSemanticProperties();
 
-        assertTrue(semProps.getForwardingTargetFields(0, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).contains(0));
-        assertTrue(semProps.getForwardingTargetFields(0, 3).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 3).contains(1));
-        assertTrue(semProps.getForwardingTargetFields(0, 4).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 5).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 5).contains(3));
-        assertTrue(semProps.getForwardingTargetFields(0, 6).size() == 0);
+        assertThat(semProps.getForwardingTargetFields(0, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 2)).containsExactly(0);
+        assertThat(semProps.getForwardingTargetFields(0, 3)).containsExactly(1);
+        assertThat(semProps.getForwardingTargetFields(0, 4)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 5)).containsExactly(3);
+        assertThat(semProps.getForwardingTargetFields(0, 6)).isEmpty();
 
-        assertTrue(semProps.getForwardingSourceField(0, 0) == 2);
-        assertTrue(semProps.getForwardingSourceField(0, 1) == 3);
-        assertTrue(semProps.getForwardingSourceField(0, 2) < 0);
-        assertTrue(semProps.getForwardingSourceField(0, 3) == 5);
-        assertTrue(semProps.getForwardingSourceField(0, 4) < 0);
+        assertThat(semProps.getForwardingSourceField(0, 0)).isEqualTo(2);
+        assertThat(semProps.getForwardingSourceField(0, 1)).isEqualTo(3);
+        assertThat(semProps.getForwardingSourceField(0, 2)).isLessThan(0);
+        assertThat(semProps.getForwardingSourceField(0, 3)).isEqualTo(5);
+        assertThat(semProps.getForwardingSourceField(0, 4)).isLessThan(0);
 
-        assertTrue(semProps.getReadFields(0) == null);
+        assertThat(semProps.getReadFields(0)).isNull();
     }
 
     private static class DummyTestKeySelector

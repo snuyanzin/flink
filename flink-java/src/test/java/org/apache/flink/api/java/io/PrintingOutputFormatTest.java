@@ -24,7 +24,7 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for the {@link PrintingOutputFormat}. */
 public class PrintingOutputFormatTest {
@@ -62,8 +62,8 @@ public class PrintingOutputFormatTest {
 
         printSink.writeRecord("hello world!");
 
-        assertEquals("Print to System.out", printSink.toString());
-        assertEquals("hello world!" + line, arrayOutputStream.toString());
+        assertThat(printSink).hasToString("Print to System.out");
+        assertThat(arrayOutputStream).hasToString("hello world!" + line);
         printSink.close();
     }
 
@@ -74,8 +74,8 @@ public class PrintingOutputFormatTest {
 
         printSink.writeRecord("hello world!");
 
-        assertEquals("Print to System.err", printSink.toString());
-        assertEquals("hello world!" + line, arrayErrorStream.toString());
+        assertThat(printSink).hasToString("Print to System.err");
+        assertThat(arrayErrorStream).hasToString("hello world!" + line);
         printSink.close();
     }
 
@@ -86,8 +86,8 @@ public class PrintingOutputFormatTest {
 
         printSink.writeRecord("hello world!");
 
-        assertEquals("Print to System.out", printSink.toString());
-        assertEquals("2> hello world!" + line, arrayOutputStream.toString());
+        assertThat(printSink).hasToString("Print to System.out");
+        assertThat(arrayOutputStream).hasToString("2> hello world!" + line);
         printSink.close();
     }
 
@@ -98,8 +98,8 @@ public class PrintingOutputFormatTest {
 
         printSink.writeRecord("hello world!");
 
-        assertEquals("Print to System.out", printSink.toString());
-        assertEquals("mySink:2> hello world!" + line, arrayOutputStream.toString());
+        assertThat(printSink).hasToString("Print to System.out");
+        assertThat(arrayOutputStream).hasToString("mySink:2> hello world!" + line);
         printSink.close();
     }
 
@@ -110,8 +110,8 @@ public class PrintingOutputFormatTest {
 
         printSink.writeRecord("hello world!");
 
-        assertEquals("Print to System.out", printSink.toString());
-        assertEquals("mySink> hello world!" + line, arrayOutputStream.toString());
+        assertThat(printSink).hasToString("Print to System.out");
+        assertThat(arrayOutputStream).hasToString("mySink> hello world!" + line);
         printSink.close();
     }
 }

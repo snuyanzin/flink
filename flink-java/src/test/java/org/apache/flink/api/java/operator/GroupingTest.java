@@ -31,12 +31,13 @@ import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#groupBy(int...)}. */
 public class GroupingTest {
@@ -82,7 +83,7 @@ public class GroupingTest {
         try {
             tupleDs.groupBy(0);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -152,7 +153,7 @@ public class GroupingTest {
         try {
             ds.groupBy("myInt");
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -201,7 +202,7 @@ public class GroupingTest {
         try {
             ds.groupBy("nested.myInt");
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -234,7 +235,7 @@ public class GroupingTest {
                         }
                     });
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -256,7 +257,7 @@ public class GroupingTest {
                         }
                     });
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -278,7 +279,7 @@ public class GroupingTest {
                         }
                     });
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -301,7 +302,7 @@ public class GroupingTest {
                         }
                     });
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -334,7 +335,7 @@ public class GroupingTest {
         try {
             tupleDs.groupBy(0).sortGroup(0, Order.ASCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -401,7 +402,7 @@ public class GroupingTest {
         try {
             tupleDs.groupBy(0).sortGroup(0, Order.ASCENDING).sortGroup(2, Order.DESCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -416,7 +417,7 @@ public class GroupingTest {
         try {
             tupleDs.groupBy("f0").sortGroup("f1", Order.ASCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -431,7 +432,7 @@ public class GroupingTest {
         try {
             tupleDs.groupBy("f0").sortGroup("f2.myString", Order.ASCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -448,7 +449,7 @@ public class GroupingTest {
                     .sortGroup("f2.myString", Order.ASCENDING)
                     .sortGroup("f1", Order.DESCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 

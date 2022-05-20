@@ -24,13 +24,14 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#cross(DataSet)}. */
 public class CrossOperatorTest {
@@ -67,7 +68,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -84,7 +85,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -101,7 +102,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0, 3);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -118,7 +119,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0, 3);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -135,7 +136,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0).projectSecond(3);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -152,7 +153,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0).projectSecond(3);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -169,7 +170,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0, 2).projectSecond(1, 4).projectFirst(1);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -186,7 +187,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst(0, 2).projectSecond(1, 4).projectFirst(1);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -203,7 +204,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectSecond(0, 2).projectFirst(1, 4).projectFirst(1);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -220,7 +221,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectSecond(0, 2).projectFirst(1, 4).projectFirst(1);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -235,7 +236,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst().projectSecond();
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -250,7 +251,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectFirst().projectSecond();
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -267,7 +268,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectSecond().projectFirst(1, 4);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -284,7 +285,7 @@ public class CrossOperatorTest {
         try {
             ds1.cross(ds2).projectSecond().projectFirst(1, 4);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 

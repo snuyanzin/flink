@@ -41,9 +41,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for semantic properties of projected fields. */
 public class SemanticPropertiesProjectionTest {
@@ -100,16 +98,16 @@ public class SemanticPropertiesProjectionTest {
 
         SingleInputSemanticProperties props = projectOperator.getSemanticProperties();
 
-        assertEquals(1, props.getForwardingTargetFields(0, 0).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 1).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 2).size());
-        assertEquals(2, props.getForwardingTargetFields(0, 3).size());
+        assertThat(props.getForwardingTargetFields(0, 0)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 1)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 2)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 3)).hasSize(2);
 
-        assertTrue(props.getForwardingTargetFields(0, 1).contains(0));
-        assertTrue(props.getForwardingTargetFields(0, 3).contains(1));
-        assertTrue(props.getForwardingTargetFields(0, 2).contains(2));
-        assertTrue(props.getForwardingTargetFields(0, 0).contains(3));
-        assertTrue(props.getForwardingTargetFields(0, 3).contains(4));
+        assertThat(props.getForwardingTargetFields(0, 1)).contains(0);
+        assertThat(props.getForwardingTargetFields(0, 3)).contains(1);
+        assertThat(props.getForwardingTargetFields(0, 2)).contains(2);
+        assertThat(props.getForwardingTargetFields(0, 0)).contains(3);
+        assertThat(props.getForwardingTargetFields(0, 3)).contains(4);
     }
 
     @Test
@@ -127,23 +125,23 @@ public class SemanticPropertiesProjectionTest {
 
         SingleInputSemanticProperties props = projectOperator.getSemanticProperties();
 
-        assertNotNull(props.getForwardingTargetFields(0, 0));
-        assertEquals(1, props.getForwardingTargetFields(0, 1).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 2).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 3).size());
-        assertEquals(2, props.getForwardingTargetFields(0, 4).size());
-        assertEquals(2, props.getForwardingTargetFields(0, 5).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 6).size());
-        assertEquals(0, props.getForwardingTargetFields(0, 0).size());
+        assertThat(props.getForwardingTargetFields(0, 0)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 1)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 2)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 3)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 4)).hasSize(2);
+        assertThat(props.getForwardingTargetFields(0, 5)).hasSize(2);
+        assertThat(props.getForwardingTargetFields(0, 6)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 0)).isEmpty();
 
-        assertTrue(props.getForwardingTargetFields(0, 4).contains(0));
-        assertTrue(props.getForwardingTargetFields(0, 5).contains(1));
-        assertTrue(props.getForwardingTargetFields(0, 6).contains(2));
-        assertTrue(props.getForwardingTargetFields(0, 1).contains(3));
-        assertTrue(props.getForwardingTargetFields(0, 2).contains(4));
-        assertTrue(props.getForwardingTargetFields(0, 3).contains(5));
-        assertTrue(props.getForwardingTargetFields(0, 4).contains(6));
-        assertTrue(props.getForwardingTargetFields(0, 5).contains(7));
+        assertThat(props.getForwardingTargetFields(0, 4)).contains(0);
+        assertThat(props.getForwardingTargetFields(0, 5)).contains(1);
+        assertThat(props.getForwardingTargetFields(0, 6)).contains(2);
+        assertThat(props.getForwardingTargetFields(0, 1)).contains(3);
+        assertThat(props.getForwardingTargetFields(0, 2)).contains(4);
+        assertThat(props.getForwardingTargetFields(0, 3)).contains(5);
+        assertThat(props.getForwardingTargetFields(0, 4)).contains(6);
+        assertThat(props.getForwardingTargetFields(0, 5)).contains(7);
     }
 
     @Test
@@ -167,15 +165,15 @@ public class SemanticPropertiesProjectionTest {
 
         DualInputSemanticProperties props = projectJoinOperator.getSemanticProperties();
 
-        assertEquals(1, props.getForwardingTargetFields(0, 2).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 3).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 1).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 4).size());
+        assertThat(props.getForwardingTargetFields(0, 2)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 3)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 1)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 4)).hasSize(1);
 
-        assertTrue(props.getForwardingTargetFields(0, 2).contains(0));
-        assertTrue(props.getForwardingTargetFields(0, 3).contains(1));
-        assertTrue(props.getForwardingTargetFields(1, 1).contains(2));
-        assertTrue(props.getForwardingTargetFields(1, 4).contains(3));
+        assertThat(props.getForwardingTargetFields(0, 2)).contains(0);
+        assertThat(props.getForwardingTargetFields(0, 3)).contains(1);
+        assertThat(props.getForwardingTargetFields(1, 1)).contains(2);
+        assertThat(props.getForwardingTargetFields(1, 4)).contains(3);
     }
 
     @Test
@@ -199,36 +197,36 @@ public class SemanticPropertiesProjectionTest {
 
         DualInputSemanticProperties props = projectJoinOperator.getSemanticProperties();
 
-        assertEquals(1, props.getForwardingTargetFields(0, 0).size());
-        assertNotNull(props.getForwardingTargetFields(0, 1));
-        assertNotNull(props.getForwardingTargetFields(0, 2));
-        assertNotNull(props.getForwardingTargetFields(0, 3));
-        assertEquals(1, props.getForwardingTargetFields(0, 4).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 5).size());
-        assertNotNull(props.getForwardingTargetFields(0, 6));
-        assertEquals(0, props.getForwardingTargetFields(0, 1).size());
-        assertEquals(0, props.getForwardingTargetFields(0, 2).size());
-        assertEquals(0, props.getForwardingTargetFields(0, 3).size());
-        assertEquals(0, props.getForwardingTargetFields(0, 6).size());
+        assertThat(props.getForwardingTargetFields(0, 0)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 1)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 2)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 3)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 4)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 5)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 6)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(props.getForwardingTargetFields(0, 2)).isEmpty();
+        assertThat(props.getForwardingTargetFields(0, 3)).isEmpty();
+        assertThat(props.getForwardingTargetFields(0, 6)).isEmpty();
 
-        assertNotNull(props.getForwardingTargetFields(1, 0));
-        assertEquals(1, props.getForwardingTargetFields(1, 1).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 2).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 3).size());
-        assertNotNull(props.getForwardingTargetFields(1, 4));
-        assertNotNull(props.getForwardingTargetFields(1, 5));
-        assertEquals(1, props.getForwardingTargetFields(1, 6).size());
-        assertEquals(0, props.getForwardingTargetFields(1, 0).size());
-        assertEquals(0, props.getForwardingTargetFields(1, 4).size());
-        assertEquals(0, props.getForwardingTargetFields(1, 5).size());
+        assertThat(props.getForwardingTargetFields(1, 0)).isNotNull();
+        assertThat(props.getForwardingTargetFields(1, 1)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 2)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 3)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 4)).isNotNull();
+        assertThat(props.getForwardingTargetFields(1, 5)).isNotNull();
+        assertThat(props.getForwardingTargetFields(1, 6)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 0)).isEmpty();
+        assertThat(props.getForwardingTargetFields(1, 4)).isEmpty();
+        assertThat(props.getForwardingTargetFields(1, 5)).isEmpty();
 
-        assertTrue(props.getForwardingTargetFields(0, 4).contains(0));
-        assertTrue(props.getForwardingTargetFields(0, 5).contains(1));
-        assertTrue(props.getForwardingTargetFields(0, 0).contains(2));
-        assertTrue(props.getForwardingTargetFields(1, 1).contains(3));
-        assertTrue(props.getForwardingTargetFields(1, 2).contains(4));
-        assertTrue(props.getForwardingTargetFields(1, 3).contains(5));
-        assertTrue(props.getForwardingTargetFields(1, 6).contains(6));
+        assertThat(props.getForwardingTargetFields(0, 4)).contains(0);
+        assertThat(props.getForwardingTargetFields(0, 5)).contains(1);
+        assertThat(props.getForwardingTargetFields(0, 0)).contains(2);
+        assertThat(props.getForwardingTargetFields(1, 1)).contains(3);
+        assertThat(props.getForwardingTargetFields(1, 2)).contains(4);
+        assertThat(props.getForwardingTargetFields(1, 3)).contains(5);
+        assertThat(props.getForwardingTargetFields(1, 6)).contains(6);
     }
 
     @Test
@@ -250,15 +248,15 @@ public class SemanticPropertiesProjectionTest {
 
         DualInputSemanticProperties props = projectCrossOperator.getSemanticProperties();
 
-        assertEquals(1, props.getForwardingTargetFields(0, 2).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 3).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 1).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 4).size());
+        assertThat(props.getForwardingTargetFields(0, 2)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 3)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 1)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 4)).hasSize(1);
 
-        assertTrue(props.getForwardingTargetFields(0, 2).contains(0));
-        assertTrue(props.getForwardingTargetFields(0, 3).contains(1));
-        assertTrue(props.getForwardingTargetFields(1, 1).contains(2));
-        assertTrue(props.getForwardingTargetFields(1, 4).contains(3));
+        assertThat(props.getForwardingTargetFields(0, 2)).contains(0);
+        assertThat(props.getForwardingTargetFields(0, 3)).contains(1);
+        assertThat(props.getForwardingTargetFields(1, 1)).contains(2);
+        assertThat(props.getForwardingTargetFields(1, 4)).contains(3);
     }
 
     @Test
@@ -280,35 +278,35 @@ public class SemanticPropertiesProjectionTest {
 
         DualInputSemanticProperties props = projectCrossOperator.getSemanticProperties();
 
-        assertEquals(1, props.getForwardingTargetFields(0, 0).size());
-        assertNotNull(props.getForwardingTargetFields(0, 1));
-        assertNotNull(props.getForwardingTargetFields(0, 2));
-        assertNotNull(props.getForwardingTargetFields(0, 3));
-        assertEquals(1, props.getForwardingTargetFields(0, 4).size());
-        assertEquals(1, props.getForwardingTargetFields(0, 5).size());
-        assertNotNull(props.getForwardingTargetFields(0, 6));
-        assertEquals(0, props.getForwardingTargetFields(0, 1).size());
-        assertEquals(0, props.getForwardingTargetFields(0, 2).size());
-        assertEquals(0, props.getForwardingTargetFields(0, 3).size());
-        assertEquals(0, props.getForwardingTargetFields(0, 6).size());
+        assertThat(props.getForwardingTargetFields(0, 0)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 1)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 2)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 3)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 4)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 5)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(0, 6)).isNotNull();
+        assertThat(props.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(props.getForwardingTargetFields(0, 2)).isEmpty();
+        assertThat(props.getForwardingTargetFields(0, 3)).isEmpty();
+        assertThat(props.getForwardingTargetFields(0, 6)).isEmpty();
 
-        assertNotNull(props.getForwardingTargetFields(1, 0));
-        assertEquals(1, props.getForwardingTargetFields(1, 1).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 2).size());
-        assertEquals(1, props.getForwardingTargetFields(1, 3).size());
-        assertNotNull(props.getForwardingTargetFields(1, 4));
-        assertNotNull(props.getForwardingTargetFields(1, 5));
-        assertEquals(1, props.getForwardingTargetFields(1, 6).size());
-        assertEquals(0, props.getForwardingTargetFields(1, 0).size());
-        assertEquals(0, props.getForwardingTargetFields(1, 4).size());
-        assertEquals(0, props.getForwardingTargetFields(1, 5).size());
+        assertThat(props.getForwardingTargetFields(1, 0)).isNotNull();
+        assertThat(props.getForwardingTargetFields(1, 1)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 2)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 3)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 4)).isNotNull();
+        assertThat(props.getForwardingTargetFields(1, 5)).isNotNull();
+        assertThat(props.getForwardingTargetFields(1, 6)).hasSize(1);
+        assertThat(props.getForwardingTargetFields(1, 0)).isEmpty();
+        assertThat(props.getForwardingTargetFields(1, 4)).isEmpty();
+        assertThat(props.getForwardingTargetFields(1, 5)).isEmpty();
 
-        assertTrue(props.getForwardingTargetFields(0, 4).contains(0));
-        assertTrue(props.getForwardingTargetFields(0, 5).contains(1));
-        assertTrue(props.getForwardingTargetFields(0, 0).contains(2));
-        assertTrue(props.getForwardingTargetFields(1, 1).contains(3));
-        assertTrue(props.getForwardingTargetFields(1, 2).contains(4));
-        assertTrue(props.getForwardingTargetFields(1, 3).contains(5));
-        assertTrue(props.getForwardingTargetFields(1, 6).contains(6));
+        assertThat(props.getForwardingTargetFields(0, 4)).contains(0);
+        assertThat(props.getForwardingTargetFields(0, 5)).contains(1);
+        assertThat(props.getForwardingTargetFields(0, 0)).contains(2);
+        assertThat(props.getForwardingTargetFields(1, 1)).contains(3);
+        assertThat(props.getForwardingTargetFields(1, 2)).contains(4);
+        assertThat(props.getForwardingTargetFields(1, 3)).contains(5);
+        assertThat(props.getForwardingTargetFields(1, 6)).contains(6);
     }
 }

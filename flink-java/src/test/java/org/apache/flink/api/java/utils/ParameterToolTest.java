@@ -18,7 +18,6 @@
 
 package org.apache.flink.api.java.utils;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -41,6 +40,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link ParameterTool}. */
 public class ParameterToolTest extends AbstractParameterToolTest {
@@ -67,13 +69,13 @@ public class ParameterToolTest extends AbstractParameterToolTest {
                                     "-negativeShort",
                                     "-1024"
                                 });
-        Assert.assertEquals(7, parameter.getNumberOfParameters());
+        assertThat(parameter.getNumberOfParameters()).isEqualTo(7);
         validate(parameter);
-        Assert.assertTrue(parameter.has("withoutValues"));
-        Assert.assertEquals(-0.58, parameter.getFloat("negativeFloat"), 0.1);
-        Assert.assertTrue(parameter.getBoolean("isWorking"));
-        Assert.assertEquals(127, parameter.getByte("maxByte"));
-        Assert.assertEquals(-1024, parameter.getShort("negativeShort"));
+        assertThat(parameter.has("withoutValues")).isTrue();
+        assertThat(parameter.getFloat("negativeFloat")).isCloseTo(-0.58f, within(0.1f));
+        assertThat(parameter.getBoolean("isWorking")).isTrue();
+        assertThat(parameter.getByte("maxByte")).isEqualTo((byte) 127);
+        assertThat(parameter.getShort("negativeShort")).isEqualTo((short) -1024);
     }
 
     @Test
@@ -87,17 +89,17 @@ public class ParameterToolTest extends AbstractParameterToolTest {
         }
         ParameterTool parameter =
                 ParameterTool.fromPropertiesFile(propertiesFile.getAbsolutePath());
-        Assert.assertEquals(2, parameter.getNumberOfParameters());
+        assertThat(parameter.getNumberOfParameters()).isEqualTo(2);
         validate(parameter);
 
         parameter = ParameterTool.fromPropertiesFile(propertiesFile);
-        Assert.assertEquals(2, parameter.getNumberOfParameters());
+        assertThat(parameter.getNumberOfParameters()).isEqualTo(2);
         validate(parameter);
 
         try (FileInputStream fis = new FileInputStream(propertiesFile)) {
             parameter = ParameterTool.fromPropertiesFile(fis);
         }
-        Assert.assertEquals(2, parameter.getNumberOfParameters());
+        assertThat(parameter.getNumberOfParameters()).isEqualTo(2);
         validate(parameter);
     }
 
@@ -107,7 +109,7 @@ public class ParameterToolTest extends AbstractParameterToolTest {
         props.setProperty("input", "myInput");
         props.setProperty("expectedCount", "15");
         ParameterTool parameter = ParameterTool.fromMap((Map) props);
-        Assert.assertEquals(2, parameter.getNumberOfParameters());
+        assertThat(parameter.getNumberOfParameters()).isEqualTo(2);
         validate(parameter);
     }
 

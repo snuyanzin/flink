@@ -18,11 +18,13 @@
 
 package org.apache.flink.api.java.utils;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /** Tests for {@link MultipleParameterTool}. */
 public class MultipleParameterToolTest extends AbstractParameterToolTest {
@@ -52,13 +54,13 @@ public class MultipleParameterToolTest extends AbstractParameterToolTest {
                                     "-1024"
                                 });
 
-        Assert.assertEquals(8, parameter.getNumberOfParameters());
+        assertThat(parameter.getNumberOfParameters()).isEqualTo(8);
         validate(parameter);
-        Assert.assertTrue(parameter.has("withoutValues"));
-        Assert.assertEquals(-0.58, parameter.getFloat("negativeFloat"), 0.1);
-        Assert.assertTrue(parameter.getBoolean("isWorking"));
-        Assert.assertEquals(127, parameter.getByte("maxByte"));
-        Assert.assertEquals(-1024, parameter.getShort("negativeShort"));
+        assertThat(parameter.has("withoutValues")).isTrue();
+        assertThat(parameter.getFloat("negativeFloat")).isCloseTo(-0.58f, within(0.1f));
+        assertThat(parameter.getBoolean("isWorking")).isTrue();
+        assertThat(parameter.getByte("maxByte")).isEqualTo((byte) 127);
+        assertThat(parameter.getShort("negativeShort")).isEqualTo((short) -1024);
 
         exception.expect(IllegalStateException.class);
         exception.expectMessage("Key multi should has only one value");
@@ -71,14 +73,15 @@ public class MultipleParameterToolTest extends AbstractParameterToolTest {
                 (MultipleParameterTool)
                         createParameterToolFromArgs(
                                 new String[] {"--multi", "v1", "--multi", "v2", "--multi2", "vv1"});
-        Assert.assertEquals(createHashSet("multi", "multi2"), parameter.getUnrequestedParameters());
+        assertThat(parameter.getUnrequestedParameters())
+                .containsExactlyInAnyOrder("multi", "multi2");
 
-        Assert.assertEquals(Arrays.asList("v1", "v2"), parameter.getMultiParameter("multi"));
-        Assert.assertEquals(createHashSet("multi2"), parameter.getUnrequestedParameters());
+        assertThat(parameter.getMultiParameter("multi")).isEqualTo(Arrays.asList("v1", "v2"));
+        assertThat(parameter.getUnrequestedParameters()).containsExactly("multi2");
 
-        Assert.assertEquals(
-                Collections.singletonList("vv1"), parameter.getMultiParameterRequired("multi2"));
-        Assert.assertEquals(Collections.emptySet(), parameter.getUnrequestedParameters());
+        assertThat(parameter.getMultiParameterRequired("multi2"))
+                .isEqualTo(Collections.singletonList("vv1"));
+        assertThat(parameter.getUnrequestedParameters()).isEqualTo(Collections.emptySet());
     }
 
     @Test
@@ -104,7 +107,7 @@ public class MultipleParameterToolTest extends AbstractParameterToolTest {
                                 });
         MultipleParameterTool parameter = parameter1.mergeWith(parameter2);
         validate(parameter);
-        Assert.assertEquals(Arrays.asList("v1", "v2", "v3"), parameter.getMultiParameter("merge"));
+        assertThat(parameter.getMultiParameter("merge")).isEqualTo(Arrays.asList("v1", "v2", "v3"));
     }
 
     @Override

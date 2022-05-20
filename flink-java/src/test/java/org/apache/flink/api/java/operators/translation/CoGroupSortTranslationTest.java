@@ -32,9 +32,8 @@ import org.apache.flink.util.Collector;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of co-group sort. */
 @SuppressWarnings({"serial", "unchecked"})
@@ -72,18 +71,21 @@ public class CoGroupSortTranslationTest implements java.io.Serializable {
             CoGroupOperatorBase<?, ?, ?, ?> coGroup =
                     (CoGroupOperatorBase<?, ?, ?, ?>) sink.getInput();
 
-            assertNotNull(coGroup.getGroupOrderForInputOne());
-            assertNotNull(coGroup.getGroupOrderForInputTwo());
+            assertThat(coGroup.getGroupOrderForInputOne()).isNotNull();
+            assertThat(coGroup.getGroupOrderForInputTwo()).isNotNull();
 
-            assertEquals(1, coGroup.getGroupOrderForInputOne().getNumberOfFields());
-            assertEquals(0, coGroup.getGroupOrderForInputOne().getFieldNumber(0).intValue());
-            assertEquals(Order.DESCENDING, coGroup.getGroupOrderForInputOne().getOrder(0));
+            assertThat(coGroup.getGroupOrderForInputOne().getNumberOfFields()).isEqualTo(1);
+            assertThat(coGroup.getGroupOrderForInputOne().getFieldNumber(0).intValue())
+                    .isEqualTo(0);
+            assertThat(coGroup.getGroupOrderForInputOne().getOrder(0)).isEqualTo(Order.DESCENDING);
 
-            assertEquals(2, coGroup.getGroupOrderForInputTwo().getNumberOfFields());
-            assertEquals(1, coGroup.getGroupOrderForInputTwo().getFieldNumber(0).intValue());
-            assertEquals(0, coGroup.getGroupOrderForInputTwo().getFieldNumber(1).intValue());
-            assertEquals(Order.ASCENDING, coGroup.getGroupOrderForInputTwo().getOrder(0));
-            assertEquals(Order.DESCENDING, coGroup.getGroupOrderForInputTwo().getOrder(1));
+            assertThat(coGroup.getGroupOrderForInputTwo().getNumberOfFields()).isEqualTo(2);
+            assertThat(coGroup.getGroupOrderForInputTwo().getFieldNumber(0).intValue())
+                    .isEqualTo(1);
+            assertThat(coGroup.getGroupOrderForInputTwo().getFieldNumber(1).intValue())
+                    .isEqualTo(0);
+            assertThat(coGroup.getGroupOrderForInputTwo().getOrder(0)).isEqualTo(Order.ASCENDING);
+            assertThat(coGroup.getGroupOrderForInputTwo().getOrder(1)).isEqualTo(Order.DESCENDING);
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -120,18 +122,21 @@ public class CoGroupSortTranslationTest implements java.io.Serializable {
             CoGroupOperatorBase<?, ?, ?, ?> coGroup =
                     (CoGroupOperatorBase<?, ?, ?, ?>) sink.getInput();
 
-            assertNotNull(coGroup.getGroupOrderForInputOne());
-            assertNotNull(coGroup.getGroupOrderForInputTwo());
+            assertThat(coGroup.getGroupOrderForInputOne()).isNotNull();
+            assertThat(coGroup.getGroupOrderForInputTwo()).isNotNull();
 
-            assertEquals(1, coGroup.getGroupOrderForInputOne().getNumberOfFields());
-            assertEquals(0, coGroup.getGroupOrderForInputOne().getFieldNumber(0).intValue());
-            assertEquals(Order.DESCENDING, coGroup.getGroupOrderForInputOne().getOrder(0));
+            assertThat(coGroup.getGroupOrderForInputOne().getNumberOfFields()).isEqualTo(1);
+            assertThat(coGroup.getGroupOrderForInputOne().getFieldNumber(0).intValue())
+                    .isEqualTo(0);
+            assertThat(coGroup.getGroupOrderForInputOne().getOrder(0)).isEqualTo(Order.DESCENDING);
 
-            assertEquals(2, coGroup.getGroupOrderForInputTwo().getNumberOfFields());
-            assertEquals(2, coGroup.getGroupOrderForInputTwo().getFieldNumber(0).intValue());
-            assertEquals(0, coGroup.getGroupOrderForInputTwo().getFieldNumber(1).intValue());
-            assertEquals(Order.ASCENDING, coGroup.getGroupOrderForInputTwo().getOrder(0));
-            assertEquals(Order.DESCENDING, coGroup.getGroupOrderForInputTwo().getOrder(1));
+            assertThat(coGroup.getGroupOrderForInputTwo().getNumberOfFields()).isEqualTo(2);
+            assertThat(coGroup.getGroupOrderForInputTwo().getFieldNumber(0).intValue())
+                    .isEqualTo(2);
+            assertThat(coGroup.getGroupOrderForInputTwo().getFieldNumber(1).intValue())
+                    .isEqualTo(0);
+            assertThat(coGroup.getGroupOrderForInputTwo().getOrder(0)).isEqualTo(Order.ASCENDING);
+            assertThat(coGroup.getGroupOrderForInputTwo().getOrder(1)).isEqualTo(Order.DESCENDING);
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());

@@ -26,12 +26,13 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#distinct()}. */
 public class DistinctOperatorTest {
@@ -64,7 +65,7 @@ public class DistinctOperatorTest {
         try {
             tupleDs.distinct(0);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -134,7 +135,7 @@ public class DistinctOperatorTest {
         try {
             longDs.distinct("*");
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -157,7 +158,7 @@ public class DistinctOperatorTest {
                         }
                     });
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -169,7 +170,7 @@ public class DistinctOperatorTest {
             // should work
             longDs.distinct();
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 

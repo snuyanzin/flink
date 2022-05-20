@@ -26,11 +26,13 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#first(int)}. */
 public class FirstNOperatorTest {
@@ -59,35 +61,25 @@ public class FirstNOperatorTest {
         try {
             tupleDs.first(1);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
 
         // should work
         try {
             tupleDs.first(10);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
 
         // should not work n == 0
-        try {
-            tupleDs.first(0);
-            Assert.fail();
-        } catch (InvalidProgramException ipe) {
-            // we're good here
-        } catch (Exception e) {
-            Assert.fail();
-        }
+        assertThatThrownBy(() -> tupleDs.first(0))
+                .withFailMessage("unknown failure")
+                .isInstanceOf(InvalidProgramException.class);
 
         // should not work n == -1
-        try {
-            tupleDs.first(-1);
-            Assert.fail();
-        } catch (InvalidProgramException ipe) {
-            // we're good here
-        } catch (Exception e) {
-            Assert.fail();
-        }
+        assertThatThrownBy(() -> tupleDs.first(-1))
+                .withFailMessage("unknown failure")
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
@@ -101,35 +93,25 @@ public class FirstNOperatorTest {
         try {
             tupleDs.groupBy(2).first(1);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
 
         // should work
         try {
             tupleDs.groupBy(1, 3).first(10);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
 
         // should not work n == 0
-        try {
-            tupleDs.groupBy(0).first(0);
-            Assert.fail();
-        } catch (InvalidProgramException ipe) {
-            // we're good here
-        } catch (Exception e) {
-            Assert.fail();
-        }
+        assertThatThrownBy(() -> tupleDs.groupBy(0).first(0))
+                .withFailMessage("unknown failure")
+                .isInstanceOf(InvalidProgramException.class);
 
         // should not work n == -1
-        try {
-            tupleDs.groupBy(2).first(-1);
-            Assert.fail();
-        } catch (InvalidProgramException ipe) {
-            // we're good here
-        } catch (Exception e) {
-            Assert.fail();
-        }
+        assertThatThrownBy(() -> tupleDs.groupBy(2).first(-1))
+                .withFailMessage("unknown failure")
+                .isInstanceOf(InvalidProgramException.class);
     }
 
     @Test
@@ -143,34 +125,24 @@ public class FirstNOperatorTest {
         try {
             tupleDs.groupBy(2).sortGroup(4, Order.ASCENDING).first(1);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
 
         // should work
         try {
             tupleDs.groupBy(1, 3).sortGroup(4, Order.ASCENDING).first(10);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
 
         // should not work n == 0
-        try {
-            tupleDs.groupBy(0).sortGroup(4, Order.ASCENDING).first(0);
-            Assert.fail();
-        } catch (InvalidProgramException ipe) {
-            // we're good here
-        } catch (Exception e) {
-            Assert.fail();
-        }
+        assertThatThrownBy(() -> tupleDs.groupBy(0).sortGroup(4, Order.ASCENDING).first(0))
+                .withFailMessage("unknown failure")
+                .isInstanceOf(InvalidProgramException.class);
 
         // should not work n == -1
-        try {
-            tupleDs.groupBy(2).sortGroup(4, Order.ASCENDING).first(-1);
-            Assert.fail();
-        } catch (InvalidProgramException ipe) {
-            // we're good here
-        } catch (Exception e) {
-            Assert.fail();
-        }
+        assertThatThrownBy(() -> tupleDs.groupBy(2).sortGroup(4, Order.ASCENDING).first(-1))
+                .withFailMessage("unknown failure")
+                .isInstanceOf(InvalidProgramException.class);
     }
 }

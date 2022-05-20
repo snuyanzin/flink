@@ -40,13 +40,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link TextInputFormat}. */
 public class TextInputFormatTest extends TestLogger {
@@ -74,21 +68,19 @@ public class TextInputFormatTest extends TestLogger {
         inputFormat.configure(parameters);
 
         FileInputSplit[] splits = inputFormat.createInputSplits(1);
-        assertThat("expected at least one input split", splits.length, greaterThanOrEqualTo(1));
+        assertThat(splits).as("expected at least one input split").isNotEmpty();
 
         inputFormat.open(splits[0]);
         try {
-            assertFalse(inputFormat.reachedEnd());
+            assertThat(inputFormat.reachedEnd()).isFalse();
             String result = inputFormat.nextRecord("");
-            assertNotNull("Expecting first record here", result);
-            assertEquals(first, result);
+            assertThat(result).as("Expecting first record here").isNotNull().isEqualTo(first);
 
-            assertFalse(inputFormat.reachedEnd());
+            assertThat(inputFormat.reachedEnd()).isFalse();
             result = inputFormat.nextRecord(result);
-            assertNotNull("Expecting second record here", result);
-            assertEquals(second, result);
+            assertThat(result).as("Expecting second record here").isNotNull().isEqualTo(second);
 
-            assertTrue(inputFormat.reachedEnd() || null == inputFormat.nextRecord(result));
+            assertThat(inputFormat.reachedEnd() || null == inputFormat.nextRecord(result)).isTrue();
         } finally {
             inputFormat.close();
         }
@@ -122,8 +114,8 @@ public class TextInputFormatTest extends TestLogger {
         config.setString("delimited-format.numSamples", "20");
         inputFormat.configure(config);
 
-        assertTrue(inputFormat.getNestedFileEnumeration());
-        assertEquals(10, inputFormat.getNumLineSamples());
+        assertThat(inputFormat.getNestedFileEnumeration()).isTrue();
+        assertThat(inputFormat.getNumLineSamples()).isEqualTo(10);
 
         FileInputSplit[] splits = inputFormat.createInputSplits(expectedFiles.size());
 
@@ -135,7 +127,7 @@ public class TextInputFormatTest extends TestLogger {
         Collections.sort(expectedFiles);
         Collections.sort(paths);
         for (int i = 0; i < expectedFiles.size(); i++) {
-            assertEquals(expectedFiles.get(i), paths.get(i));
+            assertThat(paths.get(i)).isEqualTo(expectedFiles.get(i));
         }
     }
 
@@ -184,20 +176,17 @@ public class TextInputFormatTest extends TestLogger {
                 || (lineBreaker.equals(delimiter))) {
 
             result = inputFormat.nextRecord("");
-            assertNotNull("Expecting first record here", result);
-            assertEquals(first, result);
+            assertThat(result).as("Expecting first record here").isNotNull().isEqualTo(first);
 
             result = inputFormat.nextRecord(result);
-            assertNotNull("Expecting second record here", result);
-            assertEquals(second, result);
+            assertThat(result).as("Expecting second record here").isNotNull().isEqualTo(second);
 
             result = inputFormat.nextRecord(result);
-            assertNull("The input file is over", result);
+            assertThat(result).as("The input file is over").isNull();
 
         } else {
             result = inputFormat.nextRecord("");
-            assertNotNull("Expecting first record here", result);
-            assertEquals(content, result);
+            assertThat(result).as("Expecting first record here").isNotNull().isEqualTo(content);
         }
     }
 
@@ -236,15 +225,14 @@ public class TextInputFormatTest extends TestLogger {
         inputFormat.configure(parameters);
 
         FileInputSplit[] splits = inputFormat.createInputSplits(1);
-        assertThat("expected at least one input split", splits.length, greaterThanOrEqualTo(1));
+        assertThat(splits.length).as("expected at least one input split").isGreaterThanOrEqualTo(1);
 
         inputFormat.open(splits[0]);
         try {
-            assertFalse(inputFormat.reachedEnd());
+            assertThat(inputFormat.reachedEnd()).isFalse();
             String result = inputFormat.nextRecord("");
-            assertNotNull("Expecting first record here", result);
-            assertEquals(first, result);
-            assertFalse(inputFormat.reachedEnd());
+            assertThat(result).as("Expecting first record here").isNotNull().isEqualTo(first);
+            assertThat(inputFormat.reachedEnd()).isFalse();
 
             Long currentOffset = inputFormat.getCurrentState();
             inputFormat.close();
@@ -253,12 +241,11 @@ public class TextInputFormatTest extends TestLogger {
             inputFormat.configure(parameters);
             inputFormat.reopen(splits[0], currentOffset);
 
-            assertFalse(inputFormat.reachedEnd());
+            assertThat(inputFormat.reachedEnd()).isFalse();
             result = inputFormat.nextRecord(result);
-            assertNotNull("Expecting second record here", result);
-            assertEquals(second, result);
+            assertThat(result).as("Expecting second record here").isNotNull().isEqualTo(second);
 
-            assertTrue(inputFormat.reachedEnd() || null == inputFormat.nextRecord(result));
+            assertThat(inputFormat.reachedEnd() || null == inputFormat.nextRecord(result)).isTrue();
         } finally {
             inputFormat.close();
         }

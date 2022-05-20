@@ -24,9 +24,8 @@ import org.apache.flink.api.java.io.DiscardingOutputFormat;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for multiple invocations of a plan. */
 public class MultipleInvokationsTest {
@@ -46,10 +45,11 @@ public class MultipleInvokationsTest {
             {
                 Plan p = env.createProgramPlan();
 
-                assertEquals(2, p.getDataSinks().size());
+                assertThat(p.getDataSinks()).hasSize(2);
                 for (GenericDataSinkBase<?> sink : p.getDataSinks()) {
-                    assertTrue(sink.getName().equals("print1") || sink.getName().equals("output1"));
-                    assertEquals("source1", sink.getInput().getName());
+                    assertThat(sink.getName().equals("print1") || sink.getName().equals("output1"))
+                            .isTrue();
+                    assertThat(sink.getInput().getName()).isEqualTo("source1");
                 }
             }
 
@@ -60,10 +60,10 @@ public class MultipleInvokationsTest {
             {
                 Plan p = env.createProgramPlan();
 
-                assertEquals(1, p.getDataSinks().size());
+                assertThat(p.getDataSinks()).hasSize(1);
                 GenericDataSinkBase<?> sink = p.getDataSinks().iterator().next();
-                assertEquals("textsink", sink.getName());
-                assertEquals("source1", sink.getInput().getName());
+                assertThat(sink.getName()).isEqualTo("textsink");
+                assertThat(sink.getInput().getName()).isEqualTo("source1");
             }
         } catch (Exception e) {
             System.err.println(e.getMessage());

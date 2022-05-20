@@ -28,10 +28,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link PrimitiveInputFormat}. */
 public class PrimitiveInputFormatTest {
@@ -54,17 +52,17 @@ public class PrimitiveInputFormatTest {
             String result = null;
 
             result = format.nextRecord(result);
-            assertEquals("abc", result);
+            assertThat(result).isEqualTo("abc");
 
             result = format.nextRecord(result);
-            assertEquals("def", result);
+            assertThat(result).isEqualTo("def");
 
             result = format.nextRecord(result);
-            assertEquals("", result);
+            assertThat(result).isEmpty();
 
             result = format.nextRecord(result);
-            assertNull(result);
-            assertTrue(format.reachedEnd());
+            assertThat(result).isNull();
+            assertThat(format.reachedEnd()).isTrue();
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("Test failed due to a " + ex.getClass().getName() + ": " + ex.getMessage());
@@ -85,14 +83,14 @@ public class PrimitiveInputFormatTest {
 
             Integer result = null;
             result = format.nextRecord(result);
-            assertEquals(Integer.valueOf(111), result);
+            assertThat(result).isEqualTo(Integer.valueOf(111));
 
             result = format.nextRecord(result);
-            assertEquals(Integer.valueOf(222), result);
+            assertThat(result).isEqualTo(Integer.valueOf(222));
 
             result = format.nextRecord(result);
-            assertNull(result);
-            assertTrue(format.reachedEnd());
+            assertThat(result).isNull();
+            assertThat(format.reachedEnd()).isTrue();
         } catch (Exception ex) {
             fail("Test failed due to a " + ex.getClass().getName() + ": " + ex.getMessage());
         }
@@ -112,14 +110,14 @@ public class PrimitiveInputFormatTest {
 
             Double result = null;
             result = format.nextRecord(result);
-            assertEquals(Double.valueOf(1.21), result);
+            assertThat(result).isEqualTo(Double.valueOf(1.21));
 
             result = format.nextRecord(result);
-            assertEquals(Double.valueOf(2.23), result);
+            assertThat(result).isEqualTo(Double.valueOf(2.23));
 
             result = format.nextRecord(result);
-            assertNull(result);
-            assertTrue(format.reachedEnd());
+            assertThat(result).isNull();
+            assertThat(format.reachedEnd()).isTrue();
         } catch (Exception ex) {
             fail("Test failed due to a " + ex.getClass().getName() + ": " + ex.getMessage());
         }
@@ -142,10 +140,10 @@ public class PrimitiveInputFormatTest {
             String result = null;
 
             result = format.nextRecord(result);
-            assertEquals(first, result);
+            assertThat(result).isEqualTo(first);
 
             result = format.nextRecord(result);
-            assertEquals(second, result);
+            assertThat(result).isEqualTo(second);
         } catch (Exception ex) {
             fail("Test failed due to a " + ex.getClass().getName() + ": " + ex.getMessage());
         }
@@ -165,10 +163,10 @@ public class PrimitiveInputFormatTest {
 
         Integer result = null;
         result = format.nextRecord(result);
-        assertEquals(Integer.valueOf(111), result);
+        assertThat(result).isEqualTo(Integer.valueOf(111));
 
         result = format.nextRecord(result);
-        assertEquals(Integer.valueOf(222), result);
+        assertThat(result).isEqualTo(Integer.valueOf(222));
 
         result = format.nextRecord(result);
     }

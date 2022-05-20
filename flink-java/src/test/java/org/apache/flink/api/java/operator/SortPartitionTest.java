@@ -31,12 +31,13 @@ import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#sortPartition(int, Order)}. */
 public class SortPartitionTest {
@@ -79,7 +80,7 @@ public class SortPartitionTest {
         try {
             tupleDs.sortPartition(0, Order.ASCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -94,7 +95,7 @@ public class SortPartitionTest {
         try {
             tupleDs.sortPartition(0, Order.ASCENDING).sortPartition(3, Order.DESCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -131,7 +132,7 @@ public class SortPartitionTest {
         try {
             tupleDs.sortPartition("f1", Order.ASCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -147,7 +148,7 @@ public class SortPartitionTest {
             tupleDs.sortPartition("f0", Order.ASCENDING)
                     .sortPartition("f2.nested.myInt", Order.DESCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -191,7 +192,7 @@ public class SortPartitionTest {
                     },
                     Order.ASCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -252,7 +253,7 @@ public class SortPartitionTest {
                     },
                     Order.ASCENDING);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 

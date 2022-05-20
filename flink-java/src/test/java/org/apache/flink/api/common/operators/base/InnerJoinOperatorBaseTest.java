@@ -42,8 +42,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link InnerJoinOperatorBase}. */
 @SuppressWarnings({"unchecked", "serial"})
@@ -66,8 +66,8 @@ public class InnerJoinOperatorBaseTest implements Serializable {
                                     Tuple2<Integer, String> second,
                                     Collector<Tuple2<Double, String>> out) {
 
-                                assertEquals(first.f0, second.f1);
-                                assertEquals(first.f2, second.f0);
+                                assertThat(second.f1).isEqualTo(first.f0);
+                                assertThat(second.f0).isEqualTo(first.f2);
 
                                 out.collect(new Tuple2<>(first.f1, second.f0.toString()));
                             }
@@ -168,8 +168,8 @@ public class InnerJoinOperatorBaseTest implements Serializable {
                                     UnregisteredMetricsGroup.createOperatorMetricGroup()),
                             executionConfig);
 
-            assertEquals(expected, new HashSet<>(resultSafe));
-            assertEquals(expected, new HashSet<>(resultRegular));
+            assertThat(new HashSet<>(resultSafe)).containsExactlyElementsOf(expected);
+            assertThat(new HashSet<>(resultRegular)).containsExactlyElementsOf(expected);
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());

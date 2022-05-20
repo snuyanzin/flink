@@ -33,14 +33,14 @@ import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.util.Collector;
 
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link DataSet#coGroup(DataSet)}. */
 @SuppressWarnings("serial")
@@ -78,7 +78,7 @@ public class CoGroupOperatorTest {
         try {
             ds1.coGroup(ds2).where(0).equalTo(0);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -157,7 +157,7 @@ public class CoGroupOperatorTest {
         try {
             ds1.coGroup(ds2).where("myInt").equalTo("myInt");
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -278,7 +278,7 @@ public class CoGroupOperatorTest {
             ds1.coGroup(ds2).where("nested.myInt").equalTo("nested.myInt");
         } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -342,7 +342,7 @@ public class CoGroupOperatorTest {
                                 }
                             });
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -367,7 +367,7 @@ public class CoGroupOperatorTest {
                             })
                     .equalTo(3);
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -392,7 +392,7 @@ public class CoGroupOperatorTest {
                                 }
                             });
         } catch (Exception e) {
-            Assert.fail();
+            fail("unknown failure");
         }
     }
 
@@ -455,35 +455,25 @@ public class CoGroupOperatorTest {
 
         SemanticProperties semProps = coGroupOp.getSemanticProperties();
 
-        assertTrue(semProps.getForwardingTargetFields(0, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).contains(4));
-        assertTrue(semProps.getForwardingTargetFields(0, 3).size() == 2);
-        assertTrue(semProps.getForwardingTargetFields(0, 3).contains(1));
-        assertTrue(semProps.getForwardingTargetFields(0, 3).contains(3));
-        assertTrue(semProps.getForwardingTargetFields(0, 4).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 5).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 6).size() == 0);
+        assertThat(semProps.getForwardingTargetFields(0, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 2)).containsExactly(4);
+        assertThat(semProps.getForwardingTargetFields(0, 3)).containsExactlyInAnyOrder(1, 3);
+        assertThat(semProps.getForwardingTargetFields(0, 4)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 5)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 6)).isEmpty();
 
-        assertTrue(semProps.getForwardingTargetFields(1, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 2).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 3).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 4).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(1, 4).contains(2));
-        assertTrue(semProps.getForwardingTargetFields(1, 5).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 6).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(1, 6).contains(0));
+        assertThat(semProps.getForwardingTargetFields(1, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 2)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 3)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 4)).containsExactly(2);
+        assertThat(semProps.getForwardingTargetFields(1, 5)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 6)).containsExactly(0);
 
-        assertTrue(semProps.getReadFields(0).size() == 3);
-        assertTrue(semProps.getReadFields(0).contains(2));
-        assertTrue(semProps.getReadFields(0).contains(4));
-        assertTrue(semProps.getReadFields(0).contains(6));
+        assertThat(semProps.getReadFields(0)).containsExactlyInAnyOrder(2, 4, 6);
 
-        assertTrue(semProps.getReadFields(1).size() == 2);
-        assertTrue(semProps.getReadFields(1).contains(3));
-        assertTrue(semProps.getReadFields(1).contains(5));
+        assertThat(semProps.getReadFields(1)).containsExactlyInAnyOrder(3, 5);
     }
 
     @Test
@@ -505,33 +495,25 @@ public class CoGroupOperatorTest {
 
         SemanticProperties semProps = coGroupOp.getSemanticProperties();
 
-        assertTrue(semProps.getForwardingTargetFields(0, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 2).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 3).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 4).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 4).contains(2));
-        assertTrue(semProps.getForwardingTargetFields(0, 5).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(0, 6).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(0, 6).contains(0));
+        assertThat(semProps.getForwardingTargetFields(0, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 2)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 3)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 4)).containsExactly(2);
+        assertThat(semProps.getForwardingTargetFields(0, 5)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(0, 6)).containsExactly(0);
 
-        assertTrue(semProps.getForwardingTargetFields(1, 0).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 1).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 2).size() == 1);
-        assertTrue(semProps.getForwardingTargetFields(1, 2).contains(4));
-        assertTrue(semProps.getForwardingTargetFields(1, 3).size() == 2);
-        assertTrue(semProps.getForwardingTargetFields(1, 3).contains(1));
-        assertTrue(semProps.getForwardingTargetFields(1, 3).contains(3));
-        assertTrue(semProps.getForwardingTargetFields(1, 4).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 5).size() == 0);
-        assertTrue(semProps.getForwardingTargetFields(1, 6).size() == 0);
+        assertThat(semProps.getForwardingTargetFields(1, 0)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 1)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 2)).containsExactly(4);
+        assertThat(semProps.getForwardingTargetFields(1, 3)).containsExactlyInAnyOrder(1, 3);
+        assertThat(semProps.getForwardingTargetFields(1, 4)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 5)).isEmpty();
+        assertThat(semProps.getForwardingTargetFields(1, 6)).isEmpty();
 
-        assertTrue(semProps.getReadFields(0).size() == 3);
-        assertTrue(semProps.getReadFields(0).contains(2));
-        assertTrue(semProps.getReadFields(0).contains(3));
-        assertTrue(semProps.getReadFields(0).contains(4));
+        assertThat(semProps.getReadFields(0)).containsExactlyInAnyOrder(2, 3, 4);
 
-        assertTrue(semProps.getReadFields(1) == null);
+        assertThat(semProps.getReadFields(1)).isNull();
     }
 
     private static class DummyTestKeySelector

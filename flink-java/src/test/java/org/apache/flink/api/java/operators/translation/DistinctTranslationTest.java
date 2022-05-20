@@ -41,10 +41,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for translation of distinct operation. */
 @SuppressWarnings("serial")
@@ -70,16 +68,16 @@ public class DistinctTranslationTest {
             ReduceOperatorBase<?, ?> reducer = (ReduceOperatorBase<?, ?>) sink.getInput();
 
             // check types
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getInputType());
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getOutputType());
+            assertThat(reducer.getOperatorInfo().getInputType()).isEqualTo(initialData.getType());
+            assertThat(reducer.getOperatorInfo().getOutputType()).isEqualTo(initialData.getType());
 
             // check keys
-            assertArrayEquals(new int[] {0, 1, 2}, reducer.getKeyColumns(0));
+            assertThat(reducer.getKeyColumns(0)).isEqualTo(new int[] {0, 1, 2});
 
             // parallelism was not configured on the operator
-            assertTrue(reducer.getParallelism() == 1 || reducer.getParallelism() == -1);
+            assertThat(reducer.getParallelism() == 1 || reducer.getParallelism() == -1).isTrue();
 
-            assertTrue(reducer.getInput() instanceof GenericDataSourceBase<?, ?>);
+            assertThat(reducer.getInput()).isInstanceOf(GenericDataSourceBase.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
@@ -105,16 +103,16 @@ public class DistinctTranslationTest {
             ReduceOperatorBase<?, ?> reducer = (ReduceOperatorBase<?, ?>) sink.getInput();
 
             // check types
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getInputType());
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getOutputType());
+            assertThat(reducer.getOperatorInfo().getInputType()).isEqualTo(initialData.getType());
+            assertThat(reducer.getOperatorInfo().getOutputType()).isEqualTo(initialData.getType());
 
             // check keys
-            assertArrayEquals(new int[] {0}, reducer.getKeyColumns(0));
+            assertThat(reducer.getKeyColumns(0)).isEqualTo(new int[] {0});
 
             // parallelism was not configured on the operator
-            assertTrue(reducer.getParallelism() == 1 || reducer.getParallelism() == -1);
+            assertThat(reducer.getParallelism() == 1 || reducer.getParallelism() == -1).isTrue();
 
-            assertTrue(reducer.getInput() instanceof GenericDataSourceBase<?, ?>);
+            assertThat(reducer.getInput()).isInstanceOf(GenericDataSourceBase.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
@@ -142,16 +140,16 @@ public class DistinctTranslationTest {
             ReduceOperatorBase<?, ?> reducer = (ReduceOperatorBase<?, ?>) sink.getInput();
 
             // check types
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getInputType());
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getOutputType());
+            assertThat(reducer.getOperatorInfo().getInputType()).isEqualTo(initialData.getType());
+            assertThat(reducer.getOperatorInfo().getOutputType()).isEqualTo(initialData.getType());
 
             // check keys
-            assertArrayEquals(new int[] {1, 2}, reducer.getKeyColumns(0));
+            assertThat(reducer.getKeyColumns(0)).isEqualTo(new int[] {1, 2});
 
             // parallelism was not configured on the operator
-            assertTrue(reducer.getParallelism() == 1 || reducer.getParallelism() == -1);
+            assertThat(reducer.getParallelism() == 1 || reducer.getParallelism() == -1).isTrue();
 
-            assertTrue(reducer.getInput() instanceof GenericDataSourceBase<?, ?>);
+            assertThat(reducer.getInput()).isInstanceOf(GenericDataSourceBase.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
@@ -188,8 +186,8 @@ public class DistinctTranslationTest {
             MapOperatorBase<?, ?, ?> keyExtractor = (MapOperatorBase<?, ?, ?>) reducer.getInput();
 
             // check the parallelisms
-            assertEquals(1, keyExtractor.getParallelism());
-            assertEquals(4, reducer.getParallelism());
+            assertThat(keyExtractor.getParallelism()).isEqualTo(1);
+            assertThat(reducer.getParallelism()).isEqualTo(4);
 
             // check types
             TypeInformation<?> keyValueInfo =
@@ -197,21 +195,22 @@ public class DistinctTranslationTest {
                             new ValueTypeInfo<StringValue>(StringValue.class),
                             initialData.getType());
 
-            assertEquals(initialData.getType(), keyExtractor.getOperatorInfo().getInputType());
-            assertEquals(keyValueInfo, keyExtractor.getOperatorInfo().getOutputType());
+            assertThat(keyExtractor.getOperatorInfo().getInputType())
+                    .isEqualTo(initialData.getType());
+            assertThat(keyExtractor.getOperatorInfo().getOutputType()).isEqualTo(keyValueInfo);
 
-            assertEquals(keyValueInfo, reducer.getOperatorInfo().getInputType());
-            assertEquals(keyValueInfo, reducer.getOperatorInfo().getOutputType());
+            assertThat(reducer.getOperatorInfo().getInputType()).isEqualTo(keyValueInfo);
+            assertThat(reducer.getOperatorInfo().getOutputType()).isEqualTo(keyValueInfo);
 
-            assertEquals(keyValueInfo, keyRemover.getOperatorInfo().getInputType());
-            assertEquals(initialData.getType(), keyRemover.getOperatorInfo().getOutputType());
+            assertThat(keyRemover.getOperatorInfo().getInputType()).isEqualTo(keyValueInfo);
+            assertThat(keyRemover.getOperatorInfo().getOutputType())
+                    .isEqualTo(initialData.getType());
 
             // check keys
-            assertEquals(
-                    KeyExtractingMapper.class,
-                    keyExtractor.getUserCodeWrapper().getUserCodeClass());
+            assertThat(keyExtractor.getUserCodeWrapper().getUserCodeClass())
+                    .isEqualTo(KeyExtractingMapper.class);
 
-            assertTrue(keyExtractor.getInput() instanceof GenericDataSourceBase<?, ?>);
+            assertThat(keyExtractor.getInput()).isInstanceOf(GenericDataSourceBase.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
@@ -237,16 +236,16 @@ public class DistinctTranslationTest {
             ReduceOperatorBase<?, ?> reducer = (ReduceOperatorBase<?, ?>) sink.getInput();
 
             // check types
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getInputType());
-            assertEquals(initialData.getType(), reducer.getOperatorInfo().getOutputType());
+            assertThat(reducer.getOperatorInfo().getInputType()).isEqualTo(initialData.getType());
+            assertThat(reducer.getOperatorInfo().getOutputType()).isEqualTo(initialData.getType());
 
             // check keys
-            assertArrayEquals(new int[] {0}, reducer.getKeyColumns(0));
+            assertThat(reducer.getKeyColumns(0)).isEqualTo(new int[] {0});
 
             // parallelism was not configured on the operator
-            assertTrue(reducer.getParallelism() == 1 || reducer.getParallelism() == -1);
+            assertThat(reducer.getParallelism() == 1 || reducer.getParallelism() == -1).isTrue();
 
-            assertTrue(reducer.getInput() instanceof GenericDataSourceBase<?, ?>);
+            assertThat(reducer.getInput()).isInstanceOf(GenericDataSourceBase.class);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             e.printStackTrace();

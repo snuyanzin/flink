@@ -24,7 +24,7 @@ import org.apache.flink.api.common.typeinfo.Types;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests concerning type extraction by ExecutionEnvironment methods. */
 @SuppressWarnings("serial")
@@ -51,7 +51,7 @@ public class TypeExtractionTest {
                         .returns(Types.STRING)
                         .getResultType();
 
-        assertEquals(Types.STRING, info);
+        assertThat(info).isEqualTo(Types.STRING);
     }
 
     @Test
