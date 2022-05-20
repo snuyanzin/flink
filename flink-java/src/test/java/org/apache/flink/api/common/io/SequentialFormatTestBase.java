@@ -26,7 +26,6 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.core.memory.DataOutputView;
 import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -65,11 +64,14 @@ public abstract class SequentialFormatTestBase<T> {
 
     private int[] rawDataSizes;
 
+    protected File tempFile;
+
     @TempDir protected java.nio.file.Path tmpDir;
 
     /** Count how many bytes would be written if all records were directly serialized. */
     @BeforeEach
-    public void calcRawDataSize(int numberOfTuples, long blockSize, int parallelism) throws IOException {
+    public void calcRawDataSize(int numberOfTuples, long blockSize, int parallelism)
+            throws IOException {
         int recordIndex = 0;
         this.numberOfTuples = numberOfTuples;
         this.blockSize = blockSize;
@@ -91,7 +93,8 @@ public abstract class SequentialFormatTestBase<T> {
     /** Checks if the expected input splits were created. */
     @ParameterizedTest
     @MethodSource("getParameters")
-    public void checkInputSplits(int numberOfTuples, long blockSize, int parallelism) throws IOException {
+    public void checkInputSplits(int numberOfTuples, long blockSize, int parallelism)
+            throws IOException {
         FileInputSplit[] inputSplits = this.createInputFormat().createInputSplits(0);
         Arrays.sort(inputSplits, new InputSplitSorter());
 
@@ -175,7 +178,8 @@ public abstract class SequentialFormatTestBase<T> {
 
     /** Write out the tuples in a temporary file and return it. */
     @BeforeEach
-    public void writeTuples(int numberOfTuples, long blockSize, int parallelism) throws IOException {
+    public void writeTuples(int numberOfTuples, long blockSize, int parallelism)
+            throws IOException {
         this.tempFile = File.createTempFile("BinaryInputFormat", null);
         this.tempFile.deleteOnExit();
         Configuration configuration = new Configuration();

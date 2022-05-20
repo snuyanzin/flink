@@ -32,33 +32,23 @@ import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.core.memory.DataOutputView;
 
-import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for type serialization format. */
-@RunWith(Parameterized.class)
 public class TypeSerializerFormatTest extends SequentialFormatTestBase<Tuple2<Integer, String>> {
 
     TypeInformation<Tuple2<Integer, String>> resultType = TypeExtractor.getForObject(getRecord(0));
 
-    private TypeSerializer<Tuple2<Integer, String>> serializer;
+    private TypeSerializer<Tuple2<Integer, String>> serializer =
+            resultType.createSerializer(new ExecutionConfig());
 
     private BlockInfo block;
 
-    public TypeSerializerFormatTest(int numberOfTuples, long blockSize, int parallelism) {
-
-
-        resultType = TypeExtractor.getForObject(getRecord(0));
-
-        serializer = resultType.createSerializer(new ExecutionConfig());
-    }
-
-    @Before
+    @BeforeEach
     public void setup() {
         block = createInputFormat().createBlockInfo();
     }
