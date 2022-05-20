@@ -25,7 +25,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.configuration.Configuration;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link CollectionExecutor} with broadcast variables. */
 @SuppressWarnings("serial")
-public class CollectionExecutionWithBroadcastVariableTest {
+class CollectionExecutionWithBroadcastVariableTest {
 
     private static final String BC_VAR_NAME = "BC";
 
@@ -43,7 +43,7 @@ public class CollectionExecutionWithBroadcastVariableTest {
     private static final String SUFFIX = "-suffixed";
 
     @Test
-    public void testUnaryOp() {
+    void testUnaryOp() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
 
@@ -69,7 +69,7 @@ public class CollectionExecutionWithBroadcastVariableTest {
     }
 
     @Test
-    public void testBinaryOp() {
+    void testBinaryOp() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
 

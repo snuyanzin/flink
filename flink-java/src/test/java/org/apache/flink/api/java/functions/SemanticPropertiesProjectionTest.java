@@ -36,7 +36,7 @@ import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.api.java.tuple.Tuple5;
 import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for semantic properties of projected fields. */
-public class SemanticPropertiesProjectionTest {
+class SemanticPropertiesProjectionTest {
 
     final List<Tuple5<Integer, Long, String, Long, Integer>> emptyTupleData =
             new ArrayList<Tuple5<Integer, Long, String, Long, Integer>>();
@@ -84,7 +84,7 @@ public class SemanticPropertiesProjectionTest {
                             BasicTypeInfo.STRING_TYPE_INFO);
 
     @Test
-    public void testProjectionSemProps1() {
+    void testProjectionSemProps1() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
                 env.fromCollection(emptyTupleData, tupleTypeInfo);
@@ -111,7 +111,7 @@ public class SemanticPropertiesProjectionTest {
     }
 
     @Test
-    public void testProjectionSemProps2() {
+    void testProjectionSemProps2() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Tuple3<String, Integer, Long>, Tuple2<Long, Long>, String>>
                 tupleDs = env.fromCollection(emptyNestedTupleData, nestedTupleTypeInfo);
@@ -145,7 +145,7 @@ public class SemanticPropertiesProjectionTest {
     }
 
     @Test
-    public void testJoinProjectionSemProps1() {
+    void testJoinProjectionSemProps1() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
                 env.fromCollection(emptyTupleData, tupleTypeInfo);
@@ -177,7 +177,7 @@ public class SemanticPropertiesProjectionTest {
     }
 
     @Test
-    public void testJoinProjectionSemProps2() {
+    void testJoinProjectionSemProps2() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Tuple3<String, Integer, Long>, Tuple2<Long, Long>, String>>
                 tupleDs = env.fromCollection(emptyNestedTupleData, nestedTupleTypeInfo);
@@ -230,7 +230,7 @@ public class SemanticPropertiesProjectionTest {
     }
 
     @Test
-    public void testCrossProjectionSemProps1() {
+    void testCrossProjectionSemProps1() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple5<Integer, Long, String, Long, Integer>> tupleDs =
                 env.fromCollection(emptyTupleData, tupleTypeInfo);
@@ -260,7 +260,7 @@ public class SemanticPropertiesProjectionTest {
     }
 
     @Test
-    public void testCrossProjectionSemProps2() {
+    void testCrossProjectionSemProps2() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         DataSet<Tuple4<Integer, Tuple3<String, Integer, Long>, Tuple2<Long, Long>, String>>
                 tupleDs = env.fromCollection(emptyNestedTupleData, nestedTupleTypeInfo);

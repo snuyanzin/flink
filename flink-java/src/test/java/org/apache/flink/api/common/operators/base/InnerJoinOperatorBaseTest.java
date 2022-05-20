@@ -31,7 +31,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -47,10 +47,10 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link InnerJoinOperatorBase}. */
 @SuppressWarnings({"unchecked", "serial"})
-public class InnerJoinOperatorBaseTest implements Serializable {
+class InnerJoinOperatorBaseTest implements Serializable {
 
     @Test
-    public void testTupleBaseJoiner() {
+    void testTupleBaseJoiner() {
         final FlatJoinFunction<
                         Tuple3<String, Double, Integer>,
                         Tuple2<Integer, String>,

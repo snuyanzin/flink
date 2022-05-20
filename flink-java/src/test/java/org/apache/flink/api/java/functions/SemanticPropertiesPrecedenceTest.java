@@ -29,15 +29,15 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.DiscardingOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple3;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests the precedence of semantic properties: annotation > API. */
-public class SemanticPropertiesPrecedenceTest {
+class SemanticPropertiesPrecedenceTest {
 
     @Test
-    public void testFunctionForwardedAnnotationPrecedence() {
+    void testFunctionForwardedAnnotationPrecedence() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         @SuppressWarnings("unchecked")
@@ -63,7 +63,7 @@ public class SemanticPropertiesPrecedenceTest {
     }
 
     @Test
-    public void testFunctionApiPrecedence() {
+    void testFunctionApiPrecedence() {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         @SuppressWarnings("unchecked")

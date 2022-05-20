@@ -25,12 +25,14 @@ import org.apache.flink.core.fs.FileInputSplit;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.core.memory.DataOutputView;
 import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
-import org.apache.flink.util.TestLogger;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,11 +41,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test base for {@link BinaryInputFormat} and {@link BinaryOutputFormat}. */
-public abstract class SequentialFormatTestBase<T> extends TestLogger {
+@ExtendWith(AfterBeforeParameterResolver.class)
+public abstract class SequentialFormatTestBase<T> {
 
     private class InputSplitSorter implements Comparator<FileInputSplit> {
         @Override
@@ -61,20 +65,16 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
 
     private int[] rawDataSizes;
 
-    protected File tempFile;
+    @TempDir protected java.nio.file.Path tmpDir;
 
-    /** Initializes SequentialFormatTest. */
-    public SequentialFormatTestBase(int numberOfTuples, long blockSize, int parallelism) {
+    /** Count how many bytes would be written if all records were directly serialized. */
+    @BeforeEach
+    public void calcRawDataSize(int numberOfTuples, long blockSize, int parallelism) throws IOException {
+        int recordIndex = 0;
         this.numberOfTuples = numberOfTuples;
         this.blockSize = blockSize;
         this.parallelism = parallelism;
         this.rawDataSizes = new int[parallelism];
-    }
-
-    /** Count how many bytes would be written if all records were directly serialized. */
-    @Before
-    public void calcRawDataSize() throws IOException {
-        int recordIndex = 0;
         for (int fileIndex = 0; fileIndex < this.parallelism; fileIndex++) {
             ByteCounter byteCounter = new ByteCounter();
 
@@ -89,8 +89,9 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
     }
 
     /** Checks if the expected input splits were created. */
-    @Test
-    public void checkInputSplits() throws IOException {
+    @ParameterizedTest
+    @MethodSource("getParameters")
+    public void checkInputSplits(int numberOfTuples, long blockSize, int parallelism) throws IOException {
         FileInputSplit[] inputSplits = this.createInputFormat().createInputSplits(0);
         Arrays.sort(inputSplits, new InputSplitSorter());
 
@@ -121,8 +122,9 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
     }
 
     /** Tests if the expected sequence and amount of data can be read. */
-    @Test
-    public void checkRead() throws Exception {
+    @ParameterizedTest
+    @MethodSource("getParameters")
+    public void checkRead(int numberOfTuples, long blockSize, int parallelism) throws Exception {
         BinaryInputFormat<T> input = this.createInputFormat();
         FileInputSplit[] inputSplits = input.createInputSplits(0);
         Arrays.sort(inputSplits, new InputSplitSorter());
@@ -149,20 +151,16 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
                 }
             }
         }
-        assertThat(readCount).isEqualTo(this.numberOfTuples);
+        assertThat(readCount).isEqualTo(numberOfTuples);
     }
 
     /** Tests the statistics of the given format. */
-    @Test
-    public void checkStatistics() {
+    @ParameterizedTest
+    @MethodSource("getParameters")
+    public void checkStatistics(int numberOfTuples, long blockSize, int parallelism) {
         BinaryInputFormat<T> input = this.createInputFormat();
         BaseStatistics statistics = input.getStatistics(null);
-        assertThat(statistics.getNumberOfRecords()).isEqualTo(this.numberOfTuples);
-    }
-
-    @After
-    public void cleanup() {
-        this.deleteRecursively(this.tempFile);
+        assertThat(statistics.getNumberOfRecords()).isEqualTo(numberOfTuples);
     }
 
     private void deleteRecursively(File file) {
@@ -176,8 +174,8 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
     }
 
     /** Write out the tuples in a temporary file and return it. */
-    @Before
-    public void writeTuples() throws IOException {
+    @BeforeEach
+    public void writeTuples(int numberOfTuples, long blockSize, int parallelism) throws IOException {
         this.tempFile = File.createTempFile("BinaryInputFormat", null);
         this.tempFile.deleteOnExit();
         Configuration configuration = new Configuration();
@@ -212,8 +210,9 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
     }
 
     /** Tests if the length of the file matches the expected value. */
-    @Test
-    public void checkLength() {
+    @ParameterizedTest
+    @MethodSource("getParameters")
+    public void checkLength(int numberOfTuples, long blockSize, int parallelism) {
         File[] files =
                 this.tempFile.isDirectory()
                         ? this.tempFile.listFiles()
@@ -255,18 +254,17 @@ public abstract class SequentialFormatTestBase<T> extends TestLogger {
         return expectedBlockCount;
     }
 
-    @Parameters
-    public static List<Object[]> getParameters() {
-        ArrayList<Object[]> params = new ArrayList<Object[]>();
+    public static Stream<Arguments> getParameters() {
+        ArrayList<Arguments> params = new ArrayList<Arguments>();
         for (int parallelism = 1; parallelism <= 2; parallelism++) {
             // numberOfTuples, blockSize, parallelism
-            params.add(new Object[] {100, BinaryOutputFormat.NATIVE_BLOCK_SIZE, parallelism});
-            params.add(new Object[] {100, 1000, parallelism});
-            params.add(new Object[] {100, 1 << 20, parallelism});
-            params.add(new Object[] {10000, 1000, parallelism});
-            params.add(new Object[] {10000, 1 << 20, parallelism});
+            params.add(Arguments.of(100, BinaryOutputFormat.NATIVE_BLOCK_SIZE, parallelism));
+            params.add(Arguments.of(100, 1000, parallelism));
+            params.add(Arguments.of(100, 1 << 20, parallelism));
+            params.add(Arguments.of(10000, 1000, parallelism));
+            params.add(Arguments.of(10000, 1 << 20, parallelism));
         }
-        return params;
+        return params.stream();
     }
 
     /** Counts the bytes that would be written. */

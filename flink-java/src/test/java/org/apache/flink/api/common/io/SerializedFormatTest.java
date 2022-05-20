@@ -26,25 +26,18 @@ import org.apache.flink.types.IntValue;
 import org.apache.flink.types.Record;
 import org.apache.flink.types.StringValue;
 
-import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for serialized formats. */
-@RunWith(Parameterized.class)
 public class SerializedFormatTest extends SequentialFormatTestBase<Record> {
 
     private BlockInfo info;
 
-    public SerializedFormatTest(int numberOfRecords, long blockSize, int parallelism) {
-        super(numberOfRecords, blockSize, parallelism);
-    }
-
-    @Before
+    @BeforeEach
     public void setup() {
         info = createInputFormat().createBlockInfo();
     }

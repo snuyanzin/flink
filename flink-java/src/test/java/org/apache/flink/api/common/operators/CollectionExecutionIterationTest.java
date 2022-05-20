@@ -31,7 +31,7 @@ import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +41,10 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link CollectionExecutor} with iterations. */
 @SuppressWarnings("serial")
-public class CollectionExecutionIterationTest implements java.io.Serializable {
+class CollectionExecutionIterationTest implements java.io.Serializable {
 
     @Test
-    public void testBulkIteration() {
+    void testBulkIteration() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
 
@@ -67,7 +67,7 @@ public class CollectionExecutionIterationTest implements java.io.Serializable {
     }
 
     @Test
-    public void testBulkIterationWithTerminationCriterion() {
+    void testBulkIterationWithTerminationCriterion() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
 
@@ -100,7 +100,7 @@ public class CollectionExecutionIterationTest implements java.io.Serializable {
     }
 
     @Test
-    public void testDeltaIteration() {
+    void testDeltaIteration() {
         try {
             ExecutionEnvironment env = ExecutionEnvironment.createCollectionsEnvironment();
 

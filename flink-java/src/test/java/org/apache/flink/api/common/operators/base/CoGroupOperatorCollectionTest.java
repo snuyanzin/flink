@@ -35,7 +35,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -51,10 +51,10 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link CoGroupOperatorBase} on collections. */
 @SuppressWarnings("serial")
-public class CoGroupOperatorCollectionTest implements Serializable {
+class CoGroupOperatorCollectionTest implements Serializable {
 
     @Test
-    public void testExecuteOnCollection() {
+    void testExecuteOnCollection() {
         try {
             List<Tuple2<String, Integer>> input1 =
                     Arrays.asList(

@@ -31,9 +31,8 @@ import org.apache.flink.api.java.operators.ReduceOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
-import org.apache.flink.util.TestLogger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -49,13 +48,13 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link ReduceOperator}. */
 @SuppressWarnings({"serial", "unchecked"})
-public class ReduceOperatorTest extends TestLogger implements Serializable {
+class ReduceOperatorTest implements Serializable {
 
     private static final TypeInformation<Tuple2<String, Integer>> STRING_INT_TUPLE =
             TypeInformation.of(new TypeHint<Tuple2<String, Integer>>() {});
 
     @Test
-    public void testReduceCollection() {
+    void testReduceCollection() {
         try {
             final ReduceFunction<Tuple2<String, Integer>> reducer =
                     (value1, value2) -> new Tuple2<>(value1.f0, value1.f1 + value2.f1);
@@ -100,7 +99,7 @@ public class ReduceOperatorTest extends TestLogger implements Serializable {
     }
 
     @Test
-    public void testReduceCollectionWithRuntimeContext() {
+    void testReduceCollectionWithRuntimeContext() {
         try {
             final String taskName = "Test Task";
             final AtomicBoolean opened = new AtomicBoolean();

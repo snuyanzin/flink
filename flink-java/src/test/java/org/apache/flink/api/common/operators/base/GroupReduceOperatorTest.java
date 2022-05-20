@@ -32,7 +32,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,13 +48,13 @@ import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link GroupReduceFunction}. */
 @SuppressWarnings({"serial", "unchecked"})
-public class GroupReduceOperatorTest implements java.io.Serializable {
+class GroupReduceOperatorTest implements java.io.Serializable {
 
     private static final TypeInformation<Tuple2<String, Integer>> STRING_INT_TUPLE =
             TypeInformation.of(new TypeHint<Tuple2<String, Integer>>() {});
 
     @Test
-    public void testGroupReduceCollection() {
+    void testGroupReduceCollection() {
         try {
             final GroupReduceFunction<Tuple2<String, Integer>, Tuple2<String, Integer>> reducer =
                     new GroupReduceFunction<Tuple2<String, Integer>, Tuple2<String, Integer>>() {
@@ -120,7 +120,7 @@ public class GroupReduceOperatorTest implements java.io.Serializable {
     }
 
     @Test
-    public void testGroupReduceCollectionWithRuntimeContext() {
+    void testGroupReduceCollectionWithRuntimeContext() {
         try {
             final String taskName = "Test Task";
             final AtomicBoolean opened = new AtomicBoolean();
