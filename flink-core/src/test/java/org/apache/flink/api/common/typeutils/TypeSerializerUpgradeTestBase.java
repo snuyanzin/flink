@@ -24,11 +24,14 @@ import org.apache.flink.core.memory.DataInputDeserializer;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputSerializer;
 import org.apache.flink.core.memory.DataOutputView;
-import org.apache.flink.util.TestLogger;
+import org.apache.flink.util.TestLoggerExtension;
 
 import org.hamcrest.Matcher;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +40,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.hamcrest.CoreMatchers.not;
@@ -46,27 +50,24 @@ import static org.junit.Assume.assumeThat;
 /**
  * A test base for testing {@link TypeSerializer} upgrades.
  *
- * <p>You can run {@link #generateTestSetupFiles()} on a Flink branch to (re-)generate the test data
- * files.
+ * <p>You can run {@link
+ * #generateTestSetupFiles(org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase.TestSpecification)}
+ * on a Flink branch to (re-)generate the test data files.
  */
-public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedElementT>
-        extends TestLogger {
+@ExtendWith(TestLoggerExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedElementT> {
 
     public static final FlinkVersion CURRENT_VERSION = FlinkVersion.v1_15;
 
     public static final Set<FlinkVersion> MIGRATION_VERSIONS =
             FlinkVersion.rangeOf(FlinkVersion.v1_11, CURRENT_VERSION);
 
-    private final TestSpecification<PreviousElementT, UpgradedElementT> testSpecification;
-
-    protected TypeSerializerUpgradeTestBase(
-            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
-        this.testSpecification = checkNotNull(testSpecification);
-    }
-
     // ------------------------------------------------------------------------------
     //  APIs
     // ------------------------------------------------------------------------------
+
+    public abstract Stream<TestSpecification<?, ?>> testData() throws Exception;
 
     /**
      * Setup code for a {@link TestSpecification}. This creates the serializer before upgrade and
@@ -242,10 +243,13 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
      * generating the test files, e.g. to generate test files for {@link FlinkVersion#v1_8}, you
      * should be under the release-1.8 branch.
      */
-    @Test
-    @Ignore
-    public void generateTestSetupFiles() throws Exception {
-        Files.createDirectories(getSerializerSnapshotFilePath().getParent());
+    @Disabled
+    @ParameterizedTest(name = "Test Specification = {0}")
+    @MethodSource("testData")
+    void generateTestSetupFiles(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification)
+            throws Exception {
+        Files.createDirectories(getSerializerSnapshotFilePath(testSpecification).getParent());
 
         try (ThreadContextClassLoader ignored =
                 new ThreadContextClassLoader(testSpecification.setup.setupClassloader)) {
@@ -259,14 +263,15 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
             // registrations for Pojo / Kryo)
             DataOutputSerializer testDataOut = new DataOutputSerializer(INITIAL_OUTPUT_BUFFER_SIZE);
             priorSerializer.serialize(testSpecification.setup.createTestData(), testDataOut);
-            writeContentsTo(getGenerateDataFilePath(), testDataOut.getCopyOfBuffer());
+            writeContentsTo(
+                    getGenerateDataFilePath(testSpecification), testDataOut.getCopyOfBuffer());
 
             // ... then write the serializer snapshot
             DataOutputSerializer serializerSnapshotOut =
                     new DataOutputSerializer(INITIAL_OUTPUT_BUFFER_SIZE);
             writeSerializerSnapshot(serializerSnapshotOut, priorSerializer, CURRENT_VERSION);
             writeContentsTo(
-                    getGenerateSerializerSnapshotFilePath(),
+                    getGenerateSerializerSnapshotFilePath(testSpecification),
                     serializerSnapshotOut.getCopyOfBuffer());
         }
     }
@@ -275,8 +280,11 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
     //  Tests
     // ------------------------------------------------------------------------------
 
-    @Test
-    public void restoreSerializerIsValid() throws Exception {
+    @ParameterizedTest(name = "Test Specification = {0}")
+    @MethodSource("testData")
+    void restoreSerializerIsValid(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification)
+            throws Exception {
         try (ThreadContextClassLoader ignored =
                 new ThreadContextClassLoader(testSpecification.verifier.verifierClassloader)) {
             assumeThat(
@@ -287,23 +295,26 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
                                     testSpecification.flinkVersion)));
 
             TypeSerializerSnapshot<UpgradedElementT> restoredSerializerSnapshot =
-                    snapshotUnderTest();
+                    snapshotUnderTest(testSpecification);
 
             TypeSerializer<UpgradedElementT> restoredSerializer =
                     restoredSerializerSnapshot.restoreSerializer();
             assertSerializerIsValid(
                     restoredSerializer,
-                    dataUnderTest(),
+                    dataUnderTest(testSpecification),
                     testSpecification.verifier.testDataMatcher());
         }
     }
 
-    @Test
-    public void upgradedSerializerHasExpectedSchemaCompatibility() throws Exception {
+    @ParameterizedTest(name = "Test Specification = {0}")
+    @MethodSource("testData")
+    void upgradedSerializerHasExpectedSchemaCompatibility(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification)
+            throws Exception {
         try (ThreadContextClassLoader ignored =
                 new ThreadContextClassLoader(testSpecification.verifier.verifierClassloader)) {
             TypeSerializerSnapshot<UpgradedElementT> restoredSerializerSnapshot =
-                    snapshotUnderTest();
+                    snapshotUnderTest(testSpecification);
             TypeSerializer<UpgradedElementT> upgradedSerializer =
                     testSpecification.verifier.createUpgradedSerializer();
 
@@ -317,12 +328,15 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
         }
     }
 
-    @Test
-    public void upgradedSerializerIsValidAfterMigration() throws Exception {
+    @ParameterizedTest(name = "Test Specification = {0}")
+    @MethodSource("testData")
+    void upgradedSerializerIsValidAfterMigration(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification)
+            throws Exception {
         try (ThreadContextClassLoader ignored =
                 new ThreadContextClassLoader(testSpecification.verifier.verifierClassloader)) {
             TypeSerializerSnapshot<UpgradedElementT> restoredSerializerSnapshot =
-                    snapshotUnderTest();
+                    snapshotUnderTest(testSpecification);
 
             TypeSerializer<UpgradedElementT> upgradedSerializer =
                     testSpecification.verifier.createUpgradedSerializer();
@@ -339,7 +353,7 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
                     restoredSerializerSnapshot.restoreSerializer();
             DataInputView migratedData =
                     readAndThenWriteData(
-                            dataUnderTest(),
+                            dataUnderTest(testSpecification),
                             restoreSerializer,
                             upgradedSerializer,
                             testSpecification.verifier.testDataMatcher());
@@ -350,12 +364,15 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
         }
     }
 
-    @Test
-    public void upgradedSerializerIsValidAfterReconfiguration() throws Exception {
+    @ParameterizedTest(name = "Test Specification = {0}")
+    @MethodSource("testData")
+    void upgradedSerializerIsValidAfterReconfiguration(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification)
+            throws Exception {
         try (ThreadContextClassLoader ignored =
                 new ThreadContextClassLoader(testSpecification.verifier.verifierClassloader)) {
             TypeSerializerSnapshot<UpgradedElementT> restoredSerializerSnapshot =
-                    snapshotUnderTest();
+                    snapshotUnderTest(testSpecification);
             TypeSerializer<UpgradedElementT> upgradedSerializer =
                     testSpecification.verifier.createUpgradedSerializer();
 
@@ -370,17 +387,20 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
                     upgradeCompatibility.getReconfiguredSerializer();
             assertSerializerIsValid(
                     reconfiguredUpgradedSerializer,
-                    dataUnderTest(),
+                    dataUnderTest(testSpecification),
                     testSpecification.verifier.testDataMatcher());
         }
     }
 
-    @Test
-    public void upgradedSerializerIsValidWhenCompatibleAsIs() throws Exception {
+    @ParameterizedTest(name = "Test Specification = {0}")
+    @MethodSource("testData")
+    void upgradedSerializerIsValidWhenCompatibleAsIs(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification)
+            throws Exception {
         try (ThreadContextClassLoader ignored =
                 new ThreadContextClassLoader(testSpecification.verifier.verifierClassloader)) {
             TypeSerializerSnapshot<UpgradedElementT> restoredSerializerSnapshot =
-                    snapshotUnderTest();
+                    snapshotUnderTest(testSpecification);
             TypeSerializer<UpgradedElementT> upgradedSerializer =
                     testSpecification.verifier.createUpgradedSerializer();
 
@@ -393,7 +413,7 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
 
             assertSerializerIsValid(
                     upgradedSerializer,
-                    dataUnderTest(),
+                    dataUnderTest(testSpecification),
                     testSpecification.verifier.testDataMatcher());
         }
     }
@@ -436,17 +456,20 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
     // ------------------------------------------------------------------------------
 
     /** Paths to use during snapshot generation, which should only use the CURRENT_VERSION. */
-    private Path getGenerateSerializerSnapshotFilePath() {
-        return Paths.get(getGenerateResourceDirectory() + "/serializer-snapshot");
+    private Path getGenerateSerializerSnapshotFilePath(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
+        return Paths.get(getGenerateResourceDirectory(testSpecification) + "/serializer-snapshot");
     }
 
     /** Paths to use during snapshot generation, which should only use the CURRENT_VERSION. */
-    private Path getGenerateDataFilePath() {
-        return Paths.get(getGenerateResourceDirectory() + "/test-data");
+    private Path getGenerateDataFilePath(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
+        return Paths.get(getGenerateResourceDirectory(testSpecification) + "/test-data");
     }
 
     /** Paths to use during snapshot generation, which should only use the CURRENT_VERSION. */
-    private String getGenerateResourceDirectory() {
+    private String getGenerateResourceDirectory(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
         return System.getProperty("user.dir")
                 + "/src/test/resources/"
                 + testSpecification.name
@@ -454,15 +477,18 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
                 + CURRENT_VERSION;
     }
 
-    private Path getSerializerSnapshotFilePath() {
-        return Paths.get(getTestResourceDirectory() + "/serializer-snapshot");
+    private Path getSerializerSnapshotFilePath(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
+        return Paths.get(getTestResourceDirectory(testSpecification) + "/serializer-snapshot");
     }
 
-    private Path getTestDataFilePath() {
-        return Paths.get(getTestResourceDirectory() + "/test-data");
+    private Path getTestDataFilePath(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
+        return Paths.get(getTestResourceDirectory(testSpecification) + "/test-data");
     }
 
-    private String getTestResourceDirectory() {
+    private String getTestResourceDirectory(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
         return System.getProperty("user.dir")
                 + "/src/test/resources/"
                 + testSpecification.name
@@ -470,13 +496,17 @@ public abstract class TypeSerializerUpgradeTestBase<PreviousElementT, UpgradedEl
                 + testSpecification.flinkVersion;
     }
 
-    private TypeSerializerSnapshot<UpgradedElementT> snapshotUnderTest() throws Exception {
+    private TypeSerializerSnapshot<UpgradedElementT> snapshotUnderTest(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification)
+            throws Exception {
         return readSerializerSnapshot(
-                contentsOf(getSerializerSnapshotFilePath()), testSpecification.flinkVersion);
+                contentsOf(getSerializerSnapshotFilePath(testSpecification)),
+                testSpecification.flinkVersion);
     }
 
-    private DataInputView dataUnderTest() {
-        return contentsOf(getTestDataFilePath());
+    private DataInputView dataUnderTest(
+            TestSpecification<PreviousElementT, UpgradedElementT> testSpecification) {
+        return contentsOf(getTestDataFilePath(testSpecification));
     }
 
     private static void writeContentsTo(Path path, byte[] bytes) {
