@@ -46,7 +46,7 @@ import org.apache.flink.streaming.runtime.operators.WriteAheadSinkTestBase;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentInternal;
 import org.apache.flink.testutils.junit.RetryOnException;
-import org.apache.flink.testutils.junit.RetryRule;
+import org.apache.flink.testutils.junit.extensions.retry.RetryExtension;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.DockerImageVersions;
 
@@ -63,18 +63,20 @@ import net.bytebuddy.ByteBuddy;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.CassandraContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.Transferable;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -99,6 +101,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SuppressWarnings("serial")
 // NoHostAvailableException is raised by Cassandra client under load while connecting to the cluster
 @RetryOnException(times = 3, exception = NoHostAvailableException.class)
+@ExtendWith(RetryExtension.class)
+@Testcontainers
 public class CassandraConnectorITCase
         extends WriteAheadSinkTestBase<
                 Tuple3<String, Integer, Integer>,
@@ -109,12 +113,10 @@ public class CassandraConnectorITCase
     private static final Logger LOG = LoggerFactory.getLogger(CassandraConnectorITCase.class);
     private static final Slf4jLogConsumer LOG_CONSUMER = new Slf4jLogConsumer(LOG);
 
-    @ClassRule public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
+    @TempDir private static Path tmpDir;
 
-    @ClassRule
+    @Container
     public static final CassandraContainer CASSANDRA_CONTAINER = createCassandraContainer();
-
-    @Rule public final RetryRule retryRule = new RetryRule();
 
     private static final int PORT = 9042;
 
@@ -271,7 +273,7 @@ public class CassandraConnectorITCase
 
     private static void raiseCassandraRequestsTimeouts() {
         try {
-            final Path configurationPath = TEMPORARY_FOLDER.newFile().toPath();
+            final Path configurationPath = Files.createTempFile(tmpDir, "", "");
             CASSANDRA_CONTAINER.copyFileFromContainer(
                     "/etc/cassandra/cassandra.yaml", configurationPath.toAbsolutePath().toString());
             String configuration =
@@ -350,7 +352,7 @@ public class CassandraConnectorITCase
     //  Tests initialization
     // ------------------------------------------------------------------------
 
-    @BeforeClass
+    @BeforeAll
     public static void startAndInitializeCassandra() {
         raiseCassandraRequestsTimeouts();
         // CASSANDRA_CONTAINER#start() already contains retrials
@@ -383,13 +385,13 @@ public class CassandraConnectorITCase
         session.execute(CREATE_KEYSPACE_QUERY);
     }
 
-    @Before
+    @BeforeEach
     public void createTable() {
         tableID = random.nextInt(Integer.MAX_VALUE);
         session.execute(injectTableName(CREATE_TABLE_QUERY));
     }
 
-    @AfterClass
+    @AfterAll
     public static void closeCassandra() {
         if (session != null) {
             session.close();
@@ -418,7 +420,7 @@ public class CassandraConnectorITCase
         // raiseCassandraRequestsTimeouts() was already called in @BeforeClass,
         // do not change the container conf twice, just assert that it was indeed changed in the
         // container
-        final Path configurationPath = TEMPORARY_FOLDER.newFile().toPath();
+        final Path configurationPath = Files.createTempFile(tmpDir, "", "");
         CASSANDRA_CONTAINER.copyFileFromContainer(
                 "/etc/cassandra/cassandra.yaml", configurationPath.toAbsolutePath().toString());
         final String configuration =
@@ -703,8 +705,10 @@ public class CassandraConnectorITCase
 
     private static int retrialsCount = 0;
 
-    @Test
+    @TestTemplate
+    @RetryOnException(times = 2, exception = NoHostAvailableException.class)
     public void testRetrial() {
+        System.out.println(retrialsCount);
         annotatePojoWithTable(KEYSPACE, TABLE_NAME_PREFIX + tableID);
         if (retrialsCount < 2) {
             retrialsCount++;

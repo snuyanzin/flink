@@ -30,7 +30,6 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -39,11 +38,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /** Tests for the {@link CassandraTupleWriteAheadSink}. */
 public class CassandraTupleWriteAheadSinkTest {
@@ -64,8 +63,7 @@ public class CassandraTupleWriteAheadSinkTest {
                                     .thenReturn(boundStatement);
 
                             PreparedStatement preparedStatement = mock(PreparedStatement.class);
-                            when(preparedStatement.bind(Matchers.anyVararg()))
-                                    .thenReturn(boundStatement);
+                            when(preparedStatement.bind(any())).thenReturn(boundStatement);
 
                             ResultSetFuture future = mock(ResultSetFuture.class);
                             when(future.get())
