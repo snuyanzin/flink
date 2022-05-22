@@ -67,7 +67,6 @@ import com.amazonaws.services.kinesis.model.Shard;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -96,6 +95,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -170,7 +170,7 @@ public class FlinkKinesisConsumerTest extends TestLogger {
         consumer.setRuntimeContext(context);
 
         OperatorStateStore operatorStateStore = mock(OperatorStateStore.class);
-        when(operatorStateStore.getUnionListState(Matchers.any(ListStateDescriptor.class)))
+        when(operatorStateStore.getUnionListState(any(ListStateDescriptor.class)))
                 .thenReturn(listState);
 
         StateInitializationContext initializationContext = mock(StateInitializationContext.class);
@@ -257,7 +257,7 @@ public class FlinkKinesisConsumerTest extends TestLogger {
         }
 
         OperatorStateStore operatorStateStore = mock(OperatorStateStore.class);
-        when(operatorStateStore.getUnionListState(Matchers.any(ListStateDescriptor.class)))
+        when(operatorStateStore.getUnionListState(any(ListStateDescriptor.class)))
                 .thenReturn(listState);
 
         StateInitializationContext initializationContext = mock(StateInitializationContext.class);
@@ -357,7 +357,7 @@ public class FlinkKinesisConsumerTest extends TestLogger {
         }
 
         OperatorStateStore operatorStateStore = mock(OperatorStateStore.class);
-        when(operatorStateStore.getUnionListState(Matchers.any(ListStateDescriptor.class)))
+        when(operatorStateStore.getUnionListState(any(ListStateDescriptor.class)))
                 .thenReturn(listState);
 
         StateInitializationContext initializationContext = mock(StateInitializationContext.class);
@@ -434,7 +434,7 @@ public class FlinkKinesisConsumerTest extends TestLogger {
         }
 
         OperatorStateStore operatorStateStore = mock(OperatorStateStore.class);
-        when(operatorStateStore.getUnionListState(Matchers.any(ListStateDescriptor.class)))
+        when(operatorStateStore.getUnionListState(any(ListStateDescriptor.class)))
                 .thenReturn(listState);
 
         StateInitializationContext initializationContext = mock(StateInitializationContext.class);
@@ -542,7 +542,7 @@ public class FlinkKinesisConsumerTest extends TestLogger {
         }
 
         OperatorStateStore operatorStateStore = mock(OperatorStateStore.class);
-        when(operatorStateStore.getUnionListState(Matchers.any(ListStateDescriptor.class)))
+        when(operatorStateStore.getUnionListState(any(ListStateDescriptor.class)))
                 .thenReturn(listState);
 
         StateInitializationContext initializationContext = mock(StateInitializationContext.class);
@@ -678,7 +678,7 @@ public class FlinkKinesisConsumerTest extends TestLogger {
         }
 
         OperatorStateStore operatorStateStore = mock(OperatorStateStore.class);
-        when(operatorStateStore.getUnionListState(Matchers.any(ListStateDescriptor.class)))
+        when(operatorStateStore.getUnionListState(any(ListStateDescriptor.class)))
                 .thenReturn(listState);
 
         StateInitializationContext initializationContext = mock(StateInitializationContext.class);
@@ -845,7 +845,7 @@ public class FlinkKinesisConsumerTest extends TestLogger {
                     return otherParamArgs;
                 };
         PowerMockito.whenNew(ctor)
-                .withArguments(Mockito.any(ctor.getParameterTypes()[0]), argumentSupplier.get())
+                .withArguments(any(ctor.getParameterTypes()[0]), argumentSupplier.get())
                 .thenReturn(mockedFetcher);
         return mockedFetcher;
     }

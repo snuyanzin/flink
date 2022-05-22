@@ -48,10 +48,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -87,8 +87,7 @@ public class CliFrontendSavepointTest extends CliFrontendTestBase {
             frontend.savepoint(parameters);
 
             verify(clusterClient, times(1))
-                    .triggerSavepoint(
-                            eq(jobId), isNull(String.class), eq(SavepointFormatType.DEFAULT));
+                    .triggerSavepoint(eq(jobId), isNull(), eq(SavepointFormatType.DEFAULT));
 
             assertTrue(buffer.toString().contains(savepointPath));
         } finally {

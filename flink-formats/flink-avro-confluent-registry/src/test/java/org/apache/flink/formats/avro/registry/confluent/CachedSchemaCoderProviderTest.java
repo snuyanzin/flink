@@ -18,12 +18,13 @@
 
 package org.apache.flink.formats.avro.registry.confluent;
 
+import org.apache.flink.mock.Whitebox;
+
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.RestService;
 import io.confluent.kafka.schemaregistry.client.security.basicauth.BasicAuthCredentialProvider;
 import io.confluent.kafka.schemaregistry.client.security.bearerauth.BearerAuthCredentialProvider;
 import org.junit.jupiter.api.Test;
-import org.powermock.reflect.Whitebox;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -91,7 +92,7 @@ class CachedSchemaCoderProviderTest {
     void testThatBearerAuthIsNotInitializedForNoBearerAuthProperties() {
         CachedSchemaCoderProvider provider = initCachedSchemaCoderProvider(new HashMap<>());
         BearerAuthCredentialProvider bearerAuthCredentialProvider =
-                getBearerAuthFromProvider(provider);
+                (BearerAuthCredentialProvider) getBearerAuthFromProvider(provider);
 
         assertThat(bearerAuthCredentialProvider).isNull();
     }
@@ -105,7 +106,7 @@ class CachedSchemaCoderProviderTest {
 
         CachedSchemaCoderProvider provider = initCachedSchemaCoderProvider(configs);
         BearerAuthCredentialProvider bearerAuthCredentialProvider =
-                getBearerAuthFromProvider(provider);
+                (BearerAuthCredentialProvider) getBearerAuthFromProvider(provider);
 
         assertThat(bearerAuthCredentialProvider).isNotNull();
         assertThat(bearerAuthCredentialProvider.getBearerToken(null)).isEqualTo(token);
@@ -128,16 +129,16 @@ class CachedSchemaCoderProviderTest {
         return getInternalStateFromRestService("basicAuthCredentialProvider", provider);
     }
 
-    private BearerAuthCredentialProvider getBearerAuthFromProvider(
-            CachedSchemaCoderProvider provider) {
+    private Object getBearerAuthFromProvider(CachedSchemaCoderProvider provider) {
         return getInternalStateFromRestService("bearerAuthCredentialProvider", provider);
     }
 
     private <T> T getInternalStateFromRestService(String name, CachedSchemaCoderProvider provider) {
         CachedSchemaRegistryClient cachedSchemaRegistryClient =
-                Whitebox.getInternalState(provider.get(), "schemaRegistryClient");
+                (CachedSchemaRegistryClient)
+                        Whitebox.getInternalState(provider.get(), "schemaRegistryClient");
         RestService restService =
-                Whitebox.getInternalState(cachedSchemaRegistryClient, "restService");
-        return Whitebox.getInternalState(restService, name);
+                (RestService) Whitebox.getInternalState(cachedSchemaRegistryClient, "restService");
+        return (T) Whitebox.getInternalState(restService, name);
     }
 }

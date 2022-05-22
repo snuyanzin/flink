@@ -39,8 +39,7 @@ import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.table.utils.HandwrittenSelectorUtil;
 
 import org.junit.Test;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
+import org.mockito.ArgumentMatchers;
 
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -49,9 +48,9 @@ import java.util.Collections;
 import static org.apache.flink.table.runtime.util.StreamRecordUtils.insertRecord;
 import static org.apache.flink.table.runtime.util.StreamRecordUtils.row;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -265,28 +264,27 @@ public class WindowOperatorContractTest {
         @SuppressWarnings("unchecked")
         Trigger<W> mockTrigger = mock(Trigger.class);
 
-        when(mockTrigger.onElement(Matchers.<RowData>any(), anyLong(), Matchers.any()))
+        when(mockTrigger.onElement(ArgumentMatchers.<RowData>any(), anyLong(), any()))
                 .thenReturn(false);
-        when(mockTrigger.onEventTime(anyLong(), Matchers.any())).thenReturn(false);
-        when(mockTrigger.onProcessingTime(anyLong(), Matchers.any())).thenReturn(false);
+        when(mockTrigger.onEventTime(anyLong(), any())).thenReturn(false);
+        when(mockTrigger.onProcessingTime(anyLong(), any())).thenReturn(false);
 
         return mockTrigger;
     }
 
     private static TimeWindow anyTimeWindow() {
-        return Mockito.any();
+        return any();
     }
 
     private static GenericRowData anyGenericRow() {
-        return Mockito.any();
+        return any();
     }
 
     private static WindowAssigner<TimeWindow> mockTimeWindowAssigner() throws Exception {
         @SuppressWarnings("unchecked")
         WindowAssigner<TimeWindow> mockAssigner = mock(WindowAssigner.class);
 
-        when(mockAssigner.getWindowSerializer(Mockito.any()))
-                .thenReturn(new TimeWindow.Serializer());
+        when(mockAssigner.getWindowSerializer(any())).thenReturn(new TimeWindow.Serializer());
         when(mockAssigner.isEventTime()).thenReturn(true);
 
         return mockAssigner;
@@ -296,21 +294,20 @@ public class WindowOperatorContractTest {
         @SuppressWarnings("unchecked")
         MergingWindowAssigner<TimeWindow> mockAssigner = mock(MergingWindowAssigner.class);
 
-        when(mockAssigner.getWindowSerializer(Mockito.any()))
-                .thenReturn(new TimeWindow.Serializer());
+        when(mockAssigner.getWindowSerializer(any())).thenReturn(new TimeWindow.Serializer());
         when(mockAssigner.isEventTime()).thenReturn(true);
 
         return mockAssigner;
     }
 
     private static MergingWindowAssigner.MergeCallback<TimeWindow> anyMergeCallback() {
-        return Mockito.any();
+        return any();
     }
 
     // ------------------------------------------------------------------------------------
 
     private static <T> void shouldFireOnElement(Trigger<TimeWindow> mockTrigger) throws Exception {
-        when(mockTrigger.onElement(Matchers.<T>anyObject(), anyLong(), anyTimeWindow()))
+        when(mockTrigger.onElement(ArgumentMatchers.<T>any(), anyLong(), anyTimeWindow()))
                 .thenReturn(true);
     }
 }

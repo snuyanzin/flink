@@ -39,7 +39,6 @@ import org.apache.flink.shaded.guava30.com.google.common.collect.Sets;
 
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.Matchers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +56,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -241,8 +241,8 @@ public class DefaultExecutionGraphConstructionTest {
             @SuppressWarnings("unchecked")
             InputSplitSource<InputSplit> source2 = mock(InputSplitSource.class);
 
-            when(source1.createInputSplits(Matchers.anyInt())).thenReturn(emptySplits);
-            when(source2.createInputSplits(Matchers.anyInt())).thenReturn(emptySplits);
+            when(source1.createInputSplits(anyInt())).thenReturn(emptySplits);
+            when(source2.createInputSplits(anyInt())).thenReturn(emptySplits);
             when(source1.getInputSplitAssigner(emptySplits)).thenReturn(assigner1);
             when(source2.getInputSplitAssigner(emptySplits)).thenReturn(assigner2);
 

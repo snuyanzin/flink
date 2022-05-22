@@ -27,13 +27,13 @@ import org.apache.flink.runtime.io.network.partition.consumer.InputGate;
 import org.apache.flink.runtime.util.event.EventListener;
 
 import org.junit.Test;
-import org.mockito.Matchers;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -58,9 +58,9 @@ public class AbstractReaderTest {
         reader.handleEvent(new TestTaskEvent1()); // for listener1 only
         reader.handleEvent(new TestTaskEvent2()); // for listener2 only
 
-        verify(listener1, times(1)).onEvent(Matchers.any(TaskEvent.class));
-        verify(listener2, times(1)).onEvent(Matchers.any(TaskEvent.class));
-        verify(listener3, times(0)).onEvent(Matchers.any(TaskEvent.class));
+        verify(listener1, times(1)).onEvent(any(TaskEvent.class));
+        verify(listener2, times(1)).onEvent(any(TaskEvent.class));
+        verify(listener3, times(0)).onEvent(any(TaskEvent.class));
     }
 
     @Test

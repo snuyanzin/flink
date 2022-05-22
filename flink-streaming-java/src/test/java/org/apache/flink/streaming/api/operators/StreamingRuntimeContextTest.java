@@ -62,7 +62,6 @@ import org.apache.flink.streaming.util.CollectorOutput;
 import org.apache.flink.streaming.util.MockStreamTaskBuilder;
 
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -316,8 +315,7 @@ public class StreamingRuntimeContextTest {
                             }
                         })
                 .when(keyedStateBackend)
-                .getPartitionedState(
-                        Matchers.any(), any(TypeSerializer.class), any(StateDescriptor.class));
+                .getPartitionedState(any(), any(TypeSerializer.class), any(StateDescriptor.class));
 
         operator.initializeState(streamTaskStateManager);
         operator.getRuntimeContext().setKeyedStateStore(keyedStateStore);
@@ -374,7 +372,7 @@ public class StreamingRuntimeContextTest {
                         })
                 .when(keyedStateBackend)
                 .getPartitionedState(
-                        Matchers.any(), any(TypeSerializer.class), any(ListStateDescriptor.class));
+                        any(), any(TypeSerializer.class), any(ListStateDescriptor.class));
 
         when(operatorMock.getKeyedStateStore()).thenReturn(keyedStateStore);
         when(operatorMock.getOperatorID()).thenReturn(new OperatorID());
@@ -430,7 +428,7 @@ public class StreamingRuntimeContextTest {
                         })
                 .when(keyedStateBackend)
                 .getPartitionedState(
-                        Matchers.any(), any(TypeSerializer.class), any(MapStateDescriptor.class));
+                        any(), any(TypeSerializer.class), any(MapStateDescriptor.class));
 
         when(operatorMock.getKeyedStateStore()).thenReturn(keyedStateStore);
         when(operatorMock.getOperatorID()).thenReturn(new OperatorID());
