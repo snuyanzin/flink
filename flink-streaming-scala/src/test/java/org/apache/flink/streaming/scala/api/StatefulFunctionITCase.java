@@ -18,15 +18,15 @@
 package org.apache.flink.streaming.scala.api;
 
 import org.apache.flink.streaming.api.scala.StateTestPrograms;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** IT case using stateful functions. */
-public class StatefulFunctionITCase extends AbstractTestBase {
+class StatefulFunctionITCase extends AbstractTestBaseJUnit5 {
 
     @Test
-    public void testProgram() throws Exception {
+    void testProgram() {
         StateTestPrograms.testStatefulFunctions();
     }
 }

@@ -38,34 +38,29 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.types.Either;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
 /** End to end tests of both CEP operators and {@link NFA}. */
 @SuppressWarnings("serial")
-@RunWith(Parameterized.class)
-public class CEPITCase extends AbstractTestBase {
+public class CEPITCase extends AbstractTestBaseJUnit5 {
 
-    @Parameterized.Parameter public Configuration envConfiguration;
-
-    @Parameterized.Parameters
-    public static Collection<Configuration> prepareSharedBufferCacheConfig() {
+    private static Stream<Configuration> prepareSharedBufferCacheConfig() {
         Configuration miniCacheConfig = new Configuration();
         miniCacheConfig.set(CEPCacheOptions.CEP_CACHE_STATISTICS_INTERVAL, Duration.ofSeconds(1));
         miniCacheConfig.set(CEPCacheOptions.CEP_SHARED_BUFFER_ENTRY_CACHE_SLOTS, 1);
@@ -74,7 +69,7 @@ public class CEPITCase extends AbstractTestBase {
         Configuration bigCacheConfig = new Configuration();
         miniCacheConfig.set(CEPCacheOptions.CEP_CACHE_STATISTICS_INTERVAL, Duration.ofSeconds(1));
 
-        return Arrays.asList(miniCacheConfig, bigCacheConfig);
+        return Stream.of(miniCacheConfig, bigCacheConfig);
     }
 
     /**
@@ -82,8 +77,9 @@ public class CEPITCase extends AbstractTestBase {
      *
      * @throws Exception
      */
-    @Test
-    public void testSimplePatternCEP() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimplePatternCEP(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
 
@@ -153,8 +149,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList("2,6,8"), resultList);
     }
 
-    @Test
-    public void testSimpleKeyedPatternCEP() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimpleKeyedPatternCEP(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
         env.setParallelism(2);
@@ -240,8 +237,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList("2,2,2", "3,3,3", "42,42,42"), resultList);
     }
 
-    @Test
-    public void testSimplePatternEventTime() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimplePatternEventTime(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
 
@@ -337,8 +335,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList("1,5,4"), resultList);
     }
 
-    @Test
-    public void testSimpleKeyedPatternEventTime() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimpleKeyedPatternEventTime(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
         env.setParallelism(2);
@@ -447,8 +446,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList("1,1,1", "2,2,2"), resultList);
     }
 
-    @Test
-    public void testSimplePatternWithSingleState() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimplePatternWithSingleState(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
 
@@ -488,8 +488,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList(new Tuple2<>(0, 1)), resultList);
     }
 
-    @Test
-    public void testProcessingTimeWithWindow() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testProcessingTimeWithWindow(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
         env.setParallelism(1);
@@ -519,8 +520,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList(3), resultList);
     }
 
-    @Test
-    public void testTimeoutHandling() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testTimeoutHandling(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
         env.setParallelism(1);
@@ -635,8 +637,9 @@ public class CEPITCase extends AbstractTestBase {
      *
      * @throws Exception
      */
-    @Test
-    public void testSimpleOrFilterPatternCEP() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimpleOrFilterPatternCEP(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
 
@@ -721,8 +724,10 @@ public class CEPITCase extends AbstractTestBase {
      *
      * @throws Exception
      */
-    @Test
-    public void testSimplePatternEventTimeWithComparator() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimplePatternEventTimeWithComparator(Configuration envConfiguration)
+            throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
 
@@ -832,8 +837,9 @@ public class CEPITCase extends AbstractTestBase {
         }
     }
 
-    @Test
-    public void testSimpleAfterMatchSkip() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testSimpleAfterMatchSkip(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
 
@@ -884,8 +890,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(expected, resultList);
     }
 
-    @Test
-    public void testRichPatternFlatSelectFunction() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testRichPatternFlatSelectFunction(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
 
@@ -980,8 +987,9 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList("2,6,8"), resultList);
     }
 
-    @Test
-    public void testRichPatternSelectFunction() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testRichPatternSelectFunction(Configuration envConfiguration) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);
         env.setParallelism(2);
@@ -1090,8 +1098,10 @@ public class CEPITCase extends AbstractTestBase {
         assertEquals(Arrays.asList("2,2,2", "3,3,3", "42,42,42"), resultList);
     }
 
-    @Test
-    public void testFlatSelectSerializationWithAnonymousClass() throws Exception {
+    @ParameterizedTest
+    @MethodSource("prepareSharedBufferCacheConfig")
+    public void testFlatSelectSerializationWithAnonymousClass(Configuration envConfiguration)
+            throws Exception {
 
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(envConfiguration);

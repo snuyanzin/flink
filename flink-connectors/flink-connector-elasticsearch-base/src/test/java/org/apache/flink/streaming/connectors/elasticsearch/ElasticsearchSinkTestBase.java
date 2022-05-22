@@ -22,7 +22,7 @@ import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.elasticsearch.testutils.SourceSinkDataTestKit;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 
 import org.elasticsearch.client.RestHighLevelClient;
 
@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @param <A> The address type to use
  */
 public abstract class ElasticsearchSinkTestBase<C extends AutoCloseable, A>
-        extends AbstractTestBase {
+        extends AbstractTestBaseJUnit5 {
 
     protected abstract RestHighLevelClient getClient();
 

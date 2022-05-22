@@ -19,14 +19,14 @@ package org.apache.flink.streaming.scala.api;
 
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.scala.OutputFormatTestPrograms;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.test.testdata.WordCountData;
-import org.apache.flink.test.util.AbstractTestBase;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultsByLinesInMemory;
 import static org.apache.flink.util.ExceptionUtils.findThrowableWithMessage;
@@ -34,50 +34,54 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /** IT cases for the {@link org.apache.flink.api.java.io.CsvOutputFormat}. */
-public class CsvOutputFormatITCase extends AbstractTestBase {
+public class CsvOutputFormatITCase extends AbstractTestBaseJUnit5 {
 
-    protected String resultPath;
-
-    @Before
-    public void createFile() throws Exception {
-        File resultFile = createAndRegisterTempFile("result");
-        resultPath = resultFile.toURI().toString();
-    }
+    @TempDir protected Path resultPath;
 
     @Test
     public void testPath() throws Exception {
-        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath);
+        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath.toUri().toString());
     }
 
     @Test
     public void testPathMillis() throws Exception {
-        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath);
+        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath.toUri().toString());
     }
 
     @Test
     public void testPathWriteMode() throws Exception {
         OutputFormatTestPrograms.wordCountToCsv(
-                WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE);
+                WordCountData.TEXT,
+                resultPath.toUri().toString(),
+                FileSystem.WriteMode.NO_OVERWRITE);
     }
 
     @Test
     public void testPathWriteModeMillis() throws Exception {
         OutputFormatTestPrograms.wordCountToCsv(
-                WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE);
+                WordCountData.TEXT,
+                resultPath.toUri().toString(),
+                FileSystem.WriteMode.NO_OVERWRITE);
     }
 
     @Test
     public void testPathWriteModeMillisDelimiter() throws Exception {
         OutputFormatTestPrograms.wordCountToCsv(
-                WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE, "\n", ",");
+                WordCountData.TEXT,
+                resultPath.toUri().toString(),
+                FileSystem.WriteMode.NO_OVERWRITE,
+                "\n",
+                ",");
     }
 
     @Test
     public void failPathWriteMode() throws Exception {
-        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath);
+        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath.toUri().toString());
         try {
             OutputFormatTestPrograms.wordCountToCsv(
-                    WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE);
+                    WordCountData.TEXT,
+                    resultPath.toUri().toString(),
+                    FileSystem.WriteMode.NO_OVERWRITE);
             fail("File should exist.");
         } catch (Exception e) {
             assertTrue(findThrowableWithMessage(e, "File already exists").isPresent());
@@ -86,10 +90,12 @@ public class CsvOutputFormatITCase extends AbstractTestBase {
 
     @Test
     public void failPathWriteModeMillis() throws Exception {
-        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath);
+        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath.toUri().toString());
         try {
             OutputFormatTestPrograms.wordCountToCsv(
-                    WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE);
+                    WordCountData.TEXT,
+                    resultPath.toUri().toString(),
+                    FileSystem.WriteMode.NO_OVERWRITE);
             fail("File should exist");
         } catch (Exception e) {
             assertTrue(findThrowableWithMessage(e, "File already exists").isPresent());
@@ -98,20 +104,24 @@ public class CsvOutputFormatITCase extends AbstractTestBase {
 
     @Test
     public void failPathWriteModeMillisDelimiter() throws Exception {
-        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath);
+        OutputFormatTestPrograms.wordCountToCsv(WordCountData.TEXT, resultPath.toUri().toString());
         try {
             OutputFormatTestPrograms.wordCountToCsv(
-                    WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE, "\n", ",");
+                    WordCountData.TEXT,
+                    resultPath.toUri().toString(),
+                    FileSystem.WriteMode.NO_OVERWRITE,
+                    "\n",
+                    ",");
             fail("File should exist.");
         } catch (Exception e) {
             assertTrue(findThrowableWithMessage(e, "File already exists").isPresent());
         }
     }
 
-    @After
+    @AfterEach
     public void closeFile() throws Exception {
         compareResultsByLinesInMemory(
                 WordCountData.STREAMING_COUNTS_AS_TUPLES.replaceAll("[\\\\(\\\\)]", ""),
-                resultPath);
+                resultPath.toUri().toString());
     }
 }

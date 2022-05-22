@@ -19,14 +19,14 @@ package org.apache.flink.streaming.scala.api;
 
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.scala.OutputFormatTestPrograms;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.test.testdata.WordCountData;
-import org.apache.flink.test.util.AbstractTestBase;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultsByLinesInMemory;
 import static org.apache.flink.util.ExceptionUtils.findThrowableWithMessage;
@@ -34,41 +34,40 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /** IT cases for the {@link org.apache.flink.api.java.io.TextOutputFormat}. */
-public class TextOutputFormatITCase extends AbstractTestBase {
+public class TextOutputFormatITCase extends AbstractTestBaseJUnit5 {
 
-    protected String resultPath;
-
-    @Before
-    public void createFile() throws Exception {
-        File resultFile = createAndRegisterTempFile("result");
-        resultPath = resultFile.toURI().toString();
-    }
+    @TempDir protected Path resultPath;
 
     @Test
     public void testPath() throws Exception {
-        OutputFormatTestPrograms.wordCountToText(WordCountData.TEXT, resultPath);
+        OutputFormatTestPrograms.wordCountToText(WordCountData.TEXT, resultPath.toUri().toString());
     }
 
     @Test
     public void testPathWriteMode() throws Exception {
         OutputFormatTestPrograms.wordCountToText(
-                WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE);
+                WordCountData.TEXT,
+                resultPath.toUri().toString(),
+                FileSystem.WriteMode.NO_OVERWRITE);
     }
 
     @Test
     public void failPathWriteMode() throws Exception {
-        OutputFormatTestPrograms.wordCountToText(WordCountData.TEXT, resultPath);
+        OutputFormatTestPrograms.wordCountToText(WordCountData.TEXT, resultPath.toUri().toString());
         try {
             OutputFormatTestPrograms.wordCountToText(
-                    WordCountData.TEXT, resultPath, FileSystem.WriteMode.NO_OVERWRITE);
+                    WordCountData.TEXT,
+                    resultPath.toUri().toString(),
+                    FileSystem.WriteMode.NO_OVERWRITE);
             fail("File should exist.");
         } catch (Exception e) {
             assertTrue(findThrowableWithMessage(e, "File already exists").isPresent());
         }
     }
 
-    @After
+    @AfterEach
     public void closeFile() throws Exception {
-        compareResultsByLinesInMemory(WordCountData.STREAMING_COUNTS_AS_TUPLES, resultPath);
+        compareResultsByLinesInMemory(
+                WordCountData.STREAMING_COUNTS_AS_TUPLES, resultPath.toUri().toString());
     }
 }

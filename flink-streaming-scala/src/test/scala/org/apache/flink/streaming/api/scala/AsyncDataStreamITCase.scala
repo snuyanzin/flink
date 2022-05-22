@@ -21,16 +21,14 @@ import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.scala.AsyncDataStreamITCase._
 import org.apache.flink.streaming.api.scala.async.{ResultFuture, RichAsyncFunction}
-import org.apache.flink.test.util.AbstractTestBase
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5
 
 import org.junit.Assert._
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameters
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-import java.{util => ju}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.stream
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,15 +36,14 @@ import scala.concurrent.{ExecutionContext, Future}
 object AsyncDataStreamITCase {
   private var testResult: mutable.ArrayBuffer[Int] = _
 
-  @Parameters(name = "ordered = {0}")
-  def parameters: ju.Collection[Boolean] = ju.Arrays.asList(true, false)
+  def testData(): stream.Stream[Boolean] = java.util.stream.Stream.of(true, false)
 }
 
-@RunWith(value = classOf[Parameterized])
-class AsyncDataStreamITCase(ordered: Boolean) extends AbstractTestBase {
+class AsyncDataStreamITCase() extends AbstractTestBaseJUnit5 {
 
-  @Test
-  def testAsyncWithTimeout(): Unit = {
+  @ParameterizedTest(name = "ordered = {0}")
+  @MethodSource(Array("testData"))
+  def testAsyncWithTimeout(ordered: Boolean): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
 
@@ -70,8 +67,9 @@ class AsyncDataStreamITCase(ordered: Boolean) extends AbstractTestBase {
     executeAndValidate(ordered, env, asyncMapped, mutable.ArrayBuffer[Int](3))
   }
 
-  @Test
-  def testAsyncWithoutTimeout(): Unit = {
+  @ParameterizedTest(name = "ordered = {0}")
+  @MethodSource(Array("testData"))
+  def testAsyncWithoutTimeout(ordered: Boolean): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
 
@@ -117,8 +115,9 @@ class AsyncDataStreamITCase(ordered: Boolean) extends AbstractTestBase {
     }
   }
 
-  @Test
-  def testRichAsyncFunctionRuntimeContext(): Unit = {
+  @ParameterizedTest(name = "ordered = {0}")
+  @MethodSource(Array("testData"))
+  def testRichAsyncFunctionRuntimeContext(ordered: Boolean): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
 
@@ -137,8 +136,9 @@ class AsyncDataStreamITCase(ordered: Boolean) extends AbstractTestBase {
     executeAndValidate(false, env, asyncMapped, mutable.ArrayBuffer[Int](2))
   }
 
-  @Test
-  def testAsyncWaitUsingAnonymousFunction(): Unit = {
+  @ParameterizedTest(name = "ordered = {0}")
+  @MethodSource(Array("testData"))
+  def testAsyncWaitUsingAnonymousFunction(ordered: Boolean): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
 

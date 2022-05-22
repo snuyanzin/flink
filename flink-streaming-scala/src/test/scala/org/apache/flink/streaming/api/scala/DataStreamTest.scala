@@ -21,7 +21,6 @@ import org.apache.flink.api.common.functions._
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.java.io.ParallelIteratorInputFormat
 import org.apache.flink.api.java.typeutils.TypeExtractor
-import org.apache.flink.streaming.api.environment.{StreamExecutionEnvironment => JStreamExecutionEnvironment}
 import org.apache.flink.streaming.api.functions.{KeyedProcessFunction, ProcessFunction}
 import org.apache.flink.streaming.api.functions.co.CoMapFunction
 import org.apache.flink.streaming.api.graph.{StreamEdge, StreamGraph}
@@ -30,22 +29,15 @@ import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows
 import org.apache.flink.streaming.api.windowing.triggers.{CountTrigger, PurgingTrigger}
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow
 import org.apache.flink.streaming.runtime.partitioner._
-import org.apache.flink.test.util.AbstractTestBase
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5
 import org.apache.flink.util.Collector
 
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.hamcrest.CoreMatchers.equalTo
-import org.junit.{Rule, Test}
 import org.junit.Assert._
-import org.junit.rules.ExpectedException
+import org.junit.jupiter.api.Test
 
-import java.lang
-
-class DataStreamTest extends AbstractTestBase {
-
-  private val expectedException = ExpectedException.none()
-
-  @Rule
-  def thrownException = expectedException
+class DataStreamTest extends AbstractTestBaseJUnit5 {
 
   @Test
   def testNaming(): Unit = {
@@ -356,9 +348,11 @@ class DataStreamTest extends AbstractTestBase {
     // This could be replaced with other partitioning operations (e.g., rescale, shuffle, forward),
     // which trigger the setConnectionType() method.
     val broadcastStream = map.broadcast
-    thrownException.expect(classOf[UnsupportedOperationException])
-    thrownException.expectMessage("cannot set the parallelism")
-    broadcastStream.setParallelism(1)
+    assertThatThrownBy(() => broadcastStream.setParallelism(1))
+      .isInstanceOf(classOf[UnsupportedOperationException])
+    assertThatThrownBy(() => broadcastStream.setParallelism(1))
+      .hasMessageContaining("cannot set the parallelism")
+
   }
 
   /** Tests whether resource gets set. */

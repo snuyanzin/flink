@@ -23,14 +23,14 @@ import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
 import org.apache.flink.streaming.api.watermark.Watermark
-import org.apache.flink.test.util.AbstractTestBase
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5
 import org.apache.flink.util.Collector
 
 import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 /** ITCase for the [[org.apache.flink.api.common.state.BroadcastState]]. */
-class BroadcastStateITCase extends AbstractTestBase {
+class BroadcastStateITCase extends AbstractTestBaseJUnit5 {
 
   @Test
   @throws[Exception]

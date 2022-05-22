@@ -18,12 +18,14 @@
 package org.apache.flink.streaming.api.scala
 
 import org.apache.flink.core.fs.FileSystem
-import org.apache.flink.test.util.{AbstractTestBase, TestBaseUtils}
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5
+import org.apache.flink.test.util.TestBaseUtils
 
-import org.junit.{After, Before, Rule, Test}
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.{AfterEach, BeforeEach, Test}
 
-class StreamingOperatorsITCase extends AbstractTestBase {
+import java.nio.file.Files
+
+class StreamingOperatorsITCase extends AbstractTestBaseJUnit5 {
 
   var resultPath1: String = _
   var resultPath2: String = _
@@ -32,23 +34,17 @@ class StreamingOperatorsITCase extends AbstractTestBase {
   var expected2: String = _
   var expected3: String = _
 
-  val _tempFolder = new TemporaryFolder()
-
-  @Rule
-  def tempFolder: TemporaryFolder = _tempFolder
-
-  @Before
+  @BeforeEach
   def before(): Unit = {
-    val temp = tempFolder
-    resultPath1 = temp.newFile.toURI.toString
-    resultPath2 = temp.newFile.toURI.toString
-    resultPath3 = temp.newFile.toURI.toString
+    resultPath1 = Files.createTempDirectory(tmpDir, "").toUri.toString
+    resultPath2 = Files.createTempDirectory(tmpDir, "").toUri.toString
+    resultPath3 = Files.createTempDirectory(tmpDir, "").toUri.toString
     expected1 = ""
     expected2 = ""
     expected3 = ""
   }
 
-  @After
+  @AfterEach
   def after(): Unit = {
     TestBaseUtils.compareResultsByLinesInMemory(expected1, resultPath1)
     TestBaseUtils.compareResultsByLinesInMemory(expected2, resultPath2)

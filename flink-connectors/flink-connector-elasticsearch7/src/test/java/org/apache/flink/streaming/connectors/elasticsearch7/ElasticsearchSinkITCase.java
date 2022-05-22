@@ -28,22 +28,24 @@ import org.apache.flink.util.DockerImageVersions;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** IT cases for the {@link ElasticsearchSink}. */
+@Testcontainers
 public class ElasticsearchSinkITCase
         extends ElasticsearchSinkTestBase<RestHighLevelClient, HttpHost> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchSinkITCase.class);
 
-    @ClassRule
+    @Container
     public static ElasticsearchContainer elasticsearchContainer =
             ElasticsearchUtil.createElasticsearchContainer(
                     DockerImageVersions.ELASTICSEARCH_7, LOG);
