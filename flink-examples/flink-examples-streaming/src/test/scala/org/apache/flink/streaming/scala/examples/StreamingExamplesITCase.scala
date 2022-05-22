@@ -27,16 +27,17 @@ import org.apache.flink.streaming.scala.examples.join.WindowJoin.{Grade, Salary}
 import org.apache.flink.streaming.scala.examples.windowing.{SessionWindowing, WindowWordCount}
 import org.apache.flink.streaming.scala.examples.wordcount.WordCount
 import org.apache.flink.streaming.test.examples.join.WindowJoinData
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5
 import org.apache.flink.test.testdata.WordCountData
-import org.apache.flink.test.util.{AbstractTestBase, TestBaseUtils}
+import org.apache.flink.test.util.TestBaseUtils
 
 import org.apache.commons.io.FileUtils
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 import java.io.File
 
 /** Integration test for streaming programs in Scala examples. */
-class StreamingExamplesITCase extends AbstractTestBase {
+class StreamingExamplesITCase extends AbstractTestBaseJUnit5 {
 
   @Test
   def testIterateExample(): Unit = {

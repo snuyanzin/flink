@@ -33,16 +33,16 @@ import org.apache.flink.streaming.api.functions.source.ContinuousFileMonitoringF
 import org.apache.flink.streaming.api.functions.source.ContinuousFileReaderOperatorFactory;
 import org.apache.flink.streaming.api.functions.source.FileProcessingMode;
 import org.apache.flink.streaming.api.functions.source.TimestampedFileInputSplit;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.util.ExceptionUtils;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +62,7 @@ import static org.junit.Assert.assertEquals;
  * IT cases for the {@link ContinuousFileMonitoringFunction} and {@link
  * ContinuousFileReaderOperator}.
  */
-public class ContinuousFileProcessingITCase extends AbstractTestBase {
+public class ContinuousFileProcessingITCase extends AbstractTestBaseJUnit5 {
 
     private static final int NO_OF_FILES = 5;
     private static final int LINES_PER_FILE = 100;
@@ -80,7 +80,7 @@ public class ContinuousFileProcessingITCase extends AbstractTestBase {
 
     //						PREPARING FOR THE TESTS
 
-    @Before
+    @BeforeEach
     public void createHDFS() throws IOException {
         baseDir = new File("./target/hdfs/hdfsTesting").getAbsoluteFile();
         FileUtil.fullyDelete(baseDir);
@@ -101,7 +101,7 @@ public class ContinuousFileProcessingITCase extends AbstractTestBase {
         hdfs = new org.apache.hadoop.fs.Path(hdfsURI).getFileSystem(hdConf);
     }
 
-    @After
+    @AfterEach
     public void destroyHDFS() {
         FileUtil.fullyDelete(baseDir);
         hdfsCluster.shutdown();

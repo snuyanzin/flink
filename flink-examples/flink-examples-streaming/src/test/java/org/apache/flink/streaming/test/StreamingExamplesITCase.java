@@ -31,11 +31,11 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.examples.iteration.util.IterateExampleData;
 import org.apache.flink.streaming.test.examples.join.WindowJoinData;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.test.testdata.WordCountData;
-import org.apache.flink.test.util.AbstractTestBase;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
@@ -43,7 +43,7 @@ import static org.apache.flink.test.util.TestBaseUtils.checkLinesAgainstRegexp;
 import static org.apache.flink.test.util.TestBaseUtils.compareResultsByLinesInMemory;
 
 /** Integration test for streaming programs in Java examples. */
-public class StreamingExamplesITCase extends AbstractTestBase {
+public class StreamingExamplesITCase extends AbstractTestBaseJUnit5 {
 
     @Test
     public void testIterateExample() throws Exception {

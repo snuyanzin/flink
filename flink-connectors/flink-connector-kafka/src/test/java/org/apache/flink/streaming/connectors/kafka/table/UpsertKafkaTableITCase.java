@@ -26,10 +26,10 @@ import org.apache.flink.table.planner.factories.TestValuesTableFactory;
 import org.apache.flink.table.utils.LegacyRowResource;
 import org.apache.flink.types.Row;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.apache.flink.api.common.typeinfo.Types.INT;
 import static org.apache.flink.api.common.typeinfo.Types.LOCAL_DATE_TIME;
@@ -52,38 +53,45 @@ import static org.apache.flink.table.utils.TableTestMatchers.deepEqualTo;
 import static org.junit.Assert.assertThat;
 
 /** Upsert-kafka IT cases. */
-@RunWith(Parameterized.class)
 public class UpsertKafkaTableITCase extends KafkaTableTestBase {
 
     private static final String JSON_FORMAT = "json";
     private static final String CSV_FORMAT = "csv";
     private static final String AVRO_FORMAT = "avro";
 
-    @Parameterized.Parameter public String format;
-
-    @Parameterized.Parameters(name = "format = {0}")
-    public static Object[] parameters() {
-        return new Object[] {JSON_FORMAT, CSV_FORMAT, AVRO_FORMAT};
+    private static Stream<String> parameters() {
+        return Stream.of(JSON_FORMAT, CSV_FORMAT, AVRO_FORMAT);
     }
-
-    @Rule public final LegacyRowResource usesLegacyRows = LegacyRowResource.INSTANCE;
 
     private static final String USERS_TOPIC = "users";
     private static final String WORD_COUNT_TOPIC = "word_count";
 
-    @Test
-    public void testAggregate() throws Exception {
+    @BeforeEach
+    void before() {
+        LegacyRowResource.INSTANCE.before();
+    }
+
+    @AfterEach
+    void after() {
+        LegacyRowResource.INSTANCE.after();
+        super.after();
+    }
+
+    @ParameterizedTest(name = "format = {0}")
+    @MethodSource("parameters")
+    public void testAggregate(String format) throws Exception {
         String topic = WORD_COUNT_TOPIC + "_" + format;
         createTestTopic(topic, 4, 1);
         // -------------   test   ---------------
-        wordCountToUpsertKafka(topic);
-        wordFreqToUpsertKafka(topic);
+        wordCountToUpsertKafka(topic, format);
+        wordFreqToUpsertKafka(topic, format);
         // ------------- clean up ---------------
         deleteTestTopic(topic);
     }
 
-    @Test
-    public void testTemporalJoin() throws Exception {
+    @ParameterizedTest(name = "format = {0}")
+    @MethodSource("parameters")
+    public void testTemporalJoin(String format) throws Exception {
         String topic = USERS_TOPIC + "_" + format;
         createTestTopic(topic, 2, 1);
         // -------------   test   ---------------
@@ -98,15 +106,16 @@ public class UpsertKafkaTableITCase extends KafkaTableTestBase {
         // partition and
         // use the Kafka DefaultPartition to repartition the records.
         env.setParallelism(1);
-        writeChangelogToUpsertKafkaWithMetadata(topic);
+        writeChangelogToUpsertKafkaWithMetadata(topic, format);
         env.setParallelism(2);
-        temporalJoinUpsertKafka(topic);
+        temporalJoinUpsertKafka(topic, format);
         // ------------- clean up ---------------
         deleteTestTopic(topic);
     }
 
-    @Test
-    public void testBufferedUpsertSink() throws Exception {
+    @ParameterizedTest(name = "format = {0}")
+    @MethodSource("parameters")
+    public void testBufferedUpsertSink(String format) throws Exception {
         final String topic = "buffered_upsert_topic_" + format;
         createTestTopic(topic, 1, 1);
         String bootstraps = getBootstrapServers();
@@ -194,8 +203,9 @@ public class UpsertKafkaTableITCase extends KafkaTableTestBase {
         deleteTestTopic(topic);
     }
 
-    @Test
-    public void testSourceSinkWithKeyAndPartialValue() throws Exception {
+    @ParameterizedTest(name = "format = {0}")
+    @MethodSource("parameters")
+    public void testSourceSinkWithKeyAndPartialValue(String format) throws Exception {
         // we always use a different topic name for each parameterized topic,
         // in order to make sure the topic can be created.
         final String topic = "key_partial_value_topic_" + format;
@@ -292,8 +302,9 @@ public class UpsertKafkaTableITCase extends KafkaTableTestBase {
         deleteTestTopic(topic);
     }
 
-    @Test
-    public void testKafkaSourceSinkWithKeyAndFullValue() throws Exception {
+    @ParameterizedTest(name = "format = {0}")
+    @MethodSource("parameters")
+    public void testKafkaSourceSinkWithKeyAndFullValue(String format) throws Exception {
         // we always use a different topic name for each parameterized topic,
         // in order to make sure the topic can be created.
         final String topic = "key_full_value_topic_" + format;
@@ -387,7 +398,7 @@ public class UpsertKafkaTableITCase extends KafkaTableTestBase {
         deleteTestTopic(topic);
     }
 
-    private void wordCountToUpsertKafka(String wordCountTable) throws Exception {
+    private void wordCountToUpsertKafka(String wordCountTable, String format) throws Exception {
         String bootstraps = getBootstrapServers();
 
         // ------------- test data ---------------
@@ -500,7 +511,7 @@ public class UpsertKafkaTableITCase extends KafkaTableTestBase {
         comparedWithKeyAndOrder(expected2, result2, new int[] {0});
     }
 
-    private void wordFreqToUpsertKafka(String wordCountTable) throws Exception {
+    private void wordFreqToUpsertKafka(String wordCountTable, String format) throws Exception {
         // ------------- test data ---------------
 
         final List<String> expectedData = Arrays.asList("3,1", "2,1");
@@ -537,7 +548,8 @@ public class UpsertKafkaTableITCase extends KafkaTableTestBase {
         query.getJobClient().get().cancel();
     }
 
-    private void writeChangelogToUpsertKafkaWithMetadata(String userTable) throws Exception {
+    private void writeChangelogToUpsertKafkaWithMetadata(String userTable, String format)
+            throws Exception {
         String bootstraps = getBootstrapServers();
 
         // ------------- test data ---------------
@@ -785,7 +797,7 @@ public class UpsertKafkaTableITCase extends KafkaTableTestBase {
         assertThat(result, deepEqualTo(expected, true));
     }
 
-    private void temporalJoinUpsertKafka(String userTable) throws Exception {
+    private void temporalJoinUpsertKafka(String userTable, String format) throws Exception {
         // ------------- test data ---------------
         List<Row> input =
                 Arrays.asList(

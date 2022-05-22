@@ -29,10 +29,10 @@ import org.apache.flink.graph.NeighborsFunctionWithVertexValue;
 import org.apache.flink.graph.ReduceNeighborsFunction;
 import org.apache.flink.graph.Vertex;
 import org.apache.flink.graph.test.TestGraphUtils;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.fail;
 
@@ -40,7 +40,7 @@ import static org.junit.Assert.fail;
  * Test expected exceptions for {@link Graph#groupReduceOnNeighbors} and {@link
  * Graph#reduceOnNeighbors}.
  */
-public class ReduceOnNeighborsWithExceptionITCase extends AbstractTestBase {
+public class ReduceOnNeighborsWithExceptionITCase extends AbstractTestBaseJUnit5 {
 
     private static final int PARALLELISM = 4;
 

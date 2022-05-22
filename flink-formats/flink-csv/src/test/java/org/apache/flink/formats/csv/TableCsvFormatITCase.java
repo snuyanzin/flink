@@ -28,14 +28,12 @@ import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.planner.factories.TestValuesTableFactory;
 import org.apache.flink.table.planner.runtime.utils.TestData;
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.types.Row;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nullable;
 
@@ -58,18 +56,16 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for the CSV file format. */
-public class TableCsvFormatITCase extends AbstractTestBase {
-
-    @Rule public ExpectedException exception = ExpectedException.none();
+public class TableCsvFormatITCase extends AbstractTestBaseJUnit5 {
 
     private TableEnvironment tableEnv;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         tableEnv = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
     }
 
-    @After
+    @AfterEach
     public void after() {
         TestValuesTableFactory.clearAllData();
     }
@@ -272,7 +268,7 @@ public class TableCsvFormatITCase extends AbstractTestBase {
     private void createSourceTable(String tableName, List<String> data, Schema schema)
             throws IOException {
 
-        File sourceFile = TEMPORARY_FOLDER.newFile();
+        File sourceFile = Files.createTempFile(tmpDir, "", "").toFile();
         Collections.shuffle(data);
         Files.write(sourceFile.toPath(), String.join("\n", data).getBytes());
 
@@ -286,7 +282,7 @@ public class TableCsvFormatITCase extends AbstractTestBase {
     }
 
     private File createSinkTable(String tableName, Schema schema) throws IOException {
-        File sinkPath = TEMPORARY_FOLDER.newFolder();
+        File sinkPath = Files.createTempDirectory(tmpDir, "").toFile();
 
         tableEnv.createTemporaryTable(
                 tableName,

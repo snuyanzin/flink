@@ -22,9 +22,9 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.DiscardingOutputFormat;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.graph.test.TestGraphUtils;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.fail;
 
@@ -32,7 +32,7 @@ import static org.junit.Assert.fail;
  * Test expected errors for {@link Graph#inDegrees()}, {@link Graph#outDegrees()}, and {@link
  * Graph#getDegrees()}.
  */
-public class DegreesWithExceptionITCase extends AbstractTestBase {
+public class DegreesWithExceptionITCase extends AbstractTestBaseJUnit5 {
 
     private static final int PARALLELISM = 4;
 

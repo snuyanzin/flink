@@ -19,14 +19,14 @@ package org.apache.flink.streaming.test.scala.examples.windowing;
 
 import org.apache.flink.streaming.examples.windowing.util.TopSpeedWindowingExampleData;
 import org.apache.flink.streaming.scala.examples.windowing.TopSpeedWindowing;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultsByLinesInMemory;
 
 /** Tests for {@link TopSpeedWindowing}. */
-public class TopSpeedWindowingExampleITCase extends AbstractTestBase {
+public class TopSpeedWindowingExampleITCase extends AbstractTestBaseJUnit5 {
 
     @Test
     public void testProgram() throws Exception {

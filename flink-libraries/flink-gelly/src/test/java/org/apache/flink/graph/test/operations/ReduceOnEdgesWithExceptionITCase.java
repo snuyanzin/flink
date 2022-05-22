@@ -28,15 +28,15 @@ import org.apache.flink.graph.EdgesFunctionWithVertexValue;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.graph.Vertex;
 import org.apache.flink.graph.test.TestGraphUtils;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.util.Collector;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.Assert.fail;
 
 /** Test expected exceptions for {@link Graph#groupReduceOnEdges}. */
-public class ReduceOnEdgesWithExceptionITCase extends AbstractTestBase {
+public class ReduceOnEdgesWithExceptionITCase extends AbstractTestBaseJUnit5 {
 
     private static final int PARALLELISM = 4;
 
