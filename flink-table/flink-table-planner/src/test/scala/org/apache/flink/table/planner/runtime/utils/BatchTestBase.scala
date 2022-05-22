@@ -45,15 +45,15 @@ import org.apache.flink.util.CollectionUtil
 import _root_.java.lang.{Iterable => JIterable}
 import _root_.java.util.regex.Pattern
 import _root_.scala.collection.JavaConverters._
-import _root_.scala.collection.Seq
 import _root_.scala.collection.mutable.ArrayBuffer
 import _root_.scala.util.Sorting
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.runtime.CalciteContextException
 import org.apache.calcite.sql.SqlExplainLevel
 import org.apache.calcite.sql.parser.SqlParseException
-import org.junit.{After, Assert, Before}
+import org.junit.Assert
 import org.junit.Assert._
+import org.junit.jupiter.api.{AfterEach, BeforeEach}
 
 class BatchTestBase extends BatchAbstractTestBase {
 
@@ -71,12 +71,12 @@ class BatchTestBase extends BatchAbstractTestBase {
     "(?s)From line ([0-9]+),"
       + " column ([0-9]+) to line ([0-9]+), column ([0-9]+): (.*)")
 
-  @Before
+  @BeforeEach
   def before(): Unit = {
     BatchTestBase.configForMiniCluster(tableConfig)
   }
 
-  @After
+  @AfterEach
   def after(): Unit = {
     TestValuesTableFactory.clearAllData()
   }

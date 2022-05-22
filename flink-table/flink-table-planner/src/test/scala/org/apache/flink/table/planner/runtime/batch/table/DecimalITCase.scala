@@ -17,21 +17,18 @@
  */
 package org.apache.flink.table.planner.runtime.batch.table
 
-import org.apache.flink.table.api._
 import org.apache.flink.table.api.DataTypes.{BIGINT, DECIMAL, DOUBLE, INT}
+import org.apache.flink.table.api._
 import org.apache.flink.table.api.config.ExecutionConfigOptions
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase.row
 import org.apache.flink.table.types.DataType
 import org.apache.flink.types.Row
-
 import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 import java.math.{BigDecimal => JBigDecimal}
-
 import scala.collection.JavaConverters._
-import scala.collection.Seq
 
 /**
  * Conformance test of TableApi type Decimal(p,s). Served also as documentation of our Decimal

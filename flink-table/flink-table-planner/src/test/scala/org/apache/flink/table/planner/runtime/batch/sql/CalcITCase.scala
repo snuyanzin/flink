@@ -43,25 +43,21 @@ import org.apache.flink.table.planner.utils.DateTimeTestUtil._
 import org.apache.flink.table.utils.DateTimeUtils.toLocalDateTime
 import org.apache.flink.types.Row
 
-import org.junit._
+import org.assertj.core.api.Assertions.{assertThat, assertThatThrownBy}
 import org.junit.Assert.assertEquals
+import org.junit.jupiter.api.{BeforeEach, Disabled, Test}
 import org.junit.rules.ExpectedException
 
 import java.nio.charset.StandardCharsets
 import java.sql.{Date, Time, Timestamp}
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneId}
+import java.time._
 import java.util
-
-import scala.collection.Seq
 
 class CalcITCase extends BatchTestBase {
 
   var _expectedEx: ExpectedException = ExpectedException.none
 
-  @Rule
-  def expectedEx: ExpectedException = _expectedEx
-
-  @Before
+  @BeforeEach
   override def before(): Unit = {
     super.before()
     registerCollection("Table3", data3, type3, "a, b, c", nullablesOfData3)
@@ -399,9 +395,10 @@ class CalcITCase extends BatchTestBase {
     checkResult("SELECT `1-_./Ü`, b, c FROM (SELECT a as `1-_./Ü`, b, c FROM Table3)", data3)
   }
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testInvalidFields(): Unit = {
-    checkResult("SELECT a, foo FROM Table3", data3)
+    assertThatThrownBy(() => checkResult("SELECT a, foo FROM Table3", data3))
+      .isInstanceOf(classOf[ValidationException])
   }
 
   @Test
@@ -1144,7 +1141,7 @@ class CalcITCase extends BatchTestBase {
     )
   }
 
-  @Ignore // TODO support Unicode
+  @Disabled // TODO support Unicode
   @Test
   def testFunctionWithUnicodeParameters(): Unit = {
     val data = List(
@@ -1326,7 +1323,7 @@ class CalcITCase extends BatchTestBase {
     val d1 =
       LocalDateConverter.INSTANCE.toInternal(result.toList.head.getField(0).asInstanceOf[LocalDate])
 
-    Assert.assertTrue(d0 <= d1 && d1 - d0 <= 1)
+    assertThat(d0 <= d1 && d1 - d0 <= 1).isTrue
   }
 
   @Test
@@ -1346,7 +1343,7 @@ class CalcITCase extends BatchTestBase {
 
     val ts2 = System.currentTimeMillis()
 
-    Assert.assertTrue(ts0 <= ts1 && ts1 <= ts2)
+    assertThat(ts0 <= ts1 && ts1 <= ts2).isTrue
   }
 
   @Test
@@ -1534,7 +1531,7 @@ class CalcITCase extends BatchTestBase {
     )
   }
 
-  @Test(expected = classOf[UnsupportedOperationException])
+  @Test
   def testOrderByBinary(): Unit = {
     registerCollection(
       "BinaryT",
@@ -1550,18 +1547,20 @@ class CalcITCase extends BatchTestBase {
     )
     tableConfig.set(ExecutionConfigOptions.TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM, Int.box(1))
     tableConfig.set(BatchPhysicalSortRule.TABLE_EXEC_RANGE_SORT_ENABLED, Boolean.box(true))
-    checkResult(
-      "select * from BinaryT order by c",
-      nullData3
-        .sortBy((x: Row) => x.getField(2).asInstanceOf[String])
-        .map(
-          r =>
-            row(
-              r.getField(0),
-              r.getField(1),
-              r.getField(2).toString.getBytes(StandardCharsets.UTF_8))),
-      isSorted = true
-    )
+    assertThatThrownBy(
+      () =>
+        checkResult(
+          "select * from BinaryT order by c",
+          nullData3
+            .sortBy((x: Row) => x.getField(2).asInstanceOf[String])
+            .map(
+              r =>
+                row(
+                  r.getField(0),
+                  r.getField(1),
+                  r.getField(2).toString.getBytes(StandardCharsets.UTF_8))),
+          isSorted = true
+        )).isInstanceOf(classOf[UnsupportedOperationException])
   }
 
   @Test

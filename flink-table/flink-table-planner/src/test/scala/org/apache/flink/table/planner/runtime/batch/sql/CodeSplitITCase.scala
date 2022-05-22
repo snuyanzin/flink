@@ -24,13 +24,12 @@ import org.apache.flink.table.planner.runtime.utils.BatchTestBase.row
 import org.apache.flink.table.planner.runtime.utils.TestData.{nullablesOfData3, smallData3, type3}
 import org.apache.flink.types.Row
 
-import org.junit.{Assert, Before, Test}
-
-import scala.collection.Seq
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.{BeforeEach, Test}
 
 class CodeSplitITCase extends BatchTestBase {
 
-  @Before
+  @BeforeEach
   override def before(): Unit = {
     super.before()
     registerCollection("SmallTable3", smallData3, type3, "a, b, c", nullablesOfData3)
@@ -117,7 +116,7 @@ class CodeSplitITCase extends BatchTestBase {
     for (i <- 0 until 100) {
       expected.add(s"+I[${Range(0, 100).map(_ => s"$i").mkString(", ")}]")
     }
-    Assert.assertEquals(expected, TestValuesTableFactory.getResults("test_many_values"))
+    assertThat(TestValuesTableFactory.getResults("test_many_values")).isEqualTo(expected)
   }
 
   @Test

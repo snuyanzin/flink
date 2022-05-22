@@ -29,9 +29,9 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase;
 import org.apache.flink.table.utils.PartitionPathUtils;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -70,7 +70,7 @@ public class CompactManagedTableITCase extends BatchTestBase {
             referenceOfManagedTableFileEntries;
 
     @Override
-    @Before
+    @BeforeEach
     public void before() {
         super.before();
         MANAGED_TABLES.put(tableIdentifier, new AtomicReference<>());
@@ -88,7 +88,7 @@ public class CompactManagedTableITCase extends BatchTestBase {
     }
 
     @Override
-    @After
+    @AfterEach
     public void after() {
         super.after();
         tEnv().executeSql("DROP TABLE MyTable");

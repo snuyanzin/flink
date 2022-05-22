@@ -22,26 +22,33 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.runtime.testutils.MiniClusterResourceConfiguration;
-import org.apache.flink.test.util.MiniClusterWithClientResource;
-import org.apache.flink.util.TestLogger;
+import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.apache.flink.util.TestLoggerExtension;
 
 import org.junit.ClassRule;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.rules.TemporaryFolder;
 
+import java.nio.file.Path;
+
 /** Batch test base to use {@link ClassRule}. */
-public class BatchAbstractTestBase extends TestLogger {
+@ExtendWith(TestLoggerExtension.class)
+public class BatchAbstractTestBase {
 
     public static final int DEFAULT_PARALLELISM = 3;
 
-    @ClassRule
-    public static MiniClusterWithClientResource miniClusterResource =
-            new MiniClusterWithClientResource(
+    @RegisterExtension
+    private static MiniClusterExtension miniClusterResource =
+            new MiniClusterExtension(
                     new MiniClusterResourceConfiguration.Builder()
                             .setConfiguration(getConfiguration())
                             .setNumberTaskManagers(1)
                             .setNumberSlotsPerTaskManager(DEFAULT_PARALLELISM)
                             .build());
 
+    @TempDir public static Path tmpDir;
     @ClassRule public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
     private static Configuration getConfiguration() {

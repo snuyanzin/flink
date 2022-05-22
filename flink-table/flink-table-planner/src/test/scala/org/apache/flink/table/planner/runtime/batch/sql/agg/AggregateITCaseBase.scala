@@ -28,16 +28,15 @@ import org.apache.flink.table.planner.runtime.utils.BatchTestBase.row
 import org.apache.flink.table.planner.runtime.utils.TestData._
 import org.apache.flink.types.Row
 
-import org.junit.{Before, Test}
-
-import scala.collection.Seq
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.{BeforeEach, Test}
 
 /** Aggregate IT case base class. */
 abstract class AggregateITCaseBase(testName: String) extends BatchTestBase {
 
   def prepareAggOp(): Unit
 
-  @Before
+  @BeforeEach
   override def before(): Unit = {
     super.before()
     registerCollection("SmallTable3", smallData3, type3, "a, b, c", nullablesOfSmallData3)
@@ -361,13 +360,15 @@ abstract class AggregateITCaseBase(testName: String) extends BatchTestBase {
     )
   }
 
-  @Test(expected = classOf[TableException])
+  @Test
   def testCountCannotByMultiFields(): Unit = {
-    checkQuery(
-      Seq((1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2)),
-      "select count(distinct f0, f1) from TableName",
-      Seq()
-    )
+    assertThatThrownBy(
+      () =>
+        checkQuery(
+          Seq((1, 1), (1, 2), (2, 1), (2, 2), (3, 1), (3, 2)),
+          "select count(distinct f0, f1) from TableName",
+          Seq()
+        )).isInstanceOf(classOf[TableException])
   }
 
   @Test
@@ -709,7 +710,7 @@ abstract class AggregateITCaseBase(testName: String) extends BatchTestBase {
     )
   }
 
-  @Test(expected = classOf[TableException])
+  @Test
   def testMultipleColumnDistinctCount(): Unit = {
     val testData = Seq(
       ("a", "b", "c"),
@@ -734,11 +735,13 @@ abstract class AggregateITCaseBase(testName: String) extends BatchTestBase {
       "select count(distinct f0, f1, f2) from TableName",
       Seq(Tuple1(4L)) // NOTE: Spark and MySQL returns 3
     )
-    checkQuery(
-      testData,
-      "select f0, count(distinct f1, f2) from TableName group by f0",
-      Seq(("a", 2L), ("x", 2L)) // NOTE: Spark and MySQL returns 2
-    )
+    assertThatThrownBy(
+      () =>
+        checkQuery(
+          testData,
+          "select f0, count(distinct f1, f2) from TableName group by f0",
+          Seq(("a", 2L), ("x", 2L)) // NOTE: Spark and MySQL returns 2
+        )).isInstanceOf(classOf[TableException])
   }
 
   @Test

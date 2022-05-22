@@ -23,24 +23,26 @@ import org.apache.flink.table.api.{DataTypes, TableSchema, Types}
 import org.apache.flink.table.api.config.TableConfigOptions
 import org.apache.flink.table.api.internal.TableEnvironmentInternal
 import org.apache.flink.table.planner.runtime.utils.{BatchTestBase, TestData}
-import org.apache.flink.table.planner.runtime.utils.BatchAbstractTestBase.TEMPORARY_FOLDER
+import org.apache.flink.table.planner.runtime.utils.BatchAbstractTestBase.{tmpDir, TEMPORARY_FOLDER}
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase.row
 import org.apache.flink.table.planner.utils.{TableTestUtil, TestDataTypeTableSource, TestFileInputFormatTableSource, TestInputFormatTableSource, TestLegacyFilterableTableSource, TestLegacyProjectableTableSource, TestNestedProjectableTableSource, TestPartitionableSourceFactory, TestTableSourceSinks}
 import org.apache.flink.table.runtime.types.TypeInfoDataTypeConverter
 import org.apache.flink.types.Row
 
-import org.junit.{Assert, Before, Test}
+import org.junit.Assert
+import org.junit.jupiter.api.{BeforeEach, Test}
 
 import java.io.FileWriter
 import java.lang.{Boolean => JBool, Integer => JInt, Long => JLong}
 import java.math.{BigDecimal => JDecimal}
+import java.nio.file.Files
 import java.time.{Instant, LocalDateTime, ZoneId}
 
 import scala.collection.mutable
 
 class LegacyTableSourceITCase extends BatchTestBase {
 
-  @Before
+  @BeforeEach
   override def before(): Unit = {
     super.before()
     env.setParallelism(1) // set sink parallelism to 1
@@ -311,14 +313,14 @@ class LegacyTableSourceITCase extends BatchTestBase {
 
   @Test
   def testMultiPaths(): Unit = {
-    val tmpFile1 = TEMPORARY_FOLDER.newFile("tmpFile1.tmp")
-    new FileWriter(tmpFile1).append("t1\n").append("t2\n").close()
+    val tmpFile1 = Files.createFile(tmpDir.resolve("tmpFile1.tmp"))
+    new FileWriter(tmpFile1.toFile).append("t1\n").append("t2\n").close()
 
-    val tmpFile2 = TEMPORARY_FOLDER.newFile("tmpFile2.tmp")
-    new FileWriter(tmpFile2).append("t3\n").append("t4\n").close()
+    val tmpFile2 = Files.createFile(tmpDir.resolve("tmpFile2.tmp"))
+    new FileWriter(tmpFile2.toFile).append("t3\n").append("t4\n").close()
 
     val schema = new TableSchema(Array("a"), Array(Types.STRING))
-    val paths = Array(tmpFile1.getPath, tmpFile2.getPath)
+    val paths = Array(tmpFile1.toString, tmpFile2.toString)
 
     TestFileInputFormatTableSource.createTemporaryTable(tEnv, schema, "MyMultiPathTable", paths)
     checkResult(
@@ -347,7 +349,7 @@ class LegacyTableSourceITCase extends BatchTestBase {
          |)
        """.stripMargin
     tEnv.executeSql(ddl)
-    val resultPath = TEMPORARY_FOLDER.newFolder().getAbsolutePath
+    val resultPath = tmpDir.toFile.getAbsolutePath
     tEnv.executeSql(s"""
                        |CREATE TABLE MySink (
                        |  `a` BIGINT,
