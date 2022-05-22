@@ -23,14 +23,14 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.planner.runtime.utils.StreamTestSink;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CollectionUtil;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -47,7 +47,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /** ITCase for {@link JdbcDynamicTableSource}. */
-public class JdbcDynamicTableSourceITCase extends AbstractTestBase {
+public class JdbcDynamicTableSourceITCase extends AbstractTestBaseJUnit5 {
 
     public static final String DRIVER_CLASS = "org.apache.derby.jdbc.EmbeddedDriver";
     public static final String DB_URL = "jdbc:derby:memory:test";
@@ -56,7 +56,7 @@ public class JdbcDynamicTableSourceITCase extends AbstractTestBase {
     public static StreamExecutionEnvironment env;
     public static TableEnvironment tEnv;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() throws ClassNotFoundException, SQLException {
         System.setProperty(
                 "derby.stream.error.field", JdbcTestBase.class.getCanonicalName() + ".DEV_NULL");
@@ -93,7 +93,7 @@ public class JdbcDynamicTableSourceITCase extends AbstractTestBase {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() throws Exception {
         Class.forName(DRIVER_CLASS);
         try (Connection conn = DriverManager.getConnection(DB_URL);
@@ -103,7 +103,7 @@ public class JdbcDynamicTableSourceITCase extends AbstractTestBase {
         StreamTestSink.clear();
     }
 
-    @Before
+    @BeforeEach
     public void before() throws Exception {
         env = StreamExecutionEnvironment.getExecutionEnvironment();
         tEnv = StreamTableEnvironment.create(env);

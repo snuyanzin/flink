@@ -20,7 +20,7 @@
 
 package org.apache.flink.connector.hbase1.util;
 
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,9 +36,9 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.util.VersionUtil;
-import org.junit.AfterClass;
 import org.junit.Assume;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ import static org.junit.Assert.assertTrue;
 //
 // https://github.com/apache/hbase/blob/master/hbase-server/src/test/java/org/apache/hadoop/hbase/filter/FilterTestingCluster.java
 //
-public abstract class HBaseTestingClusterAutoStarter extends AbstractTestBase {
+public abstract class HBaseTestingClusterAutoStarter extends AbstractTestBaseJUnit5 {
 
     private static final Log LOG = LogFactory.getLog(HBaseTestingClusterAutoStarter.class);
 
@@ -130,7 +130,7 @@ public abstract class HBaseTestingClusterAutoStarter extends AbstractTestBase {
         }
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         // HBase 1.4 does not work with Hadoop 3
         // because it uses Guava 12.0.1, Hadoop 3 uses Guava 27.0-jre.
@@ -167,7 +167,7 @@ public abstract class HBaseTestingClusterAutoStarter extends AbstractTestBase {
         return conf;
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         if (conf == null) {
             LOG.info("Skipping Hbase tear down. It was never started");

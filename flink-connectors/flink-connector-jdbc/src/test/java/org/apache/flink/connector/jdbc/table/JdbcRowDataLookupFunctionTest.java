@@ -31,7 +31,7 @@ import org.apache.flink.util.Collector;
 
 import org.apache.flink.shaded.guava30.com.google.common.cache.Cache;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;

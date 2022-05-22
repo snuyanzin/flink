@@ -42,12 +42,12 @@ import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.planner.factories.TestValuesTableFactory;
 import org.apache.flink.table.planner.runtime.utils.TestData;
 import org.apache.flink.table.runtime.connector.sink.SinkRuntimeProviderContext;
-import org.apache.flink.test.util.AbstractTestBase;
+import org.apache.flink.test.junit5.AbstractTestBaseJUnit5;
 import org.apache.flink.types.Row;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -66,7 +66,7 @@ import static org.apache.flink.table.api.Expressions.$;
 import static org.apache.flink.table.factories.utils.FactoryMocks.createTableSink;
 
 /** The Table Sink ITCase for {@link OracleDialect}. */
-public class OracleTableSinkITCase extends AbstractTestBase {
+public class OracleTableSinkITCase extends AbstractTestBaseJUnit5 {
 
     private static final OracleContainer container = new OracleContainer();
     private static String containerUrl;
@@ -78,7 +78,7 @@ public class OracleTableSinkITCase extends AbstractTestBase {
     public static final String OUTPUT_TABLE5 = "checkpointTable";
     public static final String USER_TABLE = "USER_TABLE";
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() throws ClassNotFoundException, SQLException {
         container.start();
         containerUrl = container.getJdbcUrl();
@@ -128,7 +128,7 @@ public class OracleTableSinkITCase extends AbstractTestBase {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() throws Exception {
         TestValuesTableFactory.clearAllData();
         Class.forName(container.getDriverClassName());
