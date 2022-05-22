@@ -23,6 +23,7 @@ import org.apache.flink.table.planner.runtime.utils.BatchTestBase
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase._
 import org.apache.flink.table.planner.runtime.utils.JavaUserDefinedTableFunctions.StringSplit
 import org.apache.flink.table.planner.runtime.utils.TestData._
+
 import org.junit.jupiter.api.{BeforeEach, Test}
 
 class CorrelateITCase2 extends BatchTestBase {

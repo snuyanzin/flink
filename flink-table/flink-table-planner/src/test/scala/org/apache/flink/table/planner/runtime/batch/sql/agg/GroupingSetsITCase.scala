@@ -23,6 +23,7 @@ import org.apache.flink.table.planner.runtime.utils.BatchTestBase
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase.row
 import org.apache.flink.table.planner.runtime.utils.TestData._
 import org.apache.flink.table.planner.utils.DateTimeTestUtil._
+
 import org.junit.jupiter.api.{BeforeEach, Test}
 
 class GroupingSetsITCase extends BatchTestBase {

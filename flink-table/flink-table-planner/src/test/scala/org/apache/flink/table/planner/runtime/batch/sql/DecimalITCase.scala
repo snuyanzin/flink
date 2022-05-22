@@ -27,6 +27,7 @@ import org.apache.flink.table.runtime.types.PlannerTypeUtils.isInteroperable
 import org.apache.flink.table.runtime.types.TypeInfoLogicalTypeConverter.fromLogicalTypeToTypeInfo
 import org.apache.flink.table.types.logical.{DecimalType, LogicalType}
 import org.apache.flink.types.Row
+
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.jupiter.api.Test
 
@@ -72,7 +73,8 @@ class DecimalITCase extends BatchTestBase {
       if (!isSorted) seq.map(_.toString).sortBy(s => s) else seq.map(_.toString)
     }
     val resultRows = executeQuery(resultTable)
-    assertThat(prepareResult(isSorted, resultRows)).isEqualTo(prepareResult(isSorted, expected.rows))
+    assertThat(prepareResult(isSorted, resultRows)).isEqualTo(
+      prepareResult(isSorted, expected.rows))
   }
 
   private def checkQuery1(
