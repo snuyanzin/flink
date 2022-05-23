@@ -20,13 +20,13 @@
 package org.apache.flink.test.example.scala;
 
 import org.apache.flink.examples.scala.wordcount.WordCount;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.testdata.WordCountData;
-import org.apache.flink.test.util.JavaProgramTestBase;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultsByLinesInMemory;
 
 /** Test {@link WordCount}. */
-public class WordCountITCase extends JavaProgramTestBase {
+public class WordCountITCase extends JavaProgramTestBaseJUnit5 {
 
     protected String textPath;
     protected String resultPath;

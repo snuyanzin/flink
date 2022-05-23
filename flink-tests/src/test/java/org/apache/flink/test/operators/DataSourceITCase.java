@@ -23,16 +23,15 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.TextInputFormat;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.Path;
-import org.apache.flink.test.util.JavaProgramTestBase;
-
-import org.junit.Assert;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 
 import java.util.List;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultAsText;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for the DataSource. */
-public class DataSourceITCase extends JavaProgramTestBase {
+public class DataSourceITCase extends JavaProgramTestBaseJUnit5 {
 
     private String inputPath;
 
@@ -71,8 +70,8 @@ public class DataSourceITCase extends JavaProgramTestBase {
         public void configure(Configuration parameters) {
             super.configure(parameters);
 
-            Assert.assertNotNull(parameters.getString("prepend", null));
-            Assert.assertEquals("test", parameters.getString("prepend", null));
+            assertThat(parameters.getString("prepend", null)).isNotNull()
+                    .isEqualTo("test");
         }
     }
 }

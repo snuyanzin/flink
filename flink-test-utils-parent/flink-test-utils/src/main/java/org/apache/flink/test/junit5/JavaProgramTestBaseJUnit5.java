@@ -56,7 +56,7 @@ public abstract class JavaProgramTestBaseJUnit5 extends AbstractTestBaseJUnit5 {
     }
 
     public int getParallelism() {
-        return ExecutionEnvironment.getExecutionEnvironment().getParallelism();
+        return isCollectionExecution ? 1 : ExecutionEnvironment.getExecutionEnvironment().getParallelism();
     }
 
     public JobExecutionResult getLatestExecutionResult() {

@@ -24,13 +24,13 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.DiscardingOutputFormat;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.util.Collector;
 
 import org.junit.Assert;
 
 /** Test accumulator within iteration. */
-public class AccumulatorIterativeITCase extends JavaProgramTestBase {
+public class AccumulatorIterativeITCase extends JavaProgramTestBaseJUnit5 {
     private static final int NUM_ITERATIONS = 3;
     private static final int NUM_SUBTASKS = 1;
     private static final String ACC_NAME = "test";

@@ -20,15 +20,15 @@
 package org.apache.flink.test.example.java;
 
 import org.apache.flink.examples.java.graph.ConnectedComponents;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.testdata.ConnectedComponentsData;
-import org.apache.flink.test.util.JavaProgramTestBase;
 
 import java.io.BufferedReader;
 
 import static org.apache.flink.test.util.TestBaseUtils.getResultReader;
 
 /** Test for {@link ConnectedComponents}. */
-public class ConnectedComponentsITCase extends JavaProgramTestBase {
+public class ConnectedComponentsITCase extends JavaProgramTestBaseJUnit5 {
 
     private static final long SEED = 0xBADC0FFEEBEEFL;
 

@@ -27,8 +27,8 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.examples.java.graph.ConnectedComponents.ComponentIdFilter;
 import org.apache.flink.examples.java.graph.ConnectedComponents.NeighborWithComponentIDJoin;
 import org.apache.flink.examples.java.graph.ConnectedComponents.UndirectEdge;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.testdata.ConnectedComponentsData;
-import org.apache.flink.test.util.JavaProgramTestBase;
 
 import java.io.BufferedReader;
 
@@ -36,7 +36,7 @@ import static org.apache.flink.test.util.TestBaseUtils.getResultReader;
 
 /** Delta iteration test implementing the connected components algorithm with an object map. */
 @SuppressWarnings("serial")
-public class ConnectedComponentsWithObjectMapITCase extends JavaProgramTestBase {
+public class ConnectedComponentsWithObjectMapITCase extends JavaProgramTestBaseJUnit5 {
 
     private static final long SEED = 0xBADC0FFEEBEEFL;
 

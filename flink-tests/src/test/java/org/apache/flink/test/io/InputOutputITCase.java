@@ -21,14 +21,16 @@ package org.apache.flink.test.io;
 import org.apache.flink.api.common.operators.util.TestNonRichInputFormat;
 import org.apache.flink.api.common.operators.util.TestNonRichOutputFormat;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.Assertions;
+
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests for non rich DataSource and DataSink input output formats being correctly used at runtime.
  */
-public class InputOutputITCase extends JavaProgramTestBase {
+public class InputOutputITCase extends JavaProgramTestBaseJUnit5 {
 
     @Override
     protected void testProgram() throws Exception {

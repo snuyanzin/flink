@@ -24,7 +24,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.util.Collector;
 
 import org.junit.Assert;
@@ -34,7 +34,7 @@ import java.util.List;
 
 /** Integration test for a bulk iteration with an all reduce. */
 @SuppressWarnings("serial")
-public class BulkIterationWithAllReducerITCase extends JavaProgramTestBase {
+public class BulkIterationWithAllReducerITCase extends JavaProgramTestBaseJUnit5 {
 
     @Override
     protected void testProgram() throws Exception {

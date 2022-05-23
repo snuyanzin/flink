@@ -20,20 +20,21 @@ package org.apache.flink.api.hadoopcompatibility.scala
 import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.hadoop.mapred.HadoopOutputFormat
 import org.apache.flink.hadoopcompatibility.scala.HadoopInputs
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5
 import org.apache.flink.test.testdata.WordCountData
-import org.apache.flink.test.util.{JavaProgramTestBase, TestBaseUtils}
+import org.apache.flink.test.util.TestBaseUtils
 import org.apache.flink.util.OperatingSystem
-
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapred.{FileOutputFormat, JobConf, TextInputFormat, TextOutputFormat}
-import org.junit.{Assume, Before}
+import org.junit.Assume
+import org.junit.jupiter.api.BeforeEach
 
-class WordCountMapredITCase extends JavaProgramTestBase {
+class WordCountMapredITCase extends JavaProgramTestBaseJUnit5 {
   protected var textPath: String = null
   protected var resultPath: String = null
 
-  @Before
+  @BeforeEach
   def checkOperatingSystem() {
     // FLINK-5164 - see https://wiki.apache.org/hadoop/WindowsProblems
     Assume.assumeTrue("This test can't run successfully on Windows.", !OperatingSystem.isWindows)

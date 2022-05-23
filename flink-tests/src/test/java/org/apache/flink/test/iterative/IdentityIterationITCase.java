@@ -21,15 +21,15 @@ package org.apache.flink.test.iterative;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.api.java.operators.IterativeDataSet;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test empty (identity) bulk iteration. */
-public class IdentityIterationITCase extends JavaProgramTestBase {
+public class IdentityIterationITCase extends JavaProgramTestBaseJUnit5 {
 
     private List<Long> result = new ArrayList<Long>();
 
@@ -45,12 +45,12 @@ public class IdentityIterationITCase extends JavaProgramTestBase {
 
     @Override
     protected void postSubmit() {
-        assertEquals(10, result.size());
+        assertThat(result).hasSize(10);
 
         long sum = 0;
         for (Long l : result) {
             sum += l;
         }
-        assertEquals(55, sum);
+        assertThat(sum).isEqualTo(55);
     }
 }

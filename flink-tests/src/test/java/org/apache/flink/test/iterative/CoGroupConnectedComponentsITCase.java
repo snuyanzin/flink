@@ -30,8 +30,8 @@ import org.apache.flink.api.java.operators.DeltaIteration;
 import org.apache.flink.api.java.operators.JoinOperator;
 import org.apache.flink.api.java.tuple.Tuple1;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.testdata.ConnectedComponentsData;
-import org.apache.flink.test.util.JavaProgramTestBase;
 import org.apache.flink.util.Collector;
 
 import java.io.BufferedReader;
@@ -40,7 +40,7 @@ import java.util.Iterator;
 import static org.apache.flink.test.util.TestBaseUtils.getResultReader;
 
 /** Delta iteration test implementing the connected components algorithm with a cogroup. */
-public class CoGroupConnectedComponentsITCase extends JavaProgramTestBase {
+public class CoGroupConnectedComponentsITCase extends JavaProgramTestBaseJUnit5 {
 
     private static final long SEED = 0xBADC0FFEEBEEFL;
 

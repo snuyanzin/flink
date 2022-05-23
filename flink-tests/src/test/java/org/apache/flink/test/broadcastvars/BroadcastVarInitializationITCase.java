@@ -25,7 +25,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.util.Collector;
 
 import org.junit.Assert;
@@ -36,7 +36,7 @@ import java.util.List;
 
 /** Test {@link BroadcastVariableInitializer}. */
 @SuppressWarnings("serial")
-public class BroadcastVarInitializationITCase extends JavaProgramTestBase {
+public class BroadcastVarInitializationITCase extends JavaProgramTestBaseJUnit5 {
 
     @Override
     protected void testProgram() throws Exception {

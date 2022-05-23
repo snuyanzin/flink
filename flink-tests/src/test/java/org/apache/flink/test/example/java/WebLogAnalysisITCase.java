@@ -20,13 +20,13 @@
 package org.apache.flink.test.example.java;
 
 import org.apache.flink.examples.java.relational.WebLogAnalysis;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.testdata.WebLogAnalysisData;
-import org.apache.flink.test.util.JavaProgramTestBase;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultsByLinesInMemory;
 
 /** Test for {@link WebLogAnalysis}. */
-public class WebLogAnalysisITCase extends JavaProgramTestBase {
+public class WebLogAnalysisITCase extends JavaProgramTestBaseJUnit5 {
 
     private String docsPath;
     private String ranksPath;

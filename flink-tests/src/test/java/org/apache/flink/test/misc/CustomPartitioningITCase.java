@@ -23,20 +23,20 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.io.DiscardingOutputFormat;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 
-import org.junit.Assert;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Integration tests for custom {@link Partitioner}. */
 @SuppressWarnings("serial")
-public class CustomPartitioningITCase extends JavaProgramTestBase {
+public class CustomPartitioningITCase extends JavaProgramTestBaseJUnit5 {
 
     @Override
     protected void testProgram() throws Exception {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         if (!isCollectionExecution()) {
-            Assert.assertTrue(env.getParallelism() > 1);
+            assertThat(env.getParallelism()).isGreaterThan(1);
         }
 
         env.generateSequence(1, 1000)

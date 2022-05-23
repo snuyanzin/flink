@@ -25,8 +25,8 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.graph.Edge;
 import org.apache.flink.graph.Graph;
 import org.apache.flink.graph.Vertex;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.testdata.ConnectedComponentsData;
-import org.apache.flink.test.util.JavaProgramTestBase;
 import org.apache.flink.types.NullValue;
 
 import java.io.BufferedReader;
@@ -35,7 +35,7 @@ import static org.apache.flink.test.util.TestBaseUtils.getResultReader;
 
 /** Test {@link ConnectedComponents} with a randomly generated graph. */
 @SuppressWarnings("serial")
-public class ConnectedComponentsWithRandomisedEdgesITCase extends JavaProgramTestBase {
+public class ConnectedComponentsWithRandomisedEdgesITCase extends JavaProgramTestBaseJUnit5 {
 
     private static final long SEED = 9487520347802987L;
 

@@ -29,7 +29,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.util.Collector;
 
 import java.util.Collection;
@@ -38,7 +38,7 @@ import java.util.List;
 import static org.apache.flink.test.util.TestBaseUtils.compareResultAsText;
 
 /** Test broadcast input after branching. */
-public class BroadcastBranchingITCase extends JavaProgramTestBase {
+public class BroadcastBranchingITCase extends JavaProgramTestBaseJUnit5 {
     private static final String RESULT = "(2,112)\n";
 
     //              Sc1(id,a,b,c) --

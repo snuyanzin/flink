@@ -24,22 +24,21 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.runtime.client.JobExecutionException;
-import org.apache.flink.test.util.JavaProgramTestBase;
-
-import org.junit.Assert;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 
 import java.util.List;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultAsText;
 import static org.apache.flink.util.ExceptionUtils.findThrowableWithMessage;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Tests that both jobs, the failing and the working one, are handled correctly. The first (failing)
  * job must be canceled and the client must report the failure. The second (working) job must finish
  * successfully and compute the correct result.
  */
-public class TaskFailureITCase extends JavaProgramTestBase {
+public class TaskFailureITCase extends JavaProgramTestBaseJUnit5 {
 
     private static final String EXCEPTION_STRING = "This is an expected Test Exception";
 
@@ -50,16 +49,16 @@ public class TaskFailureITCase extends JavaProgramTestBase {
             executeTask(new FailingTestMapper(), 1);
         } catch (RuntimeException e) { // expected for collection execution
             if (!isCollectionExecution()) {
-                Assert.fail();
+                fail();
             }
             // for collection execution, no restarts. So, exception should be appended with 0.
-            assertTrue(findThrowableWithMessage(e, EXCEPTION_STRING + ":0").isPresent());
+            assertThat(findThrowableWithMessage(e, EXCEPTION_STRING + ":0")).isPresent();
         } catch (JobExecutionException e) { // expected for cluster execution
             if (isCollectionExecution()) {
-                Assert.fail();
+                fail();
             }
             // for cluster execution, one restart. So, exception should be appended with 1.
-            assertTrue(findThrowableWithMessage(e, EXCEPTION_STRING + ":1").isPresent());
+            assertThat(findThrowableWithMessage(e, EXCEPTION_STRING + ":1")).isPresent();
         }
         // test correct version
         executeTask(new TestMapper(), 0);

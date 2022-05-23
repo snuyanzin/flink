@@ -24,8 +24,8 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.util.CoordVector;
-import org.apache.flink.test.util.JavaProgramTestBase;
 import org.apache.flink.test.util.PointFormatter;
 import org.apache.flink.test.util.PointInFormat;
 import org.apache.flink.util.Collector;
@@ -35,7 +35,7 @@ import java.io.Serializable;
 import static org.apache.flink.test.util.TestBaseUtils.compareResultsByLinesInMemory;
 
 /** Test iteration with union. */
-public class IterationWithUnionITCase extends JavaProgramTestBase {
+public class IterationWithUnionITCase extends JavaProgramTestBaseJUnit5 {
 
     private static final String DATAPOINTS =
             "0|50.90|16.20|72.08|\n" + "1|73.65|61.76|62.89|\n" + "2|61.73|49.95|92.74|\n";

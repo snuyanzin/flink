@@ -22,15 +22,15 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple5;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.operators.util.CollectionDataSets;
-import org.apache.flink.test.util.JavaProgramTestBase;
 
 import java.util.List;
 
 import static org.apache.flink.test.util.TestBaseUtils.compareResultAsTuples;
 
 /** Integration tests for {@link DataSet#project}. */
-public class ProjectITCase extends JavaProgramTestBase {
+public class ProjectITCase extends JavaProgramTestBaseJUnit5 {
 
     @Override
     protected void testProgram() throws Exception {

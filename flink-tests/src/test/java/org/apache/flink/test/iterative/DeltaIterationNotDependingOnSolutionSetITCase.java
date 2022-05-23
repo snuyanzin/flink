@@ -25,17 +25,17 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.api.java.operators.DeltaIteration;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.test.util.JavaProgramTestBase;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /** Test delta iterations that do not join with the solution set. */
 @SuppressWarnings("serial")
-public class DeltaIterationNotDependingOnSolutionSetITCase extends JavaProgramTestBase {
+public class DeltaIterationNotDependingOnSolutionSetITCase extends JavaProgramTestBaseJUnit5 {
     private final List<Tuple2<Long, Long>> result = new ArrayList<>();
 
     @Override
@@ -69,7 +69,7 @@ public class DeltaIterationNotDependingOnSolutionSetITCase extends JavaProgramTe
         }
 
         for (int i = 0; i < present.length; i++) {
-            assertTrue(String.format("Missing tuple (%d, %d)", i, i), present[i]);
+            assertThat(present[i]).as(String.format("Missing tuple (%d, %d)", i, i)).isTrue();
         }
     }
 

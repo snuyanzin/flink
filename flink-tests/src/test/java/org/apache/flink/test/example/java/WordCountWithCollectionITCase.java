@@ -25,17 +25,17 @@ import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.examples.java.wordcount.WordCount;
+import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 import org.apache.flink.test.testdata.WordCountData;
-import org.apache.flink.test.util.JavaProgramTestBase;
-
-import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /** WordCount with collection example. */
-public class WordCountWithCollectionITCase extends JavaProgramTestBase {
+public class WordCountWithCollectionITCase extends JavaProgramTestBaseJUnit5 {
 
     private final List<Tuple2<String, Integer>> resultsCollected =
             new ArrayList<Tuple2<String, Integer>>();
@@ -51,11 +51,10 @@ public class WordCountWithCollectionITCase extends JavaProgramTestBase {
         String[] expected = WordCountData.COUNTS_AS_TUPLES.split("\n");
         Arrays.sort(expected);
 
-        Assert.assertEquals(
-                "Different number of lines in expected and obtained result.",
-                expected.length,
-                result.length);
-        Assert.assertArrayEquals(expected, result);
+        assertThat(result)
+                .as("Different number of lines in expected and obtained result.")
+                .hasSameSizeAs(expected)
+                .containsExactly(expected);
     }
 
     @Override
