@@ -28,12 +28,12 @@ import org.apache.flink.table.runtime.operators.join.Int2HashJoinOperatorTest;
 import org.apache.flink.table.types.logical.IntType;
 import org.apache.flink.table.types.logical.RowType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link LongHashJoinGenerator}. */
-public class LongHashJoinGeneratorTest extends Int2HashJoinOperatorTest {
+class LongHashJoinGeneratorTest extends Int2HashJoinOperatorTest {
 
     @Override
     public Object newOperator(long memorySize, HashJoinType type, boolean reverseJoinFunction) {

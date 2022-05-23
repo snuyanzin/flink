@@ -41,7 +41,7 @@ import org.apache.flink.table.types.logical.IntType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.util.MutableObjectIterator;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -57,7 +57,7 @@ public class Int2HashJoinOperatorTest implements Serializable {
 
     // ---------------------- build first inner join -----------------------------------------
     @Test
-    public void testBuildFirstHashInnerJoin() throws Exception {
+    void testBuildFirstHashInnerJoin() throws Exception {
 
         int numKeys = 100;
         int buildValsPerKey = 3;

@@ -40,63 +40,67 @@ import org.apache.flink.table.runtime.util.UniformBinaryRowGenerator;
 import org.apache.flink.types.IntValue;
 import org.apache.flink.util.MutableObjectIterator;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Hash table it case for binary row. */
-@RunWith(Parameterized.class)
-public class BinaryHashTableTest {
+class BinaryHashTableTest {
 
     private static final int PAGE_SIZE = 32 * 1024;
     private IOManager ioManager;
     private BinaryRowDataSerializer buildSideSerializer;
     private BinaryRowDataSerializer probeSideSerializer;
 
-    private boolean useCompress;
-    private Configuration conf;
-
-    public BinaryHashTableTest(boolean useCompress) {
-        this.useCompress = useCompress;
+    private static Stream<TestSpec> getVarSeg() {
+        return Stream.of(new TestSpec(true), new TestSpec(false));
     }
 
-    @Parameterized.Parameters(name = "useCompress-{0}")
-    public static List<Boolean> getVarSeg() {
-        return Arrays.asList(true, false);
+    private static class TestSpec {
+        private final Configuration conf;
+        private final boolean useCompress;
+
+        TestSpec(boolean useCompress) {
+            this.useCompress = useCompress;
+            conf = new Configuration();
+            conf.setBoolean(
+                    ExecutionConfigOptions.TABLE_EXEC_SPILL_COMPRESSION_ENABLED, useCompress);
+        }
+
+        @Override
+        public String toString() {
+            return "useCompress-" + useCompress;
+        }
     }
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         TypeInformation[] types = new TypeInformation[] {Types.INT, Types.INT};
         this.buildSideSerializer = new BinaryRowDataSerializer(types.length);
         this.probeSideSerializer = new BinaryRowDataSerializer(types.length);
-
         this.ioManager = new IOManagerAsync();
-
-        conf = new Configuration();
-        conf.setBoolean(ExecutionConfigOptions.TABLE_EXEC_SPILL_COMPRESSION_ENABLED, useCompress);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         // shut down I/O manager and Memory Manager and verify the correct shutdown
         this.ioManager.close();
     }
 
-    @Test
-    public void testIOBufferCountComputation() {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testIOBufferCountComputation(TestSpec testSpec) {
         assertThat(BinaryHashTable.getNumWriteBehindBuffers(32)).isEqualTo(1);
         assertThat(BinaryHashTable.getNumWriteBehindBuffers(33)).isEqualTo(1);
         assertThat(BinaryHashTable.getNumWriteBehindBuffers(40)).isEqualTo(1);
@@ -118,8 +122,9 @@ public class BinaryHashTableTest {
         assertThat(BinaryHashTable.getNumWriteBehindBuffers(Integer.MAX_VALUE)).isEqualTo(6);
     }
 
-    @Test
-    public void testInMemoryMutableHashTable() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testInMemoryMutableHashTable(TestSpec testSpec) throws IOException {
         final int numKeys = 100000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -142,7 +147,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         100 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
 
         int numRecordsInJoinResult = join(table, buildInput, probeInput);
         assertThat(numRecordsInJoinResult)
@@ -214,8 +220,9 @@ public class BinaryHashTableTest {
         return count;
     }
 
-    @Test
-    public void testSpillingHashJoinOneRecursionPerformance() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinOneRecursionPerformance(TestSpec testSpec) throws IOException {
         final int numKeys = 1000000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -242,7 +249,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         100 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
 
         // ----------------------------------------------------------------------------------------
 
@@ -259,8 +267,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testSpillingHashJoinOneRecursionValidity() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinOneRecursionValidity(TestSpec testSpec) throws IOException {
         final int numKeys = 1000000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -287,7 +296,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         100 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
         final BinaryRowData recordReuse = new BinaryRowData(2);
 
         BinaryRowData buildRow = buildSideSerializer.createInstance();
@@ -324,8 +334,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testSpillingHashJoinWithMassiveCollisions() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinWithMassiveCollisions(TestSpec testSpec) throws IOException {
         // the following two values are known to have a hash-code collision on the initial level.
         // we use them to make sure one partition grows over-proportionally large
         final int repeatedValue1 = 40559;
@@ -378,7 +389,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         896 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
 
         final BinaryRowData recordReuse = new BinaryRowData(2);
 
@@ -460,8 +472,9 @@ public class BinaryHashTableTest {
      * of repeated values (causing bucket collisions) are large enough to make sure that their target partition no longer
      * fits into memory by itself and needs to be repartitioned in the recursion again.
      */
-    @Test
-    public void testSpillingHashJoinWithTwoRecursions() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinWithTwoRecursions(TestSpec testSpec) throws IOException {
         // the following two values are known to have a hash-code collision on the first recursion
         // level.
         // we use them to make sure one partition grows over-proportionally large
@@ -515,7 +528,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         896 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
         final BinaryRowData recordReuse = new BinaryRowData(2);
 
         BinaryRowData buildRow = buildSideSerializer.createInstance();
@@ -561,8 +575,9 @@ public class BinaryHashTableTest {
      * of repeated values (causing bucket collisions) are large enough to make sure that their target partition no longer
      * fits into memory by itself and needs to be repartitioned in the recursion again.
      */
-    @Test
-    public void testFailingHashJoinTooManyRecursions() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testFailingHashJoinTooManyRecursions(TestSpec testSpec) throws IOException {
         // the following two values are known to have a hash-code collision on the first recursion
         // level.
         // we use them to make sure one partition grows over-proportionally large
@@ -611,7 +626,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         896 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
 
         try {
             join(table, buildInput, probeInput);
@@ -631,8 +647,9 @@ public class BinaryHashTableTest {
      * Spills build records, so that probe records are also spilled. But only so
      * few probe records are used that some partitions remain empty.
      */
-    @Test
-    public void testSparseProbeSpilling() throws IOException, MemoryAllocationException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testSparseProbeSpilling(TestSpec testSpec) throws IOException, MemoryAllocationException {
         final int numBuildKeys = 1000000;
         final int numBuildVals = 1;
         final int numProbeKeys = 20;
@@ -650,7 +667,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         100 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
 
         int expectedNumResults =
                 (Math.min(numProbeKeys, numBuildKeys) * numBuildVals) * numProbeVals;
@@ -674,8 +692,9 @@ public class BinaryHashTableTest {
      * Same test as {@link #testSparseProbeSpilling} but using a build-side outer join
      * that requires spilled build-side records to be returned and counted.
      */
-    @Test
-    public void testSparseProbeSpillingWithOuterJoin() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testSparseProbeSpillingWithOuterJoin(TestSpec testSpec) throws IOException {
         final int numBuildKeys = 1000000;
         final int numBuildVals = 1;
         final int numProbeKeys = 20;
@@ -687,7 +706,7 @@ public class BinaryHashTableTest {
                 MemoryManagerBuilder.newBuilder().setMemorySize(96 * PAGE_SIZE).build();
         final BinaryHashTable table =
                 new BinaryHashTable(
-                        conf,
+                        testSpec.conf,
                         new Object(),
                         this.buildSideSerializer,
                         this.probeSideSerializer,
@@ -727,8 +746,10 @@ public class BinaryHashTableTest {
      * This test validates a bug fix against former memory loss in the case where a partition was spilled
      * during an insert into the same.
      */
-    @Test
-    public void validateSpillingDuringInsertion() throws IOException, MemoryAllocationException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void validateSpillingDuringInsertion(TestSpec testSpec)
+            throws IOException, MemoryAllocationException {
         final int numBuildKeys = 500000;
         final int numBuildVals = 1;
         final int numProbeKeys = 10;
@@ -746,7 +767,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         85 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
 
         int expectedNumResults =
                 (Math.min(numProbeKeys, numBuildKeys) * numBuildVals) * numProbeVals;
@@ -766,8 +788,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testBucketsNotFulfillSegment() throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testBucketsNotFulfillSegment(TestSpec testSpec) throws Exception {
         final int numKeys = 10000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -787,7 +810,7 @@ public class BinaryHashTableTest {
 
         final BinaryHashTable table =
                 new BinaryHashTable(
-                        conf,
+                        testSpec.conf,
                         new Object(),
                         this.buildSideSerializer,
                         this.probeSideSerializer,
@@ -834,8 +857,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testHashWithBuildSideOuterJoin1() throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testHashWithBuildSideOuterJoin1(TestSpec testSpec) throws Exception {
         final int numKeys = 20000;
         final int buildValsPerKey = 1;
         final int probeValsPerKey = 1;
@@ -852,7 +876,7 @@ public class BinaryHashTableTest {
         // allocate the memory for the HashTable
         final BinaryHashTable table =
                 new BinaryHashTable(
-                        conf,
+                        testSpec.conf,
                         new Object(),
                         this.buildSideSerializer,
                         this.probeSideSerializer,
@@ -880,8 +904,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testHashWithBuildSideOuterJoin2() throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testHashWithBuildSideOuterJoin2(TestSpec testSpec) throws Exception {
         final int numKeys = 40000;
         final int buildValsPerKey = 2;
         final int probeValsPerKey = 1;
@@ -909,7 +934,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         33 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
 
         // ----------------------------------------------------------------------------------------
 
@@ -922,8 +948,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testRepeatBuildJoin() throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testRepeatBuildJoin(TestSpec testSpec) throws Exception {
         final int numKeys = 500;
         final int probeValsPerKey = 1;
         MemoryManager memManager =
@@ -957,7 +984,7 @@ public class BinaryHashTableTest {
 
         final BinaryHashTable table =
                 new BinaryHashTable(
-                        conf,
+                        testSpec.conf,
                         new Object(),
                         buildSideSerializer,
                         probeSideSerializer,
@@ -984,8 +1011,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testRepeatBuildJoinWithSpill() throws Exception {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testRepeatBuildJoinWithSpill(TestSpec testSpec) throws Exception {
         final int numKeys = 30000;
         final int numRows = 300000;
         final int probeValsPerKey = 1;
@@ -1022,7 +1050,7 @@ public class BinaryHashTableTest {
 
         final BinaryHashTable table =
                 new BinaryHashTable(
-                        conf,
+                        testSpec.conf,
                         new Object(),
                         buildSideSerializer,
                         probeSideSerializer,
@@ -1049,8 +1077,9 @@ public class BinaryHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testBinaryHashBucketAreaNotEnoughMem() throws IOException {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("getVarSeg")
+    void testBinaryHashBucketAreaNotEnoughMem(TestSpec testSpec) throws IOException {
         MemoryManager memManager =
                 MemoryManagerBuilder.newBuilder().setMemorySize(35 * PAGE_SIZE).build();
         BinaryHashTable table =
@@ -1061,7 +1090,8 @@ public class BinaryHashTableTest {
                         new MyProjection(),
                         memManager,
                         35 * PAGE_SIZE,
-                        ioManager);
+                        ioManager,
+                        testSpec.conf);
         BinaryHashBucketArea area = new BinaryHashBucketArea(table, 100, 1, false);
         for (int i = 0; i < 100000; i++) {
             area.insertToBucket(i, i, true);
@@ -1118,7 +1148,8 @@ public class BinaryHashTableTest {
             Projection<RowData, BinaryRowData> probeSideProjection,
             MemoryManager memoryManager,
             long memory,
-            IOManager ioManager) {
+            IOManager ioManager,
+            Configuration conf) {
         return new BinaryHashTable(
                 conf,
                 new Object(),

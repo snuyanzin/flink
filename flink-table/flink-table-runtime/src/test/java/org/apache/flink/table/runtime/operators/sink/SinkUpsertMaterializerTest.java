@@ -35,7 +35,7 @@ import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.table.utils.HandwrittenSelectorUtil;
 import org.apache.flink.types.RowKind;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ import static org.apache.flink.table.runtime.util.StreamRecordUtils.rowOfKind;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Test for {@link SinkUpsertMaterializer}. */
-public class SinkUpsertMaterializerTest {
+class SinkUpsertMaterializerTest {
 
     private final StateTtlConfig ttlConfig = StateConfigUtil.createTtlConfig(1000);
     private final LogicalType[] types = new LogicalType[] {new IntType(), new VarCharType()};
@@ -63,7 +63,7 @@ public class SinkUpsertMaterializerTest {
             };
 
     @Test
-    public void test() throws Exception {
+    void test() throws Exception {
         SinkUpsertMaterializer materializer =
                 new SinkUpsertMaterializer(ttlConfig, serializer, equaliser);
         KeyedOneInputStreamOperatorTestHarness<RowData, RowData, RowData> testHarness =
