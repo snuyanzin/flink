@@ -23,8 +23,6 @@ import org.apache.flink.api.common.operators.util.TestNonRichOutputFormat;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5;
 
-import org.junit.jupiter.api.Assertions;
-
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**

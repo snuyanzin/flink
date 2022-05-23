@@ -56,7 +56,9 @@ public abstract class JavaProgramTestBaseJUnit5 extends AbstractTestBaseJUnit5 {
     }
 
     public int getParallelism() {
-        return isCollectionExecution ? 1 : ExecutionEnvironment.getExecutionEnvironment().getParallelism();
+        return isCollectionExecution
+                ? 1
+                : ExecutionEnvironment.getExecutionEnvironment().getParallelism();
     }
 
     public JobExecutionResult getLatestExecutionResult() {
@@ -86,7 +88,8 @@ public abstract class JavaProgramTestBaseJUnit5 extends AbstractTestBaseJUnit5 {
     // --------------------------------------------------------------------------------------------
 
     @Test
-    public void testJobWithObjectReuse(@InjectMiniCluster MiniCluster miniCluster) throws Exception {
+    public void testJobWithObjectReuse(@InjectMiniCluster MiniCluster miniCluster)
+            throws Exception {
         isCollectionExecution = false;
 
         // pre-submit
@@ -102,7 +105,8 @@ public abstract class JavaProgramTestBaseJUnit5 extends AbstractTestBaseJUnit5 {
         // We should fix that we are able to get access to the latest execution result from a
         // different
         // execution environment and how the object reuse mode is enabled
-        TestEnvironment originalEnv = (TestEnvironment) ExecutionEnvironment.getExecutionEnvironment();
+        TestEnvironment originalEnv =
+                (TestEnvironment) ExecutionEnvironment.getExecutionEnvironment();
         TestEnvironment env = new TestEnvironment(miniCluster, originalEnv.getParallelism(), true);
         env.setAsContext();
 
@@ -135,7 +139,8 @@ public abstract class JavaProgramTestBaseJUnit5 extends AbstractTestBaseJUnit5 {
     }
 
     @Test
-    public void testJobWithoutObjectReuse(@InjectMiniCluster MiniCluster miniCluster) throws Exception {
+    public void testJobWithoutObjectReuse(@InjectMiniCluster MiniCluster miniCluster)
+            throws Exception {
         isCollectionExecution = false;
 
         // pre-submit
@@ -151,7 +156,8 @@ public abstract class JavaProgramTestBaseJUnit5 extends AbstractTestBaseJUnit5 {
         // We should fix that we are able to get access to the latest execution result from a
         // different
         // execution environment and how the object reuse mode is enabled
-        TestEnvironment originalEnv = (TestEnvironment) ExecutionEnvironment.getExecutionEnvironment();
+        TestEnvironment originalEnv =
+                (TestEnvironment) ExecutionEnvironment.getExecutionEnvironment();
         TestEnvironment env = new TestEnvironment(miniCluster, originalEnv.getParallelism(), false);
         env.setAsContext();
 
@@ -202,7 +208,8 @@ public abstract class JavaProgramTestBaseJUnit5 extends AbstractTestBaseJUnit5 {
             Assert.fail("Pre-submit work caused an error: " + e.getMessage());
         }
 
-        TestEnvironment originalEnv = (TestEnvironment) ExecutionEnvironment.getExecutionEnvironment();
+        TestEnvironment originalEnv =
+                (TestEnvironment) ExecutionEnvironment.getExecutionEnvironment();
         // prepare the test environment
         CollectionTestEnvironment env = new CollectionTestEnvironment();
         env.setAsContext();

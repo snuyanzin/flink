@@ -70,8 +70,7 @@ public class DataSourceITCase extends JavaProgramTestBaseJUnit5 {
         public void configure(Configuration parameters) {
             super.configure(parameters);
 
-            assertThat(parameters.getString("prepend", null)).isNotNull()
-                    .isEqualTo("test");
+            assertThat(parameters.getString("prepend", null)).isNotNull().isEqualTo("test");
         }
     }
 }

@@ -24,6 +24,7 @@ import org.apache.flink.test.junit5.JavaProgramTestBaseJUnit5
 import org.apache.flink.test.testdata.WordCountData
 import org.apache.flink.test.util.TestBaseUtils
 import org.apache.flink.util.OperatingSystem
+
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.hadoop.mapreduce.Job
