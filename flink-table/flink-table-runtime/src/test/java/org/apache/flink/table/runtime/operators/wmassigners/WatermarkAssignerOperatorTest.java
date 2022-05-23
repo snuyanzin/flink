@@ -29,7 +29,7 @@ import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.runtime.generated.GeneratedWatermarkGenerator;
 import org.apache.flink.table.runtime.generated.WatermarkGenerator;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nullable;
 
@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Tests of {@link WatermarkAssignerOperator}. */
-public class WatermarkAssignerOperatorTest extends WatermarkAssignerOperatorTestBase {
+class WatermarkAssignerOperatorTest extends WatermarkAssignerOperatorTestBase {
 
     private static final WatermarkGenerator WATERMARK_GENERATOR =
             new BoundedOutOfOrderWatermarkGenerator(0, 1);
