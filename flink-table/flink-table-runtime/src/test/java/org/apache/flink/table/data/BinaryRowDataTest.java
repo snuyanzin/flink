@@ -87,7 +87,7 @@ import static org.assertj.core.api.HamcrestCondition.matching;
 class BinaryRowDataTest {
 
     @Test
-    public void testBasic() {
+    void testBasic() {
         // consider header 1 byte.
         assertThat(new BinaryRowData(0).getFixedLengthPartSize()).isEqualTo(8);
         assertThat(new BinaryRowData(1).getFixedLengthPartSize()).isEqualTo(16);
@@ -860,7 +860,7 @@ class BinaryRowDataTest {
     }
 
     @Test
-    public void testZeroOutPaddingString() {
+    void testZeroOutPaddingString() {
 
         Random random = new Random();
         byte[] bytes = new byte[1024];
@@ -928,7 +928,7 @@ class BinaryRowDataTest {
     }
 
     @Test
-    public void testSerStringToKryo() throws IOException {
+    void testSerStringToKryo() throws IOException {
         KryoSerializer<BinaryStringData> serializer =
                 new KryoSerializer<>(BinaryStringData.class, new ExecutionConfig());
 

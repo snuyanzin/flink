@@ -35,24 +35,22 @@ import org.apache.flink.table.runtime.util.RowIterator;
 import org.apache.flink.table.runtime.util.UniformBinaryRowGenerator;
 import org.apache.flink.util.MutableObjectIterator;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 /** Test for {@link LongHashPartition}. */
-@RunWith(Parameterized.class)
-public class LongHashTableTest {
+class LongHashTableTest {
 
     private static final int PAGE_SIZE = 32 * 1024;
     private IOManager ioManager;
@@ -61,32 +59,38 @@ public class LongHashTableTest {
     private MemoryManager memManager =
             MemoryManagerBuilder.newBuilder().setMemorySize(896 * PAGE_SIZE).build();
 
-    private boolean useCompress;
-    private Configuration conf;
-
-    public LongHashTableTest(boolean useCompress) {
-        this.useCompress = useCompress;
+    private static Stream<TestSpec> getVarSeg() {
+        return Stream.of(new TestSpec(true), new TestSpec(false));
     }
 
-    @Parameterized.Parameters(name = "useCompress-{0}")
-    public static List<Boolean> getVarSeg() {
-        return Arrays.asList(true, false);
+    private static class TestSpec {
+        private final Configuration conf;
+        private boolean useCompress;
+
+        private TestSpec(boolean useCompress) {
+            conf = new Configuration();
+            this.useCompress = useCompress;
+            conf.setBoolean(
+                    ExecutionConfigOptions.TABLE_EXEC_SPILL_COMPRESSION_ENABLED, useCompress);
+        }
+
+        @Override
+        public String toString() {
+            return useCompress + "";
+        }
     }
 
-    @Before
-    public void init() {
+    @BeforeEach
+    void init() {
         TypeInformation[] types = new TypeInformation[] {Types.INT, Types.INT};
         this.buildSideSerializer = new BinaryRowDataSerializer(types.length);
         this.probeSideSerializer = new BinaryRowDataSerializer(types.length);
         this.ioManager = new IOManagerAsync();
-
-        conf = new Configuration();
-        conf.setBoolean(ExecutionConfigOptions.TABLE_EXEC_SPILL_COMPRESSION_ENABLED, useCompress);
     }
 
     private class MyHashTable extends LongHybridHashTable {
 
-        public MyHashTable(long memorySize) {
+        public MyHashTable(long memorySize, Configuration conf) {
             super(
                     conf,
                     LongHashTableTest.this,
@@ -115,8 +119,9 @@ public class LongHashTableTest {
         }
     }
 
-    @Test
-    public void testInMemory() throws IOException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testInMemory(TestSpec testSpec) throws IOException {
         final int numKeys = 100000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -129,7 +134,7 @@ public class LongHashTableTest {
         MutableObjectIterator<BinaryRowData> probeInput =
                 new UniformBinaryRowGenerator(numKeys, probeValsPerKey, true);
 
-        final MyHashTable table = new MyHashTable(500 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(500 * PAGE_SIZE, testSpec.conf);
 
         int numRecordsInJoinResult = join(table, buildInput, probeInput);
         assertThat(numRecordsInJoinResult)
@@ -141,8 +146,9 @@ public class LongHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testSpillingHashJoinOneRecursion() throws IOException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinOneRecursion(TestSpec testSpec) throws IOException {
         final int numKeys = 100000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -155,7 +161,7 @@ public class LongHashTableTest {
         MutableObjectIterator<BinaryRowData> probeInput =
                 new UniformBinaryRowGenerator(numKeys, probeValsPerKey, true);
 
-        final MyHashTable table = new MyHashTable(300 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(300 * PAGE_SIZE, testSpec.conf);
 
         int numRecordsInJoinResult = join(table, buildInput, probeInput);
 
@@ -171,8 +177,9 @@ public class LongHashTableTest {
     }
 
     /** Non partition in memory in level 0. */
-    @Test
-    public void testSpillingHashJoinOneRecursionPerformance() throws IOException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinOneRecursionPerformance(TestSpec testSpec) throws IOException {
         final int numKeys = 1000000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -185,7 +192,7 @@ public class LongHashTableTest {
         MutableObjectIterator<BinaryRowData> probeInput =
                 new UniformBinaryRowGenerator(numKeys, probeValsPerKey, true);
 
-        final MyHashTable table = new MyHashTable(100 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(100 * PAGE_SIZE, testSpec.conf);
 
         int numRecordsInJoinResult = join(table, buildInput, probeInput);
 
@@ -200,8 +207,9 @@ public class LongHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testSpillingHashJoinOneRecursionValidity() throws IOException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinOneRecursionValidity(TestSpec testSpec) throws IOException {
         final int numKeys = 1000000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -218,7 +226,7 @@ public class LongHashTableTest {
         HashMap<Integer, Long> map = new HashMap<>(numKeys);
 
         // ----------------------------------------------------------------------------------------
-        final MyHashTable table = new MyHashTable(100 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(100 * PAGE_SIZE, testSpec.conf);
 
         BinaryRowData buildRow = buildSideSerializer.createInstance();
         while ((buildRow = buildInput.next(buildRow)) != null) {
@@ -254,8 +262,9 @@ public class LongHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testSpillingHashJoinWithMassiveCollisions() throws IOException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinWithMassiveCollisions(TestSpec testSpec) throws IOException {
         // the following two values are known to have a hash-code collision on the initial level.
         // we use them to make sure one partition grows over-proportionally large
         final int repeatedValue1 = 40559;
@@ -299,7 +308,7 @@ public class LongHashTableTest {
         // create the map for validating the results
         HashMap<Integer, Long> map = new HashMap<>(numKeys);
 
-        final MyHashTable table = new MyHashTable(896 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(896 * PAGE_SIZE, testSpec.conf);
 
         BinaryRowData buildRow = buildSideSerializer.createInstance();
         while ((buildRow = buildInput.next(buildRow)) != null) {
@@ -339,8 +348,9 @@ public class LongHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testSpillingHashJoinWithTwoRecursions() throws IOException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testSpillingHashJoinWithTwoRecursions(TestSpec testSpec) throws IOException {
         // the following two values are known to have a hash-code collision on the first recursion
         // level.
         // we use them to make sure one partition grows over-proportionally large
@@ -385,7 +395,7 @@ public class LongHashTableTest {
         // create the map for validating the results
         HashMap<Integer, Long> map = new HashMap<>(numKeys);
 
-        final MyHashTable table = new MyHashTable(896 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(896 * PAGE_SIZE, testSpec.conf);
 
         BinaryRowData buildRow = buildSideSerializer.createInstance();
         while ((buildRow = buildInput.next(buildRow)) != null) {
@@ -430,8 +440,9 @@ public class LongHashTableTest {
      * of repeated values (causing bucket collisions) are large enough to make sure that their target partition no longer
      * fits into memory by itself and needs to be repartitioned in the recursion again.
      */
-    @Test
-    public void testFailingHashJoinTooManyRecursions() throws IOException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testFailingHashJoinTooManyRecursions(TestSpec testSpec) throws IOException {
         // the following two values are known to have a hash-code collision on the first recursion
         // level.
         // we use them to make sure one partition grows over-proportionally large
@@ -473,7 +484,7 @@ public class LongHashTableTest {
         probes.add(probe2);
         probes.add(probe3);
         MutableObjectIterator<BinaryRowData> probeInput = new UnionIterator<>(probes);
-        final MyHashTable table = new MyHashTable(896 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(896 * PAGE_SIZE, testSpec.conf);
 
         try {
             join(table, buildInput, probeInput);
@@ -489,8 +500,9 @@ public class LongHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testSparseProbeSpilling() throws IOException, MemoryAllocationException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testSparseProbeSpilling(TestSpec testSpec) throws IOException, MemoryAllocationException {
         final int numBuildKeys = 1000000;
         final int numBuildVals = 1;
         final int numProbeKeys = 20;
@@ -498,7 +510,7 @@ public class LongHashTableTest {
 
         MutableObjectIterator<BinaryRowData> buildInput =
                 new UniformBinaryRowGenerator(numBuildKeys, numBuildVals, false);
-        final MyHashTable table = new MyHashTable(100 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(100 * PAGE_SIZE, testSpec.conf);
 
         int expectedNumResults =
                 (Math.min(numProbeKeys, numBuildKeys) * numBuildVals) * numProbeVals;
@@ -518,8 +530,10 @@ public class LongHashTableTest {
         table.free();
     }
 
-    @Test
-    public void validateSpillingDuringInsertion() throws IOException, MemoryAllocationException {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void validateSpillingDuringInsertion(TestSpec testSpec)
+            throws IOException, MemoryAllocationException {
         final int numBuildKeys = 500000;
         final int numBuildVals = 1;
         final int numProbeKeys = 10;
@@ -527,7 +541,7 @@ public class LongHashTableTest {
 
         MutableObjectIterator<BinaryRowData> buildInput =
                 new UniformBinaryRowGenerator(numBuildKeys, numBuildVals, false);
-        final MyHashTable table = new MyHashTable(85 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(85 * PAGE_SIZE, testSpec.conf);
 
         int expectedNumResults =
                 (Math.min(numProbeKeys, numBuildKeys) * numBuildVals) * numProbeVals;
@@ -547,8 +561,9 @@ public class LongHashTableTest {
         table.free();
     }
 
-    @Test
-    public void testBucketsNotFulfillSegment() throws Exception {
+    @ParameterizedTest(name = "useCompress-{0}")
+    @MethodSource("getVarSeg")
+    void testBucketsNotFulfillSegment(TestSpec testSpec) throws Exception {
         final int numKeys = 10000;
         final int buildValsPerKey = 3;
         final int probeValsPerKey = 10;
@@ -563,7 +578,7 @@ public class LongHashTableTest {
 
         // ----------------------------------------------------------------------------------------
 
-        final MyHashTable table = new MyHashTable(35 * PAGE_SIZE);
+        final MyHashTable table = new MyHashTable(35 * PAGE_SIZE, testSpec.conf);
 
         int numRecordsInJoinResult = join(table, buildInput, probeInput);
 

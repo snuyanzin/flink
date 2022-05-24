@@ -25,8 +25,8 @@ import org.apache.flink.runtime.io.disk.iomanager.FileIOChannel;
 import org.apache.flink.runtime.io.disk.iomanager.IOManager;
 import org.apache.flink.runtime.io.disk.iomanager.IOManagerAsync;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Random;
@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests for {@link CompressedHeaderlessChannelReaderInputView} and {@link
  * CompressedHeaderlessChannelWriterOutputView}.
  */
-public class CompressedHeaderlessChannelTest {
+class CompressedHeaderlessChannelTest {
     private static final int BUFFER_SIZE = 256;
 
     private IOManager ioManager;
@@ -48,13 +48,13 @@ public class CompressedHeaderlessChannelTest {
         ioManager = new IOManagerAsync();
     }
 
-    @After
-    public void afterTest() throws Exception {
+    @AfterEach
+    void afterTest() throws Exception {
         this.ioManager.close();
     }
 
     @Test
-    public void testCompressedView() throws IOException {
+    void testCompressedView() throws IOException {
         for (int testTime = 0; testTime < 10; testTime++) {
             int testRounds = new Random().nextInt(20000);
             FileIOChannel.ID channel = ioManager.createChannel();
