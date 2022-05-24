@@ -18,14 +18,12 @@
 package org.apache.flink.api.scala.runtime.tuple.base
 
 import org.apache.flink.api.common.typeutils.TypePairComparator
-import org.apache.flink.util.TestLogger
 
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
-import org.junit.Test
+import org.assertj.core.api.Assertions.{assertThat, fail}
+import org.junit.jupiter.api.Test
 
 /** Abstract test base for PairComparators. */
-abstract class PairComparatorTestBase[T, R] extends TestLogger {
+abstract class PairComparatorTestBase[T, R] {
   protected def createComparator(ascending: Boolean): TypePairComparator[T, R]
 
   protected def getSortedTestData: (Array[T], Array[R])
@@ -38,7 +36,7 @@ abstract class PairComparatorTestBase[T, R] extends TestLogger {
       val (dataT, dataR) = getSortedData
       for (i <- 0 until dataT.length) {
         comparator.setReference(dataT(i))
-        assertTrue(comparator.equalToReference(dataR(i)))
+        assertThat(comparator.equalToReference(dataR(i))).isTrue
       }
     } catch {
       case e: Exception => {
@@ -63,9 +61,9 @@ abstract class PairComparatorTestBase[T, R] extends TestLogger {
         for (y <- (x + 1) until dataR.length) {
           comparator.setReference(dataT(x))
           if (ascending) {
-            assertTrue(comparator.compareToReference(dataR(y)) > 0)
+            assertThat(comparator.compareToReference(dataR(y))).isGreaterThan(0)
           } else {
-            assertTrue(comparator.compareToReference(dataR(y)) < 0)
+            assertThat(comparator.compareToReference(dataR(y))).isLessThan(0)
           }
         }
       }

@@ -25,8 +25,8 @@ import org.apache.flink.api.scala.runtime.TupleSerializerCompatibilityTestGenera
 import org.apache.flink.api.scala.typeutils.CaseClassSerializer
 import org.apache.flink.core.memory.DataInputViewStreamWrapper
 
-import org.junit.Assert.{assertEquals, assertNotNull, assertTrue}
-import org.junit.Test
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.Test
 
 import java.io.InputStream
 
@@ -44,7 +44,7 @@ class TupleSerializerCompatibilityTest {
         snapshotIn,
         getClass.getClassLoader)
 
-      assertEquals(1, deserialized.size)
+      assertThat(deserialized.size()).isEqualTo(1)
 
       val oldSerializer: TypeSerializer[TestCaseClass] =
         deserialized.get(0).f0.asInstanceOf[TypeSerializer[TestCaseClass]]
@@ -53,36 +53,36 @@ class TupleSerializerCompatibilityTest {
         deserialized.get(0).f1.asInstanceOf[TypeSerializerSnapshot[TestCaseClass]]
 
       // test serializer and config snapshot
-      assertNotNull(oldSerializer)
-      assertNotNull(oldConfigSnapshot)
-      assertTrue(oldSerializer.isInstanceOf[CaseClassSerializer[_]])
-      assertTrue(oldConfigSnapshot.isInstanceOf[TupleSerializerConfigSnapshot[_]])
+      assertThat(oldSerializer).isNotNull
+      assertThat(oldConfigSnapshot).isNotNull
+      assertThat(oldSerializer).isInstanceOf(classOf[CaseClassSerializer[_]])
+      assertThat(oldConfigSnapshot).isInstanceOf(classOf[TupleSerializerConfigSnapshot[_]])
 
-      assertTrue(oldConfigSnapshot.isInstanceOf[TupleSerializerConfigSnapshot[_]])
+      assertThat(oldConfigSnapshot).isInstanceOf(classOf[TupleSerializerConfigSnapshot[_]])
 
       val currentSerializer = createTypeInformation[TestCaseClass]
         .createSerializer(new ExecutionConfig())
-      assertTrue(
+      assertThat(
         oldConfigSnapshot
           .resolveSchemaCompatibility(currentSerializer)
-          .isCompatibleAsIs)
+          .isCompatibleAsIs).isTrue
 
       // test old data serialization
       is.close()
       is = getClass.getClassLoader.getResourceAsStream(DATA_RESOURCE)
       var dataIn = new DataInputViewStreamWrapper(is)
 
-      assertEquals(TEST_DATA_1, oldSerializer.deserialize(dataIn))
-      assertEquals(TEST_DATA_2, oldSerializer.deserialize(dataIn))
-      assertEquals(TEST_DATA_3, oldSerializer.deserialize(dataIn))
+      assertThat(oldSerializer.deserialize(dataIn)).isEqualTo(TEST_DATA_1)
+      assertThat(oldSerializer.deserialize(dataIn)).isEqualTo(TEST_DATA_2)
+      assertThat(oldSerializer.deserialize(dataIn)).isEqualTo(TEST_DATA_3)
 
       // test new data serialization
       is.close()
       is = getClass.getClassLoader.getResourceAsStream(DATA_RESOURCE)
       dataIn = new DataInputViewStreamWrapper(is)
-      assertEquals(TEST_DATA_1, currentSerializer.deserialize(dataIn))
-      assertEquals(TEST_DATA_2, currentSerializer.deserialize(dataIn))
-      assertEquals(TEST_DATA_3, currentSerializer.deserialize(dataIn))
+      assertThat(currentSerializer.deserialize(dataIn)).isEqualTo(TEST_DATA_1)
+      assertThat(currentSerializer.deserialize(dataIn)).isEqualTo(TEST_DATA_2)
+      assertThat(currentSerializer.deserialize(dataIn)).isEqualTo(TEST_DATA_3)
     } finally {
       if (is != null) {
         is.close()

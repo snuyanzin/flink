@@ -25,9 +25,9 @@ import org.apache.flink.api.scala._
 import org.apache.flink.api.scala.typeutils.CaseClassSerializer
 import org.apache.flink.util.StringUtils
 
+import org.assertj.core.api.Assertions.{assertThat, fail}
 import org.joda.time.LocalDate
-import org.junit.{Assert, Test}
-import org.junit.Assert._
+import org.junit.jupiter.api.Test
 
 import java.util
 import java.util.Random
@@ -49,14 +49,17 @@ class TupleSerializerTest {
     duplicateSerializer.getFieldSerializers
 
     // the list of child serializers must be duplicated
-    assertTrue(duplicateSerializer.getFieldSerializers ne originalSerializer.getFieldSerializers)
+    assertThat(
+      duplicateSerializer.getFieldSerializers ne originalSerializer.getFieldSerializers).isTrue
 
     // each of the child serializers (which are themselves CaseClassSerializers) must be duplicated
-    assertTrue(
-      duplicateSerializer.getFieldSerializers()(0) ne originalSerializer.getFieldSerializers()(0))
+    assertThat(
+      duplicateSerializer.getFieldSerializers()(0) ne originalSerializer.getFieldSerializers()(
+        0)).isTrue
 
-    assertTrue(
-      duplicateSerializer.getFieldSerializers()(1) ne originalSerializer.getFieldSerializers()(1))
+    assertThat(
+      duplicateSerializer.getFieldSerializers()(1) ne originalSerializer.getFieldSerializers()(
+        1)).isTrue
   }
 
   @Test
@@ -274,7 +277,7 @@ class TupleSerializerTest {
       case e: Exception => {
         System.err.println(e.getMessage)
         e.printStackTrace()
-        Assert.fail(e.getMessage)
+        fail(e.getMessage)
       }
     }
   }
