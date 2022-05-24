@@ -37,7 +37,7 @@ import scala.util.Right;
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link ScalaEitherSerializerSnapshot}. */
-public class ScalaEitherSerializerUpgradeTest
+class ScalaEitherSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<Either<Integer, String>, Either<Integer, String>> {
 
     private static final String SPEC_NAME = "scala-either-serializer";

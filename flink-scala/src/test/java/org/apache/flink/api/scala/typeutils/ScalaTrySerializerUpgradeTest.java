@@ -38,7 +38,7 @@ import scala.util.Try;
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link TrySerializer}. */
-public class ScalaTrySerializerUpgradeTest
+class ScalaTrySerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<Try<String>, Try<String>> {
 
     private static final String SPEC_NAME = "scala-try-serializer";
