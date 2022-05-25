@@ -22,13 +22,13 @@ import org.apache.flink.FlinkVersion;
 import org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 /** A {@link TypeSerializerUpgradeTestBase} for the {@link PojoSerializer}. */
-public class PojoSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
+class PojoSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         // for PojoSerializer we also test against 1.7, 1.8, and 1.9 because we have snapshots
         // for this which go beyond what we have for the usual subclasses of
@@ -120,6 +120,6 @@ public class PojoSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Obj
                                     .NewAndMissingRegisteredPojoSubclassesVerifier.class));
         }
 
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 }

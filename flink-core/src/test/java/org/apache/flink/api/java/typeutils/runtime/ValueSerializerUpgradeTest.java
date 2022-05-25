@@ -31,17 +31,17 @@ import org.hamcrest.Matcher;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /** State migration test for {@link RowSerializer}. */
-public class ValueSerializerUpgradeTest
+class ValueSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<
                 ValueSerializerUpgradeTest.NameValue, ValueSerializerUpgradeTest.NameValue> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -52,7 +52,7 @@ public class ValueSerializerUpgradeTest
                             ValueSerializerVerifier.class));
         }
 
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     public static final class ValueSerializerSetup

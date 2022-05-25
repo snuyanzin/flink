@@ -28,17 +28,17 @@ import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link Lockable.LockableTypeSerializer}. */
-public class LockableTypeSerializerUpgradeTest
+class LockableTypeSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<Lockable<String>, Lockable<String>> {
 
     private static final String SPEC_NAME = "lockable-type-serializer";
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -49,7 +49,7 @@ public class LockableTypeSerializerUpgradeTest
                             LockableTypeSerializerSetup.class,
                             LockableTypeSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

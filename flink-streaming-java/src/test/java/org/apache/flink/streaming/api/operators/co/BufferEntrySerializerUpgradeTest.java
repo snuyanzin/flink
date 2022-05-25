@@ -30,16 +30,16 @@ import org.apache.flink.streaming.api.operators.co.IntervalJoinOperator.BufferEn
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.apache.flink.streaming.api.operators.co.BufferEntryMatchers.bufferEntry;
 import static org.hamcrest.Matchers.is;
 
 /** State migration tests for {@link BufferEntrySerializer}. */
-public class BufferEntrySerializerUpgradeTest
+class BufferEntrySerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<BufferEntry<String>, BufferEntry<String>> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -51,7 +51,7 @@ public class BufferEntrySerializerUpgradeTest
                             BufferEntrySerializerVerifier.class));
         }
 
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

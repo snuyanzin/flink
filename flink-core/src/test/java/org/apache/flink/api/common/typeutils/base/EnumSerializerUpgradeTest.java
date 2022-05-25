@@ -31,16 +31,16 @@ import org.hamcrest.TypeSafeMatcher;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.apache.flink.api.common.typeutils.base.TestEnum.EMMA;
 import static org.hamcrest.Matchers.is;
 
 /** Migration tests for {@link EnumSerializer}. */
-public class EnumSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<TestEnum, TestEnum> {
+class EnumSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<TestEnum, TestEnum> {
     private static final String SPEC_NAME = "enum-serializer";
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -57,7 +57,7 @@ public class EnumSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Tes
                             EnumSerializerReconfigSetup.class,
                             EnumSerializerReconfigVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     private static Matcher<? extends TypeSerializer<TestEnum>> enumSerializerWith(

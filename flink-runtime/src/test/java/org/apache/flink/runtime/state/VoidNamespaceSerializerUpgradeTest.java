@@ -27,17 +27,17 @@ import org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link VoidNamespaceSerializer}. */
-public class VoidNamespaceSerializerUpgradeTest
+class VoidNamespaceSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<VoidNamespace, VoidNamespace> {
 
     private static final String SPEC_NAME = "void-namespace-serializer";
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -48,7 +48,7 @@ public class VoidNamespaceSerializerUpgradeTest
                             VoidNamespaceSerializerSetup.class,
                             VoidNamespaceSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

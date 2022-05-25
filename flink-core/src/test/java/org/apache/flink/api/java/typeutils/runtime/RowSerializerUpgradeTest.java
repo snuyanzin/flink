@@ -32,15 +32,15 @@ import org.apache.flink.types.RowKind;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link RowSerializer}. */
 public class RowSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Row, Row> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         // for RowSerializer we also test against 1.10 and newer because we have snapshots
         // for this which go beyond what we have for the usual subclasses of
@@ -56,7 +56,7 @@ public class RowSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Row,
                             RowSerializerSetup.class,
                             RowSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     public static TypeSerializer<Row> createRowSerializer() {

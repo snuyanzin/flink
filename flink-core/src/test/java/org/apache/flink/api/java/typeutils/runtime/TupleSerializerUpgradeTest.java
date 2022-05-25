@@ -30,16 +30,16 @@ import org.apache.flink.api.java.tuple.Tuple3;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
 /** {@link TupleSerializer} upgrade test. */
-public class TupleSerializerUpgradeTest
+class TupleSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<
                 Tuple3<String, String, Integer>, Tuple3<String, String, Integer>> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -51,7 +51,7 @@ public class TupleSerializerUpgradeTest
                             TupleSerializerVerifier.class));
         }
 
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

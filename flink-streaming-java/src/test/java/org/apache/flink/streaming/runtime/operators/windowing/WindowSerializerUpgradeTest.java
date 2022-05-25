@@ -29,7 +29,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
@@ -37,9 +37,9 @@ import static org.hamcrest.Matchers.is;
  * A {@link TypeSerializerUpgradeTestBase} for {@link TimeWindow.Serializer} and {@link
  * GlobalWindow.Serializer}.
  */
-public class WindowSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
+class WindowSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -56,7 +56,7 @@ public class WindowSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<O
                             GlobalWindowSerializerSetup.class,
                             GlobalWindowSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

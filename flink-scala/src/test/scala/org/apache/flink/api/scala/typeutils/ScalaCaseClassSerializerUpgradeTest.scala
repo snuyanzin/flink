@@ -29,12 +29,11 @@ import org.hamcrest.Matcher
 import org.hamcrest.Matchers.is
 
 import java.util
-import java.util.stream
 
 /** A [[TypeSerializerUpgradeTestBase]] for [[ScalaCaseClassSerializer]]. */
 class ScalaCaseClassSerializerUpgradeTest
   extends TypeSerializerUpgradeTestBase[CustomCaseClass, CustomCaseClass] {
-  override def testData(): stream.Stream[TestSpecification[_, _]] = {
+  override def testData(): util.Collection[TestSpecification[_, _]] = {
     val testSpecifications =
       new util.ArrayList[TypeSerializerUpgradeTestBase.TestSpecification[_, _]]
     TypeSerializerUpgradeTestBase.MIGRATION_VERSIONS.forEach(
@@ -46,7 +45,7 @@ class ScalaCaseClassSerializerUpgradeTest
             classOf[ScalaCaseClassSerializerSetup],
             classOf[ScalaCaseClassSerializerVerifier])))
 
-    testSpecifications.stream()
+    testSpecifications
   }
 }
 

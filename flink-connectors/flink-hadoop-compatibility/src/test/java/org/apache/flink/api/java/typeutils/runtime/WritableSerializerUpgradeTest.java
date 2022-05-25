@@ -32,16 +32,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link WritableSerializer}. */
-public class WritableSerializerUpgradeTest
+class WritableSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<WritableName, WritableName> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -52,7 +52,7 @@ public class WritableSerializerUpgradeTest
                             WritableSerializerSetup.class,
                             WritableSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     /** A dummy class that is used in this test. */

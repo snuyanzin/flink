@@ -29,7 +29,7 @@ import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import scala.util.Either;
 import scala.util.Right;
@@ -37,12 +37,12 @@ import scala.util.Right;
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link ScalaEitherSerializerSnapshot}. */
-public class ScalaEitherSerializerUpgradeTest
+class ScalaEitherSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<Either<Integer, String>, Either<Integer, String>> {
 
     private static final String SPEC_NAME = "scala-either-serializer";
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -53,7 +53,7 @@ public class ScalaEitherSerializerUpgradeTest
                             EitherSerializerSetup.class,
                             EitherSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

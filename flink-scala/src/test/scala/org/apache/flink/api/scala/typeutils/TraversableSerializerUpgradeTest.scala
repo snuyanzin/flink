@@ -31,14 +31,13 @@ import org.hamcrest.Matchers.is
 
 import java.util
 import java.util.function.Supplier
-import java.util.stream
 
 import scala.collection.{mutable, BitSet, LinearSeq}
 
 /** A [[TypeSerializerUpgradeTestBase]] for [[TraversableSerializer]]. */
 class TraversableSerializerUpgradeTest
   extends TypeSerializerUpgradeTestBase[TraversableOnce[_], TraversableOnce[_]] {
-  override def testData(): stream.Stream[TestSpecification[_, _]] = {
+  override def testData(): util.Collection[TestSpecification[_, _]] = {
     val testSpecifications =
       new util.ArrayList[TypeSerializerUpgradeTestBase.TestSpecification[_, _]]
     TypeSerializerUpgradeTestBase.MIGRATION_VERSIONS.forEach(
@@ -98,7 +97,7 @@ class TraversableSerializerUpgradeTest
             classOf[SeqWithPojoSetup],
             classOf[SeqWithPojoVerifier]))
       })
-    testSpecifications.stream()
+    testSpecifications
   }
 }
 

@@ -26,12 +26,11 @@ import org.hamcrest.Matcher
 import org.hamcrest.Matchers.is
 
 import java.util
-import java.util.stream
 
 /** A [[TypeSerializerUpgradeTestBase]] for [[EnumValueSerializer]]. */
 class EnumValueSerializerUpgradeTest
   extends TypeSerializerUpgradeTestBase[Letters.Value, Letters.Value] {
-  override def testData(): stream.Stream[TestSpecification[_, _]] = {
+  override def testData(): util.Collection[TestSpecification[_, _]] = {
     val testSpecifications =
       new util.ArrayList[TypeSerializerUpgradeTestBase.TestSpecification[_, _]]
 
@@ -44,7 +43,7 @@ class EnumValueSerializerUpgradeTest
             classOf[EnumValueSerializerSetup],
             classOf[EnumValueSerializerVerifier])))
 
-    testSpecifications.stream()
+    testSpecifications
   }
 }
 

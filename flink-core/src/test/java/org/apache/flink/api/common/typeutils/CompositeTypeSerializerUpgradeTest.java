@@ -28,15 +28,14 @@ import org.apache.flink.types.Either;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link GenericArraySerializer}. */
-public class CompositeTypeSerializerUpgradeTest
-        extends TypeSerializerUpgradeTestBase<Object, Object> {
+class CompositeTypeSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -53,7 +52,7 @@ public class CompositeTypeSerializerUpgradeTest
                             GenericArraySerializerSetup.class,
                             GenericArraySerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

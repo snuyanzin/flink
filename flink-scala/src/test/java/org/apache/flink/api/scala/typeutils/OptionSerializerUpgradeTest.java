@@ -28,7 +28,7 @@ import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import scala.Option;
 
@@ -38,12 +38,12 @@ import static org.hamcrest.CoreMatchers.is;
  * A {@link org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase} for {@link
  * ScalaEitherSerializerSnapshot}.
  */
-public class OptionSerializerUpgradeTest
+class OptionSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<Option<String>, Option<String>> {
 
     private static final String SPEC_NAME = "scala-option-serializer";
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -54,7 +54,7 @@ public class OptionSerializerUpgradeTest
                             ScalaOptionSerializerSetup.class,
                             ScalaOptionSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

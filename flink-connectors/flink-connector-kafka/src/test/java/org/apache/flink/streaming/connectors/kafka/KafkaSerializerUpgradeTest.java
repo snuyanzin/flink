@@ -29,9 +29,9 @@ import org.hamcrest.Matcher;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.is;
 
@@ -39,9 +39,9 @@ import static org.hamcrest.Matchers.is;
  * A {@link TypeSerializerUpgradeTestBase} for {@link FlinkKafkaProducer.TransactionStateSerializer}
  * and {@link FlinkKafkaProducer.ContextStateSerializer}.
  */
-public class KafkaSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
+class KafkaSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -58,7 +58,7 @@ public class KafkaSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Ob
                             ContextStateSerializerSetup.class,
                             ContextStateSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

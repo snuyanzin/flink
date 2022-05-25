@@ -22,13 +22,12 @@ import org.apache.flink.FlinkVersion;
 import org.apache.flink.api.common.typeutils.TypeSerializerUpgradeTestBase;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 /** Migration tests for primitive array type serializers' snapshots. */
-public class PrimitiveArraySerializerUpgradeTest
-        extends TypeSerializerUpgradeTestBase<Object, Object> {
+class PrimitiveArraySerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -105,6 +104,6 @@ public class PrimitiveArraySerializerUpgradeTest
                                     .PrimitiveStringArrayVerifier.class));
         }
 
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 }

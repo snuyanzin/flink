@@ -28,8 +28,9 @@ import org.apache.flink.util.FlinkRuntimeException;
 
 import org.hamcrest.Matcher;
 
+import java.util.Collection;
 import java.util.LinkedList;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.is;
 
@@ -37,7 +38,7 @@ import static org.hamcrest.Matchers.is;
 public class LinkedListSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<LinkedList<Long>, LinkedList<Long>> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
         return FlinkVersion.rangeOf(FlinkVersion.v1_13, CURRENT_VERSION).stream()
                 .map(
                         version -> {
@@ -50,7 +51,8 @@ public class LinkedListSerializerUpgradeTest
                             } catch (Exception e) {
                                 throw new FlinkRuntimeException(e);
                             }
-                        });
+                        })
+                .collect(Collectors.toList());
     }
 
     public static TypeSerializer<LinkedList<Long>> createLinkedListSerializer() {

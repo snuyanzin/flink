@@ -28,14 +28,14 @@ import org.apache.flink.api.common.typeutils.base.LongSerializer;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link NullableSerializer}. */
-public class NullableSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Long, Long> {
+class NullableSerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Long, Long> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
 
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
@@ -53,7 +53,7 @@ public class NullableSerializerUpgradeTest extends TypeSerializerUpgradeTestBase
                             NullableNotPaddedSerializerSetup.class,
                             NullableNotPaddedSerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------

@@ -31,16 +31,16 @@ import org.apache.flink.streaming.api.datastream.CoGroupedStreams.UnionSerialize
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
 /** A {@link TypeSerializerUpgradeTestBase} for {@link UnionSerializer}. */
-public class UnionSerializerUpgradeTest
+class UnionSerializerUpgradeTest
         extends TypeSerializerUpgradeTestBase<
                 TaggedUnion<String, Long>, TaggedUnion<String, Long>> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -56,7 +56,7 @@ public class UnionSerializerUpgradeTest
                             UnionSerializerTwoSetup.class,
                             UnionSerializerTwoVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     private static TypeSerializer<TaggedUnion<String, Long>> stringLongRowSupplier() {

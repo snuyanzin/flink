@@ -36,14 +36,14 @@ import org.apache.flink.types.StringValue;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.Collection;
 
 import static org.hamcrest.Matchers.is;
 
 /** Migration tests for boxed-value array serializer snapshots. */
-public class ValueArraySerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
+class ValueArraySerializerUpgradeTest extends TypeSerializerUpgradeTestBase<Object, Object> {
 
-    public Stream<TestSpecification<?, ?>> testData() throws Exception {
+    public Collection<TestSpecification<?, ?>> testData() throws Exception {
         ArrayList<TestSpecification<?, ?>> testSpecifications = new ArrayList<>();
         for (FlinkVersion flinkVersion : MIGRATION_VERSIONS) {
             testSpecifications.add(
@@ -101,7 +101,7 @@ public class ValueArraySerializerUpgradeTest extends TypeSerializerUpgradeTestBa
                             StringValueArraySerializerSetup.class,
                             StringValueArraySerializerVerifier.class));
         }
-        return testSpecifications.stream();
+        return testSpecifications;
     }
 
     // ----------------------------------------------------------------------------------------------
