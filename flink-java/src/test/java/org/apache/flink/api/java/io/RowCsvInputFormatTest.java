@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 /** Tests for {@link RowCsvInputFormat}. */
 class RowCsvInputFormatTest {

@@ -19,13 +19,14 @@
 package org.apache.flink.api.java.sampling;
 
 import org.apache.flink.testutils.junit.RetryOnFailure;
-import org.apache.flink.testutils.junit.RetryRule;
+import org.apache.flink.testutils.junit.extensions.retry.RetryExtension;
 import org.apache.flink.util.Preconditions;
 
 import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * This test suite try to verify whether all the random samplers work as we expected, which mainly
@@ -55,7 +57,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @see <a href="https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test">Kolmogorov Smirnov
  *     test</a>
  */
-public class RandomSamplerTest {
+@ExtendWith(RetryExtension.class)
+class RandomSamplerTest {
 
     private static final int SOURCE_SIZE = 10000;
 
@@ -65,13 +68,11 @@ public class RandomSamplerTest {
 
     private static final List<Double> source = new ArrayList<Double>(SOURCE_SIZE);
 
-    @Rule public final RetryRule retryRule = new RetryRule();
-
     @SuppressWarnings({"unchecked", "rawtypes"})
     private final List<Double>[] sourcePartitions = new List[DEFAULT_PARTITION_NUMBER];
 
-    @BeforeClass
-    public static void init() {
+    @BeforeAll
+    static void init() {
         // initiate source data set.
         for (int i = 0; i < SOURCE_SIZE; i++) {
             source.add((double) i);
@@ -90,19 +91,21 @@ public class RandomSamplerTest {
         }
     }
 
-    @Test(expected = java.lang.IllegalArgumentException.class)
-    public void testBernoulliSamplerWithUnexpectedFraction1() {
-        verifySamplerFraction(-1, false);
-    }
-
-    @Test(expected = java.lang.IllegalArgumentException.class)
-    public void testBernoulliSamplerWithUnexpectedFraction2() {
-        verifySamplerFraction(2, false);
+    @Test
+    void testBernoulliSamplerWithUnexpectedFraction1() {
+        assertThatThrownBy(() -> verifySamplerFraction(-1, false))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
+    void testBernoulliSamplerWithUnexpectedFraction2() {
+        assertThatThrownBy(() -> verifySamplerFraction(2, false))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testBernoulliSamplerFraction() {
+    void testBernoulliSamplerFraction() {
         verifySamplerFraction(0.01, false);
         verifySamplerFraction(0.05, false);
         verifySamplerFraction(0.1, false);
@@ -112,22 +115,23 @@ public class RandomSamplerTest {
         verifySamplerFraction(0.99, false);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testBernoulliSamplerDuplicateElements() {
+    void testBernoulliSamplerDuplicateElements() {
         verifyRandomSamplerDuplicateElements(new BernoulliSampler<Double>(0.01));
         verifyRandomSamplerDuplicateElements(new BernoulliSampler<Double>(0.1));
         verifyRandomSamplerDuplicateElements(new BernoulliSampler<Double>(0.5));
     }
 
-    @Test(expected = java.lang.IllegalArgumentException.class)
-    public void testPoissonSamplerWithUnexpectedFraction1() {
-        verifySamplerFraction(-1, true);
+    @Test
+    void testPoissonSamplerWithUnexpectedFraction1() {
+        assertThatThrownBy(() -> verifySamplerFraction(-1, true))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testPoissonSamplerFraction() {
+    void testPoissonSamplerFraction() {
         verifySamplerFraction(0.01, true);
         verifySamplerFraction(0.05, true);
         verifySamplerFraction(0.1, true);
@@ -137,37 +141,39 @@ public class RandomSamplerTest {
         verifySamplerFraction(1.5, true);
     }
 
-    @Test(expected = java.lang.IllegalArgumentException.class)
-    public void testReservoirSamplerUnexpectedSize1() {
-        verifySamplerFixedSampleSize(-1, true);
-    }
-
-    @Test(expected = java.lang.IllegalArgumentException.class)
-    public void testReservoirSamplerUnexpectedSize2() {
-        verifySamplerFixedSampleSize(-1, false);
+    @Test
+    void testReservoirSamplerUnexpectedSize1() {
+        assertThatThrownBy(() -> verifySamplerFixedSampleSize(-1, true))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
+    void testReservoirSamplerUnexpectedSize2() {
+        assertThatThrownBy(() -> verifySamplerFixedSampleSize(-1, false))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testBernoulliSamplerDistribution() {
+    void testBernoulliSamplerDistribution() {
         verifyBernoulliSampler(0.01d);
         verifyBernoulliSampler(0.05d);
         verifyBernoulliSampler(0.1d);
         verifyBernoulliSampler(0.5d);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testPoissonSamplerDistribution() {
+    void testPoissonSamplerDistribution() {
         verifyPoissonSampler(0.01d);
         verifyPoissonSampler(0.05d);
         verifyPoissonSampler(0.1d);
         verifyPoissonSampler(0.5d);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testReservoirSamplerSampledSize() {
+    void testReservoirSamplerSampledSize() {
         verifySamplerFixedSampleSize(1, true);
         verifySamplerFixedSampleSize(10, true);
         verifySamplerFixedSampleSize(100, true);
@@ -182,9 +188,9 @@ public class RandomSamplerTest {
         verifySamplerFixedSampleSize(9999, false);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testReservoirSamplerSampledSize2() {
+    void testReservoirSamplerSampledSize2() {
         RandomSampler<Double> sampler = new ReservoirSamplerWithoutReplacement<Double>(20000);
         Iterator<Double> sampled = sampler.sample(source.iterator());
         assertThat(getSize(sampled))
@@ -193,35 +199,35 @@ public class RandomSamplerTest {
                 .isEqualTo(SOURCE_SIZE);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testReservoirSamplerDuplicateElements() {
+    void testReservoirSamplerDuplicateElements() {
         verifyRandomSamplerDuplicateElements(new ReservoirSamplerWithoutReplacement<Double>(100));
         verifyRandomSamplerDuplicateElements(new ReservoirSamplerWithoutReplacement<Double>(1000));
         verifyRandomSamplerDuplicateElements(new ReservoirSamplerWithoutReplacement<Double>(5000));
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testReservoirSamplerWithoutReplacement() {
+    void testReservoirSamplerWithoutReplacement() {
         verifyReservoirSamplerWithoutReplacement(100, false);
         verifyReservoirSamplerWithoutReplacement(500, false);
         verifyReservoirSamplerWithoutReplacement(1000, false);
         verifyReservoirSamplerWithoutReplacement(5000, false);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testReservoirSamplerWithReplacement() {
+    void testReservoirSamplerWithReplacement() {
         verifyReservoirSamplerWithReplacement(100, false);
         verifyReservoirSamplerWithReplacement(500, false);
         verifyReservoirSamplerWithReplacement(1000, false);
         verifyReservoirSamplerWithReplacement(5000, false);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testReservoirSamplerWithMultiSourcePartitions1() {
+    void testReservoirSamplerWithMultiSourcePartitions1() {
         initSourcePartition();
 
         verifyReservoirSamplerWithoutReplacement(100, true);
@@ -230,9 +236,9 @@ public class RandomSamplerTest {
         verifyReservoirSamplerWithoutReplacement(5000, true);
     }
 
-    @Test
+    @TestTemplate
     @RetryOnFailure(times = 3)
-    public void testReservoirSamplerWithMultiSourcePartitions2() {
+    void testReservoirSamplerWithMultiSourcePartitions2() {
         initSourcePartition();
 
         verifyReservoirSamplerWithReplacement(100, true);
