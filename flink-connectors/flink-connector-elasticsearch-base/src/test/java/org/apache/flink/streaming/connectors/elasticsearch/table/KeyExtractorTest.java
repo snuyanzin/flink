@@ -19,7 +19,8 @@
 package org.apache.flink.streaming.connectors.elasticsearch.table;
 
 import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.catalog.ResolvedSchema;
+import org.apache.flink.table.catalog.UniqueConstraint;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.StringData;
@@ -31,20 +32,24 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Function;
 
+import static org.apache.flink.table.catalog.Column.physical;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for {@link KeyExtractor}. */
 public class KeyExtractorTest {
     @Test
     public void testSimpleKey() {
-        TableSchema schema =
-                TableSchema.builder()
-                        .field("a", DataTypes.BIGINT().notNull())
-                        .field("b", DataTypes.STRING())
-                        .primaryKey("a")
-                        .build();
+        ResolvedSchema schema =
+                new ResolvedSchema(
+                        Arrays.asList(
+                                physical("a", DataTypes.BIGINT().notNull()),
+                                physical("b", DataTypes.STRING())),
+                        Collections.emptyList(),
+                        UniqueConstraint.primaryKey("PK_1", Collections.singletonList("a")));
 
         Function<RowData, String> keyExtractor = KeyExtractor.createKeyExtractor(schema, "_");
 
@@ -54,11 +59,10 @@ public class KeyExtractorTest {
 
     @Test
     public void testNoPrimaryKey() {
-        TableSchema schema =
-                TableSchema.builder()
-                        .field("a", DataTypes.BIGINT().notNull())
-                        .field("b", DataTypes.STRING())
-                        .build();
+        ResolvedSchema schema =
+                ResolvedSchema.of(
+                        physical("a", DataTypes.BIGINT().notNull()),
+                        physical("b", DataTypes.STRING()));
 
         Function<RowData, String> keyExtractor = KeyExtractor.createKeyExtractor(schema, "_");
 
@@ -68,13 +72,14 @@ public class KeyExtractorTest {
 
     @Test
     public void testTwoFieldsKey() {
-        TableSchema schema =
-                TableSchema.builder()
-                        .field("a", DataTypes.BIGINT().notNull())
-                        .field("b", DataTypes.STRING())
-                        .field("c", DataTypes.TIMESTAMP().notNull())
-                        .primaryKey("a", "c")
-                        .build();
+        ResolvedSchema schema =
+                new ResolvedSchema(
+                        Arrays.asList(
+                                physical("a", DataTypes.BIGINT().notNull()),
+                                physical("b", DataTypes.STRING()),
+                                physical("c", DataTypes.TIMESTAMP().notNull())),
+                        Collections.emptyList(),
+                        UniqueConstraint.primaryKey("PK_1", Arrays.asList("a", "c")));
 
         Function<RowData, String> keyExtractor = KeyExtractor.createKeyExtractor(schema, "_");
 
@@ -90,22 +95,27 @@ public class KeyExtractorTest {
 
     @Test
     public void testAllTypesKey() {
-        TableSchema schema =
-                TableSchema.builder()
-                        .field("a", DataTypes.TINYINT().notNull())
-                        .field("b", DataTypes.SMALLINT().notNull())
-                        .field("c", DataTypes.INT().notNull())
-                        .field("d", DataTypes.BIGINT().notNull())
-                        .field("e", DataTypes.BOOLEAN().notNull())
-                        .field("f", DataTypes.FLOAT().notNull())
-                        .field("g", DataTypes.DOUBLE().notNull())
-                        .field("h", DataTypes.STRING().notNull())
-                        .field("i", DataTypes.TIMESTAMP().notNull())
-                        .field("j", DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE().notNull())
-                        .field("k", DataTypes.TIME().notNull())
-                        .field("l", DataTypes.DATE().notNull())
-                        .primaryKey("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l")
-                        .build();
+        ResolvedSchema schema =
+                new ResolvedSchema(
+                        Arrays.asList(
+                                physical("a", DataTypes.TINYINT().notNull()),
+                                physical("b", DataTypes.SMALLINT().notNull()),
+                                physical("c", DataTypes.INT().notNull()),
+                                physical("d", DataTypes.BIGINT().notNull()),
+                                physical("e", DataTypes.BOOLEAN().notNull()),
+                                physical("f", DataTypes.FLOAT().notNull()),
+                                physical("g", DataTypes.DOUBLE().notNull()),
+                                physical("h", DataTypes.STRING().notNull()),
+                                physical("i", DataTypes.TIMESTAMP().notNull()),
+                                physical("j", DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE().notNull()),
+                                physical("k", DataTypes.TIME().notNull()),
+                                physical("l", DataTypes.DATE().notNull())),
+                        Collections.emptyList(),
+                        UniqueConstraint.primaryKey(
+                                "PK_1",
+                                Arrays.asList(
+                                        "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
+                                        "l")));
 
         Function<RowData, String> keyExtractor = KeyExtractor.createKeyExtractor(schema, "_");
 

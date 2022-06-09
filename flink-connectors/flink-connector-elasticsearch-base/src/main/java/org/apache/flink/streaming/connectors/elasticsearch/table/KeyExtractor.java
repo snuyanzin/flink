@@ -19,8 +19,8 @@
 package org.apache.flink.streaming.connectors.elasticsearch.table;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.table.api.TableColumn;
-import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.catalog.Column;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
@@ -64,16 +64,16 @@ class KeyExtractor implements Function<RowData, String>, Serializable {
     }
 
     private static class ColumnWithIndex {
-        public TableColumn column;
+        public Column column;
         public int index;
 
-        public ColumnWithIndex(TableColumn column, int index) {
+        public ColumnWithIndex(Column column, int index) {
             this.column = column;
             this.index = index;
         }
 
         public LogicalType getType() {
-            return column.getType().getLogicalType();
+            return column.getDataType().getLogicalType();
         }
 
         public int getIndex() {
@@ -82,14 +82,14 @@ class KeyExtractor implements Function<RowData, String>, Serializable {
     }
 
     public static Function<RowData, String> createKeyExtractor(
-            TableSchema schema, String keyDelimiter) {
+            ResolvedSchema schema, String keyDelimiter) {
         return schema.getPrimaryKey()
                 .map(
                         key -> {
                             Map<String, ColumnWithIndex> namesToColumns = new HashMap<>();
-                            List<TableColumn> tableColumns = schema.getTableColumns();
-                            for (int i = 0; i < schema.getFieldCount(); i++) {
-                                TableColumn column = tableColumns.get(i);
+                            List<Column> tableColumns = schema.getColumns();
+                            for (int i = 0; i < schema.getColumnCount(); i++) {
+                                Column column = tableColumns.get(i);
                                 namesToColumns.put(
                                         column.getName(), new ColumnWithIndex(column, i));
                             }
