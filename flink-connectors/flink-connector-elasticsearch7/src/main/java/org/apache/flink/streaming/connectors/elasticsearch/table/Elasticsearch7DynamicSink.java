@@ -138,12 +138,15 @@ final class Elasticsearch7DynamicSink implements DynamicTableSink {
             final RowElasticsearchSinkFunction upsertFunction =
                     new RowElasticsearchSinkFunction(
                             IndexGeneratorFactory.createIndexGenerator(
-                                    config.getIndex(), resolvedSchema.toSinkRowDataType(), localTimeZoneId),
+                                    config.getIndex(),
+                                    resolvedSchema.toSinkRowDataType(),
+                                    localTimeZoneId),
                             null, // this is deprecated in es 7+
                             format,
                             XContentType.JSON,
                             REQUEST_FACTORY,
-                            KeyExtractor.createKeyExtractor(resolvedSchema, config.getKeyDelimiter()));
+                            KeyExtractor.createKeyExtractor(
+                                    resolvedSchema, config.getKeyDelimiter()));
 
             final ElasticsearchSink.Builder<RowData> builder =
                     builderProvider.createBuilder(config.getHosts(), upsertFunction);
