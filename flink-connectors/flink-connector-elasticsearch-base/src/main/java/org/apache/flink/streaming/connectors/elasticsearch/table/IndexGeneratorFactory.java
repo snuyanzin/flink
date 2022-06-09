@@ -20,7 +20,6 @@ package org.apache.flink.streaming.connectors.elasticsearch.table;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.TableException;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
@@ -36,7 +35,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,18 +62,18 @@ final class IndexGeneratorFactory {
 
     private IndexGeneratorFactory() {}
 
-    public static IndexGenerator createIndexGenerator(String index, TableSchema schema) {
-        return createIndexGenerator(index, schema, ZoneId.systemDefault());
+    public static IndexGenerator createIndexGenerator(String index, DataType rowDataType) {
+        return createIndexGenerator(index, rowDataType, ZoneId.systemDefault());
     }
 
     public static IndexGenerator createIndexGenerator(
-            String index, TableSchema schema, ZoneId localTimeZoneId) {
+            String index, DataType rowDataType, ZoneId localTimeZoneId) {
         final IndexHelper indexHelper = new IndexHelper();
         if (indexHelper.checkIsDynamicIndex(index)) {
             return createRuntimeIndexGenerator(
                     index,
-                    schema.getFieldNames(),
-                    schema.getFieldDataTypes(),
+                    DataType.getFieldNames(rowDataType),
+                    DataType.getFieldDataTypes(rowDataType),
                     indexHelper,
                     localTimeZoneId);
         } else {
@@ -89,8 +87,8 @@ final class IndexGeneratorFactory {
 
     private static IndexGenerator createRuntimeIndexGenerator(
             String index,
-            String[] fieldNames,
-            DataType[] fieldTypes,
+            List<String> fieldNames,
+            List<DataType> fieldTypes,
             IndexHelper indexHelper,
             ZoneId localTimeZoneId) {
         final String dynamicIndexPatternStr = indexHelper.extractDynamicIndexPatternStr(index);
@@ -115,7 +113,7 @@ final class IndexGeneratorFactory {
         final boolean isDynamicIndexWithFormat = indexHelper.checkIsDynamicIndexWithFormat(index);
         final int indexFieldPos =
                 indexHelper.extractIndexFieldPos(index, fieldNames, isDynamicIndexWithFormat);
-        final LogicalType indexFieldType = fieldTypes[indexFieldPos].getLogicalType();
+        final LogicalType indexFieldType = fieldTypes.get(indexFieldPos).getLogicalType();
         final LogicalTypeRoot indexFieldLogicalTypeRoot = indexFieldType.getTypeRoot();
 
         // validate index field type
@@ -285,8 +283,7 @@ final class IndexGeneratorFactory {
 
         /** Extract index field position in a fieldNames, return the field position. */
         int extractIndexFieldPos(
-                String index, String[] fieldNames, boolean isDynamicIndexWithFormat) {
-            List<String> fieldList = Arrays.asList(fieldNames);
+                String index, List<String> fieldList, boolean isDynamicIndexWithFormat) {
             String indexFieldName;
             if (isDynamicIndexWithFormat) {
                 indexFieldName = index.substring(index.indexOf("{") + 1, index.indexOf("|"));

@@ -23,8 +23,8 @@ import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.streaming.connectors.elasticsearch6.ElasticsearchSink;
 import org.apache.flink.streaming.connectors.elasticsearch6.RestClientFactory;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.format.EncodingFormat;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
@@ -60,7 +60,7 @@ final class Elasticsearch6DynamicSink implements DynamicTableSink {
     static final Elasticsearch6RequestFactory REQUEST_FACTORY = new Elasticsearch6RequestFactory();
 
     private final EncodingFormat<SerializationSchema<RowData>> format;
-    private final TableSchema schema;
+    private final ResolvedSchema resolvedSchema;
     private final Elasticsearch6Configuration config;
     private final ZoneId localTimeZoneId;
     private final boolean isDynamicIndexWithSystemTime;
@@ -68,9 +68,9 @@ final class Elasticsearch6DynamicSink implements DynamicTableSink {
     public Elasticsearch6DynamicSink(
             EncodingFormat<SerializationSchema<RowData>> format,
             Elasticsearch6Configuration config,
-            TableSchema schema,
+            ResolvedSchema resolvedSchema,
             ZoneId localTimeZoneId) {
-        this(format, config, schema, localTimeZoneId, (ElasticsearchSink.Builder::new));
+        this(format, config, resolvedSchema, localTimeZoneId, (ElasticsearchSink.Builder::new));
     }
 
     // --------------------------------------------------------------
@@ -94,11 +94,11 @@ final class Elasticsearch6DynamicSink implements DynamicTableSink {
     Elasticsearch6DynamicSink(
             EncodingFormat<SerializationSchema<RowData>> format,
             Elasticsearch6Configuration config,
-            TableSchema schema,
+            ResolvedSchema resolvedSchema,
             ZoneId localTimeZoneId,
             ElasticSearchBuilderProvider builderProvider) {
         this.format = format;
-        this.schema = schema;
+        this.resolvedSchema = resolvedSchema;
         this.config = config;
         this.localTimeZoneId = localTimeZoneId;
         this.isDynamicIndexWithSystemTime = isDynamicIndexWithSystemTime();
@@ -133,17 +133,20 @@ final class Elasticsearch6DynamicSink implements DynamicTableSink {
     public SinkFunctionProvider getSinkRuntimeProvider(Context context) {
         return () -> {
             SerializationSchema<RowData> format =
-                    this.format.createRuntimeEncoder(context, schema.toRowDataType());
+                    this.format.createRuntimeEncoder(context, resolvedSchema.toSinkRowDataType());
 
             final RowElasticsearchSinkFunction upsertFunction =
                     new RowElasticsearchSinkFunction(
                             IndexGeneratorFactory.createIndexGenerator(
-                                    config.getIndex(), schema, localTimeZoneId),
+                                    config.getIndex(),
+                                    resolvedSchema.toSinkRowDataType(),
+                                    localTimeZoneId),
                             config.getDocumentType(),
                             format,
                             XContentType.JSON,
                             REQUEST_FACTORY,
-                            KeyExtractor.createKeyExtractor(schema, config.getKeyDelimiter()));
+                            KeyExtractor.createKeyExtractor(
+                                    resolvedSchema, config.getKeyDelimiter()));
 
             final ElasticsearchSink.Builder<RowData> builder =
                     builderProvider.createBuilder(config.getHosts(), upsertFunction);
@@ -323,13 +326,13 @@ final class Elasticsearch6DynamicSink implements DynamicTableSink {
         }
         Elasticsearch6DynamicSink that = (Elasticsearch6DynamicSink) o;
         return Objects.equals(format, that.format)
-                && Objects.equals(schema, that.schema)
+                && Objects.equals(resolvedSchema, that.resolvedSchema)
                 && Objects.equals(config, that.config)
                 && Objects.equals(builderProvider, that.builderProvider);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(format, schema, config, builderProvider);
+        return Objects.hash(format, resolvedSchema, config, builderProvider);
     }
 }

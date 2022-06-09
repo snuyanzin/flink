@@ -23,16 +23,15 @@ import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ReadableConfig;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.api.config.TableConfigOptions;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.format.EncodingFormat;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.FactoryUtil;
 import org.apache.flink.table.factories.SerializationFormatFactory;
-import org.apache.flink.table.utils.TableSchemaUtils;
 import org.apache.flink.util.StringUtils;
 
 import java.time.ZoneId;
@@ -82,7 +81,7 @@ public class Elasticsearch6DynamicSinkFactory implements DynamicTableSinkFactory
 
     @Override
     public DynamicTableSink createDynamicTableSink(Context context) {
-        TableSchema tableSchema = context.getCatalogTable().getSchema();
+        ResolvedSchema tableSchema = context.getCatalogTable().getResolvedSchema();
         ElasticsearchValidationUtils.validatePrimaryKey(tableSchema);
         final FactoryUtil.TableFactoryHelper helper =
                 FactoryUtil.createTableFactoryHelper(this, context);
@@ -99,10 +98,7 @@ public class Elasticsearch6DynamicSinkFactory implements DynamicTableSinkFactory
         validate(config, configuration);
 
         return new Elasticsearch6DynamicSink(
-                format,
-                config,
-                TableSchemaUtils.getPhysicalSchema(tableSchema),
-                getLocalTimeZoneId(context.getConfiguration()));
+                format, config, tableSchema, getLocalTimeZoneId(context.getConfiguration()));
     }
 
     ZoneId getLocalTimeZoneId(ReadableConfig readableConfig) {

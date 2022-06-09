@@ -19,8 +19,8 @@
 package org.apache.flink.streaming.connectors.elasticsearch.table;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
@@ -56,7 +56,7 @@ class ElasticsearchValidationUtils {
      * The illegal types are mostly {@link LogicalTypeFamily#COLLECTION} types and {@link
      * LogicalTypeRoot#RAW} type.
      */
-    public static void validatePrimaryKey(TableSchema schema) {
+    public static void validatePrimaryKey(ResolvedSchema schema) {
         schema.getPrimaryKey()
                 .ifPresent(
                         key -> {
@@ -65,8 +65,9 @@ class ElasticsearchValidationUtils {
                                             .map(
                                                     fieldName -> {
                                                         LogicalType logicalType =
-                                                                schema.getFieldDataType(fieldName)
+                                                                schema.getColumn(fieldName)
                                                                         .get()
+                                                                        .getDataType()
                                                                         .getLogicalType();
                                                         if (logicalType.is(
                                                                 LogicalTypeRoot.DISTINCT_TYPE)) {

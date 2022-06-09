@@ -28,6 +28,8 @@ import org.apache.flink.streaming.connectors.elasticsearch.util.NoOpFailureHandl
 import org.apache.flink.streaming.connectors.elasticsearch7.ElasticsearchSink;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.catalog.Column;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.format.EncodingFormat;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
@@ -66,7 +68,7 @@ public class Elasticsearch7DynamicSinkTest extends TestLogger {
 
     @Test
     public void testBuilder() {
-        final TableSchema schema = createTestSchema();
+        final ResolvedSchema schema = createTestSchema();
 
         BuilderProvider provider = new BuilderProvider();
         final Elasticsearch7DynamicSink testSink =
@@ -97,7 +99,7 @@ public class Elasticsearch7DynamicSinkTest extends TestLogger {
 
     @Test
     public void testDefaultConfig() {
-        final TableSchema schema = createTestSchema();
+        final ResolvedSchema schema = createTestSchema();
         Configuration configuration = new Configuration();
         configuration.setString(ElasticsearchConnectorOptions.INDEX_OPTION.key(), INDEX);
         configuration.setString(ElasticsearchConnectorOptions.DOCUMENT_TYPE_OPTION.key(), DOC_TYPE);
@@ -129,7 +131,7 @@ public class Elasticsearch7DynamicSinkTest extends TestLogger {
 
     @Test
     public void testAuthConfig() {
-        final TableSchema schema = createTestSchema();
+        final ResolvedSchema schema = createTestSchema();
         Configuration configuration = new Configuration();
         configuration.setString(ElasticsearchConnectorOptions.INDEX_OPTION.key(), INDEX);
         configuration.setString(ElasticsearchConnectorOptions.DOCUMENT_TYPE_OPTION.key(), DOC_TYPE);
@@ -217,13 +219,12 @@ public class Elasticsearch7DynamicSinkTest extends TestLogger {
         }
     }
 
-    private TableSchema createTestSchema() {
-        return TableSchema.builder()
-                .field(FIELD_KEY, DataTypes.BIGINT())
-                .field(FIELD_FRUIT_NAME, DataTypes.STRING())
-                .field(FIELD_COUNT, DataTypes.DECIMAL(10, 4))
-                .field(FIELD_TS, DataTypes.TIMESTAMP(3))
-                .build();
+    private ResolvedSchema createTestSchema() {
+        return ResolvedSchema.of(
+                Column.physical(FIELD_KEY, DataTypes.BIGINT()),
+                Column.physical(FIELD_FRUIT_NAME, DataTypes.STRING()),
+                Column.physical(FIELD_COUNT, DataTypes.DECIMAL(10, 4)),
+                Column.physical(FIELD_TS, DataTypes.TIMESTAMP(3)));
     }
 
     private static class DummySerializationSchema implements SerializationSchema<RowData> {
