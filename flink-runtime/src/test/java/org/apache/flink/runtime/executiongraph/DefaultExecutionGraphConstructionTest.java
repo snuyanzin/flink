@@ -39,7 +39,7 @@ import org.apache.flink.shaded.guava30.com.google.common.collect.Sets;
 
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -241,8 +241,8 @@ public class DefaultExecutionGraphConstructionTest {
             @SuppressWarnings("unchecked")
             InputSplitSource<InputSplit> source2 = mock(InputSplitSource.class);
 
-            when(source1.createInputSplits(Matchers.anyInt())).thenReturn(emptySplits);
-            when(source2.createInputSplits(Matchers.anyInt())).thenReturn(emptySplits);
+            when(source1.createInputSplits(ArgumentMatchers.anyInt())).thenReturn(emptySplits);
+            when(source2.createInputSplits(ArgumentMatchers.anyInt())).thenReturn(emptySplits);
             when(source1.getInputSplitAssigner(emptySplits)).thenReturn(assigner1);
             when(source2.getInputSplitAssigner(emptySplits)).thenReturn(assigner2);
 

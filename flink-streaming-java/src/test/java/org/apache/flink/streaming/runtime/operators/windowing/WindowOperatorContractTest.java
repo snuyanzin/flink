@@ -48,7 +48,7 @@ import org.apache.flink.util.TestLogger;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -67,10 +67,10 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -109,11 +109,15 @@ public abstract class WindowOperatorContractTest extends TestLogger {
         Trigger<T, W> mockTrigger = mock(Trigger.class);
 
         when(mockTrigger.onElement(
-                        Matchers.<T>any(), anyLong(), Matchers.<W>any(), anyTriggerContext()))
+                        ArgumentMatchers.<T>any(),
+                        anyLong(),
+                        ArgumentMatchers.<W>any(),
+                        anyTriggerContext()))
                 .thenReturn(TriggerResult.CONTINUE);
-        when(mockTrigger.onEventTime(anyLong(), Matchers.<W>any(), anyTriggerContext()))
+        when(mockTrigger.onEventTime(anyLong(), ArgumentMatchers.<W>any(), anyTriggerContext()))
                 .thenReturn(TriggerResult.CONTINUE);
-        when(mockTrigger.onProcessingTime(anyLong(), Matchers.<W>any(), anyTriggerContext()))
+        when(mockTrigger.onProcessingTime(
+                        anyLong(), ArgumentMatchers.<W>any(), anyTriggerContext()))
                 .thenReturn(TriggerResult.CONTINUE);
 
         return mockTrigger;
@@ -206,8 +210,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                             }
                         })
                 .when(mockTrigger)
-                .onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext());
+                .onElement(ArgumentMatchers.any(), anyLong(), anyTimeWindow(), anyTriggerContext());
     }
 
     private static <T> void shouldDeleteEventTimeTimerOnElement(
@@ -225,8 +228,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                             }
                         })
                 .when(mockTrigger)
-                .onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext());
+                .onElement(ArgumentMatchers.any(), anyLong(), anyTimeWindow(), anyTriggerContext());
     }
 
     private static <T> void shouldRegisterProcessingTimeTimerOnElement(
@@ -244,8 +246,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                             }
                         })
                 .when(mockTrigger)
-                .onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext());
+                .onElement(ArgumentMatchers.any(), anyLong(), anyTimeWindow(), anyTriggerContext());
     }
 
     private static <T> void shouldDeleteProcessingTimeTimerOnElement(
@@ -263,8 +264,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                             }
                         })
                 .when(mockTrigger)
-                .onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext());
+                .onElement(ArgumentMatchers.any(), anyLong(), anyTimeWindow(), anyTriggerContext());
     }
 
     @SuppressWarnings("unchecked")
@@ -293,34 +293,35 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(assigner)
                 .mergeWindows(
-                        anyCollection(), Matchers.<MergingWindowAssigner.MergeCallback>anyObject());
+                        anyCollection(),
+                        ArgumentMatchers.<MergingWindowAssigner.MergeCallback>any());
     }
 
     private static <T> void shouldContinueOnElement(Trigger<T, TimeWindow> mockTrigger)
             throws Exception {
         when(mockTrigger.onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext()))
+                        ArgumentMatchers.<T>any(), anyLong(), anyTimeWindow(), anyTriggerContext()))
                 .thenReturn(TriggerResult.CONTINUE);
     }
 
     private static <T> void shouldFireOnElement(Trigger<T, TimeWindow> mockTrigger)
             throws Exception {
         when(mockTrigger.onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext()))
+                        ArgumentMatchers.<T>any(), anyLong(), anyTimeWindow(), anyTriggerContext()))
                 .thenReturn(TriggerResult.FIRE);
     }
 
     private static <T> void shouldPurgeOnElement(Trigger<T, TimeWindow> mockTrigger)
             throws Exception {
         when(mockTrigger.onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext()))
+                        ArgumentMatchers.any(), anyLong(), anyTimeWindow(), anyTriggerContext()))
                 .thenReturn(TriggerResult.PURGE);
     }
 
     private static <T> void shouldFireAndPurgeOnElement(Trigger<T, TimeWindow> mockTrigger)
             throws Exception {
         when(mockTrigger.onElement(
-                        Matchers.<T>anyObject(), anyLong(), anyTimeWindow(), anyTriggerContext()))
+                        ArgumentMatchers.any(), anyLong(), anyTimeWindow(), anyTriggerContext()))
                 .thenReturn(TriggerResult.FIRE_AND_PURGE);
     }
 
@@ -686,7 +687,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -833,7 +834,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -885,7 +886,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -956,7 +957,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1031,7 +1032,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1101,7 +1102,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1171,7 +1172,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1262,7 +1263,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1354,7 +1355,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1433,7 +1434,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1511,7 +1512,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1589,7 +1590,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1870,7 +1871,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -1937,7 +1938,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -2088,7 +2089,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -2200,7 +2201,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -2484,7 +2485,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -2552,7 +2553,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -2636,7 +2637,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -2724,7 +2725,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
@@ -2911,7 +2912,7 @@ public abstract class WindowOperatorContractTest extends TestLogger {
                         })
                 .when(mockTrigger)
                 .onElement(
-                        Matchers.<Integer>anyObject(),
+                        ArgumentMatchers.<Integer>any(),
                         anyLong(),
                         anyTimeWindow(),
                         anyTriggerContext());
