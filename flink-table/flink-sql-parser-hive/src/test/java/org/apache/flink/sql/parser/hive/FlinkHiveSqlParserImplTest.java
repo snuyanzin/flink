@@ -63,6 +63,18 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
     }
 
     @Test
+    void testArrayAgg() {}
+
+    @Test
+    void testGroupConcat() {}
+
+    @Test
+    void testStringAgg() {}
+
+    @Test
+    void testExplainAsDot() {}
+
+    @Test
     void testCreateDatabase() {
         sql("create database db1").ok("CREATE DATABASE `DB1`");
         sql("create database db1 comment 'comment db1' location '/path/to/db1'")

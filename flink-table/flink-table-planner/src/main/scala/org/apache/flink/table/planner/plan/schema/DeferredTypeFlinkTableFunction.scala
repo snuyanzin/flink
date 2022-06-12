@@ -27,6 +27,9 @@ import org.apache.flink.table.types.utils.TypeConversions
 
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
 
+import java.lang.reflect.Type
+import java.util
+
 /**
  * A Deferred Type is a Table Function which the result type hasn't been determined yet. It will
  * determine the result type after the arguments are passed.
@@ -69,4 +72,9 @@ class DeferredTypeFlinkTableFunction(
       fieldNames,
       fieldIndexes)
   }
+
+  override def getRowType(relDataTypeFactory: RelDataTypeFactory, list: util.List[_]): RelDataType =
+    ???
+
+  override def getElementType(list: util.List[_]): Type = ???
 }

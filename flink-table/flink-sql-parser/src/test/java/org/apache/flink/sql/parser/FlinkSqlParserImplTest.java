@@ -1697,6 +1697,18 @@ class FlinkSqlParserImplTest extends SqlParserTest {
     }
 
     @Test
+    void testArrayAgg() {}
+
+    @Test
+    void testGroupConcat() {}
+
+    @Test
+    void testStringAgg() {}
+
+    @Test
+    void testExplainAsDot() {}
+
+    @Test
     void testExplainAsJson() {
         String sql = "explain json_execution_plan select * from emps";
         String expected = "EXPLAIN JSON_EXECUTION_PLAN SELECT *\n" + "FROM `EMPS`";

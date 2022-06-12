@@ -1679,6 +1679,7 @@ public class HiveParserUtils {
                 ignoreNulls,
                 argList,
                 filterArg,
+                null,
                 collation,
                 type,
                 name);

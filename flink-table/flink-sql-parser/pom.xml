@@ -161,6 +161,14 @@ under the License.
 					<groupId>org.apiguardian</groupId>
 					<artifactId>apiguardian-api</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.checkerframework</groupId>
+					<artifactId>checker-qual</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.google.errorprone</groupId>
+					<artifactId>error_prone_annotations</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -192,6 +200,14 @@ under the License.
 				<exclusion>
 					<groupId>org.apiguardian</groupId>
 					<artifactId>apiguardian-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.checkerframework</groupId>
+					<artifactId>checker-qual</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.google.errorprone</groupId>
+					<artifactId>error_prone_annotations</artifactId>
 				</exclusion>
 			</exclusions>
 			<scope>test</scope>

@@ -28,6 +28,9 @@ import org.apache.flink.table.typeutils.FieldInfoUtils
 
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
 
+import java.lang.reflect.Type
+import java.util
+
 /**
  * A Typed Function is a Table Function which the result type has already been determined. The
  * result type will be determined before constructing the class.
@@ -68,4 +71,9 @@ class TypedFlinkTableFunction(
       .foreach(f => builder.add(f._1, flinkTypeFactory.createFieldTypeFromLogicalType(f._2)))
     builder.build
   }
+
+  override def getRowType(relDataTypeFactory: RelDataTypeFactory, list: util.List[_]): RelDataType =
+    ???
+
+  override def getElementType(list: util.List[_]): Type = ???
 }

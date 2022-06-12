@@ -23,7 +23,6 @@ import org.apache.flink.table.types.DataType
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
 import org.apache.calcite.schema.{FunctionParameter, TableFunction}
 
-import java.lang.reflect.Type
 import java.util
 import java.util.Collections
 
@@ -37,14 +36,10 @@ import java.util.Collections
  */
 abstract class FlinkTableFunction(tableFunction: functions.TableFunction[_]) extends TableFunction {
 
-  override def getElementType(arguments: util.List[AnyRef]): Type = classOf[Array[Object]]
+  // override def getElementType(arguments: util.List[AnyRef]): Type = classOf[Array[Object]]
 
   // we do never use the FunctionParameters, so return an empty list
   override def getParameters: util.List[FunctionParameter] = Collections.emptyList()
-  // we do never use the getRowType, so return null
-  override def getRowType(
-      typeFactory: RelDataTypeFactory,
-      arguments: util.List[AnyRef]): RelDataType = null
 
   /** Returns the Type for usage, i.e. code generation. */
   def getExternalResultType(
