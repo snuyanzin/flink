@@ -351,7 +351,7 @@ class SubplanReuseTest extends TableTestBase {
 
   @Test
   def testSubplanReuseOnCorrelate(): Unit = {
-    util.addFunction("str_split", new StringSplit())
+    util.addTemporarySystemFunction("str_split", new StringSplit())
     util.tableEnv.getConfig
       .set(ExecutionConfigOptions.TABLE_EXEC_DISABLED_OPERATORS, "NestedLoopJoin,SortMergeJoin")
     val sqlQuery =
@@ -366,7 +366,7 @@ class SubplanReuseTest extends TableTestBase {
 
   @Test
   def testSubplanReuseOnCorrelateWithNonDeterministicUDTF(): Unit = {
-    util.addFunction("TableFun", new NonDeterministicTableFunc)
+    util.addTemporarySystemFunction("TableFun", new NonDeterministicTableFunc)
 
     val sqlQuery =
       """

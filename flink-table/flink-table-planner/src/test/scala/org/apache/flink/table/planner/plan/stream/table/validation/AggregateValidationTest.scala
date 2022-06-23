@@ -74,7 +74,7 @@ class AggregateValidationTest extends TableTestBase {
   def testTableFunctionInSelection(): Unit = {
     val table = util.addTableSource[(Long, Int, String)]('a, 'b, 'c)
 
-    util.addFunction("func", new TableFunc0)
+    util.addTemporarySystemFunction("func", new TableFunc0)
     val resultTable = table
       .groupBy('a)
       .aggregate('b.sum.as('d))
@@ -99,7 +99,7 @@ class AggregateValidationTest extends TableTestBase {
   def testInvalidTableFunctionInAggregate(): Unit = {
     val table = util.addTableSource[(Long, Int, String)]('a, 'b, 'c)
 
-    util.addFunction("func", new TableFunc0)
+    util.addTemporarySystemFunction("func", new TableFunc0)
     table
       .groupBy('a)
       // must fail. Only AggregateFunction can be used in aggregate

@@ -35,7 +35,7 @@ class ColumnFunctionsTest extends TableTestBase {
 
     val t = util.addTableSource[(Double, Long)]('double, 'long)
 
-    util.addFunction("TestFunc", TestFunc)
+    util.addTemporarySystemFunction("TestFunc", TestFunc)
     val tab1 = t.select(call("TestFunc", withColumns('*)))
     util.verifyExecPlan(tab1)
   }
@@ -87,7 +87,7 @@ class ColumnFunctionsTest extends TableTestBase {
   def testJoinLateral(): Unit = {
     val t = util.addTableSource[(Double, Long, String)]('int, 'long, 'string)
     val func0 = new TableFunc0
-    util.addFunction("func0", func0)
+    util.addTemporarySystemFunction("func0", func0)
 
     val tab1 = t.joinLateral(func0(withColumns('string)))
     util.verifyExecPlan(tab1)
@@ -132,9 +132,9 @@ class ColumnFunctionsTest extends TableTestBase {
     val weightAvgFun = new WeightedAvg
     val countDist = new CountDistinct
 
-    util.addFunction("countFun", countFun)
+    util.addTemporarySystemFunction("countFun", countFun)
     util.addTemporarySystemFunction("weightAvgFun", weightAvgFun)
-    util.addFunction("countDist", countDist)
+    util.addTemporarySystemFunction("countDist", countDist)
 
     val tab1 = table
       .window(Over.partitionBy(withColumns('c)).orderBy('proctime).preceding(UNBOUNDED_ROW).as('w))
@@ -152,7 +152,7 @@ class ColumnFunctionsTest extends TableTestBase {
   def testAddColumns(): Unit = {
     val t = util.addTableSource[(Double, Long, String)]('a, 'b, 'c)
 
-    util.addFunction("TestFunc", TestFunc)
+    util.addTemporarySystemFunction("TestFunc", TestFunc)
     val tab1 = t.addColumns(call("TestFunc", withColumns('a, 'b)).as('d))
     util.verifyExecPlan(tab1)
   }

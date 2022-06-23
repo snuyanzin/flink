@@ -83,7 +83,7 @@ class RelTimeIndicatorConverterTest extends TableTestBase {
 
   @Test
   def testTableFunction(): Unit = {
-    util.addFunction("tableFunc", new TableFunc)
+    util.addTemporarySystemFunction("tableFunc", new TableFunc)
     val sqlQuery =
       """
         |SELECT rowtime, proctime, s

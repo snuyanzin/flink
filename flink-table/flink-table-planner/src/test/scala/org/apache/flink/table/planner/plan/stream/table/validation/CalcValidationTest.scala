@@ -145,7 +145,7 @@ class CalcValidationTest extends TableTestBase {
   def testInvalidMapFunctionTypeUDAGG2(): Unit = {
     val util = streamTestUtil()
 
-    util.addFunction("weightedAvg", new WeightedAvg)
+    util.addTemporarySystemFunction("weightedAvg", new WeightedAvg)
     util
       .addTableSource[(Int)]("MyTable", 'int)
       .map(call("weightedAvg", $"int", $"int")) // do not support AggregateFunction as input
@@ -155,7 +155,7 @@ class CalcValidationTest extends TableTestBase {
   def testInvalidMapFunctionTypeTableFunction(): Unit = {
     val util = streamTestUtil()
 
-    util.addFunction("func", new TableFunc0)
+    util.addTemporarySystemFunction("func", new TableFunc0)
     util
       .addTableSource[(String)]("MyTable", 'string)
       .map(call("func", $"string").as("a")) // do not support TableFunction as input

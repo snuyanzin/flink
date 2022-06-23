@@ -30,7 +30,7 @@ class PythonCalcTest extends TableTestBase {
   @Before
   def setup(): Unit = {
     util.addTableSource[(Int, Int, Int)]("MyTable", 'a, 'b, 'c)
-    util.addFunction("pyFunc1", new PythonScalarFunction("pyFunc1"))
+    util.addTemporarySystemFunction("pyFunc1", new PythonScalarFunction("pyFunc1"))
   }
 
   @Test

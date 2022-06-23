@@ -322,7 +322,7 @@ class OverAggregateTest extends TableTestBase {
   /** OVER clause is necessary for [[OverAgg0]] window function. */
   @Test(expected = classOf[ValidationException])
   def testInvalidOverAggregation(): Unit = {
-    util.addFunction("overAgg", new OverAgg0)
+    util.addTemporarySystemFunction("overAgg", new OverAgg0)
     util.verifyExecPlan("SELECT overAgg(b, a) FROM MyTable")
   }
 
@@ -330,7 +330,7 @@ class OverAggregateTest extends TableTestBase {
   @Test(expected = classOf[ValidationException])
   def testInvalidOverAggregation2(): Unit = {
     util.addTableSource[(Int, Long, String, Timestamp)]("T", 'a, 'b, 'c, 'ts)
-    util.addFunction("overAgg", new OverAgg0)
+    util.addTemporarySystemFunction("overAgg", new OverAgg0)
 
     util.verifyExecPlan("SELECT overAgg(b, a) FROM T GROUP BY TUMBLE(ts, INTERVAL '2' HOUR)")
   }

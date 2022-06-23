@@ -152,7 +152,7 @@ class LookupJoinTest(legacyTableSource: Boolean) extends TableTestBase {
       "Only inner join condition with equality predicates supports the " +
         "Python UDF taking the inputs from the left table and the right table at the same time, " +
         "e.g., ON T1.id = T2.id && pythonUdf(T1.a, T2.b)")
-    testUtil.addFunction("pyFunc", new PythonScalarFunction("pyFunc"))
+    testUtil.addTemporarySystemFunction("pyFunc", new PythonScalarFunction("pyFunc"))
     val sql =
       """
         |SELECT * FROM MyTable AS T

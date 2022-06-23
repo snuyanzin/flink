@@ -111,7 +111,7 @@ public abstract class PushFilterIntoTableSourceScanRuleTestBase extends TableTes
 
     @Test
     public void testWithUdf() {
-        util.addFunction("myUdf", Func1$.MODULE$);
+        util.addTemporarySystemFunction("myUdf", Func1$.MODULE$);
         util.verifyRelPlan("SELECT * FROM MyTable WHERE amount > 2 AND myUdf(amount) < 32");
     }
 
