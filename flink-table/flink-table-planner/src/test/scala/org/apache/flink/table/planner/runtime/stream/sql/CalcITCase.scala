@@ -45,7 +45,6 @@ import java.time.Instant
 import java.util
 
 import scala.collection.JavaConversions._
-import scala.collection.Seq
 
 class CalcITCase extends StreamingTestBase {
 
@@ -95,7 +94,7 @@ class CalcITCase extends StreamingTestBase {
     val ds = env.fromCollection(data)
 
     val t = ds.toTable(tEnv, 'a, 'b)
-    tEnv.registerTable("MyTableRow", t)
+    tEnv.createTemporaryView("MyTableRow", t)
 
     val outputType = InternalTypeInfo.ofFields(new IntType(), new BooleanType())
 
@@ -130,7 +129,7 @@ class CalcITCase extends StreamingTestBase {
     val ds = env.fromCollection(data)
 
     val t = ds.toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTableRow", t)
+    tEnv.createTemporaryView("MyTableRow", t)
 
     val outputType = InternalTypeInfo.ofFields(new IntType(), new IntType(), new BigIntType())
 
@@ -157,7 +156,7 @@ class CalcITCase extends StreamingTestBase {
     val ds = env.fromCollection(data)
 
     val t = ds.toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTableRow", t)
+    tEnv.createTemporaryView("MyTableRow", t)
 
     val outputType =
       InternalTypeInfo.ofFields(VarCharType.STRING_TYPE, VarCharType.STRING_TYPE, new IntType())
@@ -190,7 +189,7 @@ class CalcITCase extends StreamingTestBase {
     val ds = env.fromCollection(data)
 
     val t = ds.toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTableRow", t)
+    tEnv.createTemporaryView("MyTableRow", t)
 
     val result = tEnv.sqlQuery(sqlQuery).toAppendStream[Row]
     val sink = new TestingAppendSink
@@ -215,7 +214,7 @@ class CalcITCase extends StreamingTestBase {
     val ds = env.fromCollection(data)
 
     val t = ds.toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTableRow", t)
+    tEnv.createTemporaryView("MyTableRow", t)
 
     val result = tEnv.sqlQuery(sqlQuery).toAppendStream[Row]
     val sink = new TestingAppendSink
@@ -233,7 +232,7 @@ class CalcITCase extends StreamingTestBase {
     val t = env
       .fromCollection(TestData.smallTupleData3)
       .toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTableRow", t)
+    tEnv.createTemporaryView("MyTableRow", t)
 
     val result = tEnv.sqlQuery(sqlQuery).toAppendStream[Row]
     val sink = new TestingAppendSink
@@ -251,7 +250,7 @@ class CalcITCase extends StreamingTestBase {
     val t = env
       .fromCollection(TestData.smallTupleData3)
       .toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTableRow", t)
+    tEnv.createTemporaryView("MyTableRow", t)
 
     val result = tEnv.sqlQuery(sqlQuery).toAppendStream[Row]
     val sink = new TestingAppendSink
@@ -275,7 +274,7 @@ class CalcITCase extends StreamingTestBase {
         )),
       '_1,
       '_2)
-    tEnv.registerTable("MyTable", table)
+    tEnv.createTemporaryView("MyTable", table)
 
     val result = tEnv.sqlQuery(sqlQuery)
     val sink = TestSinkUtil.configureSink(result, new TestingAppendTableSink())
@@ -293,7 +292,7 @@ class CalcITCase extends StreamingTestBase {
     val t = env
       .fromCollection(TestData.tupleData3)
       .toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTable", t)
+    tEnv.createTemporaryView("MyTable", t)
 
     val result = tEnv.sqlQuery(sqlQuery).toAppendStream[Row]
     val sink = new TestingAppendSink
@@ -331,7 +330,7 @@ class CalcITCase extends StreamingTestBase {
     val t = env
       .fromCollection(TestData.tupleData3)
       .toTable(tEnv, 'a, 'b, 'c)
-    tEnv.registerTable("MyTable", t)
+    tEnv.createTemporaryView("MyTable", t)
 
     val result = tEnv.sqlQuery(sqlQuery).toAppendStream[Row]
     val sink = new TestingAppendSink

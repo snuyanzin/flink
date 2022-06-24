@@ -485,7 +485,7 @@ public class TableImpl implements Table {
     public String toString() {
         if (tableName == null) {
             tableName = "UnnamedTable$" + uniqueId.getAndIncrement();
-            tableEnvironment.registerTable(tableName, this);
+            tableEnvironment.createTemporaryView(tableName, this);
         }
         return tableName;
     }

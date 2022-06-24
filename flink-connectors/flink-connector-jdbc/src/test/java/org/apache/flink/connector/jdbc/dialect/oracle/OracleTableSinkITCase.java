@@ -281,7 +281,7 @@ public class OracleTableSinkITCase extends AbstractTestBase {
                 tEnv.fromDataStream(
                         get4TupleDataStream(env), $("id"), $("num"), $("text"), $("ts"));
 
-        tEnv.registerTable("T", t);
+        tEnv.createTemporaryView("T", t);
 
         tEnv.executeSql(
                 "CREATE TABLE upsertSink ("

@@ -59,7 +59,7 @@ class FlinkRelOptUtilTest {
     val tableEnv = StreamTableEnvironment.create(env, TableTestUtil.STREAM_SETTING)
 
     val table = env.fromElements[(Int, Long, String)]().toTable(tableEnv, 'a, 'b, 'c)
-    tableEnv.registerTable("MyTable", table)
+    tableEnv.createTemporaryView("MyTable", table)
 
     val sqlQuery =
       """
@@ -117,7 +117,7 @@ class FlinkRelOptUtilTest {
   @Test
   def testGetDigestWithDynamicFunctionView(): Unit = {
     val view = tableEnv.sqlQuery("SELECT id AS random FROM MyTable ORDER BY rand() LIMIT 1")
-    tableEnv.registerTable("MyView", view)
+    tableEnv.createTemporaryView("MyView", view)
     val table = tableEnv.sqlQuery("""
                                     |(SELECT * FROM MyView)
                                     |INTERSECT

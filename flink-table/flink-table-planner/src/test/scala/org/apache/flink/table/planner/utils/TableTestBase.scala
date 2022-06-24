@@ -1123,7 +1123,7 @@ abstract class TableTestUtil(
       name)
     val operation = new RichTableSourceQueryOperation(identifier, tableSource, statistic)
     val table = testingTableEnv.createTable(operation)
-    testingTableEnv.registerTable(name, table)
+    testingTableEnv.createTemporaryView(name, table)
     testingTableEnv.from(name)
   }
 
@@ -1253,7 +1253,7 @@ case class StreamTableTestUtil(
       expr
     )
     val queryOperation = new PlannerQueryOperation(watermarkAssigner)
-    testingTableEnv.registerTable(tableName, testingTableEnv.createTable(queryOperation))
+    testingTableEnv.createTemporaryView(tableName, testingTableEnv.createTable(queryOperation))
   }
 
   def buildStreamProgram(firstProgramNameToRemove: String): Unit = {
@@ -1633,7 +1633,7 @@ object TableTestUtil {
       statistic.getOrElse(FlinkStatistic.UNKNOWN)
     )
     val table = tEnv.asInstanceOf[TableEnvironmentImpl].createTable(dataStreamQueryOperation)
-    tEnv.registerTable(name, table)
+    tEnv.createTemporaryView(name, table)
   }
 
   def readFromResource(path: String): String = {

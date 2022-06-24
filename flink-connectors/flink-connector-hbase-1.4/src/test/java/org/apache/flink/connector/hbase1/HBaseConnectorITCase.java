@@ -200,8 +200,8 @@ public class HBaseConnectorITCase extends HBaseTestBase {
                         + getZookeeperQuorum()
                         + "'"
                         + ")");
-        tEnv.registerFunction("toUTF8", new ToUTF8());
-        tEnv.registerFunction("toLong", new ToLong());
+        tEnv.createTemporarySystemFunction("toUTF8", new ToUTF8());
+        tEnv.createTemporarySystemFunction("toLong", new ToLong());
 
         Table table =
                 tEnv.sqlQuery(
@@ -380,7 +380,7 @@ public class HBaseConnectorITCase extends HBaseTestBase {
         String srcTableName = "src";
         DataStream<Row> srcDs = execEnv.fromCollection(testData).returns(testTypeInfo);
         Table in = tEnv.fromDataStream(srcDs, $("a"), $("b"), $("c"), $("proc").proctime());
-        tEnv.registerTable(srcTableName, in);
+        tEnv.createTemporaryView(srcTableName, in);
 
         // perform a temporal table join query
         String dimJoinQuery =

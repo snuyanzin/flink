@@ -127,7 +127,7 @@ class OverAggregateHarnessTest(mode: StateBackendMode) extends HarnessTestBase(m
       : (KeyedOneInputStreamOperatorTestHarness[RowData, RowData, RowData], Array[LogicalType]) = {
     val data = new mutable.MutableList[(Long, String, Long)]
     val t = env.fromCollection(data).toTable(tEnv, 'currtime, 'b, 'c, 'proctime.proctime)
-    tEnv.registerTable("T", t)
+    tEnv.createTemporaryView("T", t)
 
     val sql =
       """
@@ -160,7 +160,7 @@ class OverAggregateHarnessTest(mode: StateBackendMode) extends HarnessTestBase(m
 
     val data = new mutable.MutableList[(Long, String, Long)]
     val t = env.fromCollection(data).toTable(tEnv, 'currtime, 'b, 'c, 'proctime.proctime)
-    tEnv.registerTable("T", t)
+    tEnv.createTemporaryView("T", t)
 
     val sql =
       """
@@ -264,7 +264,7 @@ class OverAggregateHarnessTest(mode: StateBackendMode) extends HarnessTestBase(m
 
     val data = new mutable.MutableList[(Long, String, Long)]
     val t = env.fromCollection(data).toTable(tEnv, 'currtime, 'b, 'c, 'proctime.proctime)
-    tEnv.registerTable("T", t)
+    tEnv.createTemporaryView("T", t)
 
     val sql =
       """
@@ -355,7 +355,7 @@ class OverAggregateHarnessTest(mode: StateBackendMode) extends HarnessTestBase(m
 
     val data = new mutable.MutableList[(Long, String, Long)]
     val t = env.fromCollection(data).toTable(tEnv, 'rowtime.rowtime, 'b, 'c)
-    tEnv.registerTable("T", t)
+    tEnv.createTemporaryView("T", t)
 
     val sql =
       """
@@ -452,7 +452,7 @@ class OverAggregateHarnessTest(mode: StateBackendMode) extends HarnessTestBase(m
 
     val data = new mutable.MutableList[(Long, String, Long)]
     val t = env.fromCollection(data).toTable(tEnv, 'rowtime.rowtime, 'b, 'c)
-    tEnv.registerTable("T", t)
+    tEnv.createTemporaryView("T", t)
 
     val sql =
       """
@@ -579,7 +579,7 @@ class OverAggregateHarnessTest(mode: StateBackendMode) extends HarnessTestBase(m
 
     val data = new mutable.MutableList[(Long, String, Long)]
     val t = env.fromCollection(data).toTable(tEnv, 'rowtime.rowtime, 'b, 'c)
-    tEnv.registerTable("T", t)
+    tEnv.createTemporaryView("T", t)
 
     val sql =
       """
@@ -701,7 +701,7 @@ class OverAggregateHarnessTest(mode: StateBackendMode) extends HarnessTestBase(m
 
     val data = new mutable.MutableList[(Long, String, Long)]
     val t = env.fromCollection(data).toTable(tEnv, 'rowtime.rowtime, 'b, 'c)
-    tEnv.registerTable("T", t)
+    tEnv.createTemporaryView("T", t)
 
     val sql =
       """
