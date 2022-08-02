@@ -111,17 +111,24 @@ public class SmokeKafkaITCase {
 
     @BeforeAll
     static void setUp() {
-        final Map<String, Object> adminProperties = new HashMap<>();
-        adminProperties.put(
-                CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG,
-                KAFKA_CONTAINER.getBootstrapServers());
-        admin = AdminClient.create(adminProperties);
-        final Properties producerProperties = new Properties();
-        producerProperties.putAll(adminProperties);
-        producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, VoidSerializer.class);
-        producerProperties.put(
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
-        producer = new KafkaProducer<>(producerProperties);
+        try {
+            final Map<String, Object> adminProperties = new HashMap<>();
+            adminProperties.put(
+                    CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG,
+                    KAFKA_CONTAINER.getBootstrapServers());
+            admin = AdminClient.create(adminProperties);
+            final Properties producerProperties = new Properties();
+            producerProperties.putAll(adminProperties);
+            producerProperties.put(
+                    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                    VoidSerializer.class);
+            producerProperties.put(
+                    ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
+            producer = new KafkaProducer<>(producerProperties);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @AfterAll
