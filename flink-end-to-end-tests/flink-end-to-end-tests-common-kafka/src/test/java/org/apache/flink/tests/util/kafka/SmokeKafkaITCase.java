@@ -110,7 +110,7 @@ public class SmokeKafkaITCase {
     }
 
     @BeforeAll
-    private static void setUp() {
+    static void setUp() {
         final Map<String, Object> adminProperties = new HashMap<>();
         adminProperties.put(
                 CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG,
@@ -125,7 +125,7 @@ public class SmokeKafkaITCase {
     }
 
     @AfterAll
-    private static void teardown() {
+    static void teardown() {
         admin.close();
         producer.close();
     }
