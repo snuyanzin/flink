@@ -120,8 +120,7 @@ public class SmokeKafkaITCase {
             final Properties producerProperties = new Properties();
             producerProperties.putAll(adminProperties);
             producerProperties.put(
-                    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                    VoidSerializer.class);
+                    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, VoidSerializer.class);
             producerProperties.put(
                     ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
             producer = new KafkaProducer<>(producerProperties);
