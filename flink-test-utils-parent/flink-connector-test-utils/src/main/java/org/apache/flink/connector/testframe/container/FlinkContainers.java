@@ -460,6 +460,7 @@ public class FlinkContainers implements BeforeAllCallback, AfterAllCallback {
         final String[] command = {"bash", "-c", deletionBaseCommand.toString()};
         final Container.ExecResult result;
         try {
+            System.out.println("jobManager " + jobManager);
             result = jobManager.execInContainer(command);
             if (result.getExitCode() != 0) {
                 throw new IllegalStateException(
