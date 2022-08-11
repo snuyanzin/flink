@@ -451,7 +451,7 @@ public class SubQueryDecorrelator extends RelShuttleImpl {
 
             // Project projects the original expressions,
             // plus any correlated variables the input wants to pass along.
-            final List<Pair<RexNode, String>> projects = new ArrayList<>();
+            final List<Pair<RexNode, ? extends String>> projects = new ArrayList<>();
 
             // If this Project has correlated reference, produce the correlated variables in the new
             // output.
@@ -589,7 +589,7 @@ public class SubQueryDecorrelator extends RelShuttleImpl {
 
             // Project projects the original expressions,
             // plus any correlated variables the input wants to pass along.
-            final List<Pair<RexNode, String>> projects = new ArrayList<>();
+            final List<Pair<RexNode, ? extends String>> projects = new ArrayList<>();
             final List<RelDataTypeField> newInputOutput = newInput.getRowType().getFieldList();
 
             // oldInput has the original group by keys in the front.

@@ -227,6 +227,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     private final Map<SqlNode, RelDataType> nodeToTypeMap = new IdentityHashMap<>();
 
+    public final IdentityHashMap<SqlCall, List<RelDataType>> callToOperandTypesMap =
+            new IdentityHashMap<>();
+
     private final AggFinder aggFinder;
     private final AggFinder aggOrOverFinder;
     private final AggFinder aggOrOverOrGroupFinder;
@@ -1667,6 +1670,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return null;
     }
 
+    @Override
+    public @org.checkerframework.checker.nullness.qual.Nullable List<RelDataType>
+            getValidatedOperandTypes(SqlCall call) {
+        return callToOperandTypesMap.get(call);
+    }
+
     /**
      * Saves the type of a {@link SqlNode}, now that it has been validated.
      *
@@ -1784,11 +1793,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return type;
     }
 
+    @Override
     public CalciteException handleUnresolvedFunction(
             SqlCall call,
-            SqlFunction unresolvedFunction,
+            SqlOperator unresolvedFunction,
             List<RelDataType> argTypes,
-            List<String> argNames) {
+            @org.checkerframework.checker.nullness.qual.Nullable List<String> argNames) {
         // For builtins, we can give a better error message
         final List<SqlOperator> overloads = new ArrayList<>();
         opTab.lookupOperatorOverloads(
@@ -5402,6 +5412,88 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
         // Delegate validation to the operator.
         operator.validateCall(call, this, scope, operandScope);
+    }
+
+    @Override
+    public void validateAggregateParams(
+            SqlCall aggCall,
+            @org.checkerframework.checker.nullness.qual.Nullable SqlNode filter,
+            @org.checkerframework.checker.nullness.qual.Nullable SqlNodeList distinctList,
+            @org.checkerframework.checker.nullness.qual.Nullable SqlNodeList orderList,
+            SqlValidatorScope scope) {
+        // For "agg(expr)", expr cannot itself contain aggregate function
+        // invocations.  For example, "SUM(2 * MAX(x))" is illegal; when
+        // we see it, we'll report the error for the SUM (not the MAX).
+        // For more than one level of nesting, the error which results
+        // depends on the traversal order for validation.
+        //
+        // For a windowed aggregate "agg(expr)", expr can contain an aggregate
+        // function. For example,
+        //   SELECT AVG(2 * MAX(x)) OVER (PARTITION BY y)
+        //   FROM t
+        //   GROUP BY y
+        // is legal. Only one level of nesting is allowed since non-windowed
+        // aggregates cannot nest aggregates.
+
+        // Store nesting level of each aggregate. If an aggregate is found at an invalid
+        // nesting level, throw an assert.
+        final AggFinder a;
+        if (inWindow) {
+            a = overFinder;
+        } else {
+            a = aggOrOverFinder;
+        }
+
+        for (SqlNode param : aggCall.getOperandList()) {
+            if (a.findAgg(param) != null) {
+                throw newValidationError(aggCall, RESOURCE.nestedAggIllegal());
+            }
+        }
+        if (filter != null) {
+            if (a.findAgg(filter) != null) {
+                throw newValidationError(filter, RESOURCE.aggregateInFilterIllegal());
+            }
+        }
+        if (distinctList != null) {
+            for (SqlNode param : distinctList) {
+                if (a.findAgg(param) != null) {
+                    throw newValidationError(aggCall, RESOURCE.aggregateInWithinDistinctIllegal());
+                }
+            }
+        }
+        if (orderList != null) {
+            for (SqlNode param : orderList) {
+                if (a.findAgg(param) != null) {
+                    throw newValidationError(aggCall, RESOURCE.aggregateInWithinGroupIllegal());
+                }
+            }
+        }
+
+        final SqlAggFunction op = (SqlAggFunction) aggCall.getOperator();
+        switch (op.requiresGroupOrder()) {
+            case MANDATORY:
+                if (orderList == null || orderList.size() == 0) {
+                    throw newValidationError(
+                            aggCall, RESOURCE.aggregateMissingWithinGroupClause(op.getName()));
+                }
+                break;
+            case OPTIONAL:
+                break;
+            case IGNORED:
+                // rewrite the order list to empty
+                if (orderList != null) {
+                    orderList.clear();
+                }
+                break;
+            case FORBIDDEN:
+                if (orderList != null && orderList.size() != 0) {
+                    throw newValidationError(
+                            aggCall, RESOURCE.withinGroupClauseIllegalInAggregate(op.getName()));
+                }
+                break;
+            default:
+                throw new AssertionError(op);
+        }
     }
 
     /**
