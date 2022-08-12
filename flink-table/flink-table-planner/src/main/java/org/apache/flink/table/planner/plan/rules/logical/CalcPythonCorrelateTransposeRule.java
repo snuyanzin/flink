@@ -93,6 +93,7 @@ public class CalcPythonCorrelateTransposeRule extends RelOptRule {
                 new FlinkLogicalCorrelate(
                         correlate.getCluster(),
                         correlate.getTraitSet(),
+                        correlate.getHints(),
                         correlate.getLeft(),
                         tableScan,
                         correlate.getCorrelationId(),

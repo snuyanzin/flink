@@ -35,6 +35,7 @@ import org.apache.calcite.rex.RexProgramBuilder;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
+import org.immutables.value.Value;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,11 +63,16 @@ import static org.apache.flink.table.planner.plan.utils.RexNodeExtractor.extract
  */
 @Internal
 public class PushFilterPastChangelogNormalizeRule
-        extends RelRule<PushFilterPastChangelogNormalizeRule.Config> {
+        extends RelRule<
+                PushFilterPastChangelogNormalizeRule.PushFilterPastChangelogNormalizeRuleConfig> {
 
-    public static final RelOptRule INSTANCE = Config.EMPTY.as(Config.class).onMatch().toRule();
+    public static final RelOptRule INSTANCE =
+            ImmutablePushFilterPastChangelogNormalizeRuleConfig.builder()
+                    .build()
+                    .onMatch()
+                    .toRule();
 
-    public PushFilterPastChangelogNormalizeRule(Config config) {
+    public PushFilterPastChangelogNormalizeRule(PushFilterPastChangelogNormalizeRuleConfig config) {
         super(config);
     }
 
@@ -219,7 +225,8 @@ public class PushFilterPastChangelogNormalizeRule
     // ---------------------------------------------------------------------------------------------
 
     /** Configuration for {@link PushFilterPastChangelogNormalizeRule}. */
-    public interface Config extends RelRule.Config {
+    @Value.Immutable(singleton = false)
+    public interface PushFilterPastChangelogNormalizeRuleConfig extends RelRule.Config {
 
         @Override
         default RelOptRule toRule() {

@@ -295,6 +295,7 @@ public class PythonCorrelateSplitRule extends RelOptRule {
                     new FlinkLogicalCorrelate(
                             correlate.getCluster(),
                             correlate.getTraitSet(),
+                            correlate.getHints(),
                             leftCalc,
                             rightNewInput,
                             correlate.getCorrelationId(),
@@ -305,6 +306,7 @@ public class PythonCorrelateSplitRule extends RelOptRule {
                     new FlinkLogicalCorrelate(
                             correlate.getCluster(),
                             correlate.getTraitSet(),
+                            correlate.getHints(),
                             left,
                             rightNewInput,
                             correlate.getCorrelationId(),

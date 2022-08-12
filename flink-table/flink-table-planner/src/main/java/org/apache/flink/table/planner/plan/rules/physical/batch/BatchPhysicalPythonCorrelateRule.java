@@ -97,7 +97,7 @@ public class BatchPhysicalPythonCorrelateRule extends ConverterRule {
         }
 
         BatchPhysicalPythonCorrelate convertToCorrelate() {
-            return convertToCorrelate(right, Option.empty());
+            return convertToCorrelate(right, Option.<RexNode>empty());
         }
 
         private BatchPhysicalPythonCorrelate convertToCorrelate(

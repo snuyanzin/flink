@@ -171,9 +171,10 @@ object FlinkLogicalRelFactories {
 
   /** Implementation of [[CorrelateFactory]] that returns a [[FlinkLogicalCorrelate]]. */
   class CorrelateFactoryImpl extends CorrelateFactory {
-    def createCorrelate(
+    override def createCorrelate(
         left: RelNode,
         right: RelNode,
+        hints: util.List[RelHint],
         correlationId: CorrelationId,
         requiredColumns: ImmutableBitSet,
         joinType: JoinRelType): RelNode = {

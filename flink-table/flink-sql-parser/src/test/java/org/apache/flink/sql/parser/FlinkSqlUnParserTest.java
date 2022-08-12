@@ -34,13 +34,4 @@ class FlinkSqlUnParserTest extends FlinkSqlParserImplTest {
 
     // ~ Methods ----------------------------------------------------------------
 
-    @Override
-    protected boolean isUnparserTest() {
-        return true;
-    }
-
-    @Override
-    protected Tester getTester() {
-        return new UnparsingTesterImpl();
-    }
 }

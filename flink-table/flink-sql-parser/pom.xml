@@ -173,45 +173,8 @@ under the License.
 		</dependency>
 		<dependency>
 			<groupId>org.apache.calcite</groupId>
-			<artifactId>calcite-core</artifactId>
+			<artifactId>calcite-testkit</artifactId>
 			<version>${calcite.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.calcite.avatica</groupId>
-					<artifactId>avatica-server</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-databind</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-annotations</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.google.uzaygezen</groupId>
-					<artifactId>uzaygezen-core</artifactId>
-				</exclusion>
-				<!-- Excluding org.apiguardian:apiguardian-api v1.1.0 because org.junit.jupiter:junit-jupiter contains newer version v1.1.2 -->
-				<exclusion>
-					<groupId>org.apiguardian</groupId>
-					<artifactId>apiguardian-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.checkerframework</groupId>
-					<artifactId>checker-qual</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.google.errorprone</groupId>
-					<artifactId>error_prone_annotations</artifactId>
-				</exclusion>
-			</exclusions>
-			<scope>test</scope>
-			<type>test-jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.flink</groupId>

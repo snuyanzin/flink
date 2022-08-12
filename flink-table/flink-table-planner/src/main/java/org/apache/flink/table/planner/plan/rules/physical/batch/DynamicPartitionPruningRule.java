@@ -45,6 +45,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
+import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 
@@ -84,25 +85,40 @@ import java.util.stream.Collectors;
  *       +- TableSourceScan(table=[[dim, filter=[]]], fields=[xxx, dim_key])
  * }</pre>
  */
-public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config> {
+public abstract class DynamicPartitionPruningRule<CONFIG extends RelRule.Config>
+        extends RelRule<CONFIG> {
 
     // To support more patterns of dynamic partition pruning, in this rule base, we provide eight
     // different matching rules according to the different situation of the fact side (partition
     // table side) and the different order of left/right join.
     public static final RuleSet DYNAMIC_PARTITION_PRUNING_RULES =
             RuleSets.ofList(
-                    DynamicPartitionPruningFactInRightRule.Config.DEFAULT.toRule(),
-                    DynamicPartitionPruningFactInLeftRule.Config.DEFAULT.toRule(),
-                    DynamicPartitionPruningFactInRightWithExchangeRule.Config.DEFAULT.toRule(),
-                    DynamicPartitionPruningFactInLeftWithExchangeRule.Config.DEFAULT.toRule(),
-                    DynamicPartitionPruningFactInRightWithCalcRule.Config.DEFAULT.toRule(),
-                    DynamicPartitionPruningFactInLeftWithCalcRule.Config.DEFAULT.toRule(),
-                    DynamicPartitionPruningFactInRightWithExchangeAndCalcRule.Config.DEFAULT
+                    DynamicPartitionPruningFactInRightRule
+                            .DynamicPartitionPruningFactInRightRuleConfig.DEFAULT
                             .toRule(),
-                    DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule.Config.DEFAULT
+                    DynamicPartitionPruningFactInLeftRule
+                            .DynamicPartitionPruningFactInLeftRuleConfig.DEFAULT
+                            .toRule(),
+                    DynamicPartitionPruningFactInRightWithExchangeRule
+                            .DynamicPartitionPruningFactInRightWithExchangeRuleConfig.DEFAULT
+                            .toRule(),
+                    DynamicPartitionPruningFactInLeftWithExchangeRule
+                            .DynamicPartitionPruningFactInLeftWithExchangeRuleConfig.DEFAULT
+                            .toRule(),
+                    DynamicPartitionPruningFactInRightWithCalcRule
+                            .DynamicPartitionPruningFactInRightWithCalcRuleConfig.DEFAULT
+                            .toRule(),
+                    DynamicPartitionPruningFactInLeftWithCalcRule
+                            .DynamicPartitionPruningFactInLeftWithCalcRuleConfig.DEFAULT
+                            .toRule(),
+                    DynamicPartitionPruningFactInRightWithExchangeAndCalcRule
+                            .DynamicPartitionPruningFactInRightWithExchangeAndCalcRuleConfig.DEFAULT
+                            .toRule(),
+                    DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule
+                            .DynamicPartitionPruningFactInLeftWithExchangeAndCalcRuleConfig.DEFAULT
                             .toRule());
 
-    protected DynamicPartitionPruningRule(RelRule.Config config) {
+    protected DynamicPartitionPruningRule(CONFIG config) {
         super(config);
     }
 
@@ -248,16 +264,22 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
 
     /** Simple dynamic filtering pattern with fact side in join right. */
     protected static class DynamicPartitionPruningFactInRightRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInRightRule
+                            .DynamicPartitionPruningFactInRightRuleConfig> {
 
-        public DynamicPartitionPruningFactInRightRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInRightRule(
+                DynamicPartitionPruningFactInRightRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInRightRuleConfig extends RelRule.Config {
+            DynamicPartitionPruningFactInRightRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInRightRuleConfig.builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -271,7 +293,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                     BatchPhysicalTableSourceScan
                                                                                             .class)
                                                                             .noInputs()))
-                            .as(DynamicPartitionPruningFactInRightRule.Config.class);
+                            .as(DynamicPartitionPruningFactInRightRuleConfig.class);
 
             @Override
             default DynamicPartitionPruningFactInRightRule toRule() {
@@ -303,21 +325,27 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
 
     /** Simple dynamic filtering pattern with fact side in join left. */
     protected static class DynamicPartitionPruningFactInLeftRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInLeftRule
+                            .DynamicPartitionPruningFactInLeftRuleConfig> {
 
-        public DynamicPartitionPruningFactInLeftRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInLeftRule(
+                DynamicPartitionPruningFactInLeftRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInLeftRuleConfig extends RelRule.Config {
             @Override
             default DynamicPartitionPruningFactInLeftRule toRule() {
                 return new DynamicPartitionPruningFactInLeftRule(this);
             }
 
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+            DynamicPartitionPruningFactInLeftRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInLeftRuleConfig.builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -331,7 +359,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                     BatchPhysicalRel
                                                                                             .class)
                                                                             .anyInputs()))
-                            .as(DynamicPartitionPruningFactInLeftRule.Config.class);
+                            .as(DynamicPartitionPruningFactInLeftRuleConfig.class);
         }
 
         @Override
@@ -358,21 +386,28 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
 
     /** Dynamic filtering pattern with exchange node in fact side while fact side in join right. */
     protected static class DynamicPartitionPruningFactInRightWithExchangeRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInRightWithExchangeRule
+                            .DynamicPartitionPruningFactInRightWithExchangeRuleConfig> {
 
-        public DynamicPartitionPruningFactInRightWithExchangeRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInRightWithExchangeRule(
+                DynamicPartitionPruningFactInRightWithExchangeRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInRightWithExchangeRuleConfig
+                extends RelRule.Config {
             @Override
             default DynamicPartitionPruningFactInRightWithExchangeRule toRule() {
                 return new DynamicPartitionPruningFactInRightWithExchangeRule(this);
             }
 
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+            DynamicPartitionPruningFactInRightWithExchangeRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInRightWithExchangeRuleConfig.builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -391,7 +426,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                                             BatchPhysicalTableSourceScan
                                                                                                                     .class)
                                                                                                     .noInputs())))
-                            .as(DynamicPartitionPruningFactInRightWithExchangeRule.Config.class);
+                            .as(DynamicPartitionPruningFactInRightWithExchangeRuleConfig.class);
         }
 
         @Override
@@ -423,21 +458,28 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
 
     /** Dynamic filtering pattern with exchange node in fact side while fact side in join left. */
     protected static class DynamicPartitionPruningFactInLeftWithExchangeRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInLeftWithExchangeRule
+                            .DynamicPartitionPruningFactInLeftWithExchangeRuleConfig> {
 
-        public DynamicPartitionPruningFactInLeftWithExchangeRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInLeftWithExchangeRule(
+                DynamicPartitionPruningFactInLeftWithExchangeRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInLeftWithExchangeRuleConfig
+                extends RelRule.Config {
             @Override
             default DynamicPartitionPruningFactInLeftWithExchangeRule toRule() {
                 return new DynamicPartitionPruningFactInLeftWithExchangeRule(this);
             }
 
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+            DynamicPartitionPruningFactInLeftWithExchangeRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInLeftWithExchangeRuleConfig.builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -456,7 +498,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                     BatchPhysicalRel
                                                                                             .class)
                                                                             .anyInputs()))
-                            .as(DynamicPartitionPruningFactInLeftWithExchangeRule.Config.class);
+                            .as(DynamicPartitionPruningFactInLeftWithExchangeRuleConfig.class);
         }
 
         @Override
@@ -488,21 +530,28 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
 
     /** Dynamic filtering pattern with calc node in fact side while fact side in join right. */
     protected static class DynamicPartitionPruningFactInRightWithCalcRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInRightWithCalcRule
+                            .DynamicPartitionPruningFactInRightWithCalcRuleConfig> {
 
-        public DynamicPartitionPruningFactInRightWithCalcRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInRightWithCalcRule(
+                DynamicPartitionPruningFactInRightWithCalcRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInRightWithCalcRuleConfig
+                extends RelRule.Config {
             @Override
             default DynamicPartitionPruningFactInRightWithCalcRule toRule() {
                 return new DynamicPartitionPruningFactInRightWithCalcRule(this);
             }
 
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+            DynamicPartitionPruningFactInRightWithCalcRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInRightWithCalcRuleConfig.builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -521,7 +570,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                                             BatchPhysicalTableSourceScan
                                                                                                                     .class)
                                                                                                     .noInputs())))
-                            .as(DynamicPartitionPruningFactInRightWithCalcRule.Config.class);
+                            .as(DynamicPartitionPruningFactInRightWithCalcRuleConfig.class);
         }
 
         @Override
@@ -550,21 +599,28 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
 
     /** Dynamic filtering pattern with calc node in fact side while fact side in join left. */
     protected static class DynamicPartitionPruningFactInLeftWithCalcRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInLeftWithCalcRule
+                            .DynamicPartitionPruningFactInLeftWithCalcRuleConfig> {
 
-        public DynamicPartitionPruningFactInLeftWithCalcRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInLeftWithCalcRule(
+                DynamicPartitionPruningFactInLeftWithCalcRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInLeftWithCalcRuleConfig
+                extends RelRule.Config {
             @Override
             default DynamicPartitionPruningFactInLeftWithCalcRule toRule() {
                 return new DynamicPartitionPruningFactInLeftWithCalcRule(this);
             }
 
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+            DynamicPartitionPruningFactInLeftWithCalcRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInLeftWithCalcRuleConfig.builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -583,7 +639,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                     BatchPhysicalRel
                                                                                             .class)
                                                                             .anyInputs()))
-                            .as(DynamicPartitionPruningFactInLeftWithCalcRule.Config.class);
+                            .as(DynamicPartitionPruningFactInLeftWithCalcRuleConfig.class);
         }
 
         @Override
@@ -618,21 +674,29 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
      * join right.
      */
     protected static class DynamicPartitionPruningFactInRightWithExchangeAndCalcRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInRightWithExchangeAndCalcRule
+                            .DynamicPartitionPruningFactInRightWithExchangeAndCalcRuleConfig> {
 
-        public DynamicPartitionPruningFactInRightWithExchangeAndCalcRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInRightWithExchangeAndCalcRule(
+                DynamicPartitionPruningFactInRightWithExchangeAndCalcRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInRightWithExchangeAndCalcRuleConfig
+                extends RelRule.Config {
             @Override
             default DynamicPartitionPruningFactInRightWithExchangeAndCalcRule toRule() {
                 return new DynamicPartitionPruningFactInRightWithExchangeAndCalcRule(this);
             }
 
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+            DynamicPartitionPruningFactInRightWithExchangeAndCalcRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInRightWithExchangeAndCalcRuleConfig
+                            .builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -657,7 +721,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                                                                             .class)
                                                                                                                             .noInputs()))))
                             .as(
-                                    DynamicPartitionPruningFactInRightWithExchangeAndCalcRule.Config
+                                    DynamicPartitionPruningFactInRightWithExchangeAndCalcRuleConfig
                                             .class);
         }
 
@@ -698,21 +762,29 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
      * join left.
      */
     protected static class DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule
-            extends DynamicPartitionPruningRule {
+            extends DynamicPartitionPruningRule<
+                    DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule
+                            .DynamicPartitionPruningFactInLeftWithExchangeAndCalcRuleConfig> {
 
-        public DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule(RelRule.Config config) {
+        public DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule(
+                DynamicPartitionPruningFactInLeftWithExchangeAndCalcRuleConfig config) {
             super(config);
         }
 
         /** Config. */
-        public interface Config extends RelRule.Config {
+        @Value.Immutable(singleton = false)
+        public interface DynamicPartitionPruningFactInLeftWithExchangeAndCalcRuleConfig
+                extends RelRule.Config {
             @Override
             default DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule toRule() {
                 return new DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule(this);
             }
 
-            Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+            DynamicPartitionPruningFactInLeftWithExchangeAndCalcRuleConfig DEFAULT =
+                    ImmutableDynamicPartitionPruningFactInLeftWithExchangeAndCalcRuleConfig
+                            .builder()
+                            .build()
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(BatchPhysicalJoinBase.class)
                                                     .inputs(
@@ -737,7 +809,7 @@ public abstract class DynamicPartitionPruningRule extends RelRule<RelRule.Config
                                                                                             .class)
                                                                             .anyInputs()))
                             .as(
-                                    DynamicPartitionPruningFactInLeftWithExchangeAndCalcRule.Config
+                                    DynamicPartitionPruningFactInLeftWithExchangeAndCalcRuleConfig
                                             .class);
         }
 

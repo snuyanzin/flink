@@ -91,6 +91,7 @@ class SplitPythonConditionFromCorrelateRule
     val newCorrelate = new FlinkLogicalCorrelate(
       correlate.getCluster,
       correlate.getTraitSet,
+      correlate.getHints,
       correlate.getLeft,
       newBottomCalc,
       correlate.getCorrelationId,

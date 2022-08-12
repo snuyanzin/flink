@@ -23,12 +23,15 @@ import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalJoin;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
+import org.immutables.value.Value;
 
 /** Rule that rewrites Join on TableFunctionScan to Correlate. */
-public class JoinTableFunctionScanToCorrelateRule extends RelRule<RelRule.Config> {
+public class JoinTableFunctionScanToCorrelateRule
+        extends RelRule<
+                JoinTableFunctionScanToCorrelateRule.JoinTableFunctionScanToCorrelateRuleConfig> {
 
-    private static final Config RULE_CONFIG =
-            Config.EMPTY
+    private static final JoinTableFunctionScanToCorrelateRuleConfig RULE_CONFIG =
+            JoinTableFunctionScanToCorrelateRuleConfig.DEFAULT
                     .withOperandSupplier(
                             b0 ->
                                     b0.operand(LogicalJoin.class)
@@ -39,13 +42,21 @@ public class JoinTableFunctionScanToCorrelateRule extends RelRule<RelRule.Config
                                                                             LogicalTableFunctionScan
                                                                                     .class)
                                                                     .noInputs()))
-                    .withDescription("JoinTableFunctionScanToCorrelateRule");
+                    .withDescription("JoinTableFunctionScanToCorrelateRule")
+                    .as(JoinTableFunctionScanToCorrelateRuleConfig.class);
 
     public static final JoinTableFunctionScanToCorrelateRule INSTANCE =
-            new JoinTableFunctionScanToCorrelateRule();
+            JoinTableFunctionScanToCorrelateRule.JoinTableFunctionScanToCorrelateRuleConfig.DEFAULT
+                    .toRule();
 
     private JoinTableFunctionScanToCorrelateRule() {
         super(RULE_CONFIG);
+    }
+
+    private JoinTableFunctionScanToCorrelateRule(
+            JoinTableFunctionScanToCorrelateRule.JoinTableFunctionScanToCorrelateRuleConfig
+                    config) {
+        super(config);
     }
 
     @Override
@@ -60,5 +71,17 @@ public class JoinTableFunctionScanToCorrelateRule extends RelRule<RelRule.Config
                         .correlate(join.getJoinType(), join.getCluster().createCorrel())
                         .build();
         call.transformTo(correlate);
+    }
+
+    /** Rule configuration. */
+    @Value.Immutable(singleton = false)
+    public interface JoinTableFunctionScanToCorrelateRuleConfig extends RelRule.Config {
+        JoinTableFunctionScanToCorrelateRule.JoinTableFunctionScanToCorrelateRuleConfig DEFAULT =
+                ImmutableJoinTableFunctionScanToCorrelateRuleConfig.builder().build();
+
+        @Override
+        default JoinTableFunctionScanToCorrelateRule toRule() {
+            return new JoinTableFunctionScanToCorrelateRule(this);
+        }
     }
 }

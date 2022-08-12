@@ -39,9 +39,9 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.util.ImmutableBeans;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
+import org.immutables.value.Value;
 
 import javax.annotation.Nullable;
 
@@ -72,9 +72,9 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
         implements TransformationRule {
 
     public static final FlinkFilterIntoJoinRule FILTER_INTO_JOIN =
-            FlinkFilterIntoJoinRule.Config.DEFAULT.toRule();
+            FlinkFilterIntoJoinRule.FlinkFilterIntoJoinRuleConfig.DEFAULT.toRule();
     public static final FlinkJoinConditionPushRule JOIN_CONDITION_PUSH =
-            FlinkJoinConditionPushRule.Config.DEFAULT.toRule();
+            FlinkJoinConditionPushRule.FlinkFilterJoinRuleConfig.DEFAULT.toRule();
 
     /** Creates a FilterJoinRule. */
     protected FlinkFilterJoinRule(C config) {
@@ -408,9 +408,10 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
 
     /** Rule that pushes parts of the join condition to its inputs. */
     public static class FlinkJoinConditionPushRule
-            extends FlinkFilterJoinRule<FlinkJoinConditionPushRule.Config> {
+            extends FlinkFilterJoinRule<FlinkJoinConditionPushRule.FlinkFilterJoinRuleConfig> {
         /** Creates a JoinConditionPushRule. */
-        protected FlinkJoinConditionPushRule(FlinkJoinConditionPushRule.Config config) {
+        protected FlinkJoinConditionPushRule(
+                FlinkJoinConditionPushRule.FlinkFilterJoinRuleConfig config) {
             super(config);
         }
 
@@ -421,13 +422,15 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
         }
 
         /** Rule configuration. */
-        public interface Config extends FlinkFilterJoinRule.Config {
-            FlinkJoinConditionPushRule.Config DEFAULT =
-                    EMPTY.withOperandSupplier(b -> b.operand(Join.class).anyInputs())
-                            .as(FlinkJoinConditionPushRule.Config.class)
-                            .withSmart(true)
+        @Value.Immutable(singleton = false)
+        public interface FlinkFilterJoinRuleConfig extends FlinkFilterJoinRule.Config {
+            FlinkFilterJoinRuleConfig DEFAULT =
+                    ImmutableFlinkFilterJoinRuleConfig.builder()
+                            .build()
                             .withPredicate((join, joinType, exp) -> true)
-                            .as(FlinkJoinConditionPushRule.Config.class);
+                            .withOperandSupplier(b -> b.operand(Join.class).anyInputs())
+                            .withSmart(true)
+                            .as(FlinkFilterJoinRuleConfig.class);
 
             @Override
             default FlinkJoinConditionPushRule toRule() {
@@ -443,9 +446,9 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
      * @see CoreRules#FILTER_INTO_JOIN
      */
     public static class FlinkFilterIntoJoinRule
-            extends FlinkFilterJoinRule<FlinkFilterIntoJoinRule.Config> {
+            extends FlinkFilterJoinRule<FlinkFilterIntoJoinRule.FlinkFilterIntoJoinRuleConfig> {
         /** Creates a FlinkFilterIntoJoinRule. */
-        protected FlinkFilterIntoJoinRule(FlinkFilterIntoJoinRule.Config config) {
+        protected FlinkFilterIntoJoinRule(FlinkFilterIntoJoinRuleConfig config) {
             super(config);
         }
 
@@ -457,19 +460,19 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
         }
 
         /** Rule configuration. */
-        public interface Config extends FlinkFilterJoinRule.Config {
-            FlinkFilterIntoJoinRule.Config DEFAULT =
-                    EMPTY.withOperandSupplier(
+        @Value.Immutable(singleton = false)
+        public interface FlinkFilterIntoJoinRuleConfig extends FlinkFilterJoinRule.Config {
+            FlinkFilterIntoJoinRuleConfig DEFAULT =
+                    ImmutableFlinkFilterIntoJoinRuleConfig.of((join, joinType, exp) -> true)
+                            .withOperandSupplier(
                                     b0 ->
                                             b0.operand(Filter.class)
                                                     .oneInput(
                                                             b1 ->
                                                                     b1.operand(Join.class)
                                                                             .anyInputs()))
-                            .as(FlinkFilterIntoJoinRule.Config.class)
                             .withSmart(true)
-                            .withPredicate((join, joinType, exp) -> true)
-                            .as(FlinkFilterIntoJoinRule.Config.class);
+                            .as(FlinkFilterIntoJoinRuleConfig.class);
 
             @Override
             default FlinkFilterIntoJoinRule toRule() {
@@ -490,9 +493,10 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
     /** Rule configuration. */
     public interface Config extends RelRule.Config {
         /** Whether to try to strengthen join-type, default false. */
-        @ImmutableBeans.Property
-        @ImmutableBeans.BooleanDefault(false)
-        boolean isSmart();
+        @Value.Default
+        default boolean isSmart() {
+            return false;
+        }
 
         /** Sets {@link #isSmart()}. */
         Config withSmart(boolean smart);
@@ -501,7 +505,7 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
          * Predicate that returns whether a filter is valid in the ON clause of a join for this
          * particular kind of join. If not, Calcite will push it back to above the join.
          */
-        @ImmutableBeans.Property
+        @Value.Parameter
         Predicate getPredicate();
 
         /** Sets {@link #getPredicate()} ()}. */

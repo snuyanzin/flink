@@ -36,6 +36,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
+import org.immutables.value.Value;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -51,13 +52,13 @@ public class RemoveUnreachableCoalesceArgumentsRule
         extends RelRule<RemoveUnreachableCoalesceArgumentsRule.Config> {
 
     public static final RelOptRule PROJECT_INSTANCE =
-            Config.EMPTY.as(Config.class).withProject().toRule();
+            ImmutableConfig.builder().build().withProject().toRule();
     public static final RelOptRule FILTER_INSTANCE =
-            Config.EMPTY.as(Config.class).withFilter().toRule();
+            ImmutableConfig.builder().build().withFilter().toRule();
     public static final RelOptRule JOIN_INSTANCE =
-            Config.EMPTY.as(Config.class).withJoin().toRule();
+            ImmutableConfig.builder().build().withJoin().toRule();
     public static final RelOptRule CALC_INSTANCE =
-            Config.EMPTY.as(Config.class).withCalc().toRule();
+            ImmutableConfig.builder().build().withCalc().toRule();
 
     public RemoveUnreachableCoalesceArgumentsRule(Config config) {
         super(config);
@@ -137,6 +138,7 @@ public class RemoveUnreachableCoalesceArgumentsRule
     // ---------------------------------------------------------------------------------------------
 
     /** Configuration for {@link RemoveUnreachableCoalesceArgumentsRule}. */
+    @Value.Immutable(singleton = false)
     public interface Config extends RelRule.Config {
 
         @Override

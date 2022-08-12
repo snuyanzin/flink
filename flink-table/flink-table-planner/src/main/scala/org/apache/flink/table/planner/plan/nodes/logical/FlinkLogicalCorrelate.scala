@@ -19,12 +19,16 @@ package org.apache.flink.table.planner.plan.nodes.logical
 
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 
+import com.google.common.collect.ImmutableList
 import org.apache.calcite.plan.{Convention, RelOptCluster, RelOptRule, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
 import org.apache.calcite.rel.core.{Correlate, CorrelationId, JoinRelType}
+import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rel.logical.LogicalCorrelate
 import org.apache.calcite.util.ImmutableBitSet
+
+import java.util
 
 /**
  * Sub-class of [[Correlate]] that is a relational operator which performs nested-loop joins in
@@ -33,12 +37,13 @@ import org.apache.calcite.util.ImmutableBitSet
 class FlinkLogicalCorrelate(
     cluster: RelOptCluster,
     traitSet: RelTraitSet,
+    hints: util.List[RelHint],
     left: RelNode,
     right: RelNode,
     correlationId: CorrelationId,
     requiredColumns: ImmutableBitSet,
     joinType: JoinRelType)
-  extends Correlate(cluster, traitSet, left, right, correlationId, requiredColumns, joinType)
+  extends Correlate(cluster, traitSet, hints, left, right, correlationId, requiredColumns, joinType)
   with FlinkLogicalRel {
 
   override def copy(
@@ -52,6 +57,7 @@ class FlinkLogicalCorrelate(
     new FlinkLogicalCorrelate(
       cluster,
       traitSet,
+      ImmutableList.of(),
       left,
       right,
       correlationId,
@@ -95,6 +101,7 @@ object FlinkLogicalCorrelate {
     new FlinkLogicalCorrelate(
       cluster,
       traitSet,
+      ImmutableList.of(),
       left,
       right,
       correlationId,

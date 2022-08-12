@@ -45,6 +45,7 @@ import org.apache.calcite.rex.RexProgramBuilder;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.util.mapping.Mappings;
+import org.immutables.value.Value;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,23 +61,26 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  * StreamPhysicalChangelogNormalize}.
  */
 public class WatermarkAssignerChangelogNormalizeTransposeRule
-        extends RelRule<WatermarkAssignerChangelogNormalizeTransposeRule.Config> {
+        extends RelRule<
+                WatermarkAssignerChangelogNormalizeTransposeRule
+                        .WatermarkAssignerChangelogNormalizeTransposeRuleConfig> {
 
     public static final RelOptRule WITH_CALC =
-            Config.EMPTY
+            ImmutableWatermarkAssignerChangelogNormalizeTransposeRuleConfig.builder()
+                    .build()
                     .withDescription("WatermarkAssignerChangelogNormalizeTransposeRuleWithCalc")
-                    .as(Config.class)
                     .withCalc()
                     .toRule();
 
     public static final RelOptRule WITHOUT_CALC =
-            Config.EMPTY
+            ImmutableWatermarkAssignerChangelogNormalizeTransposeRuleConfig.builder()
+                    .build()
                     .withDescription("WatermarkAssignerChangelogNormalizeTransposeRuleWithoutCalc")
-                    .as(Config.class)
                     .withoutCalc()
                     .toRule();
 
-    public WatermarkAssignerChangelogNormalizeTransposeRule(Config config) {
+    public WatermarkAssignerChangelogNormalizeTransposeRule(
+            WatermarkAssignerChangelogNormalizeTransposeRuleConfig config) {
         super(config);
     }
 
@@ -369,7 +373,8 @@ public class WatermarkAssignerChangelogNormalizeTransposeRule
     }
 
     /** Rule configuration. */
-    public interface Config extends RelRule.Config {
+    @Value.Immutable(singleton = false)
+    public interface WatermarkAssignerChangelogNormalizeTransposeRuleConfig extends RelRule.Config {
 
         @Override
         default WatermarkAssignerChangelogNormalizeTransposeRule toRule() {
