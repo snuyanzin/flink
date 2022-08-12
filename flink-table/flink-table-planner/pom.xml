@@ -64,7 +64,12 @@ under the License.
 			<version>2.8.2</version>
 			<scope>compile</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>org.checkerframework</groupId>
+			<artifactId>checker-qual</artifactId>
+			<version>3.10.0</version>
+			<scope>compile</scope>
+		</dependency>
 
 		<!-- Table API Java dependencies (not included in the uber) -->
 		<dependency>
