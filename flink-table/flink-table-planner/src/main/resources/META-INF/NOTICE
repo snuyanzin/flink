@@ -11,7 +11,6 @@ This project bundles the following dependencies under the Apache Software Licens
 - com.esri.geometry:esri-geometry-api:2.2.0
 - org.apache.calcite:calcite-core:1.30.0
 - org.apache.calcite:calcite-linq4j:1.30.0
-- org.apache.calcite:calcite-testkit:1.30.0
 - org.apache.calcite.avatica:avatica-core:1.20.0
 - commons-codec:commons-codec:1.15
 - commons-io:commons-io:2.11.0
