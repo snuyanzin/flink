@@ -175,6 +175,25 @@ under the License.
 			<groupId>org.apache.calcite</groupId>
 			<artifactId>calcite-testkit</artifactId>
 			<version>${calcite.version}</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-pool2</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-dbcp2</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.jetbrains.kotlin</groupId>
+					<artifactId>kotlin-stdlib-jdk8</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.checkerframework</groupId>
+					<artifactId>checker-qual</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.flink</groupId>
