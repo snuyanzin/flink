@@ -210,7 +210,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
-import static org.checkerframework.checker.nullness.NullnessUtil.castNonNull;
+import static org.apache.calcite.linq4j.Nullness.castNonNull;
 
 /**
  * Converts a SQL parse tree (consisting of {@link SqlNode} objects) into a relational algebra
