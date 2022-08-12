@@ -49,18 +49,33 @@ import java.util.function.Predicate;
  */
 @Internal
 public class RemoveUnreachableCoalesceArgumentsRule
-        extends RelRule<RemoveUnreachableCoalesceArgumentsRule.Config> {
+        extends RelRule<
+                RemoveUnreachableCoalesceArgumentsRule
+                        .RemoveUnreachableCoalesceArgumentsRuleConfig> {
 
     public static final RelOptRule PROJECT_INSTANCE =
-            ImmutableConfig.builder().build().withProject().toRule();
+            ImmutableRemoveUnreachableCoalesceArgumentsRuleConfig.builder()
+                    .build()
+                    .withProject()
+                    .toRule();
     public static final RelOptRule FILTER_INSTANCE =
-            ImmutableConfig.builder().build().withFilter().toRule();
+            ImmutableRemoveUnreachableCoalesceArgumentsRuleConfig.builder()
+                    .build()
+                    .withFilter()
+                    .toRule();
     public static final RelOptRule JOIN_INSTANCE =
-            ImmutableConfig.builder().build().withJoin().toRule();
+            ImmutableRemoveUnreachableCoalesceArgumentsRuleConfig.builder()
+                    .build()
+                    .withJoin()
+                    .toRule();
     public static final RelOptRule CALC_INSTANCE =
-            ImmutableConfig.builder().build().withCalc().toRule();
+            ImmutableRemoveUnreachableCoalesceArgumentsRuleConfig.builder()
+                    .build()
+                    .withCalc()
+                    .toRule();
 
-    public RemoveUnreachableCoalesceArgumentsRule(Config config) {
+    public RemoveUnreachableCoalesceArgumentsRule(
+            RemoveUnreachableCoalesceArgumentsRuleConfig config) {
         super(config);
     }
 
@@ -139,7 +154,7 @@ public class RemoveUnreachableCoalesceArgumentsRule
 
     /** Configuration for {@link RemoveUnreachableCoalesceArgumentsRule}. */
     @Value.Immutable(singleton = false)
-    public interface Config extends RelRule.Config {
+    public interface RemoveUnreachableCoalesceArgumentsRuleConfig extends RelRule.Config {
 
         @Override
         default RelOptRule toRule() {

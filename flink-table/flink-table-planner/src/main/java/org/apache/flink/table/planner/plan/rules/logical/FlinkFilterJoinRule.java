@@ -28,6 +28,7 @@ import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.core.JoinInfo;
 import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.rules.FilterJoinRule;
 import org.apache.calcite.rel.rules.TransformationRule;
@@ -39,6 +40,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.immutables.value.Value;
@@ -410,9 +412,27 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
     public static class FlinkJoinConditionPushRule
             extends FlinkFilterJoinRule<FlinkJoinConditionPushRule.FlinkFilterJoinRuleConfig> {
         /** Creates a JoinConditionPushRule. */
-        protected FlinkJoinConditionPushRule(
-                FlinkJoinConditionPushRule.FlinkFilterJoinRuleConfig config) {
+        protected FlinkJoinConditionPushRule(FlinkFilterJoinRuleConfig config) {
             super(config);
+        }
+
+        @Deprecated // to be removed before 2.0
+        public FlinkJoinConditionPushRule(
+                RelBuilderFactory relBuilderFactory, Predicate predicate) {
+            this(
+                    ImmutableFlinkFilterJoinRuleConfig.of(predicate)
+                            .withRelBuilderFactory(relBuilderFactory)
+                            .withOperandSupplier(b -> b.operand(Join.class).anyInputs())
+                            .withDescription("FilterJoinRule:no-filter")
+                            .withSmart(true));
+        }
+
+        @Deprecated // to be removed before 2.0
+        public FlinkJoinConditionPushRule(
+                RelFactories.FilterFactory filterFactory,
+                RelFactories.ProjectFactory projectFactory,
+                Predicate predicate) {
+            this(RelBuilder.proto(filterFactory, projectFactory), predicate);
         }
 
         @Override
@@ -423,14 +443,15 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
 
         /** Rule configuration. */
         @Value.Immutable(singleton = false)
+        @Value.Style(
+                get = {"is*", "get*"}, // Detect 'get' and 'is' prefixes in accessor methods
+                init = "with*", // Builder initialization methods will have 'set' prefix
+                defaults = @Value.Immutable(copy = false))
         public interface FlinkFilterJoinRuleConfig extends FlinkFilterJoinRule.Config {
             FlinkFilterJoinRuleConfig DEFAULT =
-                    ImmutableFlinkFilterJoinRuleConfig.builder()
-                            .build()
-                            .withPredicate((join, joinType, exp) -> true)
+                    ImmutableFlinkFilterJoinRuleConfig.of((join, joinType, exp) -> true)
                             .withOperandSupplier(b -> b.operand(Join.class).anyInputs())
-                            .withSmart(true)
-                            .as(FlinkFilterJoinRuleConfig.class);
+                            .withSmart(true);
 
             @Override
             default FlinkJoinConditionPushRule toRule() {
@@ -447,9 +468,46 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
      */
     public static class FlinkFilterIntoJoinRule
             extends FlinkFilterJoinRule<FlinkFilterIntoJoinRule.FlinkFilterIntoJoinRuleConfig> {
-        /** Creates a FlinkFilterIntoJoinRule. */
+        /** Creates a FilterIntoJoinRule. */
         protected FlinkFilterIntoJoinRule(FlinkFilterIntoJoinRuleConfig config) {
             super(config);
+        }
+
+        @Deprecated // to be removed before 2.0
+        public FlinkFilterIntoJoinRule(
+                boolean smart, RelBuilderFactory relBuilderFactory, Predicate predicate) {
+            this(
+                    ImmutableFlinkFilterIntoJoinRuleConfig.of(predicate)
+                            .withRelBuilderFactory(relBuilderFactory)
+                            .withOperandSupplier(
+                                    b0 ->
+                                            b0.operand(Filter.class)
+                                                    .oneInput(
+                                                            b1 ->
+                                                                    b1.operand(Join.class)
+                                                                            .anyInputs()))
+                            .withDescription("FilterJoinRule:filter")
+                            .withSmart(smart));
+        }
+
+        @Deprecated // to be removed before 2.0
+        public FlinkFilterIntoJoinRule(
+                boolean smart,
+                RelFactories.FilterFactory filterFactory,
+                RelFactories.ProjectFactory projectFactory,
+                Predicate predicate) {
+            this(
+                    ImmutableFlinkFilterIntoJoinRuleConfig.of(predicate)
+                            .withRelBuilderFactory(RelBuilder.proto(filterFactory, projectFactory))
+                            .withOperandSupplier(
+                                    b0 ->
+                                            b0.operand(Filter.class)
+                                                    .oneInput(
+                                                            b1 ->
+                                                                    b1.operand(Join.class)
+                                                                            .anyInputs()))
+                            .withDescription("FilterJoinRule:filter")
+                            .withSmart(smart));
         }
 
         @Override
@@ -461,6 +519,10 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
 
         /** Rule configuration. */
         @Value.Immutable(singleton = false)
+        @Value.Style(
+                get = {"is*", "get*"}, // Detect 'get' and 'is' prefixes in accessor methods
+                init = "with*", // Builder initialization methods will have 'set' prefix
+                defaults = @Value.Immutable(copy = false))
         public interface FlinkFilterIntoJoinRuleConfig extends FlinkFilterJoinRule.Config {
             FlinkFilterIntoJoinRuleConfig DEFAULT =
                     ImmutableFlinkFilterIntoJoinRuleConfig.of((join, joinType, exp) -> true)
@@ -471,8 +533,7 @@ public abstract class FlinkFilterJoinRule<C extends FlinkFilterJoinRule.Config> 
                                                             b1 ->
                                                                     b1.operand(Join.class)
                                                                             .anyInputs()))
-                            .withSmart(true)
-                            .as(FlinkFilterIntoJoinRuleConfig.class);
+                            .withSmart(true);
 
             @Override
             default FlinkFilterIntoJoinRule toRule() {

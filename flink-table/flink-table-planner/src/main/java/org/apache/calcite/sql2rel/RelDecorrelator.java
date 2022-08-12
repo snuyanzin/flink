@@ -124,7 +124,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static org.checkerframework.checker.nullness.NullnessUtil.castNonNull;
+import static org.apache.calcite.linq4j.Nullness.castNonNull;
 
 /** Copied to fix calcite issues. */
 public class RelDecorrelator implements ReflectiveVisitor {
@@ -140,8 +140,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
     protected CorelMap cm;
 
     @SuppressWarnings("method.invocation.invalid")
-    protected final ReflectUtil.MethodDispatcher<Frame> dispatcher =
-            ReflectUtil.createMethodDispatcher(
+    protected final ReflectUtil.MethodDispatcher<@Nullable Frame> dispatcher =
+            ReflectUtil.<RelNode, @Nullable Frame>createMethodDispatcher(
                     Frame.class, getVisitor(), "decorrelateRel", RelNode.class, boolean.class);
 
     // The rel which is being visited
@@ -511,7 +511,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         return decorrelateRel((Aggregate) rel, isCorVarDefined);
     }
 
-    public Frame decorrelateRel(Aggregate rel, boolean isCorVarDefined) {
+    public @Nullable Frame decorrelateRel(Aggregate rel, boolean isCorVarDefined) {
         //
         // Rewrite logic:
         //
@@ -1987,7 +1987,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
 
         static RemoveCorrelationForScalarProjectRuleConfig config(
                 RelDecorrelator decorrelator, RelBuilderFactory relBuilderFactory) {
-            return ImmutableRemoveSingleAggregateRuleConfig.builder()
+            return ImmutableRemoveCorrelationForScalarProjectRuleConfig.builder()
                     .withRelBuilderFactory(relBuilderFactory)
                     .withOperandSupplier(
                             b0 ->
@@ -2212,7 +2212,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
                             .RemoveCorrelationForScalarAggregateRuleConfig> {
         private final RelDecorrelator d;
 
-        static Config config(RelDecorrelator d, RelBuilderFactory relBuilderFactory) {
+        static RemoveCorrelationForScalarAggregateRuleConfig config(
+                RelDecorrelator d, RelBuilderFactory relBuilderFactory) {
             return ImmutableRemoveCorrelationForScalarAggregateRuleConfig.builder()
                     .withRelBuilderFactory(relBuilderFactory)
                     .withOperandSupplier(
