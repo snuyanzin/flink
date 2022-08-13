@@ -81,7 +81,7 @@ public class JoinTableFunctionScanToCorrelateRule
 
         @Override
         default JoinTableFunctionScanToCorrelateRule toRule() {
-            return new JoinTableFunctionScanToCorrelateRule(this);
+            return new JoinTableFunctionScanToCorrelateRule(RULE_CONFIG);
         }
     }
 }
