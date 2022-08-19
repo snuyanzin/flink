@@ -89,7 +89,7 @@ under the License.
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-shaded-swagger</artifactId>
-			<version>15.0</version>
+			<version>15.0-aiven-0.1</version>
 			<!-- Only required at compile-time; only flink-docs needs it at runtime -->
 			<optional>true</optional>
 		</dependency>
