@@ -26,14 +26,13 @@
  * <blockquote>
  *
  * <pre>
- *   SqlParser.create(source,
- *   		SqlParser.configBuilder()
- *   			.setParserFactory(new FlinkSqlParserImplFactory(conformance0))
- * 				.setQuoting(Quoting.DOUBLE_QUOTE)
- * 				.setUnquotedCasing(Casing.TO_UPPER)
- * 				.setQuotedCasing(Casing.UNCHANGED)
- * 				.setConformance(conformance0) // the sql conformance you want use.
- * 				.build());
+ * SqlParser.create(source,
+ * SqlParser.config()
+ * .withParserFactory(new FlinkSqlParserImplFactory(conformance0))
+ * .withQuoting(Quoting.DOUBLE_QUOTE)
+ * .withUnquotedCasing(Casing.TO_UPPER)
+ * .withQuotedCasing(Casing.UNCHANGED)
+ * .withConformance(conformance0); // the sql conformance you want use.
  * </pre>
  *
  * </blockquote>

@@ -187,7 +187,7 @@ public class PlannerContext {
         }
 
         final SqlParser.Config newSqlParserConfig =
-                SqlParser.configBuilder(sqlParserConfig).setCaseSensitive(caseSensitive).build();
+                SqlParser.config().withCaseSensitive(caseSensitive);
 
         final SchemaPlus finalRootSchema = getRootSchema(rootSchema.plus());
 
