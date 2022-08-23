@@ -29,6 +29,7 @@ import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalTab
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 
 /**
  * Planner rule that tries to push a local sort aggregate which with sort and calc into a {@link
@@ -57,24 +58,49 @@ import org.apache.calcite.plan.RelOptRuleCall;
  *       +- BatchPhysicalTableSourceScan (with local aggregate pushed down)
  * }</pre>
  */
-public class PushLocalSortAggWithSortAndCalcIntoScanRule extends PushLocalAggIntoScanRuleBase {
+public class PushLocalSortAggWithSortAndCalcIntoScanRule
+        extends PushLocalAggIntoScanRuleBase<PushLocalSortAggWithSortAndCalcIntoScanRule.Config> {
     public static final PushLocalSortAggWithSortAndCalcIntoScanRule INSTANCE =
-            new PushLocalSortAggWithSortAndCalcIntoScanRule();
+            new PushLocalSortAggWithSortAndCalcIntoScanRule(Config.DEFAULT);
 
-    public PushLocalSortAggWithSortAndCalcIntoScanRule() {
-        super(
-                operand(
-                        BatchPhysicalExchange.class,
-                        operand(
-                                BatchPhysicalLocalSortAggregate.class,
-                                operand(
-                                        BatchPhysicalSort.class,
-                                        operand(
-                                                BatchPhysicalCalc.class,
-                                                operand(
-                                                        BatchPhysicalTableSourceScan.class,
-                                                        none()))))),
-                "PushLocalSortAggWithSortAndCalcIntoScanRule");
+    public PushLocalSortAggWithSortAndCalcIntoScanRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PushLocalSortAggWithSortAndCalcIntoScanRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(BatchPhysicalExchange.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                BatchPhysicalLocalSortAggregate
+                                                                                        .class)
+                                                                        .oneInput(
+                                                                                b2 ->
+                                                                                        b2.operand(
+                                                                                                        BatchPhysicalSort
+                                                                                                                .class)
+                                                                                                .oneInput(
+                                                                                                        b3 ->
+                                                                                                                b3.operand(
+                                                                                                                                BatchPhysicalCalc
+                                                                                                                                        .class)
+                                                                                                                        .oneInput(
+                                                                                                                                b4 ->
+                                                                                                                                        b4.operand(
+                                                                                                                                                        BatchPhysicalTableSourceScan
+                                                                                                                                                                .class)
+                                                                                                                                                .noInputs())))))
+                        .withDescription("PushLocalSortAggWithSortAndCalcIntoScanRule")
+                        .as(Config.class);
+
+        @Override
+        default PushLocalSortAggWithSortAndCalcIntoScanRule toRule() {
+            return new PushLocalSortAggWithSortAndCalcIntoScanRule(this);
+        }
     }
 
     @Override

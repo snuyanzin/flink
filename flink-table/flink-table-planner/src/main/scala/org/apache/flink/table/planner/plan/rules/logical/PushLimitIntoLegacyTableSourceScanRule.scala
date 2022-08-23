@@ -20,11 +20,12 @@ package org.apache.flink.table.planner.plan.rules.logical
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.plan.stats.TableStats
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalLegacyTableSourceScan, FlinkLogicalSort}
+import org.apache.flink.table.planner.plan.rules.logical.PushLimitIntoLegacyTableSourceScanRule.Config
 import org.apache.flink.table.planner.plan.schema.{FlinkPreparingTableBase, LegacyTableSourceTable}
 import org.apache.flink.table.planner.plan.stats.FlinkStatistic
 import org.apache.flink.table.sources.LimitableTableSource
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.plan.RelOptRule.{none, operand}
 import org.apache.calcite.rel.core.{Sort, TableScan}
 import org.apache.calcite.rex.RexLiteral
@@ -44,10 +45,7 @@ import java.util.Collections
  * should do limit first and do the filter later, it is hard to implement. 3.We can support limit
  * with offset, we can push down offset + fetch to table source.
  */
-class PushLimitIntoLegacyTableSourceScanRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalSort], operand(classOf[FlinkLogicalLegacyTableSourceScan], none)),
-    "PushLimitIntoLegacyTableSourceScanRule") {
+class PushLimitIntoLegacyTableSourceScanRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val sort = call.rel(0).asInstanceOf[Sort]
@@ -122,5 +120,21 @@ class PushLimitIntoLegacyTableSourceScanRule
 }
 
 object PushLimitIntoLegacyTableSourceScanRule {
-  val INSTANCE: RelOptRule = new PushLimitIntoLegacyTableSourceScanRule
+  val INSTANCE: RelOptRule = new PushLimitIntoLegacyTableSourceScanRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalSort])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[FlinkLogicalLegacyTableSourceScan]).noInputs()))
+      .withDescription("PushLimitIntoLegacyTableSourceScanRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new PushLimitIntoLegacyTableSourceScanRule(this)
+  }
 }

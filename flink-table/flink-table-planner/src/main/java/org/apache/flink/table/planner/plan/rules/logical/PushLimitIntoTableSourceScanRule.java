@@ -29,8 +29,8 @@ import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalTableSource
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.stats.FlinkStatistic;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rex.RexLiteral;
 
@@ -48,14 +48,34 @@ import java.util.Collections;
  * do limit first and do the filter later, it is hard to implement. 3.We can support limit with
  * offset, we can push down offset + fetch to table source.
  */
-public class PushLimitIntoTableSourceScanRule extends RelOptRule {
+public class PushLimitIntoTableSourceScanRule
+        extends RelRule<PushLimitIntoTableSourceScanRule.Config> {
     public static final PushLimitIntoTableSourceScanRule INSTANCE =
-            new PushLimitIntoTableSourceScanRule();
+            new PushLimitIntoTableSourceScanRule(Config.DEFAULT);
 
-    public PushLimitIntoTableSourceScanRule() {
-        super(
-                operand(FlinkLogicalSort.class, operand(FlinkLogicalTableSourceScan.class, none())),
-                "PushLimitIntoTableSourceScanRule");
+    public PushLimitIntoTableSourceScanRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PushLimitIntoTableSourceScanRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalSort.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                FlinkLogicalTableSourceScan
+                                                                                        .class)
+                                                                        .noInputs()))
+                        .withDescription("PushLimitIntoTableSourceScanRule")
+                        .as(PushLimitIntoTableSourceScanRule.Config.class);
+
+        @Override
+        default PushLimitIntoTableSourceScanRule toRule() {
+            return new PushLimitIntoTableSourceScanRule(this);
+        }
     }
 
     @Override

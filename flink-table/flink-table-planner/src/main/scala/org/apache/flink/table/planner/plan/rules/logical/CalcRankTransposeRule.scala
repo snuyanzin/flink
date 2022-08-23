@@ -20,11 +20,11 @@ package org.apache.flink.table.planner.plan.rules.logical
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
 import org.apache.flink.table.planner.plan.nodes.logical._
+import org.apache.flink.table.planner.plan.rules.logical.CalcRankTransposeRule.Config
 import org.apache.flink.table.planner.plan.utils.{FlinkRexUtil, RankUtil}
 import org.apache.flink.table.runtime.operators.rank.VariableRankRange
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.RelCollations
 import org.apache.calcite.rel.core.Calc
@@ -37,10 +37,7 @@ import scala.collection.JavaConversions._
  * Planner rule that transposes [[FlinkLogicalCalc]] past [[FlinkLogicalRank]] to reduce rank input
  * fields.
  */
-class CalcRankTransposeRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalCalc], operand(classOf[FlinkLogicalRank], any())),
-    "CalcRankTransposeRule") {
+class CalcRankTransposeRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val calc: FlinkLogicalCalc = call.rel(0)
@@ -187,5 +184,20 @@ class CalcRankTransposeRule
 }
 
 object CalcRankTransposeRule {
-  val INSTANCE = new CalcRankTransposeRule
+  val INSTANCE = new CalcRankTransposeRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalCalc])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRank]).anyInputs()))
+      .withDescription("CalcRankTransposeRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new CalcRankTransposeRule(this)
+  }
 }

@@ -36,8 +36,8 @@ import org.apache.flink.table.planner.plan.trait.UpdateKindTrait;
 import org.apache.flink.table.planner.plan.utils.AggregateUtil;
 import org.apache.flink.table.planner.utils.AggregatePhaseStrategy;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 
@@ -64,17 +64,40 @@ import static org.apache.flink.table.planner.utils.TableConfigUtils.getAggPhaseS
  * slice before shuffle in stage 1, and then the partially aggregated results are shuffled by group
  * key to global-aggregation which produces the final result in stage 2.
  */
-public class TwoStageOptimizedWindowAggregateRule extends RelOptRule {
+public class TwoStageOptimizedWindowAggregateRule
+        extends RelRule<TwoStageOptimizedWindowAggregateRule.Config> {
 
     public static final TwoStageOptimizedWindowAggregateRule INSTANCE =
-            new TwoStageOptimizedWindowAggregateRule();
+            new TwoStageOptimizedWindowAggregateRule(Config.DEFAULT);
 
-    private TwoStageOptimizedWindowAggregateRule() {
-        super(
-                operand(
-                        StreamPhysicalWindowAggregate.class,
-                        operand(StreamPhysicalExchange.class, operand(RelNode.class, any()))),
-                "TwoStageOptimizedWindowAggregateRule");
+    private TwoStageOptimizedWindowAggregateRule(Config config) {
+        super(config);
+    }
+
+    /** Config for BatchPhysicalPythonWindowAggregateRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(StreamPhysicalWindowAggregate.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                StreamPhysicalExchange
+                                                                                        .class)
+                                                                        .oneInput(
+                                                                                b2 ->
+                                                                                        b2.operand(
+                                                                                                        RelNode
+                                                                                                                .class)
+                                                                                                .anyInputs())))
+                        .withDescription("TwoStageOptimizedWindowAggregateRule")
+                        .as(Config.class);
+
+        @Override
+        default TwoStageOptimizedWindowAggregateRule toRule() {
+            return new TwoStageOptimizedWindowAggregateRule(this);
+        }
     }
 
     @Override

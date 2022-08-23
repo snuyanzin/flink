@@ -24,13 +24,13 @@ import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalOverAggregate
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalOverAggregate, BatchPhysicalOverAggregateBase, BatchPhysicalPythonOverAggregate}
+import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalOverAggregateRule.Config
 import org.apache.flink.table.planner.plan.utils.{AggregateUtil, OverAggregateUtil, SortUtil}
 import org.apache.flink.table.planner.plan.utils.PythonUtil.isPythonAggregate
 import org.apache.flink.table.planner.typeutils.RowTypeUtils
 import org.apache.flink.table.planner.utils.ShortcutUtils
 
-import org.apache.calcite.plan.{RelOptCluster, RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.calcite.plan.{RelOptCluster, RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel._
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.core.{AggregateCall, Window}
@@ -50,10 +50,7 @@ import scala.collection.mutable.ArrayBuffer
  * If there are more than one [[Group]], this rule will combine adjacent [[Group]]s with the same
  * partition keys and order keys into one BatchExecOverAggregate.
  */
-class BatchPhysicalOverAggregateRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalOverAggregate], operand(classOf[RelNode], any)),
-    "BatchPhysicalOverAggregateRule") {
+class BatchPhysicalOverAggregateRule(config: Config) extends RelRule[Config](config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val logicWindow: FlinkLogicalOverAggregate = call.rel(0)
@@ -272,5 +269,19 @@ class BatchPhysicalOverAggregateRule
 }
 
 object BatchPhysicalOverAggregateRule {
-  val INSTANCE: RelOptRule = new BatchPhysicalOverAggregateRule
+  val INSTANCE: RelOptRule = new BatchPhysicalOverAggregateRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalOverAggregate])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs))
+      .withDescription("BatchPhysicalOverAggregateRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new BatchPhysicalOverAggregateRule(this)
+  }
 }

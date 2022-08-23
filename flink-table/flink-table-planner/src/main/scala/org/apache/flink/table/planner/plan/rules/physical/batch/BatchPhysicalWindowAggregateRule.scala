@@ -27,6 +27,7 @@ import org.apache.flink.table.planner.plan.logical.{LogicalWindow, SlidingGroupW
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalWindowAggregate
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalHashWindowAggregate, BatchPhysicalLocalHashWindowAggregate, BatchPhysicalLocalSortWindowAggregate, BatchPhysicalSortWindowAggregate}
+import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalWindowAggregateRule.Config
 import org.apache.flink.table.planner.plan.utils.AggregateUtil
 import org.apache.flink.table.planner.plan.utils.AggregateUtil.hasTimeIntervalType
 import org.apache.flink.table.planner.plan.utils.PythonUtil.isPythonAggregate
@@ -34,8 +35,7 @@ import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, un
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromDataTypeToLogicalType
 import org.apache.flink.table.types.logical.{BigIntType, IntType, LogicalType}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelCollations, RelNode}
 import org.apache.calcite.rel.core.{Aggregate, AggregateCall}
@@ -67,11 +67,8 @@ import scala.collection.JavaConversions._
  * try to create two possibilities above, and chooses the best one based on cost. if all aggregate
  * function buffer are fix length, the rule will choose hash window agg.
  */
-class BatchPhysicalWindowAggregateRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalWindowAggregate], operand(classOf[RelNode], any)),
-    FlinkRelFactories.LOGICAL_BUILDER_WITHOUT_AGG_INPUT_PRUNE,
-    "BatchPhysicalWindowAggregateRule")
+class BatchPhysicalWindowAggregateRule(config: Config)
+  extends RelRule[Config](config)
   with BatchPhysicalAggRuleBase {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -440,5 +437,20 @@ class BatchPhysicalWindowAggregateRule
 }
 
 object BatchPhysicalWindowAggregateRule {
-  val INSTANCE: RelOptRule = new BatchPhysicalWindowAggregateRule
+  val INSTANCE: RelOptRule = new BatchPhysicalWindowAggregateRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalWindowAggregate])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs))
+      .withRelBuilderFactory(FlinkRelFactories.LOGICAL_BUILDER_WITHOUT_AGG_INPUT_PRUNE)
+      .withDescription("BatchPhysicalWindowAggregateRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new BatchPhysicalWindowAggregateRule(this)
+  }
 }

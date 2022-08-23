@@ -26,6 +26,7 @@ import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.Calc;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
@@ -38,14 +39,34 @@ import scala.Tuple2;
  * Pushes a filter condition from the {@link FlinkLogicalCalc} and into a {@link
  * FlinkLogicalTableSourceScan}.
  */
-public class PushFilterInCalcIntoTableSourceScanRule extends PushFilterIntoSourceScanRuleBase {
+public class PushFilterInCalcIntoTableSourceScanRule
+        extends PushFilterIntoSourceScanRuleBase<PushFilterInCalcIntoTableSourceScanRule.Config> {
     public static final PushFilterInCalcIntoTableSourceScanRule INSTANCE =
-            new PushFilterInCalcIntoTableSourceScanRule();
+            new PushFilterInCalcIntoTableSourceScanRule(Config.DEFAULT);
 
-    public PushFilterInCalcIntoTableSourceScanRule() {
-        super(
-                operand(FlinkLogicalCalc.class, operand(FlinkLogicalTableSourceScan.class, none())),
-                "PushFilterInCalcIntoTableSourceScanRule");
+    public PushFilterInCalcIntoTableSourceScanRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PushFilterInCalcIntoTableSourceScanRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalCalc.class)
+                                                .inputs(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                FlinkLogicalTableSourceScan
+                                                                                        .class)
+                                                                        .noInputs()))
+                        .withDescription("PushFilterInCalcIntoTableSourceScanRule")
+                        .as(Config.class);
+
+        @Override
+        default PushFilterInCalcIntoTableSourceScanRule toRule() {
+            return new PushFilterInCalcIntoTableSourceScanRule(this);
+        }
     }
 
     @Override

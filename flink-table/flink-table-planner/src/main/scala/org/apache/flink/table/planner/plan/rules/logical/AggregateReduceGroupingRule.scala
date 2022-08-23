@@ -19,10 +19,10 @@ package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
+import org.apache.flink.table.planner.plan.rules.logical.AggregateReduceGroupingRule.Config
 
 import com.google.common.collect.ImmutableList
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.core.{Aggregate, AggregateCall, RelFactories}
 import org.apache.calcite.rel.core.Aggregate.Group
 import org.apache.calcite.tools.RelBuilderFactory
@@ -35,11 +35,9 @@ import scala.collection.mutable
  *
  * Find (minimum) unique group for the grouping columns, and use it as new grouping columns.
  */
-class AggregateReduceGroupingRule(relBuilderFactory: RelBuilderFactory)
-  extends RelOptRule(
-    operand(classOf[Aggregate], any),
-    relBuilderFactory,
-    "AggregateReduceGroupingRule") {
+class AggregateReduceGroupingRule(config: Config, relBuilderFactory: RelBuilderFactory)
+  extends RelRule[AggregateReduceGroupingRule.Config](
+    config.withRelBuilderFactory(relBuilderFactory).as(classOf[Config])) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: Aggregate = call.rel(0)
@@ -122,5 +120,16 @@ class AggregateReduceGroupingRule(relBuilderFactory: RelBuilderFactory)
 }
 
 object AggregateReduceGroupingRule {
-  val INSTANCE = new AggregateReduceGroupingRule(RelFactories.LOGICAL_BUILDER)
+  val INSTANCE = new AggregateReduceGroupingRule(Config.DEFAULT, RelFactories.LOGICAL_BUILDER)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Aggregate]).anyInputs)
+      .withDescription("AggregateReduceGroupingRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new AggregateReduceGroupingRule(this, RelFactories.LOGICAL_BUILDER)
+  }
 }

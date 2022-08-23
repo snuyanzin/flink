@@ -21,9 +21,9 @@ package org.apache.flink.table.planner.plan.rules.logical;
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalCalc;
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalRank;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.util.ImmutableBitSet;
@@ -36,14 +36,32 @@ import java.util.stream.Collectors;
  * Planner rule that removes the output column of rank number iff the rank number column is not used
  * by successor calc.
  */
-public class RedundantRankNumberColumnRemoveRule extends RelOptRule {
+public class RedundantRankNumberColumnRemoveRule
+        extends RelRule<RedundantRankNumberColumnRemoveRule.Config> {
     public static final RedundantRankNumberColumnRemoveRule INSTANCE =
-            new RedundantRankNumberColumnRemoveRule();
+            new RedundantRankNumberColumnRemoveRule(Config.DEFAULT);
 
-    public RedundantRankNumberColumnRemoveRule() {
-        super(
-                operand(FlinkLogicalCalc.class, operand(FlinkLogicalRank.class, any())),
-                "RedundantRankNumberColumnRemoveRule");
+    public RedundantRankNumberColumnRemoveRule(Config config) {
+        super(config);
+    }
+
+    /** Config for RedundantRankNumberColumnRemoveRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalCalc.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(FlinkLogicalRank.class)
+                                                                        .noInputs()))
+                        .withDescription("RedundantRankNumberColumnRemoveRule")
+                        .as(RedundantRankNumberColumnRemoveRule.Config.class);
+
+        @Override
+        default RedundantRankNumberColumnRemoveRule toRule() {
+            return new RedundantRankNumberColumnRemoveRule(this);
+        }
     }
 
     @Override

@@ -18,10 +18,10 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalCalc, FlinkLogicalRank}
+import org.apache.flink.table.planner.plan.rules.logical.ConstantRankNumberColumnRemoveRule.Config
 import org.apache.flink.table.runtime.operators.rank.{ConstantRankRange, RankType}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rex.RexProgramBuilder
 
 import java.math.{BigDecimal => JBigDecimal}
@@ -30,10 +30,7 @@ import java.math.{BigDecimal => JBigDecimal}
  * Planner rule that removes the output column of rank number iff there is a equality condition for
  * the rank column.
  */
-class ConstantRankNumberColumnRemoveRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalRank], any()),
-    "ConstantRankNumberColumnRemoveRule") {
+class ConstantRankNumberColumnRemoveRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val rank: FlinkLogicalRank = call.rel(0)
@@ -79,5 +76,17 @@ class ConstantRankNumberColumnRemoveRule
 }
 
 object ConstantRankNumberColumnRemoveRule {
-  val INSTANCE = new ConstantRankNumberColumnRemoveRule
+  val INSTANCE = new ConstantRankNumberColumnRemoveRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[FlinkLogicalRank]).anyInputs)
+      .withDescription("ConstantRankNumberColumnRemoveRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new ConstantRankNumberColumnRemoveRule(this)
+  }
 }

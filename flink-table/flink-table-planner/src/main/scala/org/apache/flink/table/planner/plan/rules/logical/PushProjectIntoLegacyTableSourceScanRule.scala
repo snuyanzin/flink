@@ -18,13 +18,13 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.api.TableException
+import org.apache.flink.table.planner.plan.rules.logical.PushProjectIntoLegacyTableSourceScanRule.Config
 import org.apache.flink.table.planner.plan.schema.LegacyTableSourceTable
 import org.apache.flink.table.planner.plan.utils._
 import org.apache.flink.table.sources._
 import org.apache.flink.util.CollectionUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{none, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.logical.{LogicalProject, LogicalTableScan}
 import org.apache.calcite.rel.rules.ProjectRemoveRule
 
@@ -32,10 +32,7 @@ import org.apache.calcite.rel.rules.ProjectRemoveRule
  * Planner rule that pushes a [[LogicalProject]] into a [[LogicalTableScan]] which wraps a
  * [[ProjectableTableSource]] or a [[NestedFieldsProjectableTableSource]].
  */
-class PushProjectIntoLegacyTableSourceScanRule
-  extends RelOptRule(
-    operand(classOf[LogicalProject], operand(classOf[LogicalTableScan], none)),
-    "PushProjectIntoLegacyTableSourceScanRule") {
+class PushProjectIntoLegacyTableSourceScanRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val scan: LogicalTableScan = call.rel(1)
@@ -122,5 +119,20 @@ class PushProjectIntoLegacyTableSourceScanRule
 }
 
 object PushProjectIntoLegacyTableSourceScanRule {
-  val INSTANCE: RelOptRule = new PushProjectIntoLegacyTableSourceScanRule
+  val INSTANCE: RelOptRule = new PushProjectIntoLegacyTableSourceScanRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalProject])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[LogicalTableScan]).noInputs()))
+      .withDescription("PushProjectIntoLegacyTableSourceScanRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new PushProjectIntoLegacyTableSourceScanRule(this)
+  }
 }

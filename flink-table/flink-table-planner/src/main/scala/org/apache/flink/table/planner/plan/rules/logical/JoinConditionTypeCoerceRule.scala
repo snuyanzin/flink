@@ -18,10 +18,10 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.api.TableException
+import org.apache.flink.table.planner.plan.rules.logical.JoinConditionTypeCoerceRule.Config
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.`type`.RelDataTypeFactory
 import org.apache.calcite.rel.core.Join
 import org.apache.calcite.rex.{RexCall, RexInputRef, RexNode}
@@ -40,8 +40,7 @@ import scala.collection.mutable
  * strongly uniform equals type, so that during a HashJoin shuffle we can have the same hashcode of
  * the same value.
  */
-class JoinConditionTypeCoerceRule
-  extends RelOptRule(operand(classOf[Join], any), "JoinConditionTypeCoerceRule") {
+class JoinConditionTypeCoerceRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join: Join = call.rel(0)
@@ -119,5 +118,16 @@ class JoinConditionTypeCoerceRule
 }
 
 object JoinConditionTypeCoerceRule {
-  val INSTANCE = new JoinConditionTypeCoerceRule
+  val INSTANCE = new JoinConditionTypeCoerceRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Join]).anyInputs)
+      .withDescription("JoinConditionTypeCoerceRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new JoinConditionTypeCoerceRule(this)
+  }
 }

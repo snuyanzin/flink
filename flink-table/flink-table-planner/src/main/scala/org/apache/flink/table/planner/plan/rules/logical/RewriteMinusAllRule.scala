@@ -18,9 +18,10 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable.GREATER_THAN
+import org.apache.flink.table.planner.plan.rules.logical.RewriteMinusAllRule.Config
 import org.apache.flink.table.planner.plan.utils.SetOpRewriteUtil.replicateRows
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.core.{Minus, RelFactories}
 import org.apache.calcite.sql.`type`.SqlTypeName.BIGINT
@@ -58,11 +59,7 @@ import scala.collection.JavaConversions._
  *
  * Only handle the case of input size 2.
  */
-class RewriteMinusAllRule
-  extends RelOptRule(
-    operand(classOf[Minus], any),
-    RelFactories.LOGICAL_BUILDER,
-    "RewriteMinusAllRule") {
+class RewriteMinusAllRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val minus: Minus = call.rel(0)
@@ -112,5 +109,17 @@ class RewriteMinusAllRule
 }
 
 object RewriteMinusAllRule {
-  val INSTANCE: RelOptRule = new RewriteMinusAllRule
+  val INSTANCE: RelOptRule = new RewriteMinusAllRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Minus]).anyInputs)
+      .withRelBuilderFactory(RelFactories.LOGICAL_BUILDER)
+      .withDescription("RewriteMinusAllRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new RewriteMinusAllRule(this)
+  }
 }

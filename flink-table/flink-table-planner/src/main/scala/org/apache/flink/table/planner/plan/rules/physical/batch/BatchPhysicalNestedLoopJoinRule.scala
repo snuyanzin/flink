@@ -21,10 +21,10 @@ import org.apache.flink.table.api.TableException
 import org.apache.flink.table.planner.hint.JoinStrategy
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalJoin
 import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalNestedLoopJoin
+import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalNestedLoopJoinRule.Config
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.{Join, JoinRelType}
 
@@ -34,10 +34,8 @@ import scala.collection.JavaConversions._
  * Rule that converts [[FlinkLogicalJoin]] to [[BatchPhysicalNestedLoopJoin]] if NestedLoopJoin is
  * enabled.
  */
-class BatchPhysicalNestedLoopJoinRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalJoin], operand(classOf[RelNode], any)),
-    "BatchPhysicalNestedLoopJoinRule")
+class BatchPhysicalNestedLoopJoinRule(config: Config)
+  extends RelRule[Config](config)
   with BatchPhysicalJoinRuleBase
   with BatchPhysicalNestedLoopJoinRuleBase {
 
@@ -94,5 +92,19 @@ class BatchPhysicalNestedLoopJoinRule
 }
 
 object BatchPhysicalNestedLoopJoinRule {
-  val INSTANCE: RelOptRule = new BatchPhysicalNestedLoopJoinRule
+  val INSTANCE: RelOptRule = new BatchPhysicalNestedLoopJoinRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs))
+      .withDescription("BatchPhysicalNestedLoopJoinRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new BatchPhysicalNestedLoopJoinRule(this)
+  }
 }

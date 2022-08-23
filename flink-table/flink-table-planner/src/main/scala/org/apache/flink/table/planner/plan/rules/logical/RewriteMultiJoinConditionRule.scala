@@ -17,8 +17,9 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.flink.table.planner.plan.rules.logical.RewriteMultiJoinConditionRule.Config
+
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.core.JoinRelType
 import org.apache.calcite.rel.rules.MultiJoin
 import org.apache.calcite.rex.{RexCall, RexNode}
@@ -37,8 +38,7 @@ import scala.collection.mutable
  * The advantage of applying this rule is that it increases the choice of join reorder; at the same
  * time, the disadvantage is that it will use more CPU for additional join predicates.
  */
-class RewriteMultiJoinConditionRule
-  extends RelOptRule(operand(classOf[MultiJoin], any), "RewriteMultiJoinConditionRule") {
+class RewriteMultiJoinConditionRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val multiJoin: MultiJoin = call.rel(0)
@@ -120,5 +120,16 @@ class RewriteMultiJoinConditionRule
 }
 
 object RewriteMultiJoinConditionRule {
-  val INSTANCE = new RewriteMultiJoinConditionRule
+  val INSTANCE = new RewriteMultiJoinConditionRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[MultiJoin]).anyInputs)
+      .withDescription("RewriteMultiJoinConditionRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new RewriteMultiJoinConditionRule(this)
+  }
 }
