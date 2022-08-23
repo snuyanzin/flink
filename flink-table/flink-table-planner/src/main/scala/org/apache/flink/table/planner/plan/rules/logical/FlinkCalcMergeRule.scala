@@ -20,8 +20,7 @@ package org.apache.flink.table.planner.plan.rules.logical
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalCalc
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.plan.RelOptUtil.InputFinder
 import org.apache.calcite.rel.core.{Calc, RelFactories}
 import org.apache.calcite.rex.{RexNode, RexOver, RexProgramBuilder, RexUtil}
@@ -44,10 +43,14 @@ import scala.collection.JavaConversions._
  * of the lower [[Calc]]'s inputs.
  */
 class FlinkCalcMergeRule[C <: Calc](calcClass: Class[C])
-  extends RelOptRule(
-    operand(calcClass, operand(calcClass, any)),
-    RelFactories.LOGICAL_BUILDER,
-    "FlinkCalcMergeRule") {
+  extends RelRule(
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(calcClass)
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(calcClass).anyInputs))
+      .withDescription("FlinkCalcMergeRule")
+      .withRelBuilderFactory(RelFactories.LOGICAL_BUILDER)) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val topCalc: Calc = call.rel(0)

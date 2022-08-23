@@ -17,14 +17,14 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.flink.table.planner.plan.rules.logical.FlinkLimit0RemoveRule.Config
+
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.core.Sort
 import org.apache.calcite.rex.RexLiteral
 
 /** Planner rule that rewrites `limit 0` to empty [[org.apache.calcite.rel.core.Values]]. */
-class FlinkLimit0RemoveRule
-  extends RelOptRule(operand(classOf[Sort], any()), "FlinkLimit0RemoveRule") {
+class FlinkLimit0RemoveRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val sort: Sort = call.rel(0)
@@ -42,5 +42,16 @@ class FlinkLimit0RemoveRule
 }
 
 object FlinkLimit0RemoveRule {
-  val INSTANCE = new FlinkLimit0RemoveRule
+  val INSTANCE = new FlinkLimit0RemoveRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Sort]).anyInputs)
+      .withDescription("FlinkLimit0RemoveRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new FlinkLimit0RemoveRule(this)
+  }
 }

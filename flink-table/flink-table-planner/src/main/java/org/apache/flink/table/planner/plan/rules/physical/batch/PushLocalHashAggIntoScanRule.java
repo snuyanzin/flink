@@ -26,6 +26,7 @@ import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalTab
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 
 /**
  * Planner rule that tries to push a local hash aggregate which without sort into a {@link
@@ -50,17 +51,39 @@ import org.apache.calcite.plan.RelOptRuleCall;
  *    +- BatchPhysicalTableSourceScan (with local aggregate pushed down)
  * }</pre>
  */
-public class PushLocalHashAggIntoScanRule extends PushLocalAggIntoScanRuleBase {
-    public static final PushLocalHashAggIntoScanRule INSTANCE = new PushLocalHashAggIntoScanRule();
+public class PushLocalHashAggIntoScanRule
+        extends PushLocalAggIntoScanRuleBase<PushLocalHashAggIntoScanRule.Config> {
+    public static final PushLocalHashAggIntoScanRule INSTANCE =
+            new PushLocalHashAggIntoScanRule(Config.DEFAULT);
 
-    public PushLocalHashAggIntoScanRule() {
-        super(
-                operand(
-                        BatchPhysicalExchange.class,
-                        operand(
-                                BatchPhysicalLocalHashAggregate.class,
-                                operand(BatchPhysicalTableSourceScan.class, none()))),
-                "PushLocalHashAggIntoScanRule");
+    public PushLocalHashAggIntoScanRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PushLocalHashAggIntoScanRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(BatchPhysicalExchange.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                BatchPhysicalLocalHashAggregate
+                                                                                        .class)
+                                                                        .oneInput(
+                                                                                b2 ->
+                                                                                        b2.operand(
+                                                                                                        BatchPhysicalTableSourceScan
+                                                                                                                .class)
+                                                                                                .noInputs())))
+                        .withDescription("PushLocalHashAggIntoScanRule")
+                        .as(Config.class);
+
+        @Override
+        default PushLocalHashAggIntoScanRule toRule() {
+            return new PushLocalHashAggIntoScanRule(this);
+        }
     }
 
     @Override

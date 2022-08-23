@@ -22,6 +22,7 @@ import org.apache.flink.table.api.config.{ExecutionConfigOptions, OptimizerConfi
 import org.apache.flink.table.functions.UserDefinedFunction
 import org.apache.flink.table.planner.calcite.CalciteConfig
 import org.apache.flink.table.planner.plan.optimize.program.FlinkBatchProgram
+import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalHashAggRule.Config
 import org.apache.flink.table.planner.utils.TableConfigUtils
 
 import org.apache.calcite.rel.core.Aggregate
@@ -64,7 +65,7 @@ class EnforceLocalHashAggRuleTest extends EnforceLocalAggRuleTestBase {
  * Planner rule that ignore the [[OptimizerConfigOptions.TABLE_OPTIMIZER_AGG_PHASE_STRATEGY]] value,
  * and only enable one phase aggregate. This rule only used for test.
  */
-class BatchPhysicalHashAggRuleForOnePhase extends BatchPhysicalHashAggRule {
+class BatchPhysicalHashAggRuleForOnePhase(config: Config) extends BatchPhysicalHashAggRule(config) {
   override protected def isTwoPhaseAggWorkable(
       aggFunctions: Array[UserDefinedFunction],
       tableConfig: ReadableConfig): Boolean = false
@@ -76,5 +77,5 @@ class BatchPhysicalHashAggRuleForOnePhase extends BatchPhysicalHashAggRule {
 }
 
 object BatchPhysicalHashAggRuleForOnePhase {
-  val INSTANCE = new BatchPhysicalHashAggRuleForOnePhase
+  val INSTANCE = new BatchPhysicalHashAggRuleForOnePhase(Config.DEFAULT)
 }

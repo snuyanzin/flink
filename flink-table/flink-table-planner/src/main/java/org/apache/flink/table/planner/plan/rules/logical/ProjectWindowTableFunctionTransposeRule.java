@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.planner.plan.rules.logical;
 
+import org.apache.flink.table.planner.calcite.FlinkRelFactories;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.functions.sql.SqlWindowTableFunction;
 import org.apache.flink.table.planner.plan.logical.TimeAttributeWindowingStrategy;
@@ -25,9 +26,9 @@ import org.apache.flink.table.planner.plan.utils.WindowUtil;
 import org.apache.flink.table.types.logical.LogicalType;
 
 import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
@@ -54,15 +55,36 @@ import java.util.stream.IntStream;
  * contains a Window table function call by splitting the projection into a projection on top of
  * child of the TableFunctionScan.
  */
-public class ProjectWindowTableFunctionTransposeRule extends RelOptRule {
+public class ProjectWindowTableFunctionTransposeRule
+        extends RelRule<ProjectWindowTableFunctionTransposeRule.Config> {
 
     public static final ProjectWindowTableFunctionTransposeRule INSTANCE =
-            new ProjectWindowTableFunctionTransposeRule();
+            new ProjectWindowTableFunctionTransposeRule(Config.DEFAULT);
 
-    public ProjectWindowTableFunctionTransposeRule() {
-        super(
-                operand(LogicalProject.class, operand(LogicalTableFunctionScan.class, any())),
-                "ProjectWindowTableFunctionTransposeRule");
+    public ProjectWindowTableFunctionTransposeRule(Config config) {
+        super(config);
+    }
+
+    /** Config for ProjectWindowTableFunctionTransposeRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(LogicalProject.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                LogicalTableFunctionScan
+                                                                                        .class)
+                                                                        .anyInputs()))
+                        .withDescription("ProjectWindowTableFunctionTransposeRule")
+                        .withRelBuilderFactory(FlinkRelFactories.FLINK_REL_BUILDER())
+                        .as(Config.class);
+
+        @Override
+        default ProjectWindowTableFunctionTransposeRule toRule() {
+            return new ProjectWindowTableFunctionTransposeRule(this);
+        }
     }
 
     @Override

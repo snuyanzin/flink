@@ -17,10 +17,10 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
+import org.apache.flink.table.planner.plan.rules.logical.SimplifyJoinConditionRule.Config
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.logical.LogicalJoin
 import org.apache.calcite.rex._
 
@@ -29,8 +29,7 @@ import org.apache.calcite.rex._
  * expressions: a=b AND b=a -> a=b, simplify boolean expressions: x = 1 AND FALSE -> FALSE, simplify
  * cast expressions: CAST('123' as integer) -> 123
  */
-class SimplifyJoinConditionRule
-  extends RelOptRule(operand(classOf[LogicalJoin], any()), "SimplifyJoinConditionRule") {
+class SimplifyJoinConditionRule(config: Config) extends RelRule[Config](config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val join: LogicalJoin = call.rel(0)
@@ -64,5 +63,17 @@ class SimplifyJoinConditionRule
 }
 
 object SimplifyJoinConditionRule {
-  val INSTANCE = new SimplifyJoinConditionRule
+  val INSTANCE = new SimplifyJoinConditionRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[LogicalJoin]).anyInputs)
+      .withDescription("SimplifyJoinConditionRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new SimplifyJoinConditionRule(this)
+  }
 }

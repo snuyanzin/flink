@@ -26,8 +26,8 @@ import org.apache.flink.table.planner.plan.schema.{LegacyTableSourceTable, Table
 import org.apache.flink.table.planner.plan.utils.TemporalJoinUtil
 import org.apache.flink.table.sources.LookupableTableSource
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptRuleOperand}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.RelRule.Config
 import org.apache.calcite.plan.hep.{HepPlanner, HepRelVertex}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.TableScan
@@ -44,10 +44,7 @@ import scala.collection.JavaConverters._
  *
  * Notice: This rule can only be used in [[HepPlanner]].
  */
-abstract class LogicalCorrelateToJoinFromTemporalTableRule(
-    operand: RelOptRuleOperand,
-    description: String)
-  extends RelOptRule(operand, description) {
+abstract class LogicalCorrelateToJoinFromTemporalTableRule(config: Config) extends RelRule(config) {
 
   def getFilterCondition(call: RelOptRuleCall): RexNode
 
@@ -147,10 +144,8 @@ abstract class LogicalCorrelateToJoinFromTemporalTableRule(
  * Lookup join is a kind of temporal table join implementation which only supports Processing-time
  * temporal table join and the right input required a [[LookupTableSource]].
  */
-abstract class LogicalCorrelateToJoinFromLookupTemporalTableRule(
-    operand: RelOptRuleOperand,
-    description: String)
-  extends LogicalCorrelateToJoinFromTemporalTableRule(operand, description) {
+abstract class LogicalCorrelateToJoinFromLookupTemporalTableRule(config: Config)
+  extends LogicalCorrelateToJoinFromTemporalTableRule(config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val correlate: LogicalCorrelate = call.rel(0)
@@ -191,10 +186,8 @@ abstract class LogicalCorrelateToJoinFromLookupTemporalTableRule(
 }
 
 /** General temporal table join rule to rewrite the original Correlate into a Join. */
-abstract class LogicalCorrelateToJoinFromGeneralTemporalTableRule(
-    operand: RelOptRuleOperand,
-    description: String)
-  extends LogicalCorrelateToJoinFromTemporalTableRule(operand, description) {
+abstract class LogicalCorrelateToJoinFromGeneralTemporalTableRule(config: Config)
+  extends LogicalCorrelateToJoinFromTemporalTableRule(config) {
 
   protected def extractRightEventTimeInputRef(
       leftInput: RelNode,
@@ -346,14 +339,24 @@ abstract class LogicalCorrelateToJoinFromGeneralTemporalTableRule(
  */
 class LogicalCorrelateToJoinFromLookupTableRuleWithFilter
   extends LogicalCorrelateToJoinFromLookupTemporalTableRule(
-    operand(
-      classOf[LogicalCorrelate],
-      operand(classOf[RelNode], any()),
-      operand(
-        classOf[LogicalFilter],
-        operand(classOf[LogicalSnapshot], operand(classOf[RelNode], any())))
-    ),
-    "LogicalCorrelateToJoinFromLookupTableRuleWithFilter"
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalCorrelate])
+            .inputs(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[RelNode])
+                  .anyInputs(),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[LogicalFilter])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) =>
+                      b3.operand(classOf[LogicalSnapshot])
+                        .oneInput(
+                          (b4: RelRule.OperandBuilder) => b4.operand(classOf[RelNode]).anyInputs()))
+            ))
+      .withDescription("LogicalCorrelateToJoinFromLookupTableRuleWithFilter")
+      .as(classOf[Config])
   ) {
   override def matches(call: RelOptRuleCall): Boolean = {
     val snapshot: LogicalSnapshot = call.rel(3)
@@ -378,11 +381,18 @@ class LogicalCorrelateToJoinFromLookupTableRuleWithFilter
  */
 class LogicalCorrelateToJoinFromLookupTableRuleWithoutFilter
   extends LogicalCorrelateToJoinFromLookupTemporalTableRule(
-    operand(
-      classOf[LogicalCorrelate],
-      operand(classOf[RelNode], any()),
-      operand(classOf[LogicalSnapshot], operand(classOf[RelNode], any()))),
-    "LogicalCorrelateToJoinFromLookupTableRuleWithoutFilter"
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalCorrelate])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs(),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[LogicalSnapshot])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) => b3.operand(classOf[RelNode]).anyInputs())
+            ))
+      .withDescription("LogicalCorrelateToJoinFromLookupTableRuleWithoutFilter")
   ) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -407,14 +417,21 @@ class LogicalCorrelateToJoinFromLookupTableRuleWithoutFilter
  */
 class LogicalCorrelateToJoinFromTemporalTableRuleWithFilter
   extends LogicalCorrelateToJoinFromGeneralTemporalTableRule(
-    operand(
-      classOf[LogicalCorrelate],
-      operand(classOf[RelNode], any()),
-      operand(
-        classOf[LogicalFilter],
-        operand(classOf[LogicalSnapshot], operand(classOf[RelNode], any())))
-    ),
-    "LogicalCorrelateToJoinFromTemporalTableRuleWithFilter"
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalCorrelate])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs(),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[LogicalFilter])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) =>
+                      b3.operand(classOf[LogicalSnapshot])
+                        .oneInput(
+                          (b4: RelRule.OperandBuilder) => b4.operand(classOf[RelNode]).anyInputs()))
+            ))
+      .withDescription("LogicalCorrelateToJoinFromTemporalTableRuleWithFilter")
   ) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -440,11 +457,18 @@ class LogicalCorrelateToJoinFromTemporalTableRuleWithFilter
  */
 class LogicalCorrelateToJoinFromTemporalTableRuleWithoutFilter
   extends LogicalCorrelateToJoinFromGeneralTemporalTableRule(
-    operand(
-      classOf[LogicalCorrelate],
-      operand(classOf[RelNode], any()),
-      operand(classOf[LogicalSnapshot], operand(classOf[RelNode], any()))),
-    "LogicalCorrelateToJoinFromTemporalTableRuleWithoutFilter"
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalCorrelate])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs(),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[LogicalSnapshot])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) => b3.operand(classOf[RelNode]).anyInputs())
+            ))
+      .withDescription("LogicalCorrelateToJoinFromTemporalTableRuleWithoutFilter")
   ) {
 
   override def matches(call: RelOptRuleCall): Boolean = {

@@ -21,6 +21,7 @@ import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.expressions.FieldReferenceExpression
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory.toLogicalType
+import org.apache.flink.table.planner.plan.rules.logical.LogicalWindowAggregateRuleBase.Config
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromLogicalTypeToDataType
 
 import _root_.java.math.{BigDecimal => JBigDecimal}
@@ -34,8 +35,9 @@ import org.apache.calcite.sql.`type`.SqlTypeFamily
  * expression to [[org.apache.flink.table.planner.plan.nodes.calcite.LogicalWindowAggregate]] for
  * stream.
  */
-class StreamLogicalWindowAggregateRule
-  extends LogicalWindowAggregateRuleBase("StreamLogicalWindowAggregateRule") {
+class StreamLogicalWindowAggregateRule(config: Config)
+  extends LogicalWindowAggregateRuleBase(
+    config.withDescription("StreamLogicalWindowAggregateRule").as(classOf[Config])) {
 
   /** Returns a reference to the time attribute with a time indicator type */
   override private[table] def getInAggregateGroupExpression(
@@ -81,5 +83,9 @@ class StreamLogicalWindowAggregateRule
 }
 
 object StreamLogicalWindowAggregateRule {
-  val INSTANCE = new StreamLogicalWindowAggregateRule
+  val INSTANCE = new StreamLogicalWindowAggregateRule(LogicalWindowAggregateRuleBase.Config.DEFAULT)
+
+  trait Config extends LogicalWindowAggregateRuleBase.Config {
+    override def toRule = new StreamLogicalWindowAggregateRule(this)
+  }
 }

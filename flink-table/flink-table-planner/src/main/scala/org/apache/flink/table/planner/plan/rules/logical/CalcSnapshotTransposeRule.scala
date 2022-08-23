@@ -18,16 +18,13 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalCalc, FlinkLogicalSnapshot}
+import org.apache.flink.table.planner.plan.rules.logical.CalcSnapshotTransposeRule.Config
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rex.RexOver
 
 /** Transpose [[FlinkLogicalCalc]] past into [[FlinkLogicalSnapshot]]. */
-class CalcSnapshotTransposeRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalCalc], operand(classOf[FlinkLogicalSnapshot], any())),
-    "CalcSnapshotTransposeRule") {
+class CalcSnapshotTransposeRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val calc = call.rel[FlinkLogicalCalc](0)
@@ -45,5 +42,21 @@ class CalcSnapshotTransposeRule
 }
 
 object CalcSnapshotTransposeRule {
-  val INSTANCE = new CalcSnapshotTransposeRule
+  val INSTANCE = new CalcSnapshotTransposeRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalCalc])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[FlinkLogicalSnapshot]).anyInputs()))
+      .withDescription("CalcSnapshotTransposeRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new CalcSnapshotTransposeRule(this)
+  }
 }

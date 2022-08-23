@@ -17,8 +17,8 @@
 
 package org.apache.flink.table.planner.plan.rules.logical;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.core.Project;
@@ -41,7 +41,7 @@ import java.util.List;
  * org.apache.calcite.rel.core.Join} by splitting the projection into a projection on top of each
  * child of the join.
  */
-public class FlinkProjectJoinTransposeRule extends RelOptRule {
+public class FlinkProjectJoinTransposeRule extends RelRule {
     public static final FlinkProjectJoinTransposeRule INSTANCE =
             new FlinkProjectJoinTransposeRule(expr -> true, RelFactories.LOGICAL_BUILDER);
 
@@ -60,7 +60,13 @@ public class FlinkProjectJoinTransposeRule extends RelOptRule {
      */
     public FlinkProjectJoinTransposeRule(
             PushProjector.ExprCondition preserveExprCondition, RelBuilderFactory relFactory) {
-        super(operand(Project.class, operand(Join.class, any())), relFactory, null);
+        super(
+                Config.EMPTY
+                        .withOperandSupplier(
+                                b0 ->
+                                        b0.operand(Project.class)
+                                                .inputs(b1 -> b1.operand(Join.class).anyInputs()))
+                        .withRelBuilderFactory(relFactory));
         this.preserveExprCondition = preserveExprCondition;
     }
 

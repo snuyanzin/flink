@@ -19,11 +19,11 @@ package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkRelFactories}
+import org.apache.flink.table.planner.plan.rules.logical.DecomposeGroupingSetsRule.Config
 import org.apache.flink.table.planner.plan.utils.{AggregateUtil, ExpandUtil}
 
 import com.google.common.collect.ImmutableList
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.core.AggregateCall
 import org.apache.calcite.rel.logical.LogicalAggregate
 import org.apache.calcite.rex.{RexBuilder, RexNode}
@@ -156,11 +156,7 @@ import scala.collection.JavaConversions._
  * \+-----+-----+-----+-----+ ---+--- \| 2 | 1 | null| 1 | | \+-----+-----+-----+-----+ records
  * expanded by record3 \| null| 1 | c1 | 2 | | \+-----+-----+-----+-----+ ---+---
  */
-class DecomposeGroupingSetsRule
-  extends RelOptRule(
-    operand(classOf[LogicalAggregate], any),
-    FlinkRelFactories.FLINK_REL_BUILDER,
-    "DecomposeGroupingSetsRule") {
+class DecomposeGroupingSetsRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: LogicalAggregate = call.rel(0)
@@ -334,5 +330,18 @@ class DecomposeGroupingSetsRule
 }
 
 object DecomposeGroupingSetsRule {
-  val INSTANCE: RelOptRule = new DecomposeGroupingSetsRule
+  val INSTANCE: RelOptRule = new DecomposeGroupingSetsRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[LogicalAggregate]).anyInputs)
+      .withDescription("DecomposeGroupingSetsRule")
+      .withRelBuilderFactory(FlinkRelFactories.FLINK_REL_BUILDER)
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new DecomposeGroupingSetsRule(this)
+  }
 }

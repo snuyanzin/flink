@@ -23,11 +23,11 @@ import org.apache.flink.table.planner.plan.logical.TimeAttributeWindowingStrateg
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.stream.{StreamPhysicalCalc, StreamPhysicalExpand, StreamPhysicalWindowAggregate, StreamPhysicalWindowTableFunction}
+import org.apache.flink.table.planner.plan.rules.physical.stream.ExpandWindowTableFunctionTransposeRule.Config
 import org.apache.flink.table.planner.plan.utils.WindowUtil
 import org.apache.flink.table.planner.plan.utils.WindowUtil.buildNewProgramWithoutWindowColumns
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rex.{RexInputRef, RexLiteral, RexNode, RexProgram}
 
@@ -85,14 +85,7 @@ import scala.collection.mutable.ArrayBuffer
  * }}}
  * </pre>
  */
-class ExpandWindowTableFunctionTransposeRule
-  extends RelOptRule(
-    operand(
-      classOf[StreamPhysicalExpand],
-      operand(
-        classOf[StreamPhysicalCalc],
-        operand(classOf[StreamPhysicalWindowTableFunction], any()))),
-    "ExpandWindowTableFunctionTransposeRule") {
+class ExpandWindowTableFunctionTransposeRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val expand: StreamPhysicalExpand = call.rel(0)
@@ -279,5 +272,24 @@ class ExpandWindowTableFunctionTransposeRule
 }
 
 object ExpandWindowTableFunctionTransposeRule {
-  val INSTANCE = new ExpandWindowTableFunctionTransposeRule
+  val INSTANCE = new ExpandWindowTableFunctionTransposeRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[StreamPhysicalExpand])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[StreamPhysicalCalc])
+                  .oneInput(
+                    (b2: RelRule.OperandBuilder) =>
+                      b2.operand(classOf[StreamPhysicalWindowTableFunction]).anyInputs())))
+      .withDescription("ExpandWindowTableFunctionTransposeRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new ExpandWindowTableFunctionTransposeRule(this)
+  }
 }

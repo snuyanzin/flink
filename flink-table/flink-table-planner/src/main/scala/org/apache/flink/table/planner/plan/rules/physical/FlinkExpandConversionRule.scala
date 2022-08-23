@@ -25,16 +25,19 @@ import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalE
 import org.apache.flink.table.planner.plan.rules.physical.FlinkExpandConversionRule._
 
 import org.apache.calcite.plan._
-import org.apache.calcite.plan.RelOptRule._
 import org.apache.calcite.plan.volcano.AbstractConverter
 import org.apache.calcite.rel.{RelCollation, RelCollations, RelCollationTraitDef, RelNode}
 import org.apache.calcite.rel.RelDistribution.Type._
 
 /** Rule which converts an [[AbstractConverter]] to a RelNode which satisfies the target traits. */
 class FlinkExpandConversionRule(flinkConvention: Convention)
-  extends RelOptRule(
-    operand(classOf[AbstractConverter], operand(classOf[RelNode], any)),
-    "FlinkExpandConversionRule") {
+  extends RelRule(
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[AbstractConverter])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs()))
+      .withDescription("FlinkExpandConversionRule")) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val toTraitSet = call.rel(0).asInstanceOf[AbstractConverter].getTraitSet

@@ -25,7 +25,7 @@ import org.apache.flink.table.planner.plan.nodes.physical.batch._
 import org.apache.flink.table.planner.plan.utils.AggregateUtil
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleOperand}
+import org.apache.calcite.plan.RelRule
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rex.RexUtil
 
@@ -38,8 +38,8 @@ import scala.collection.JavaConversions._
  *      strategy is enabled, 3. the input is [[BatchPhysicalExpand]] and there is at least one
  *      expand row which the columns for grouping are all constant.
  */
-abstract class EnforceLocalAggRuleBase(operand: RelOptRuleOperand, description: String)
-  extends RelOptRule(operand, description)
+abstract class EnforceLocalAggRuleBase(config: RelRule.Config)
+  extends RelRule[RelRule.Config](config)
   with BatchPhysicalAggRuleBase {
 
   protected def isTwoPhaseAggEnabled(agg: BatchPhysicalGroupAggregateBase): Boolean = {

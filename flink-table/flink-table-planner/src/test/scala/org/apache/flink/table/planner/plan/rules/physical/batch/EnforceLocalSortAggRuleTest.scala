@@ -82,7 +82,8 @@ class EnforceLocalSortAggRuleTest extends EnforceLocalAggRuleTestBase {
  * Planner rule that ignore the [[OptimizerConfigOptions.TABLE_OPTIMIZER_AGG_PHASE_STRATEGY]] value,
  * and only enable one phase aggregate. This rule only used for test.
  */
-class BatchExecSortAggRuleForOnePhase extends BatchPhysicalSortAggRule {
+class BatchExecSortAggRuleForOnePhase(config: BatchPhysicalSortAggRule.Config)
+  extends BatchPhysicalSortAggRule(config) {
   override protected def isTwoPhaseAggWorkable(
       aggFunctions: Array[UserDefinedFunction],
       tableConfig: ReadableConfig): Boolean = false
@@ -94,5 +95,5 @@ class BatchExecSortAggRuleForOnePhase extends BatchPhysicalSortAggRule {
 }
 
 object BatchExecSortAggRuleForOnePhase {
-  val INSTANCE = new BatchExecSortAggRuleForOnePhase
+  val INSTANCE = new BatchExecSortAggRuleForOnePhase(BatchPhysicalSortAggRule.Config.DEFAULT)
 }

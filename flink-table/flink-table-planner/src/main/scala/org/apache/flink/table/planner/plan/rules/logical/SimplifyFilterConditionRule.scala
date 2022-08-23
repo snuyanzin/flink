@@ -17,10 +17,10 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
+import org.apache.flink.table.planner.plan.rules.logical.SimplifyFilterConditionRule.Config
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.{RelNode, RelShuttleImpl}
 import org.apache.calcite.rel.core.Filter
 import org.apache.calcite.rel.logical.LogicalFilter
@@ -32,8 +32,8 @@ import org.apache.calcite.rex._
  * if `simplifySubQuery` is true, this rule will also simplify the filter condition in
  * [[RexSubQuery]].
  */
-class SimplifyFilterConditionRule(simplifySubQuery: Boolean, description: String)
-  extends RelOptRule(operand(classOf[Filter], any()), description) {
+class SimplifyFilterConditionRule(config: Config, simplifySubQuery: Boolean, description: String)
+  extends RelRule[Config](config.withDescription(description).as(classOf[Config])) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val filter: Filter = call.rel(0)
@@ -91,8 +91,24 @@ class SimplifyFilterConditionRule(simplifySubQuery: Boolean, description: String
 }
 
 object SimplifyFilterConditionRule {
-  val INSTANCE = new SimplifyFilterConditionRule(false, "SimplifyFilterConditionRule")
+  val INSTANCE =
+    new SimplifyFilterConditionRule(Config.DEFAULT, false, "SimplifyFilterConditionRule")
 
   val EXTENDED =
-    new SimplifyFilterConditionRule(true, "SimplifyFilterConditionRule:simplifySubQuery")
+    new SimplifyFilterConditionRule(
+      Config.DEFAULT,
+      true,
+      "SimplifyFilterConditionRule:simplifySubQuery")
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Filter]).anyInputs)
+      .withDescription("SimplifyFilterConditionRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule =
+      new SimplifyFilterConditionRule(this, false, "SimplifyFilterConditionRule")
+  }
 }

@@ -22,7 +22,7 @@ import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalTableFuncti
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalCorrelate, BatchPhysicalValues}
 
 import com.google.common.collect.ImmutableList
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.plan.RelOptRule._
 import org.apache.calcite.rel.core.JoinRelType
 import org.apache.calcite.rex.{RexLiteral, RexUtil}
@@ -42,10 +42,9 @@ import org.apache.calcite.rex.{RexLiteral, RexUtil}
  * the normal correlate query, such as the following SQL: example1: SELECT * FROM T, LATERAL
  * TABLE(func()) as T(c) example2: SELECT a, c FROM T, LATERAL TABLE(func(a)) as T(c)
  */
-class BatchPhysicalConstantTableFunctionScanRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalTableFunctionScan], any),
-    "BatchPhysicalConstantTableFunctionScanRule") {
+class BatchPhysicalConstantTableFunctionScanRule(
+    config: BatchPhysicalConstantTableFunctionScanRule.Config)
+  extends RelRule[BatchPhysicalConstantTableFunctionScanRule.Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val scan: FlinkLogicalTableFunctionScan = call.rel(0)
@@ -78,5 +77,16 @@ class BatchPhysicalConstantTableFunctionScanRule
 }
 
 object BatchPhysicalConstantTableFunctionScanRule {
-  val INSTANCE = new BatchPhysicalConstantTableFunctionScanRule
+  val INSTANCE = new BatchPhysicalConstantTableFunctionScanRule(Config.DEFAULT)
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalTableFunctionScan]).anyInputs)
+      .withDescription("BatchPhysicalConstantTableFunctionScanRule")
+      .as(classOf[BatchPhysicalConstantTableFunctionScanRule.Config])
+  }
+  trait Config extends RelRule.Config {
+    override def toRule = new BatchPhysicalConstantTableFunctionScanRule(this)
+  }
 }

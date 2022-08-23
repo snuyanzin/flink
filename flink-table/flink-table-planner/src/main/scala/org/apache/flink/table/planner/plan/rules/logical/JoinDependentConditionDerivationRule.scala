@@ -17,10 +17,10 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
+import org.apache.flink.table.planner.plan.rules.logical.JoinDependentConditionDerivationRule.Config
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.core.{Join, JoinRelType}
 import org.apache.calcite.rel.logical.LogicalJoin
 import org.apache.calcite.rex.RexNode
@@ -51,8 +51,7 @@ import scala.collection.mutable
  *
  * <p>Note: This class can only be used in HepPlanner with RULE_SEQUENCE.
  */
-class JoinDependentConditionDerivationRule
-  extends RelOptRule(operand(classOf[LogicalJoin], any()), "JoinDependentConditionDerivationRule") {
+class JoinDependentConditionDerivationRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join: LogicalJoin = call.rel(0)
@@ -139,5 +138,17 @@ class JoinDependentConditionDerivationRule
 }
 
 object JoinDependentConditionDerivationRule {
-  val INSTANCE = new JoinDependentConditionDerivationRule
+  val INSTANCE = new JoinDependentConditionDerivationRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[LogicalJoin]).anyInputs)
+      .withDescription("JoinDependentConditionDerivationRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new JoinDependentConditionDerivationRule(this)
+  }
 }

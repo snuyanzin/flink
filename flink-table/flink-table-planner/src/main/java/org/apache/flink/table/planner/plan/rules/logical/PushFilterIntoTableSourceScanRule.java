@@ -24,6 +24,7 @@ import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rex.RexNode;
@@ -35,14 +36,32 @@ import scala.Tuple2;
  * Planner rule that tries to push a filter into a {@link LogicalTableScan}, which table is a {@link
  * TableSourceTable}. And the table source in the table is a {@link SupportsFilterPushDown}.
  */
-public class PushFilterIntoTableSourceScanRule extends PushFilterIntoSourceScanRuleBase {
+public class PushFilterIntoTableSourceScanRule
+        extends PushFilterIntoSourceScanRuleBase<PushFilterIntoTableSourceScanRule.Config> {
     public static final PushFilterIntoTableSourceScanRule INSTANCE =
-            new PushFilterIntoTableSourceScanRule();
+            new PushFilterIntoTableSourceScanRule(Config.DEFAULT);
 
-    public PushFilterIntoTableSourceScanRule() {
-        super(
-                operand(Filter.class, operand(LogicalTableScan.class, none())),
-                "PushFilterIntoTableSourceScanRule");
+    public PushFilterIntoTableSourceScanRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PushFilterIntoTableSourceScanRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(Filter.class)
+                                                .inputs(
+                                                        b1 ->
+                                                                b1.operand(LogicalTableScan.class)
+                                                                        .noInputs()))
+                        .withDescription("PushFilterIntoTableSourceScanRule")
+                        .as(Config.class);
+
+        @Override
+        default PushFilterIntoTableSourceScanRule toRule() {
+            return new PushFilterIntoTableSourceScanRule(this);
+        }
     }
 
     @Override

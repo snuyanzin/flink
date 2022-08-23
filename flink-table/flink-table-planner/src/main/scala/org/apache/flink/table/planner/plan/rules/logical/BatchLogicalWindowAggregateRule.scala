@@ -21,6 +21,7 @@ import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.expressions.FieldReferenceExpression
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory.toLogicalType
+import org.apache.flink.table.planner.plan.rules.logical.LogicalWindowAggregateRuleBase.Config
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromLogicalTypeToDataType
 
 import _root_.java.math.{BigDecimal => JBigDecimal}
@@ -33,8 +34,9 @@ import org.apache.calcite.rex._
  * expression to [[org.apache.flink.table.planner.plan.nodes.calcite.LogicalWindowAggregate]] for
  * batch.
  */
-class BatchLogicalWindowAggregateRule
-  extends LogicalWindowAggregateRuleBase("BatchLogicalWindowAggregateRule") {
+class BatchLogicalWindowAggregateRule(config: Config)
+  extends LogicalWindowAggregateRuleBase(
+    config.withDescription("BatchLogicalWindowAggregateRule").as(classOf[Config])) {
 
   /** Returns the operand of the group window function. */
   override private[table] def getInAggregateGroupExpression(
@@ -68,5 +70,9 @@ class BatchLogicalWindowAggregateRule
 }
 
 object BatchLogicalWindowAggregateRule {
-  val INSTANCE = new BatchLogicalWindowAggregateRule
+  val INSTANCE = new BatchLogicalWindowAggregateRule(LogicalWindowAggregateRuleBase.Config.DEFAULT)
+
+  trait Config extends LogicalWindowAggregateRuleBase.Config {
+    override def toRule = new BatchLogicalWindowAggregateRule(this)
+  }
 }
