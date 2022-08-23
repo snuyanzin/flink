@@ -34,9 +34,8 @@ import org.apache.flink.table.planner.plan.utils.RexNodeToExpressionConverter;
 import org.apache.flink.table.planner.utils.ShortcutUtils;
 import org.apache.flink.table.planner.utils.TableConfigUtils;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.plan.RelOptRuleOperand;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
@@ -50,9 +49,10 @@ import java.util.stream.Collectors;
 import scala.Tuple2;
 
 /** Base class for rules that push down filters into table scan. */
-public abstract class PushFilterIntoSourceScanRuleBase extends RelOptRule {
-    public PushFilterIntoSourceScanRuleBase(RelOptRuleOperand operand, String description) {
-        super(operand, description);
+public abstract class PushFilterIntoSourceScanRuleBase<T extends RelRule.Config>
+        extends RelRule<T> {
+    public PushFilterIntoSourceScanRuleBase(T config) {
+        super(config);
     }
 
     @Override

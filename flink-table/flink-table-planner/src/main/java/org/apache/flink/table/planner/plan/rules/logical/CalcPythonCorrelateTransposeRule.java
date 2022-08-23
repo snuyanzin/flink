@@ -25,9 +25,9 @@ import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalTableFuncti
 import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalCorrelateRule;
 import org.apache.flink.table.planner.plan.utils.PythonUtil;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
@@ -42,18 +42,36 @@ import java.util.stream.Collectors;
  * Rule will transpose the conditions after the Python correlate node if the join type is inner
  * join.
  */
-public class CalcPythonCorrelateTransposeRule extends RelOptRule {
+public class CalcPythonCorrelateTransposeRule
+        extends RelRule<CalcPythonCorrelateTransposeRule.Config> {
 
     public static final CalcPythonCorrelateTransposeRule INSTANCE =
-            new CalcPythonCorrelateTransposeRule();
+            new CalcPythonCorrelateTransposeRule(Config.DEFAULT);
 
-    private CalcPythonCorrelateTransposeRule() {
-        super(
-                operand(
-                        FlinkLogicalCorrelate.class,
-                        operand(FlinkLogicalRel.class, any()),
-                        operand(FlinkLogicalCalc.class, any())),
-                "CalcPythonCorrelateTransposeRule");
+    private CalcPythonCorrelateTransposeRule(Config config) {
+        super(config);
+    }
+
+    /** Config for CalcPythonCorrelateTransposeRule. */
+    public interface Config extends RelRule.Config {
+        CalcPythonCorrelateTransposeRule.Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalCorrelate.class)
+                                                .inputs(
+                                                        b1 ->
+                                                                b1.operand(FlinkLogicalRel.class)
+                                                                        .anyInputs(),
+                                                        b2 ->
+                                                                b2.operand(FlinkLogicalCalc.class)
+                                                                        .anyInputs()))
+                        .withDescription("CalcPythonCorrelateTransposeRule")
+                        .as(Config.class);
+
+        @Override
+        default CalcPythonCorrelateTransposeRule toRule() {
+            return new CalcPythonCorrelateTransposeRule(this);
+        }
     }
 
     @Override

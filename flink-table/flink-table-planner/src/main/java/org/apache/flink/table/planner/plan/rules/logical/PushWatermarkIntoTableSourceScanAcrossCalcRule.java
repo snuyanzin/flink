@@ -26,6 +26,7 @@ import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalWatermarkAs
 import org.apache.flink.table.planner.utils.ShortcutUtils;
 
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -47,18 +48,37 @@ import static org.apache.flink.table.planner.plan.utils.PythonUtil.containsPytho
  * FlinkLogicalCalc}.
  */
 public class PushWatermarkIntoTableSourceScanAcrossCalcRule
-        extends PushWatermarkIntoTableSourceScanRuleBase {
+        extends PushWatermarkIntoTableSourceScanRuleBase<
+                PushWatermarkIntoTableSourceScanAcrossCalcRule.Config> {
     public static final PushWatermarkIntoTableSourceScanAcrossCalcRule INSTANCE =
-            new PushWatermarkIntoTableSourceScanAcrossCalcRule();
+            new PushWatermarkIntoTableSourceScanAcrossCalcRule(Config.DEFAULT);
 
-    public PushWatermarkIntoTableSourceScanAcrossCalcRule() {
-        super(
-                operand(
-                        FlinkLogicalWatermarkAssigner.class,
-                        operand(
-                                FlinkLogicalCalc.class,
-                                operand(FlinkLogicalTableSourceScan.class, none()))),
-                "PushWatermarkIntoFlinkTableSourceScanAcrossCalcRule");
+    public PushWatermarkIntoTableSourceScanAcrossCalcRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PushWatermarkIntoTableSourceScanAcrossCalcRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalWatermarkAssigner.class)
+                                                .inputs(
+                                                        b1 ->
+                                                                b1.operand(FlinkLogicalCalc.class)
+                                                                        .inputs(
+                                                                                b2 ->
+                                                                                        b2.operand(
+                                                                                                        FlinkLogicalTableSourceScan
+                                                                                                                .class)
+                                                                                                .noInputs())))
+                        .withDescription("PushWatermarkIntoTableSourceScanAcrossCalcRule")
+                        .as(Config.class);
+
+        @Override
+        default PushWatermarkIntoTableSourceScanAcrossCalcRule toRule() {
+            return new PushWatermarkIntoTableSourceScanAcrossCalcRule(this);
+        }
     }
 
     @Override

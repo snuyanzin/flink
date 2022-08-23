@@ -25,12 +25,13 @@ import org.apache.flink.table.planner.plan.PartialFinalType
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
 import org.apache.flink.table.planner.plan.nodes.FlinkRelNode
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalAggregate
+import org.apache.flink.table.planner.plan.rules.logical.SplitAggregateRule.Config
 import org.apache.flink.table.planner.plan.utils.{AggregateUtil, ExpandUtil, WindowUtil}
 import org.apache.flink.table.planner.plan.utils.AggregateUtil.doAllAggSupportSplit
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 
 import com.google.common.collect.ImmutableList
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.core.AggregateCall
 import org.apache.calcite.rex.{RexInputRef, RexNode}
@@ -104,11 +105,7 @@ import scala.collection.JavaConversions._
  *
  * NOTES: this rule is only used for Stream now.
  */
-class SplitAggregateRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalAggregate], operand(classOf[FlinkRelNode], any)),
-    FlinkLogicalRelFactories.FLINK_LOGICAL_REL_BUILDER,
-    "SplitAggregateRule") {
+class SplitAggregateRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val tableConfig = unwrapTableConfig(call)
@@ -397,7 +394,22 @@ class SplitAggregateRule
 }
 
 object SplitAggregateRule {
-  val INSTANCE: RelOptRule = new SplitAggregateRule
+  val INSTANCE: RelOptRule = new SplitAggregateRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalAggregate])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkRelNode]).anyInputs))
+      .withDescription("SplitAggregateRule")
+      .withRelBuilderFactory(FlinkLogicalRelFactories.FLINK_LOGICAL_REL_BUILDER)
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new SplitAggregateRule(this)
+  }
 
   // mapping aggFun to (partial aggFun, final aggFun)
   val PARTIAL_FINAL_MAP: Map[SqlAggFunction, (Seq[SqlAggFunction], Seq[SqlAggFunction])] = Map(

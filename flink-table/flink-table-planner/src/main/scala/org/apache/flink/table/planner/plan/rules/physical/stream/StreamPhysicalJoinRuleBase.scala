@@ -24,8 +24,7 @@ import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalJoin, Flin
 import org.apache.flink.table.planner.plan.utils.IntervalJoinUtil
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapClassLoader, unwrapTableConfig}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rex.RexNode
 
@@ -36,12 +35,16 @@ import java.util
  * join and temporal join.
  */
 abstract class StreamPhysicalJoinRuleBase(description: String)
-  extends RelOptRule(
-    operand(
-      classOf[FlinkLogicalJoin],
-      operand(classOf[FlinkLogicalRel], any()),
-      operand(classOf[FlinkLogicalRel], any())),
-    description) {
+  extends RelRule(
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRel]).anyInputs(),
+              (b2: RelRule.OperandBuilder) => b2.operand(classOf[FlinkLogicalRel]).anyInputs()
+            ))
+      .withDescription(description)) {
 
   protected def extractWindowBounds(
       join: FlinkLogicalJoin): (Option[WindowBounds], Option[RexNode]) = {

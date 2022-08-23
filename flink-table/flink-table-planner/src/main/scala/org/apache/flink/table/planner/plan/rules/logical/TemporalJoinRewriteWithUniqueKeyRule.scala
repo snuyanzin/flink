@@ -21,10 +21,10 @@ import org.apache.flink.table.api.ValidationException
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalJoin, FlinkLogicalRel, FlinkLogicalSnapshot}
 import org.apache.flink.table.planner.plan.rules.common.CommonTemporalTableJoinRule
+import org.apache.flink.table.planner.plan.rules.logical.TemporalJoinRewriteWithUniqueKeyRule.Config
 import org.apache.flink.table.planner.plan.utils.TemporalJoinUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.JoinRelType
 import org.apache.calcite.rex._
@@ -39,13 +39,8 @@ import scala.collection.JavaConversions._
  * <p> Flink supports extract the primary key and row time attribute from the view if the view comes
  * from [[LogicalRank]] node which can convert to a [[Deduplicate]] node.
  */
-class TemporalJoinRewriteWithUniqueKeyRule
-  extends RelOptRule(
-    operand(
-      classOf[FlinkLogicalJoin],
-      operand(classOf[FlinkLogicalRel], any()),
-      operand(classOf[FlinkLogicalSnapshot], operand(classOf[FlinkLogicalRel], any()))),
-    "TemporalJoinRewriteWithUniqueKeyRule")
+class TemporalJoinRewriteWithUniqueKeyRule(config: Config)
+  extends RelRule[Config](config)
   with CommonTemporalTableJoinRule {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -194,5 +189,27 @@ class TemporalJoinRewriteWithUniqueKeyRule
 }
 
 object TemporalJoinRewriteWithUniqueKeyRule {
-  val INSTANCE: TemporalJoinRewriteWithUniqueKeyRule = new TemporalJoinRewriteWithUniqueKeyRule
+  val INSTANCE: TemporalJoinRewriteWithUniqueKeyRule = new TemporalJoinRewriteWithUniqueKeyRule(
+    Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRel]).anyInputs(),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[FlinkLogicalSnapshot])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) =>
+                      b3.operand(classOf[FlinkLogicalRel]).anyInputs())
+            ))
+      .withDescription("TemporalJoinRewriteWithUniqueKeyRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new TemporalJoinRewriteWithUniqueKeyRule(this)
+  }
 }

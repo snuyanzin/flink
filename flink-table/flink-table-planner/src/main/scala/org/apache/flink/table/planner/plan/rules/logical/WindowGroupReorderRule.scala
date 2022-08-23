@@ -17,8 +17,9 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.flink.table.planner.plan.rules.logical.WindowGroupReorderRule.Config
+
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelCollation, RelNode}
 import org.apache.calcite.rel.core.Window.Group
@@ -35,10 +36,7 @@ import scala.collection.JavaConversions._
  * Planner rule that makes the over window groups which have the same shuffle keys and order keys
  * together.
  */
-class WindowGroupReorderRule
-  extends RelOptRule(
-    operand(classOf[LogicalWindow], operand(classOf[RelNode], any)),
-    "ExchangeWindowGroupRule") {
+class WindowGroupReorderRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val window: LogicalWindow = call.rel(0)
@@ -134,5 +132,19 @@ class WindowGroupReorderRule
 }
 
 object WindowGroupReorderRule {
-  val INSTANCE = new WindowGroupReorderRule
+  val INSTANCE = new WindowGroupReorderRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalWindow])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs()))
+      .withDescription("WindowGroupReorderRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new WindowGroupReorderRule(this)
+  }
 }

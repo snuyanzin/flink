@@ -26,8 +26,7 @@ import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType
 import org.apache.flink.table.planner.plan.utils.JoinUtil
 import org.apache.flink.table.sources.LookupableTableSource
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptTable}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptTable, RelRule}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.TableScan
 import org.apache.calcite.rex.RexProgram
@@ -116,12 +115,19 @@ trait CommonLookupJoinRule extends CommonTemporalTableJoinRule {
 }
 
 abstract class BaseSnapshotOnTableScanRule(description: String)
-  extends RelOptRule(
-    operand(
-      classOf[FlinkLogicalJoin],
-      operand(classOf[FlinkLogicalRel], any()),
-      operand(classOf[FlinkLogicalSnapshot], operand(classOf[TableScan], any()))),
-    description)
+  extends RelRule(
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRel]).anyInputs(),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[FlinkLogicalSnapshot])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) => b3.operand(classOf[TableScan]).anyInputs())
+            ))
+      .withDescription(description))
   with CommonLookupJoinRule {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -144,15 +150,23 @@ abstract class BaseSnapshotOnTableScanRule(description: String)
 }
 
 abstract class BaseSnapshotOnCalcTableScanRule(description: String)
-  extends RelOptRule(
-    operand(
-      classOf[FlinkLogicalJoin],
-      operand(classOf[FlinkLogicalRel], any()),
-      operand(
-        classOf[FlinkLogicalSnapshot],
-        operand(classOf[FlinkLogicalCalc], operand(classOf[TableScan], any())))
-    ),
-    description)
+  extends RelRule(
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRel]).anyInputs(),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[FlinkLogicalSnapshot])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) =>
+                      b3.operand(classOf[FlinkLogicalCalc])
+                        .oneInput(
+                          (b4: RelRule.OperandBuilder) =>
+                            b4.operand(classOf[TableScan]).anyInputs()))
+            ))
+      .withDescription(description))
   with CommonLookupJoinRule {
 
   override def matches(call: RelOptRuleCall): Boolean = {

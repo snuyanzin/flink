@@ -17,15 +17,14 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptRuleOperand}
-import org.apache.calcite.plan.RelOptRule.{any, operandJ}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.RelRule.Config
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.{Aggregate, Filter, RelFactories}
-import org.apache.calcite.rex.{RexShuttle, _}
+import org.apache.calcite.rex._
 import org.apache.calcite.sql.`type`.SqlTypeFamily
 import org.apache.calcite.sql.SqlKind
 import org.apache.calcite.sql.fun.SqlCountAggFunction
-import org.apache.calcite.tools.RelBuilderFactory
 
 import scala.collection.JavaConversions._
 
@@ -46,11 +45,7 @@ import scala.collection.JavaConversions._
  *             +- LogicalTableScan(table=[[y, source: [TestTableSource(d, e, f)]]])
  * }}}
  */
-class FlinkRewriteSubQueryRule(
-    operand: RelOptRuleOperand,
-    relBuilderFactory: RelBuilderFactory,
-    description: String)
-  extends RelOptRule(operand, relBuilderFactory, description) {
+class FlinkRewriteSubQueryRule(config: Config) extends RelRule(config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val filter: Filter = call.rel(0)
@@ -166,8 +161,13 @@ class FlinkRewriteSubQueryRule(
 object FlinkRewriteSubQueryRule {
 
   val FILTER = new FlinkRewriteSubQueryRule(
-    operandJ(classOf[Filter], null, RexUtil.SubQueryFinder.FILTER_PREDICATE, any),
-    RelFactories.LOGICAL_BUILDER,
-    "FlinkRewriteSubQueryRule:Filter")
-
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[Filter])
+            .predicate(RexUtil.SubQueryFinder.FILTER_PREDICATE)
+            .anyInputs())
+      .withRelBuilderFactory(RelFactories.LOGICAL_BUILDER)
+      .withDescription("FlinkRewriteSubQueryRule:Filter")
+  )
 }

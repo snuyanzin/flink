@@ -17,8 +17,8 @@
 
 package org.apache.flink.table.planner.plan.rules.logical;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.RelFactories;
@@ -42,18 +42,36 @@ import org.apache.calcite.tools.RelBuilderFactory;
  *
  * @see org.apache.calcite.rel.rules.SemiJoinProjectTransposeRule
  */
-public class FlinkSemiAntiJoinFilterTransposeRule extends RelOptRule {
+public class FlinkSemiAntiJoinFilterTransposeRule
+        extends RelRule<FlinkSemiAntiJoinFilterTransposeRule.Config> {
     public static final FlinkSemiAntiJoinFilterTransposeRule INSTANCE =
-            new FlinkSemiAntiJoinFilterTransposeRule(RelFactories.LOGICAL_BUILDER);
+            new FlinkSemiAntiJoinFilterTransposeRule(Config.DEFAULT, RelFactories.LOGICAL_BUILDER);
 
     // ~ Constructors -----------------------------------------------------------
 
     /** Creates a FlinkSemiAntiJoinFilterTransposeRule. */
-    public FlinkSemiAntiJoinFilterTransposeRule(RelBuilderFactory relBuilderFactory) {
-        super(
-                operand(LogicalJoin.class, some(operand(LogicalFilter.class, any()))),
-                relBuilderFactory,
-                null);
+    public FlinkSemiAntiJoinFilterTransposeRule(
+            FlinkSemiAntiJoinFilterTransposeRule.Config config,
+            RelBuilderFactory relBuilderFactory) {
+        super(config.withRelBuilderFactory(relBuilderFactory).as(Config.class));
+    }
+
+    /** Config for FlinkSemiAntiJoinFilterTransposeRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(LogicalJoin.class)
+                                                .inputs(
+                                                        b1 ->
+                                                                b1.operand(LogicalFilter.class)
+                                                                        .anyInputs()))
+                        .as(Config.class);
+
+        @Override
+        default FlinkSemiAntiJoinFilterTransposeRule toRule() {
+            return new FlinkSemiAntiJoinFilterTransposeRule(this, RelFactories.LOGICAL_BUILDER);
+        }
     }
 
     // ~ Methods ----------------------------------------------------------------

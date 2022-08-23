@@ -23,21 +23,41 @@ import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalWatermarkAs
 import org.apache.flink.table.planner.utils.ShortcutUtils;
 
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 
 /**
  * Rule to push the {@link FlinkLogicalWatermarkAssigner} into the {@link
  * FlinkLogicalTableSourceScan}.
  */
-public class PushWatermarkIntoTableSourceScanRule extends PushWatermarkIntoTableSourceScanRuleBase {
+public class PushWatermarkIntoTableSourceScanRule
+        extends PushWatermarkIntoTableSourceScanRuleBase<
+                PushWatermarkIntoTableSourceScanRule.Config> {
     public static final PushWatermarkIntoTableSourceScanRule INSTANCE =
-            new PushWatermarkIntoTableSourceScanRule();
+            new PushWatermarkIntoTableSourceScanRule(Config.DEFAULT);
 
-    public PushWatermarkIntoTableSourceScanRule() {
-        super(
-                operand(
-                        FlinkLogicalWatermarkAssigner.class,
-                        operand(FlinkLogicalTableSourceScan.class, none())),
-                "PushWatermarkIntoTableSourceScanRule");
+    public PushWatermarkIntoTableSourceScanRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PushWatermarkIntoTableSourceScanRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalWatermarkAssigner.class)
+                                                .inputs(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                FlinkLogicalTableSourceScan
+                                                                                        .class)
+                                                                        .noInputs()))
+                        .withDescription("PushWatermarkIntoTableSourceScanRule")
+                        .as(Config.class);
+
+        @Override
+        default PushWatermarkIntoTableSourceScanRule toRule() {
+            return new PushWatermarkIntoTableSourceScanRule(this);
+        }
     }
 
     @Override

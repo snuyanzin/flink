@@ -24,13 +24,13 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory.isTimeIndicatorTy
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
 import org.apache.flink.table.planner.plan.logical.{LogicalWindow, SessionGroupWindow, SlidingGroupWindow, TumblingGroupWindow}
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWindowAggregate
+import org.apache.flink.table.planner.plan.rules.logical.LogicalWindowAggregateRuleBase.Config
 import org.apache.flink.table.runtime.groupwindow.{NamedWindowProperty, WindowReference}
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromDataTypeToLogicalType
 
 import _root_.scala.collection.JavaConversions._
 import com.google.common.collect.ImmutableList
 import org.apache.calcite.plan._
-import org.apache.calcite.plan.RelOptRule._
 import org.apache.calcite.plan.hep.HepRelVertex
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.RelNode
@@ -48,10 +48,7 @@ import java.util.Collections
  * Planner rule that transforms simple [[LogicalAggregate]] on a [[LogicalProject]] with windowing
  * expression to [[LogicalWindowAggregate]].
  */
-abstract class LogicalWindowAggregateRuleBase(description: String)
-  extends RelOptRule(
-    operand(classOf[LogicalAggregate], operand(classOf[LogicalProject], none())),
-    description) {
+abstract class LogicalWindowAggregateRuleBase(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: LogicalAggregate = call.rel(0)
@@ -363,4 +360,16 @@ abstract class LogicalWindowAggregateRuleBase(description: String)
 
   /** get operand value as Long type */
   def getOperandAsLong(call: RexCall, idx: Int): Long
+}
+
+object LogicalWindowAggregateRuleBase {
+  object Config {
+    val DEFAULT = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalAggregate])
+            .inputs((b1: RelRule.OperandBuilder) => b1.operand(classOf[LogicalProject]).noInputs()))
+      .as(classOf[Config])
+  }
+  trait Config extends RelRule.Config {}
 }

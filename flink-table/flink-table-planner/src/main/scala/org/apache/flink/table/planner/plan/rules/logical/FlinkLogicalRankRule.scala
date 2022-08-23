@@ -19,12 +19,12 @@ package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalCalc, FlinkLogicalOverAggregate, FlinkLogicalRank}
+import org.apache.flink.table.planner.plan.rules.logical.FlinkLogicalRankRule.Config
 import org.apache.flink.table.planner.plan.utils.RankUtil
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapClassLoader, unwrapTableConfig}
 import org.apache.flink.table.runtime.operators.rank.{ConstantRankRange, ConstantRankRangeWithoutEnd, RankType}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.`type`.RelDataTypeField
 import org.apache.calcite.rex.{RexInputRef, RexProgramBuilder, RexUtil}
 import org.apache.calcite.sql.{SqlKind, SqlRankFunction}
@@ -36,9 +36,7 @@ import scala.collection.JavaConversions._
  * Planner rule that matches a [[FlinkLogicalCalc]] on a [[FlinkLogicalOverAggregate]], and converts
  * them into a [[FlinkLogicalRank]].
  */
-abstract class FlinkLogicalRankRuleBase
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalCalc], operand(classOf[FlinkLogicalOverAggregate], any()))) {
+abstract class FlinkLogicalRankRuleBase(config: Config) extends RelRule[Config](config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val calc: FlinkLogicalCalc = call.rel(0)
@@ -149,7 +147,7 @@ abstract class FlinkLogicalRankRuleBase
  * WHERE rk < a
  *      }}}
  */
-class FlinkLogicalRankRuleForRangeEnd extends FlinkLogicalRankRuleBase {
+class FlinkLogicalRankRuleForRangeEnd(config: Config) extends FlinkLogicalRankRuleBase(config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val calc: FlinkLogicalCalc = call.rel(0)
@@ -214,7 +212,8 @@ class FlinkLogicalRankRuleForRangeEnd extends FlinkLogicalRankRuleBase {
  * The following example query could be converted to Rank by this rule: SELECT * FROM ( SELECT a, b,
  * RANK() OVER (PARTITION BY b ORDER BY a) rk FROM MyTable) t WHERE rk <= 2
  */
-class FlinkLogicalRankRuleForConstantRange extends FlinkLogicalRankRuleBase {
+class FlinkLogicalRankRuleForConstantRange(config: Config)
+  extends FlinkLogicalRankRuleBase(config) {
   override def matches(call: RelOptRuleCall): Boolean = {
     val calc: FlinkLogicalCalc = call.rel(0)
     val window: FlinkLogicalOverAggregate = call.rel(1)
@@ -266,6 +265,32 @@ class FlinkLogicalRankRuleForConstantRange extends FlinkLogicalRankRuleBase {
 }
 
 object FlinkLogicalRankRule {
-  val INSTANCE = new FlinkLogicalRankRuleForRangeEnd
-  val CONSTANT_RANGE_INSTANCE = new FlinkLogicalRankRuleForConstantRange
+  val INSTANCE = new FlinkLogicalRankRuleForRangeEnd(FlinkLogicalRankRule.Config.DEFAULT)
+  val CONSTANT_RANGE_INSTANCE = new FlinkLogicalRankRuleForConstantRange(Config.DEFAULT)
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalCalc])
+            .inputs(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[FlinkLogicalOverAggregate]).anyInputs))
+      .withDescription("FlinkLogicalRankRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {}
+}
+
+object FlinkLogicalRankRuleForRangeEnd {
+
+  trait Config extends FlinkLogicalRankRule.Config {
+    override def toRule = new FlinkLogicalRankRuleForRangeEnd(this)
+  }
+}
+
+object FlinkLogicalRankRuleForConstantRange {
+  trait Config extends FlinkLogicalRankRule.Config {
+    override def toRule = new FlinkLogicalRankRuleForConstantRange(this)
+  }
 }

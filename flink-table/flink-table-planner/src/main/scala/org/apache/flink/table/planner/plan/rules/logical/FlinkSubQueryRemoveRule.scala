@@ -20,15 +20,15 @@ package org.apache.flink.table.planner.plan.rules.logical
 import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkRelFactories}
 
 import com.google.common.collect.ImmutableList
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptRuleOperand}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.plan.RelOptUtil.Logic
+import org.apache.calcite.plan.RelRule.Config
 import org.apache.calcite.rel.{RelNode, RelShuttleImpl}
 import org.apache.calcite.rel.core.{Filter, JoinRelType}
 import org.apache.calcite.rel.logical.{LogicalFilter, LogicalJoin, LogicalProject}
 import org.apache.calcite.rex._
 import org.apache.calcite.sql.SqlKind
-import org.apache.calcite.tools.{RelBuilder, RelBuilderFactory}
+import org.apache.calcite.tools.RelBuilder
 import org.apache.calcite.util.Util
 
 import java.util
@@ -46,11 +46,7 @@ import scala.collection.mutable
  * [[RelNode]] will contain a [[RexCorrelVariable]] before the rewrite, and the product of the
  * rewrite will be a [[org.apache.calcite.rel.core.Join]] with SEMI or ANTI join type.
  */
-class FlinkSubQueryRemoveRule(
-    operand: RelOptRuleOperand,
-    relBuilderFactory: RelBuilderFactory,
-    description: String)
-  extends RelOptRule(operand, relBuilderFactory, description) {
+class FlinkSubQueryRemoveRule(config: Config) extends RelRule(config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val filter: Filter = call.rel(0)
@@ -450,9 +446,11 @@ class FlinkSubQueryRemoveRule(
 
 object FlinkSubQueryRemoveRule {
 
-  val FILTER = new FlinkSubQueryRemoveRule(
-    operandJ(classOf[Filter], null, RexUtil.SubQueryFinder.FILTER_PREDICATE, any),
-    FlinkRelFactories.FLINK_REL_BUILDER,
-    "FlinkSubQueryRemoveRule:Filter")
+  val FILTER = new FlinkSubQueryRemoveRule(Config.EMPTY
+    .withOperandSupplier(
+      (b0: RelRule.OperandBuilder) =>
+        b0.operand(classOf[Filter]).predicate(RexUtil.SubQueryFinder.FILTER_PREDICATE).anyInputs())
+    .withRelBuilderFactory(FlinkRelFactories.FLINK_REL_BUILDER)
+    .withDescription("FlinkSubQueryRemoveRule:Filter"))
 
 }

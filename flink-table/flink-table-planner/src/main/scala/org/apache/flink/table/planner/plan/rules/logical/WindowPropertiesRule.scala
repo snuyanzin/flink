@@ -25,8 +25,7 @@ import org.apache.flink.table.planner.plan.utils.AggregateUtil
 import org.apache.flink.table.runtime.groupwindow._
 import org.apache.flink.table.types.logical.LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.logical.{LogicalFilter, LogicalProject}
 import org.apache.calcite.rex.{RexCall, RexNode}
@@ -34,12 +33,8 @@ import org.apache.calcite.tools.RelBuilder
 
 import scala.collection.JavaConversions._
 
-class WindowPropertiesRule
-  extends RelOptRule(
-    operand(
-      classOf[LogicalProject],
-      operand(classOf[LogicalProject], operand(classOf[LogicalWindowAggregate], none()))),
-    "WindowPropertiesRule") {
+class WindowPropertiesRule(config: WindowPropertiesRule.Config)
+  extends RelRule[WindowPropertiesRule.Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val project: LogicalProject = call.rel(0)
@@ -59,17 +54,31 @@ class WindowPropertiesRule
   }
 }
 
-class WindowPropertiesHavingRule
-  extends RelOptRule(
-    RelOptRule.operand(
-      classOf[LogicalProject],
-      RelOptRule.operand(
-        classOf[LogicalFilter],
-        RelOptRule.operand(
-          classOf[LogicalProject],
-          RelOptRule.operand(classOf[LogicalWindowAggregate], RelOptRule.none())))
-    ),
-    "WindowPropertiesHavingRule") {
+object WindowPropertiesRule {
+  val INSTANCE = new WindowPropertiesRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalProject])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[LogicalProject])
+                  .oneInput(
+                    (b2: RelRule.OperandBuilder) =>
+                      b2.operand(classOf[LogicalWindowAggregate]).noInputs())))
+      .withDescription("WindowPropertiesRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new WindowPropertiesRule(this)
+  }
+}
+
+class WindowPropertiesHavingRule(config: WindowPropertiesHavingRule.Config)
+  extends RelRule[WindowPropertiesHavingRule.Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val project: LogicalProject = call.rel(0)
@@ -96,11 +105,38 @@ class WindowPropertiesHavingRule
   }
 }
 
+object WindowPropertiesHavingRule {
+  val INSTANCE = new WindowPropertiesHavingRule(WindowPropertiesHavingRule.Config.DEFAULT)
+
+  object Config {
+    val DEFAULT = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalProject])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[LogicalFilter])
+                  .oneInput(
+                    (b2: RelRule.OperandBuilder) =>
+                      b2.operand(classOf[LogicalProject])
+                        .oneInput(
+                          (b3: RelRule.OperandBuilder) =>
+                            b3.operand(classOf[LogicalWindowAggregate]).noInputs()))))
+      .withDescription("WindowPropertiesRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new WindowPropertiesHavingRule(this)
+  }
+}
+
 object WindowPropertiesRules {
 
-  val WINDOW_PROPERTIES_HAVING_RULE = new WindowPropertiesHavingRule
+  val WINDOW_PROPERTIES_HAVING_RULE = new WindowPropertiesHavingRule(
+    WindowPropertiesHavingRule.Config.DEFAULT)
 
-  val WINDOW_PROPERTIES_RULE = new WindowPropertiesRule
+  val WINDOW_PROPERTIES_RULE = new WindowPropertiesRule(WindowPropertiesRule.Config.DEFAULT)
 
   def convertWindowNodes(
       builder: RelBuilder,

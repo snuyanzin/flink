@@ -18,14 +18,14 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkRelFactories}
+import org.apache.flink.table.planner.plan.rules.logical.CorrelateSortToRankRule.Config
 import org.apache.flink.table.runtime.operators.rank.{ConstantRankRange, RankType}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.RelCollations
-import org.apache.calcite.rel.core.{Aggregate, Correlate, Filter, JoinRelType, Project, Sort}
-import org.apache.calcite.rex.{RexCall, RexCorrelVariable, RexFieldAccess, RexInputRef, RexLiteral, RexNode}
+import org.apache.calcite.rel.core._
+import org.apache.calcite.rex._
 import org.apache.calcite.sql.SqlKind
 import org.apache.calcite.util.ImmutableBitSet
 
@@ -63,15 +63,7 @@ import scala.collection.JavaConversions._
  *
  * <p>This rule can only be used in HepPlanner.
  */
-class CorrelateSortToRankRule
-  extends RelOptRule(
-    operand(
-      classOf[Correlate],
-      operand(classOf[Aggregate], operand(classOf[Project], any())),
-      operand(classOf[Sort], operand(classOf[Project], operand(classOf[Filter], any())))
-    ),
-    FlinkRelFactories.FLINK_REL_BUILDER,
-    "CorrelateSortToRankRule") {
+class CorrelateSortToRankRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val correlate: Correlate = call.rel(0)
@@ -188,5 +180,32 @@ class CorrelateSortToRankRule
 }
 
 object CorrelateSortToRankRule {
-  val INSTANCE = new CorrelateSortToRankRule
+  val INSTANCE = new CorrelateSortToRankRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[Correlate])
+            .inputs(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[Aggregate])
+                  .oneInput(
+                    (b2: RelRule.OperandBuilder) => b2.operand(classOf[Project]).anyInputs()),
+              (b2: RelRule.OperandBuilder) =>
+                b2.operand(classOf[Sort])
+                  .oneInput(
+                    (b3: RelRule.OperandBuilder) =>
+                      b3.operand(classOf[Project])
+                        .oneInput(
+                          (b4: RelRule.OperandBuilder) => b4.operand(classOf[Filter]).anyInputs()))
+            ))
+      .withRelBuilderFactory(FlinkRelFactories.FLINK_REL_BUILDER)
+      .withDescription("CorrelateSortToRankRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new CorrelateSortToRankRule(this)
+  }
 }

@@ -18,12 +18,12 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalCalc, FlinkLogicalCorrelate, FlinkLogicalRel, FlinkLogicalTableFunctionScan}
+import org.apache.flink.table.planner.plan.rules.logical.SplitPythonConditionFromCorrelateRule.Config
 import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalCorrelateRule
 import org.apache.flink.table.planner.plan.utils.PythonUtil.{containsPythonCall, isNonPythonCall}
 import org.apache.flink.table.planner.plan.utils.RexDefaultVisitor
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.core.JoinRelType
 import org.apache.calcite.rex._
 
@@ -40,13 +40,7 @@ import scala.collection.JavaConverters._
  * After this rule is applied, there will be no Python Functions in the condition of the upstream
  * [[FlinkLogicalCalc]].
  */
-class SplitPythonConditionFromCorrelateRule
-  extends RelOptRule(
-    operand(
-      classOf[FlinkLogicalCorrelate],
-      operand(classOf[FlinkLogicalRel], any),
-      operand(classOf[FlinkLogicalCalc], any)),
-    "SplitPythonConditionFromCorrelateRule") {
+class SplitPythonConditionFromCorrelateRule(config: Config) extends RelRule[Config](config) {
   override def matches(call: RelOptRuleCall): Boolean = {
     val correlate: FlinkLogicalCorrelate = call.rel(0).asInstanceOf[FlinkLogicalCorrelate]
     val right: FlinkLogicalCalc = call.rel(2).asInstanceOf[FlinkLogicalCalc]
@@ -144,5 +138,23 @@ private class InputRefRewriter(offset: Int) extends RexDefaultVisitor[RexNode] {
 }
 
 object SplitPythonConditionFromCorrelateRule {
-  val INSTANCE: SplitPythonConditionFromCorrelateRule = new SplitPythonConditionFromCorrelateRule
+  val INSTANCE: SplitPythonConditionFromCorrelateRule = new SplitPythonConditionFromCorrelateRule(
+    Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalCorrelate])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRel]).anyInputs(),
+              (b2: RelRule.OperandBuilder) => b2.operand(classOf[FlinkLogicalCalc]).anyInputs
+            ))
+      .withDescription("SplitPythonConditionFromCorrelateRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new SplitPythonConditionFromCorrelateRule(this)
+  }
 }

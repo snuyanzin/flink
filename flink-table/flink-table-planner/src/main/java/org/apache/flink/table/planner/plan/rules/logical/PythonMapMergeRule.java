@@ -22,8 +22,8 @@ import org.apache.flink.table.functions.python.PythonFunctionKind;
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalCalc;
 import org.apache.flink.table.planner.plan.utils.PythonUtil;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.Calc;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
@@ -40,16 +40,36 @@ import java.util.stream.Collectors;
  * Rule will merge Python {@link FlinkLogicalCalc} used in Map operation, Flatten {@link
  * FlinkLogicalCalc} and Python {@link FlinkLogicalCalc} used in Map operation together.
  */
-public class PythonMapMergeRule extends RelOptRule {
+public class PythonMapMergeRule extends RelRule<PythonMapMergeRule.Config> {
 
-    public static final PythonMapMergeRule INSTANCE = new PythonMapMergeRule();
+    public static final PythonMapMergeRule INSTANCE = new PythonMapMergeRule(Config.DEFAULT);
 
-    private PythonMapMergeRule() {
-        super(
-                operand(
-                        FlinkLogicalCalc.class,
-                        operand(FlinkLogicalCalc.class, operand(FlinkLogicalCalc.class, none()))),
-                "PythonMapMergeRule");
+    private PythonMapMergeRule(Config config) {
+        super(config);
+    }
+
+    /** Config for PythonMapMergeRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalCalc.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(FlinkLogicalCalc.class)
+                                                                        .oneInput(
+                                                                                b2 ->
+                                                                                        b2.operand(
+                                                                                                        FlinkLogicalCalc
+                                                                                                                .class)
+                                                                                                .noInputs())))
+                        .withDescription("PythonMapMergeRule")
+                        .as(PythonMapMergeRule.Config.class);
+
+        @Override
+        default PythonMapMergeRule toRule() {
+            return new PythonMapMergeRule(this);
+        }
     }
 
     @Override

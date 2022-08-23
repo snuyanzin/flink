@@ -23,9 +23,8 @@ import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalCalc
 import org.apache.flink.table.planner.plan.utils.{InputRefVisitor, RexDefaultVisitor}
 import org.apache.flink.table.planner.plan.utils.PythonUtil.{containsNonPythonCall, containsPythonCall, isNonPythonCall, isPythonCall}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
-import org.apache.calcite.rex.{RexBuilder, RexCall, RexCorrelVariable, RexFieldAccess, RexInputRef, RexLocalRef, RexNode, RexProgram}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
+import org.apache.calcite.rex._
 import org.apache.calcite.sql.validate.SqlValidatorUtil
 
 import java.util.function.Function
@@ -40,7 +39,11 @@ import scala.collection.mutable
  * [[ScalarFunction]]s.
  */
 abstract class PythonCalcSplitRuleBase(description: String)
-  extends RelOptRule(operand(classOf[FlinkLogicalCalc], any), description) {
+  extends RelRule(
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[FlinkLogicalCalc]).anyInputs())
+      .withDescription(description)) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val calc: FlinkLogicalCalc = call.rel(0).asInstanceOf[FlinkLogicalCalc]
