@@ -17,8 +17,9 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.flink.table.planner.plan.rules.logical.ProjectSemiAntiJoinTransposeRule.Config
+
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.{Join, JoinRelType, Project}
@@ -37,10 +38,7 @@ import scala.collection.JavaConversions._
  * Planner rule that pushes a [[Project]] down in a tree past a semi/anti [[Join]] by splitting the
  * projection into a projection on top of left child of the Join.
  */
-class ProjectSemiAntiJoinTransposeRule
-  extends RelOptRule(
-    operand(classOf[LogicalProject], operand(classOf[LogicalJoin], any)),
-    "ProjectSemiAntiJoinTransposeRule") {
+class ProjectSemiAntiJoinTransposeRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join: LogicalJoin = call.rel(1)
@@ -166,5 +164,19 @@ class ProjectSemiAntiJoinTransposeRule
 }
 
 object ProjectSemiAntiJoinTransposeRule {
-  val INSTANCE = new ProjectSemiAntiJoinTransposeRule
+  val INSTANCE = new ProjectSemiAntiJoinTransposeRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[LogicalProject])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[LogicalJoin]).anyInputs()))
+      .withDescription("ProjectSemiAntiJoinTransposeRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new ProjectSemiAntiJoinTransposeRule(this)
+  }
 }

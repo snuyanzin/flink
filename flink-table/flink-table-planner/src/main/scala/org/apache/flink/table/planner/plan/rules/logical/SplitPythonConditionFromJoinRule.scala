@@ -18,9 +18,10 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalCalc, FlinkLogicalJoin}
+import org.apache.flink.table.planner.plan.rules.logical.SplitPythonConditionFromJoinRule.Config
 import org.apache.flink.table.planner.plan.utils.PythonUtil.containsPythonCall
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.plan.RelOptRule.{none, operand}
 import org.apache.calcite.rel.core.JoinRelType
 import org.apache.calcite.rex.{RexProgram, RexProgramBuilder, RexUtil}
@@ -35,8 +36,7 @@ import scala.collection.JavaConversions._
  * After this rule is applied, there will be no Python Functions in the condition of the
  * [[FlinkLogicalJoin]].
  */
-class SplitPythonConditionFromJoinRule
-  extends RelOptRule(operand(classOf[FlinkLogicalJoin], none), "SplitPythonConditionFromJoinRule") {
+class SplitPythonConditionFromJoinRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join: FlinkLogicalJoin = call.rel(0).asInstanceOf[FlinkLogicalJoin]
@@ -82,5 +82,17 @@ class SplitPythonConditionFromJoinRule
 }
 
 object SplitPythonConditionFromJoinRule {
-  val INSTANCE = new SplitPythonConditionFromJoinRule
+  val INSTANCE = new SplitPythonConditionFromJoinRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[FlinkLogicalJoin]).noInputs())
+      .withDescription("SplitPythonConditionFromJoinRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new SplitPythonConditionFromJoinRule(this)
+  }
 }

@@ -23,6 +23,7 @@ import org.apache.flink.table.catalog.exceptions.PartitionNotExistException
 import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.plan.stats.TableStats
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.plan.rules.logical.PushPartitionIntoLegacyTableSourceScanRule.Config
 import org.apache.flink.table.planner.plan.schema.LegacyTableSourceTable
 import org.apache.flink.table.planner.plan.stats.FlinkStatistic
 import org.apache.flink.table.planner.plan.utils.{FlinkRelOptUtil, PartitionPruner, RexNodeExtractor, RexNodeToExpressionConverter}
@@ -31,8 +32,7 @@ import org.apache.flink.table.planner.utils.JavaScalaConversionUtil.toScala
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext
 import org.apache.flink.table.sources.PartitionableTableSource
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{none, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.core.Filter
 import org.apache.calcite.rel.logical.LogicalTableScan
 import org.apache.calcite.rex.{RexInputRef, RexNode, RexShuttle, RexUtil}
@@ -47,10 +47,7 @@ import scala.collection.JavaConversions._
  * Planner rule that tries to push partitions evaluated by filter condition into a
  * [[PartitionableTableSource]].
  */
-class PushPartitionIntoLegacyTableSourceScanRule
-  extends RelOptRule(
-    operand(classOf[Filter], operand(classOf[LogicalTableScan], none)),
-    "PushPartitionIntoLegacyTableSourceScanRule") {
+class PushPartitionIntoLegacyTableSourceScanRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val filter: Filter = call.rel(0)
@@ -275,5 +272,20 @@ class PushPartitionIntoLegacyTableSourceScanRule
 }
 
 object PushPartitionIntoLegacyTableSourceScanRule {
-  val INSTANCE: RelOptRule = new PushPartitionIntoLegacyTableSourceScanRule
+  val INSTANCE: RelOptRule = new PushPartitionIntoLegacyTableSourceScanRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[Filter])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[LogicalTableScan]).noInputs()))
+      .withDescription("PushPartitionIntoLegacyTableSourceScanRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new PushPartitionIntoLegacyTableSourceScanRule(this)
+  }
 }

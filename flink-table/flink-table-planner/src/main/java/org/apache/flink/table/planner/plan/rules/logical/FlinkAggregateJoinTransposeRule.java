@@ -21,9 +21,9 @@ import org.apache.flink.table.planner.plan.utils.AggregateUtil;
 import org.apache.flink.util.Preconditions;
 
 import org.apache.calcite.linq4j.Ord;
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.plan.hep.HepRelVertex;
 import org.apache.calcite.plan.volcano.RelSubset;
 import org.apache.calcite.rel.RelNode;
@@ -78,7 +78,7 @@ import scala.collection.Seq;
  * Planner rule that pushes an {@link org.apache.calcite.rel.core.Aggregate} past a {@link
  * org.apache.calcite.rel.core.Join}.
  */
-public class FlinkAggregateJoinTransposeRule extends RelOptRule {
+public class FlinkAggregateJoinTransposeRule extends RelRule {
     public static final FlinkAggregateJoinTransposeRule INSTANCE =
             new FlinkAggregateJoinTransposeRule(
                     LogicalAggregate.class, LogicalJoin.class, RelFactories.LOGICAL_BUILDER, false);
@@ -97,13 +97,16 @@ public class FlinkAggregateJoinTransposeRule extends RelOptRule {
             RelBuilderFactory relBuilderFactory,
             boolean allowFunctions) {
         super(
-                operandJ(
-                        aggregateClass,
-                        null,
-                        aggregate -> aggregate.getGroupType() == Aggregate.Group.SIMPLE,
-                        operand(joinClass, any())),
-                relBuilderFactory,
-                null);
+                Config.EMPTY
+                        .withOperandSupplier(
+                                b0 ->
+                                        b0.operand(aggregateClass)
+                                                .predicate(
+                                                        aggregate ->
+                                                                aggregate.getGroupType()
+                                                                        == Aggregate.Group.SIMPLE)
+                                                .inputs(b1 -> b1.operand(joinClass).noInputs()))
+                        .withRelBuilderFactory(relBuilderFactory));
 
         this.allowFunctions = allowFunctions;
     }

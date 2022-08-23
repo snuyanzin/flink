@@ -20,12 +20,13 @@ package org.apache.flink.table.planner.plan.rules.logical
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction
+import org.apache.flink.table.planner.plan.rules.logical.LogicalUnnestRule.Config
 import org.apache.flink.table.planner.utils.ShortcutUtils
 import org.apache.flink.table.runtime.functions.table.UnnestRowsFunction
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils.toRowType
 
 import com.google.common.collect.ImmutableList
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptRuleOperand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptRuleOperand, RelRule}
 import org.apache.calcite.plan.RelOptRule._
 import org.apache.calcite.plan.hep.HepRelVertex
 import org.apache.calcite.rel.RelNode
@@ -39,8 +40,7 @@ import java.util.Collections
  *
  * Note: This class can only be used in HepPlanner.
  */
-class LogicalUnnestRule(operand: RelOptRuleOperand, description: String)
-  extends RelOptRule(operand, description) {
+class LogicalUnnestRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join: LogicalCorrelate = call.rel(0)
@@ -129,5 +129,17 @@ class LogicalUnnestRule(operand: RelOptRuleOperand, description: String)
 }
 
 object LogicalUnnestRule {
-  val INSTANCE = new LogicalUnnestRule(operand(classOf[LogicalCorrelate], any), "LogicalUnnestRule")
+  val INSTANCE = new LogicalUnnestRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[LogicalCorrelate]).anyInputs)
+      .withDescription("LogicalUnnestRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new LogicalUnnestRule(this)
+  }
 }

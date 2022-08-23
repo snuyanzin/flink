@@ -23,10 +23,10 @@ import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalJoin
 import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalHashJoin
+import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalHashJoinRule.Config
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.{Join, JoinRelType}
 import org.apache.calcite.util.ImmutableIntList
@@ -39,10 +39,8 @@ import scala.collection.JavaConversions._
  * Rule that converts [[FlinkLogicalJoin]] to [[BatchPhysicalHashJoin]] if there exists at least one
  * equal-join condition and ShuffleHashJoin or BroadcastHashJoin are enabled.
  */
-class BatchPhysicalHashJoinRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalJoin], operand(classOf[RelNode], any)),
-    "BatchPhysicalHashJoinRule")
+class BatchPhysicalHashJoinRule(config: Config)
+  extends RelRule[Config](config)
   with BatchPhysicalJoinRuleBase {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -165,5 +163,19 @@ class BatchPhysicalHashJoinRule
 }
 
 object BatchPhysicalHashJoinRule {
-  val INSTANCE = new BatchPhysicalHashJoinRule
+  val INSTANCE = new BatchPhysicalHashJoinRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs))
+      .withDescription("BatchPhysicalHashJoinRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new BatchPhysicalHashJoinRule(this)
+  }
 }

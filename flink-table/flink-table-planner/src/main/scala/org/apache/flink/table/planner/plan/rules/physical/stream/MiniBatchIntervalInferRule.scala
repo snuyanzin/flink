@@ -19,12 +19,12 @@ package org.apache.flink.table.planner.plan.rules.physical.stream
 
 import org.apache.flink.table.api.config.ExecutionConfigOptions
 import org.apache.flink.table.planner.plan.`trait`.{MiniBatchInterval, MiniBatchIntervalTrait, MiniBatchIntervalTraitDef, MiniBatchMode}
-import org.apache.flink.table.planner.plan.nodes.physical.stream.{StreamPhysicalDataStreamScan, StreamPhysicalGroupWindowAggregate, StreamPhysicalLegacyTableSourceScan, StreamPhysicalMiniBatchAssigner, StreamPhysicalRel, StreamPhysicalTableSourceScan, StreamPhysicalWatermarkAssigner}
+import org.apache.flink.table.planner.plan.nodes.physical.stream._
+import org.apache.flink.table.planner.plan.rules.physical.stream.MiniBatchIntervalInferRule.Config
 import org.apache.flink.table.planner.plan.utils.FlinkRelOptUtil
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.plan.hep.HepRelVertex
 import org.apache.calcite.rel.RelNode
 
@@ -45,8 +45,7 @@ import scala.collection.JavaConversions._
  *
  * NOTES: This rule only supports HepPlanner with TOP_DOWN match order.
  */
-class MiniBatchIntervalInferRule
-  extends RelOptRule(operand(classOf[StreamPhysicalRel], any()), "MiniBatchIntervalInferRule") {
+class MiniBatchIntervalInferRule(config: Config) extends RelRule[Config](config) {
 
   /**
    * Get all children RelNodes of a RelNode.
@@ -146,5 +145,17 @@ class MiniBatchIntervalInferRule
 }
 
 object MiniBatchIntervalInferRule {
-  val INSTANCE: RelOptRule = new MiniBatchIntervalInferRule
+  val INSTANCE: RelOptRule = new MiniBatchIntervalInferRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[StreamPhysicalRel]).anyInputs)
+      .withDescription("MiniBatchIntervalInferRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new MiniBatchIntervalInferRule(this)
+  }
 }
