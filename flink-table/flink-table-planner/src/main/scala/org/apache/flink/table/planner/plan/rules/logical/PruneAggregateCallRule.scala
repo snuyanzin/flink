@@ -18,10 +18,9 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import com.google.common.collect.{ImmutableList, Maps}
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 import org.apache.calcite.rel.RelNode
-import org.apache.calcite.rel.core.{Aggregate, AggregateCall, Calc, Project, RelFactories}
+import org.apache.calcite.rel.core._
 import org.apache.calcite.rel.core.Aggregate.Group
 import org.apache.calcite.rex.{RexInputRef, RexNode, RexProgram, RexUtil}
 import org.apache.calcite.runtime.Utilities
@@ -34,10 +33,14 @@ import scala.collection.JavaConversions._
 
 /** Planner rule that removes unreferenced AggregateCall from Aggregate */
 abstract class PruneAggregateCallRule[T <: RelNode](topClass: Class[T])
-  extends RelOptRule(
-    operand(topClass, operand(classOf[Aggregate], any)),
-    RelFactories.LOGICAL_BUILDER,
-    s"PruneAggregateCallRule_${topClass.getCanonicalName}") {
+  extends RelRule(
+    RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(topClass)
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[Aggregate]).anyInputs()))
+      .withRelBuilderFactory(RelFactories.LOGICAL_BUILDER)
+      .withDescription(s"PruneAggregateCallRule_${topClass.getCanonicalName}")) {
 
   protected def getInputRefs(relOnAgg: T): ImmutableBitSet
 

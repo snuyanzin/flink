@@ -17,10 +17,10 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
+import org.apache.flink.table.planner.plan.rules.logical.ReplaceMinusWithAntiJoinRule.Config
 import org.apache.flink.table.planner.plan.utils.SetOpRewriteUtil.generateEqualsCondition
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.core._
 
 import scala.collection.JavaConversions._
@@ -31,11 +31,7 @@ import scala.collection.JavaConversions._
  *
  * Only handle the case of input size 2.
  */
-class ReplaceMinusWithAntiJoinRule
-  extends RelOptRule(
-    operand(classOf[Minus], any),
-    RelFactories.LOGICAL_BUILDER,
-    "ReplaceMinusWithAntiJoinRule") {
+class ReplaceMinusWithAntiJoinRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val minus: Minus = call.rel(0)
@@ -60,5 +56,17 @@ class ReplaceMinusWithAntiJoinRule
 }
 
 object ReplaceMinusWithAntiJoinRule {
-  val INSTANCE: RelOptRule = new ReplaceMinusWithAntiJoinRule
+  val INSTANCE: RelOptRule = new ReplaceMinusWithAntiJoinRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Minus]).anyInputs)
+      .withDescription("ReplaceMinusWithAntiJoinRule")
+      .withRelBuilderFactory(RelFactories.LOGICAL_BUILDER)
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new ReplaceMinusWithAntiJoinRule(this)
+  }
 }

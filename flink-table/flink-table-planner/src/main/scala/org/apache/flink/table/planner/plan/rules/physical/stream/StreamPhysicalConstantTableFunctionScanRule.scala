@@ -20,10 +20,10 @@ package org.apache.flink.table.planner.plan.rules.physical.stream
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalTableFunctionScan
 import org.apache.flink.table.planner.plan.nodes.physical.stream.{StreamPhysicalCorrelate, StreamPhysicalValues}
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalConstantTableFunctionScanRule.Config
 
 import com.google.common.collect.ImmutableList
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule._
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.core.JoinRelType
 import org.apache.calcite.rex.{RexLiteral, RexUtil}
 
@@ -42,10 +42,7 @@ import org.apache.calcite.rex.{RexLiteral, RexUtil}
  * for the normal correlate query, such as the following SQL: example1: SELECT * FROM T, LATERAL
  * TABLE(func()) as T(c) example2: SELECT a, c FROM T, LATERAL TABLE(func(a)) as T(c)
  */
-class StreamPhysicalConstantTableFunctionScanRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalTableFunctionScan], any),
-    "StreamPhysicalConstantTableFunctionScanRule") {
+class StreamPhysicalConstantTableFunctionScanRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val scan: FlinkLogicalTableFunctionScan = call.rel(0)
@@ -78,5 +75,18 @@ class StreamPhysicalConstantTableFunctionScanRule
 }
 
 object StreamPhysicalConstantTableFunctionScanRule {
-  val INSTANCE = new StreamPhysicalConstantTableFunctionScanRule
+  val INSTANCE = new StreamPhysicalConstantTableFunctionScanRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalTableFunctionScan]).anyInputs)
+      .withDescription("StreamPhysicalConstantTableFunctionScanRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new StreamPhysicalConstantTableFunctionScanRule(this)
+  }
 }

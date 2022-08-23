@@ -18,11 +18,11 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable.{GREATER_THAN, GREATER_THAN_OR_EQUAL, IF}
+import org.apache.flink.table.planner.plan.rules.logical.RewriteIntersectAllRule.Config
 import org.apache.flink.table.planner.plan.utils.SetOpRewriteUtil.replicateRows
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
-import org.apache.calcite.rel.core.{Intersect, RelFactories}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
+import org.apache.calcite.rel.core.Intersect
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.util.Util
 
@@ -62,11 +62,7 @@ import scala.collection.JavaConversions._
  *
  * Only handle the case of input size 2.
  */
-class RewriteIntersectAllRule
-  extends RelOptRule(
-    operand(classOf[Intersect], any),
-    RelFactories.LOGICAL_BUILDER,
-    "RewriteIntersectAllRule") {
+class RewriteIntersectAllRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val intersect: Intersect = call.rel(0)
@@ -132,5 +128,16 @@ class RewriteIntersectAllRule
 }
 
 object RewriteIntersectAllRule {
-  val INSTANCE: RelOptRule = new RewriteIntersectAllRule
+  val INSTANCE: RelOptRule = new RewriteIntersectAllRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Intersect]).anyInputs)
+      .withDescription("RewriteIntersectAllRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new RewriteIntersectAllRule(this)
+  }
 }

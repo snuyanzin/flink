@@ -23,13 +23,13 @@ import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalAggregate
 import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalHashAggregate
+import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalHashAggRule.Config
 import org.apache.flink.table.planner.plan.utils.{AggregateUtil, OperatorType}
 import org.apache.flink.table.planner.plan.utils.PythonUtil.isPythonAggregate
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
 import org.apache.flink.table.planner.utils.TableConfigUtils.isOperatorDisabled
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.RelNode
 
 import scala.collection.JavaConversions._
@@ -56,10 +56,8 @@ import scala.collection.JavaConversions._
  * Notes: if [[OptimizerConfigOptions.TABLE_OPTIMIZER_AGG_PHASE_STRATEGY]] is NONE, this rule will
  * try to create two possibilities above, and chooses the best one based on cost.
  */
-class BatchPhysicalHashAggRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalAggregate], operand(classOf[RelNode], any)),
-    "BatchPhysicalHashAggRule")
+class BatchPhysicalHashAggRule(config: Config)
+  extends RelRule(config)
   with BatchPhysicalAggRuleBase {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -185,5 +183,19 @@ class BatchPhysicalHashAggRule
 }
 
 object BatchPhysicalHashAggRule {
-  val INSTANCE = new BatchPhysicalHashAggRule
+  val INSTANCE = new BatchPhysicalHashAggRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalAggregate])
+            .inputs((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs))
+      .withDescription("BatchPhysicalHashAggRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new BatchPhysicalHashAggRule(this)
+  }
 }

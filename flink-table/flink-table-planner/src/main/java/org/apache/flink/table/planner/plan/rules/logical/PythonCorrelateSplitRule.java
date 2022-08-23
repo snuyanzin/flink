@@ -25,8 +25,8 @@ import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalC
 import org.apache.flink.table.planner.plan.utils.PythonUtil;
 import org.apache.flink.table.planner.plan.utils.RexDefaultVisitor;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.plan.hep.HepRelVertex;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -55,11 +55,25 @@ import scala.collection.mutable.ArrayBuffer;
  * will be the left input of the new {@link FlinkLogicalCorrelate} and a new {@link
  * FlinkLogicalTableFunctionScan}.
  */
-public class PythonCorrelateSplitRule extends RelOptRule {
-    public static final PythonCorrelateSplitRule INSTANCE = new PythonCorrelateSplitRule();
+public class PythonCorrelateSplitRule extends RelRule<PythonCorrelateSplitRule.Config> {
+    public static final PythonCorrelateSplitRule INSTANCE =
+            new PythonCorrelateSplitRule(Config.DEFAULT);
 
-    private PythonCorrelateSplitRule() {
-        super(operand(FlinkLogicalCorrelate.class, any()), "PythonCorrelateSplitRule");
+    private PythonCorrelateSplitRule(PythonCorrelateSplitRule.Config config) {
+        super(config);
+    }
+
+    /** Config for PythonCorrelateSplitRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(b0 -> b0.operand(FlinkLogicalCorrelate.class).anyInputs())
+                        .withDescription("PythonCorrelateSplitRule")
+                        .as(PythonCorrelateSplitRule.Config.class);
+
+        @Override
+        default PythonCorrelateSplitRule toRule() {
+            return new PythonCorrelateSplitRule(this);
+        }
     }
 
     private FlinkLogicalTableFunctionScan createNewScan(

@@ -22,20 +22,14 @@ import org.apache.flink.table.planner.plan.logical.WindowAttachedWindowingStrate
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.{FlinkLogicalJoin, FlinkLogicalRel}
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalWindowJoin
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalWindowJoinRule.Config
 import org.apache.flink.table.planner.plan.utils.WindowJoinUtil.{excludeWindowStartEqualityAndEndEqualityFromWindowJoinCondition, getChildWindowProperties, satisfyWindowJoin}
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 
 /** Rule to convert a [[FlinkLogicalJoin]] into a [[StreamPhysicalWindowJoin]]. */
-class StreamPhysicalWindowJoinRule
-  extends RelOptRule(
-    operand(
-      classOf[FlinkLogicalJoin],
-      operand(classOf[FlinkLogicalRel], any()),
-      operand(classOf[FlinkLogicalRel], any())),
-    "StreamPhysicalWindowJoinRule") {
+class StreamPhysicalWindowJoinRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join = call.rel[FlinkLogicalJoin](0)
@@ -106,5 +100,22 @@ class StreamPhysicalWindowJoinRule
 }
 
 object StreamPhysicalWindowJoinRule {
-  val INSTANCE: RelOptRule = new StreamPhysicalWindowJoinRule
+  val INSTANCE: RelOptRule = new StreamPhysicalWindowJoinRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .inputs(
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRel]).anyInputs(),
+              (b1: RelRule.OperandBuilder) => b1.operand(classOf[FlinkLogicalRel]).anyInputs()
+            ))
+      .withDescription("StreamPhysicalWindowJoinRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new StreamPhysicalWindowJoinRule(this)
+  }
 }

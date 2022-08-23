@@ -25,11 +25,11 @@ import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalJoin
 import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalSortMergeJoin
+import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalSortMergeJoinRule.Config
 import org.apache.flink.table.planner.plan.utils.FlinkRelOptUtil
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule, RelTraitSet}
 import org.apache.calcite.rel.{RelCollations, RelNode}
 import org.apache.calcite.rel.core.Join
 import org.apache.calcite.util.ImmutableIntList
@@ -42,10 +42,8 @@ import scala.collection.JavaConversions._
  * Rule that converts [[FlinkLogicalJoin]] to [[BatchPhysicalSortMergeJoin]] if there exists at
  * least one equal-join condition and SortMergeJoin is enabled.
  */
-class BatchPhysicalSortMergeJoinRule
-  extends RelOptRule(
-    operand(classOf[FlinkLogicalJoin], operand(classOf[RelNode], any)),
-    "BatchPhysicalSortMergeJoinRule")
+class BatchPhysicalSortMergeJoinRule(config: Config)
+  extends RelRule[Config](config)
   with BatchPhysicalJoinRuleBase {
 
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -142,7 +140,21 @@ class BatchPhysicalSortMergeJoinRule
 }
 
 object BatchPhysicalSortMergeJoinRule {
-  val INSTANCE: RelOptRule = new BatchPhysicalSortMergeJoinRule
+  val INSTANCE: RelOptRule = new BatchPhysicalSortMergeJoinRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[FlinkLogicalJoin])
+            .oneInput((b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs))
+      .withDescription("BatchPhysicalSortMergeJoinRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new BatchPhysicalSortMergeJoinRule(this)
+  }
 
   // It is a experimental config, will may be removed later.
   @Experimental

@@ -24,8 +24,8 @@ import org.apache.flink.table.planner.plan.utils.NestedColumn;
 import org.apache.flink.table.planner.plan.utils.NestedProjectionUtil;
 import org.apache.flink.table.planner.plan.utils.NestedSchema;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexInputRef;
@@ -44,16 +44,36 @@ import java.util.List;
  *
  * <p>NOTES: Currently the rule doesn't support nested projection push down.
  */
-public class ProjectWatermarkAssignerTransposeRule extends RelOptRule {
+public class ProjectWatermarkAssignerTransposeRule
+        extends RelRule<ProjectWatermarkAssignerTransposeRule.Config> {
 
     public static final ProjectWatermarkAssignerTransposeRule INSTANCE =
-            new ProjectWatermarkAssignerTransposeRule();
+            new ProjectWatermarkAssignerTransposeRule(Config.DEFAULT);
 
-    public ProjectWatermarkAssignerTransposeRule() {
-        super(
-                operand(LogicalProject.class, operand(LogicalWatermarkAssigner.class, any())),
-                FlinkRelFactories.FLINK_REL_BUILDER(),
-                "FlinkProjectWatermarkAssignerTransposeRule");
+    public ProjectWatermarkAssignerTransposeRule(Config config) {
+        super(config);
+    }
+
+    /** Config for ProjectWatermarkAssignerTransposeRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(LogicalProject.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(
+                                                                                LogicalWatermarkAssigner
+                                                                                        .class)
+                                                                        .anyInputs()))
+                        .withDescription("FlinkProjectWatermarkAssignerTransposeRule")
+                        .withRelBuilderFactory(FlinkRelFactories.FLINK_REL_BUILDER())
+                        .as(Config.class);
+
+        @Override
+        default ProjectWatermarkAssignerTransposeRule toRule() {
+            return new ProjectWatermarkAssignerTransposeRule(this);
+        }
     }
 
     @Override

@@ -21,10 +21,10 @@ import org.apache.flink.annotation.Experimental
 import org.apache.flink.configuration.ConfigOption
 import org.apache.flink.configuration.ConfigOptions.key
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
+import org.apache.flink.table.planner.plan.rules.logical.JoinDeriveNullFilterRule.Config
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.{Join, JoinRelType}
 import org.apache.calcite.rel.logical.LogicalJoin
@@ -45,8 +45,7 @@ import scala.collection.mutable
  * point skew due to too many Null values. We should push down a not-null filter into the child node
  * of join.
  */
-class JoinDeriveNullFilterRule
-  extends RelOptRule(operand(classOf[LogicalJoin], any()), "JoinDeriveNullFilterRule") {
+class JoinDeriveNullFilterRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join: Join = call.rel(0)
@@ -93,7 +92,19 @@ class JoinDeriveNullFilterRule
 }
 
 object JoinDeriveNullFilterRule {
-  val INSTANCE = new JoinDeriveNullFilterRule
+  val INSTANCE = new JoinDeriveNullFilterRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) => b0.operand(classOf[LogicalJoin]).anyInputs)
+      .withDescription("JoinDeriveNullFilterRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new JoinDeriveNullFilterRule(this)
+  }
 
   // It is a experimental config, will may be removed later.
   @Experimental

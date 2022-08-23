@@ -18,9 +18,9 @@
 
 package org.apache.flink.table.planner.plan.rules.logical;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.core.JoinRelType;
@@ -57,15 +57,34 @@ import java.util.List;
  * <p>Whether this first or second conversion is applied depends on which operands actually
  * participate in the semi-join.
  */
-public class FlinkSemiAntiJoinJoinTransposeRule extends RelOptRule {
+public class FlinkSemiAntiJoinJoinTransposeRule
+        extends RelRule<FlinkSemiAntiJoinJoinTransposeRule.Config> {
     public static final FlinkSemiAntiJoinJoinTransposeRule INSTANCE =
-            new FlinkSemiAntiJoinJoinTransposeRule();
+            new FlinkSemiAntiJoinJoinTransposeRule(Config.DEFAULT);
 
     // ~ Constructors -----------------------------------------------------------
 
     /** Creates a FlinkSemiAntiJoinJoinTransposeRule. */
-    private FlinkSemiAntiJoinJoinTransposeRule() {
-        super(operand(LogicalJoin.class, some(operand(LogicalJoin.class, any()))));
+    private FlinkSemiAntiJoinJoinTransposeRule(Config config) {
+        super(config);
+    }
+
+    /** Config for FlinkSemiAntiJoinJoinTransposeRule. */
+    public interface Config extends RelRule.Config {
+        FlinkSemiAntiJoinJoinTransposeRule.Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(LogicalJoin.class)
+                                                .inputs(
+                                                        b1 ->
+                                                                b1.operand(LogicalJoin.class)
+                                                                        .anyInputs()))
+                        .as(Config.class);
+
+        @Override
+        default FlinkSemiAntiJoinJoinTransposeRule toRule() {
+            return new FlinkSemiAntiJoinJoinTransposeRule(this);
+        }
     }
 
     // ~ Methods ----------------------------------------------------------------

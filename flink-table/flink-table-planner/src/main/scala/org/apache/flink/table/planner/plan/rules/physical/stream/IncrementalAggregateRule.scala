@@ -23,12 +23,12 @@ import org.apache.flink.configuration.ConfigOptions.key
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.PartialFinalType
 import org.apache.flink.table.planner.plan.nodes.physical.stream.{StreamPhysicalExchange, StreamPhysicalGlobalGroupAggregate, StreamPhysicalIncrementalGroupAggregate, StreamPhysicalLocalGroupAggregate}
+import org.apache.flink.table.planner.plan.rules.physical.stream.IncrementalAggregateRule.Config
 import org.apache.flink.table.planner.plan.utils.AggregateUtil
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
 import org.apache.flink.util.Preconditions
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
 
 import java.lang.{Boolean => JBoolean}
 import java.util.Collections
@@ -39,19 +39,7 @@ import java.util.Collections
  * and combines the final [[StreamPhysicalLocalGroupAggregate]] and the partial
  * [[StreamPhysicalGlobalGroupAggregate]] into a [[StreamPhysicalIncrementalGroupAggregate]].
  */
-class IncrementalAggregateRule
-  extends RelOptRule(
-    operand(
-      classOf[StreamPhysicalGlobalGroupAggregate], // final global agg
-      operand(
-        classOf[StreamPhysicalExchange], // key by
-        operand(
-          classOf[StreamPhysicalLocalGroupAggregate], // final local agg
-          operand(classOf[StreamPhysicalGlobalGroupAggregate], any())
-        )
-      )
-    ), // partial global agg
-    "IncrementalAggregateRule") {
+class IncrementalAggregateRule(config: Config) extends RelRule[Config](config) {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val finalGlobalAgg: StreamPhysicalGlobalGroupAggregate = call.rel(0)
@@ -150,7 +138,29 @@ class IncrementalAggregateRule
 }
 
 object IncrementalAggregateRule {
-  val INSTANCE = new IncrementalAggregateRule
+  val INSTANCE = new IncrementalAggregateRule(Config.DEFAULT)
+
+  object Config {
+    val DEFAULT: Config = RelRule.Config.EMPTY
+      .withOperandSupplier(
+        (b0: RelRule.OperandBuilder) =>
+          b0.operand(classOf[StreamPhysicalGlobalGroupAggregate])
+            .oneInput(
+              (b1: RelRule.OperandBuilder) =>
+                b1.operand(classOf[StreamPhysicalExchange])
+                  .oneInput(
+                    (b2: RelRule.OperandBuilder) =>
+                      b2.operand(classOf[StreamPhysicalLocalGroupAggregate])
+                        .oneInput(
+                          (b3: RelRule.OperandBuilder) =>
+                            b3.operand(classOf[StreamPhysicalGlobalGroupAggregate]).anyInputs()))))
+      .withDescription("IncrementalAggregateRule")
+      .as(classOf[Config])
+  }
+
+  trait Config extends RelRule.Config {
+    override def toRule = new IncrementalAggregateRule(this)
+  }
 
   // It is a experimental config, will may be removed later.
   @Experimental

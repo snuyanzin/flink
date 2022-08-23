@@ -40,6 +40,7 @@ import org.apache.flink.table.types.DataType;
 
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
@@ -60,15 +61,35 @@ import scala.collection.Seq;
  * The physical rule is responsible for convert {@link FlinkLogicalWindowAggregate} to {@link
  * BatchPhysicalPythonGroupWindowAggregate}.
  */
-public class BatchPhysicalPythonWindowAggregateRule extends RelOptRule {
+public class BatchPhysicalPythonWindowAggregateRule
+        extends RelRule<BatchPhysicalPythonWindowAggregateRule.Config> {
 
-    public static final RelOptRule INSTANCE = new BatchPhysicalPythonWindowAggregateRule();
+    public static final RelOptRule INSTANCE =
+            new BatchPhysicalPythonWindowAggregateRule(Config.DEFAULT);
 
-    private BatchPhysicalPythonWindowAggregateRule() {
-        super(
-                operand(FlinkLogicalWindowAggregate.class, operand(RelNode.class, any())),
-                FlinkRelFactories.LOGICAL_BUILDER_WITHOUT_AGG_INPUT_PRUNE(),
-                "BatchPhysicalPythonWindowAggregateRule");
+    private BatchPhysicalPythonWindowAggregateRule(Config config) {
+        super(config);
+    }
+
+    /** Config for BatchPhysicalPythonWindowAggregateRule. */
+    public interface Config extends RelRule.Config {
+        Config DEFAULT =
+                EMPTY.withOperandSupplier(
+                                b0 ->
+                                        b0.operand(FlinkLogicalWindowAggregate.class)
+                                                .oneInput(
+                                                        b1 ->
+                                                                b1.operand(RelNode.class)
+                                                                        .anyInputs()))
+                        .withDescription("BatchPhysicalPythonWindowAggregateRule")
+                        .withRelBuilderFactory(
+                                FlinkRelFactories.LOGICAL_BUILDER_WITHOUT_AGG_INPUT_PRUNE())
+                        .as(BatchPhysicalPythonWindowAggregateRule.Config.class);
+
+        @Override
+        default BatchPhysicalPythonWindowAggregateRule toRule() {
+            return new BatchPhysicalPythonWindowAggregateRule(this);
+        }
     }
 
     @Override
