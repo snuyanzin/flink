@@ -159,7 +159,7 @@ object FlinkLogicalAggregate {
       classOf[LogicalAggregate],
       Convention.NONE,
       FlinkConventions.LOGICAL,
-      "BatchPhysicalPythonCorrelateRule")
+      "FlinkLogicalAggregateStreamConverter")
     .withRuleFactory(
       (config: ConverterRule.Config) => new FlinkLogicalAggregateStreamConverter(config))
   val STREAM_CONVERTER: ConverterRule = new FlinkLogicalAggregateStreamConverter(
