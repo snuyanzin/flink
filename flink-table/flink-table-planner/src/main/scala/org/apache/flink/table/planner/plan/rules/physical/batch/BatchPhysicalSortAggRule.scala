@@ -59,7 +59,7 @@ import scala.collection.JavaConversions._
  * try to create two possibilities above, and chooses the best one based on cost.
  */
 class BatchPhysicalSortAggRule(config: Config)
-  extends RelRule(config)
+  extends RelRule[RelRule.Config](config)
   with BatchPhysicalAggRuleBase {
 
   override def matches(call: RelOptRuleCall): Boolean = {

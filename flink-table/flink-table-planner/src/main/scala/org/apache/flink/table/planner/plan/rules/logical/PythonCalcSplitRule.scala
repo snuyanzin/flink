@@ -39,7 +39,7 @@ import scala.collection.mutable
  * [[ScalarFunction]]s.
  */
 abstract class PythonCalcSplitRuleBase(description: String)
-  extends RelRule(
+  extends RelRule[RelRule.Config](
     RelRule.Config.EMPTY
       .withOperandSupplier(
         (b0: RelRule.OperandBuilder) => b0.operand(classOf[FlinkLogicalCalc]).anyInputs())
