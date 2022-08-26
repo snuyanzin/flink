@@ -43,7 +43,7 @@ import scala.collection.JavaConversions._
  * of the lower [[Calc]]'s inputs.
  */
 class FlinkCalcMergeRule[C <: Calc](calcClass: Class[C])
-  extends RelRule(
+  extends RelRule[RelRule.Config](
     RelRule.Config.EMPTY
       .withOperandSupplier(
         (b0: RelRule.OperandBuilder) =>

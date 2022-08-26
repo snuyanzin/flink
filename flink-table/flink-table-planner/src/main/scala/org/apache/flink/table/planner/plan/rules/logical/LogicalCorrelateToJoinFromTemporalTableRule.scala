@@ -44,7 +44,8 @@ import scala.collection.JavaConverters._
  *
  * Notice: This rule can only be used in [[HepPlanner]].
  */
-abstract class LogicalCorrelateToJoinFromTemporalTableRule(config: Config) extends RelRule(config) {
+abstract class LogicalCorrelateToJoinFromTemporalTableRule(config: Config)
+  extends RelRule[RelRule.Config](config) {
 
   def getFilterCondition(call: RelOptRuleCall): RexNode
 
