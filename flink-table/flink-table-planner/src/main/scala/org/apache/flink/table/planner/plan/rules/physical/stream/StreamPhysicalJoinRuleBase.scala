@@ -35,7 +35,7 @@ import java.util
  * join and temporal join.
  */
 abstract class StreamPhysicalJoinRuleBase(description: String)
-  extends RelRule(
+  extends RelRule[RelRule.Config](
     RelRule.Config.EMPTY
       .withOperandSupplier(
         (b0: RelRule.OperandBuilder) =>

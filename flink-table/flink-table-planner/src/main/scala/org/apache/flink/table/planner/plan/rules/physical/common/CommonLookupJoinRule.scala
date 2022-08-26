@@ -115,7 +115,7 @@ trait CommonLookupJoinRule extends CommonTemporalTableJoinRule {
 }
 
 abstract class BaseSnapshotOnTableScanRule(description: String)
-  extends RelRule(
+  extends RelRule[RelRule.Config](
     RelRule.Config.EMPTY
       .withOperandSupplier(
         (b0: RelRule.OperandBuilder) =>
@@ -150,7 +150,7 @@ abstract class BaseSnapshotOnTableScanRule(description: String)
 }
 
 abstract class BaseSnapshotOnCalcTableScanRule(description: String)
-  extends RelRule(
+  extends RelRule[RelRule.Config](
     RelRule.Config.EMPTY
       .withOperandSupplier(
         (b0: RelRule.OperandBuilder) =>

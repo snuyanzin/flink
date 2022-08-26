@@ -31,7 +31,7 @@ import org.apache.calcite.rel.RelDistribution.Type._
 
 /** Rule which converts an [[AbstractConverter]] to a RelNode which satisfies the target traits. */
 class FlinkExpandConversionRule(flinkConvention: Convention)
-  extends RelRule(
+  extends RelRule[RelRule.Config](
     RelRule.Config.EMPTY
       .withOperandSupplier(
         (b0: RelRule.OperandBuilder) =>

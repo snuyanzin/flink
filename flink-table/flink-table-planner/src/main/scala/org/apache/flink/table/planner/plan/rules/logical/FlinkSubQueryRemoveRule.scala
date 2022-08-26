@@ -46,7 +46,7 @@ import scala.collection.mutable
  * [[RelNode]] will contain a [[RexCorrelVariable]] before the rewrite, and the product of the
  * rewrite will be a [[org.apache.calcite.rel.core.Join]] with SEMI or ANTI join type.
  */
-class FlinkSubQueryRemoveRule(config: Config) extends RelRule(config) {
+class FlinkSubQueryRemoveRule(config: Config) extends RelRule[RelRule.Config](config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val filter: Filter = call.rel(0)

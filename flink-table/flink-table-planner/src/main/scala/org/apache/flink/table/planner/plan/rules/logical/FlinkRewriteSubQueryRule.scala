@@ -45,7 +45,7 @@ import scala.collection.JavaConversions._
  *             +- LogicalTableScan(table=[[y, source: [TestTableSource(d, e, f)]]])
  * }}}
  */
-class FlinkRewriteSubQueryRule(config: Config) extends RelRule(config) {
+class FlinkRewriteSubQueryRule(config: Config) extends RelRule[RelRule.Config](config) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val filter: Filter = call.rel(0)

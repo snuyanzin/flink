@@ -33,7 +33,7 @@ import scala.collection.JavaConversions._
 
 /** Planner rule that removes unreferenced AggregateCall from Aggregate */
 abstract class PruneAggregateCallRule[T <: RelNode](topClass: Class[T])
-  extends RelRule(
+  extends RelRule[RelRule.Config](
     RelRule.Config.EMPTY
       .withOperandSupplier(
         (b0: RelRule.OperandBuilder) =>
