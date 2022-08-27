@@ -46,6 +46,7 @@ import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Util;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.AbstractList;
 import java.util.Collections;
@@ -83,7 +84,7 @@ public abstract class Window extends SingleRel implements Hintable {
      * @param rowType Output row type
      * @param groups Windows
      */
-    public Window(
+    protected Window(
             RelOptCluster cluster,
             RelTraitSet traitSet,
             List<RelHint> hints,
@@ -159,6 +160,7 @@ public abstract class Window extends SingleRel implements Hintable {
         return litmus.succeed();
     }
 
+    @Override
     public RelWriter explainTerms(RelWriter pw) {
         super.explainTerms(pw);
         for (Ord<Group> window : Ord.zip(groups)) {
@@ -170,10 +172,12 @@ public abstract class Window extends SingleRel implements Hintable {
     public static ImmutableIntList getProjectOrdinals(final List<RexNode> exprs) {
         return ImmutableIntList.copyOf(
                 new AbstractList<Integer>() {
+                    @Override
                     public Integer get(int index) {
                         return ((RexSlot) exprs.get(index)).getIndex();
                     }
 
+                    @Override
                     public int size() {
                         return exprs.size();
                     }
@@ -183,6 +187,7 @@ public abstract class Window extends SingleRel implements Hintable {
     public static RelCollation getCollation(final List<RexFieldCollation> collations) {
         return RelCollations.of(
                 new AbstractList<RelFieldCollation>() {
+                    @Override
                     public RelFieldCollation get(int index) {
                         final RexFieldCollation collation = collations.get(index);
                         return new RelFieldCollation(
@@ -191,6 +196,7 @@ public abstract class Window extends SingleRel implements Hintable {
                                 collation.getNullDirection());
                     }
 
+                    @Override
                     public int size() {
                         return collations.size();
                     }
@@ -207,7 +213,7 @@ public abstract class Window extends SingleRel implements Hintable {
     }
 
     @Override
-    public RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
+    public @Nullable RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
         // Cost is proportional to the number of rows and the number of
         // components (groups and aggregate functions). There is
         // no I/O cost.
@@ -265,15 +271,16 @@ public abstract class Window extends SingleRel implements Hintable {
                 RexWindowBound upperBound,
                 RelCollation orderKeys,
                 List<RexWinAggCall> aggCalls) {
-            this.keys = Objects.requireNonNull(keys);
+            this.keys = Objects.requireNonNull(keys, "keys");
             this.isRows = isRows;
-            this.lowerBound = Objects.requireNonNull(lowerBound);
-            this.upperBound = Objects.requireNonNull(upperBound);
-            this.orderKeys = Objects.requireNonNull(orderKeys);
+            this.lowerBound = Objects.requireNonNull(lowerBound, "lowerBound");
+            this.upperBound = Objects.requireNonNull(upperBound, "upperBound");
+            this.orderKeys = Objects.requireNonNull(orderKeys, "orderKeys");
             this.aggCalls = com.google.common.collect.ImmutableList.copyOf(aggCalls);
             this.digest = computeString();
         }
 
+        @Override
         public String toString() {
             return digest;
         }
@@ -323,7 +330,7 @@ public abstract class Window extends SingleRel implements Hintable {
         }
 
         @Override
-        public boolean equals(Object obj) {
+        public boolean equals(@Nullable Object obj) {
             return this == obj || obj instanceof Group && this.digest.equals(((Group) obj).digest);
         }
 
@@ -360,10 +367,12 @@ public abstract class Window extends SingleRel implements Hintable {
                             windowRel.getRowType().getFieldNames(),
                             windowRel.getInput().getRowType().getFieldCount());
             return new AbstractList<AggregateCall>() {
+                @Override
                 public int size() {
                     return aggCalls.size();
                 }
 
+                @Override
                 public AggregateCall get(int index) {
                     final RexWinAggCall aggCall = aggCalls.get(index);
                     final SqlAggFunction op = (SqlAggFunction) aggCall.getOperator();
@@ -374,6 +383,7 @@ public abstract class Window extends SingleRel implements Hintable {
                             aggCall.ignoreNulls,
                             getProjectOrdinals(aggCall.getOperands()),
                             -1,
+                            null,
                             RelCollations.EMPTY,
                             aggCall.getType(),
                             fieldNames.get(aggCall.ordinal));
@@ -434,7 +444,7 @@ public abstract class Window extends SingleRel implements Hintable {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
             if (this == o) {
                 return true;
             }

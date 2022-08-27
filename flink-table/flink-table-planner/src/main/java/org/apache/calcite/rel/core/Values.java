@@ -36,6 +36,7 @@ import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.Pair;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -83,6 +84,7 @@ public abstract class Values extends AbstractRelNode implements Hintable {
      * @param tuples 2-dimensional array of tuple values to be produced; outer list contains tuples;
      *     each inner list is one tuple; all tuples must be of same length, conforming to rowType
      */
+    @SuppressWarnings("method.invocation.invalid")
     protected Values(
             RelOptCluster cluster,
             List<RelHint> hints,
@@ -120,7 +122,7 @@ public abstract class Values extends AbstractRelNode implements Hintable {
     }
 
     /** Creates a Values by parsing serialized output. */
-    public Values(RelInput input) {
+    protected Values(RelInput input) {
         this(
                 input.getCluster(),
                 input.getRowType("type"),
@@ -169,6 +171,7 @@ public abstract class Values extends AbstractRelNode implements Hintable {
 
     /** Returns true if all tuples match rowType; otherwise, assert on mismatch. */
     private boolean assertRowType() {
+        RelDataType rowType = getRowType();
         for (List<RexLiteral> tuple : tuples) {
             assert tuple.size() == rowType.getFieldCount();
             for (Pair<RexLiteral, RelDataTypeField> pair :
@@ -190,11 +193,12 @@ public abstract class Values extends AbstractRelNode implements Hintable {
 
     @Override
     protected RelDataType deriveRowType() {
+        assert rowType != null : "rowType must not be null for " + this;
         return rowType;
     }
 
     @Override
-    public RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
+    public @Nullable RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
         double dRows = mq.getRowCount(this);
 
         // Assume CPU is negligible since values are precomputed.
@@ -204,15 +208,18 @@ public abstract class Values extends AbstractRelNode implements Hintable {
     }
 
     // implement RelNode
+    @Override
     public double estimateRowCount(RelMetadataQuery mq) {
         return tuples.size();
     }
 
     // implement RelNode
+    @Override
     public RelWriter explainTerms(RelWriter pw) {
         // A little adapter just to get the tuples to come out
         // with curly brackets instead of square brackets.  Plus
         // more whitespace for readability.
+        RelDataType rowType = getRowType();
         RelWriter relWriter =
                 super.explainTerms(pw)
                         // For rel digest, include the row type since a rendered
