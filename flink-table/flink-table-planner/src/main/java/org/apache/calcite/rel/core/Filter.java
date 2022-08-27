@@ -38,9 +38,12 @@ import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.util.Litmus;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Relational expression that iterates over its input and returns elements for which <code>condition
@@ -78,9 +81,9 @@ public abstract class Filter extends SingleRel implements Hintable {
             RelNode child,
             RexNode condition) {
         super(cluster, traits, child);
-        assert condition != null;
-        assert RexUtil.isFlat(condition) : condition;
-        this.condition = condition;
+        this.condition = requireNonNull(condition, "condition");
+        assert RexUtil.isFlat(condition)
+                : "RexUtil.isFlat should be true for condition " + condition;
         // Too expensive for everyday use:
         assert !CalciteSystemProperty.DEBUG.value() || isValid(Litmus.THROW, null);
         this.hints = com.google.common.collect.ImmutableList.copyOf(hints);
@@ -104,7 +107,7 @@ public abstract class Filter extends SingleRel implements Hintable {
                 input.getCluster(),
                 input.getTraitSet(),
                 input.getInput(),
-                input.getExpression("condition"));
+                requireNonNull(input.getExpression("condition"), "condition"));
     }
 
     // ~ Methods ----------------------------------------------------------------
@@ -116,6 +119,7 @@ public abstract class Filter extends SingleRel implements Hintable {
 
     public abstract Filter copy(RelTraitSet traitSet, RelNode input, RexNode condition);
 
+    @Override
     public RelNode accept(RexShuttle shuttle) {
         RexNode condition = shuttle.apply(this.condition);
         if (this.condition == condition) {
@@ -134,7 +138,7 @@ public abstract class Filter extends SingleRel implements Hintable {
     }
 
     @Override
-    public boolean isValid(Litmus litmus, Context context) {
+    public boolean isValid(Litmus litmus, @Nullable Context context) {
         if (RexUtil.isNullabilityCast(getCluster().getTypeFactory(), condition)) {
             return litmus.fail("Cast for just nullability not allowed");
         }
@@ -147,7 +151,7 @@ public abstract class Filter extends SingleRel implements Hintable {
     }
 
     @Override
-    public RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
+    public @Nullable RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
         double dRows = mq.getRowCount(this);
         double dCpu = mq.getRowCount(getInput());
         double dIo = 0;
@@ -171,11 +175,12 @@ public abstract class Filter extends SingleRel implements Hintable {
         return RelMdUtil.estimateFilteredRows(child, condition, mq);
     }
 
+    @Override
     public RelWriter explainTerms(RelWriter pw) {
         return super.explainTerms(pw).item("condition", condition);
     }
 
-    protected boolean deepEquals0(Object obj) {
+    protected boolean deepEquals0(@Nullable Object obj) {
         if (this == obj) {
             return true;
         }

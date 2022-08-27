@@ -34,11 +34,13 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.Litmus;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * A relational operator that performs nested-loop joins.
@@ -90,6 +92,7 @@ public abstract class Correlate extends BiRel implements Hintable {
      * @param requiredColumns Set of columns that are used by correlation
      * @param joinType Join type
      */
+    @SuppressWarnings("method.invocation.invalid")
     protected Correlate(
             RelOptCluster cluster,
             RelTraitSet traitSet,
@@ -101,9 +104,9 @@ public abstract class Correlate extends BiRel implements Hintable {
             JoinRelType joinType) {
         super(cluster, traitSet, left, right);
         assert !joinType.generatesNullsOnLeft() : "Correlate has invalid join type " + joinType;
-        this.joinType = Objects.requireNonNull(joinType);
-        this.correlationId = Objects.requireNonNull(correlationId);
-        this.requiredColumns = Objects.requireNonNull(requiredColumns);
+        this.joinType = requireNonNull(joinType, "joinType");
+        this.correlationId = requireNonNull(correlationId, "correlationId");
+        this.requiredColumns = requireNonNull(requiredColumns, "requiredColumns");
         this.hints = com.google.common.collect.ImmutableList.copyOf(hints);
     }
 
@@ -141,15 +144,16 @@ public abstract class Correlate extends BiRel implements Hintable {
      *
      * @param input Input representation
      */
-    public Correlate(RelInput input) {
+    protected Correlate(RelInput input) {
         this(
                 input.getCluster(),
                 input.getTraitSet(),
                 input.getInputs().get(0),
                 input.getInputs().get(1),
-                new CorrelationId((Integer) input.get("correlation")),
+                new CorrelationId(
+                        requireNonNull((Integer) input.get("correlation"), "correlation")),
                 input.getBitSet("requiredColumns"),
-                input.getEnum("joinType", JoinRelType.class));
+                requireNonNull(input.getEnum("joinType", JoinRelType.class), "joinType"));
     }
 
     // ~ Methods ----------------------------------------------------------------
@@ -248,7 +252,7 @@ public abstract class Correlate extends BiRel implements Hintable {
     }
 
     @Override
-    public RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
+    public @Nullable RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
         double rowCount = mq.getRowCount(this);
 
         final double rightRowCount = right.estimateRowCount(mq);
@@ -258,9 +262,15 @@ public abstract class Correlate extends BiRel implements Hintable {
         }
 
         Double restartCount = mq.getRowCount(getLeft());
+        if (restartCount == null) {
+            return planner.getCostFactory().makeInfiniteCost();
+        }
         // RelMetadataQuery.getCumulativeCost(getRight()); does not work for
         // RelSubset, so we ask planner to cost-estimate right relation
         RelOptCost rightCost = planner.getCost(getRight(), mq);
+        if (rightCost == null) {
+            return planner.getCostFactory().makeInfiniteCost();
+        }
         RelOptCost rescanCost = rightCost.multiplyBy(Math.max(1.0, restartCount - 1));
 
         return planner.getCostFactory()

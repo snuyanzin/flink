@@ -1208,6 +1208,10 @@ public class HiveParserCalcitePlanner {
                             false,
                             gbKeyIndices,
                             -1,
+                            // similar to what is done in calcite
+                            // e.g.
+                            // org.apache.calcite.rel.core.AggregateCall.create(org.apache.calcite.sql.SqlAggFunction, boolean, java.util.List<java.lang.Integer>, int, org.apache.calcite.rel.RelNode, org.apache.calcite.rel.type.RelDataType, java.lang.String)
+                            null,
                             RelCollations.EMPTY,
                             groupSet.cardinality(),
                             gbInputRel,
