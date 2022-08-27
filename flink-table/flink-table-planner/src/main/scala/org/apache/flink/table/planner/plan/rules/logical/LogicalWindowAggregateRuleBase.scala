@@ -231,6 +231,7 @@ abstract class LogicalWindowAggregateRuleBase(config: Config) extends RelRule[Co
             aggCall.ignoreNulls(),
             aggCall.getArgList,
             aggCall.filterArg,
+            aggCall.distinctKeys,
             aggCall.collation,
             agg.getGroupCount,
             agg.getInput,

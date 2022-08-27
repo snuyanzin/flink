@@ -34,6 +34,7 @@ import org.apache.calcite.sql.type.SqlOperandCountRanges;
 import org.apache.calcite.sql.type.SqlSingleOperandTypeChecker;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -43,6 +44,9 @@ import org.apache.calcite.util.Litmus;
 import org.apache.calcite.util.Static;
 
 import java.util.Arrays;
+
+import static java.util.Objects.requireNonNull;
+import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getOperandLiteralValueOrThrow;
 
 /**
  * The dot operator {@code .}, used to access a field of a record. For example, {@code a.b}.
@@ -65,8 +69,8 @@ public class SqlDotOperator extends SqlSpecialOperator {
                 createCall(
                         SqlParserPos.sum(
                                 Arrays.asList(
-                                        left.getParserPosition(),
-                                        right.getParserPosition(),
+                                        requireNonNull(left, "left").getParserPosition(),
+                                        requireNonNull(right, "right").getParserPosition(),
                                         list.pos(ordinal))),
                         left,
                         right));
@@ -129,6 +133,7 @@ public class SqlDotOperator extends SqlSpecialOperator {
         return type;
     }
 
+    @Override
     public void validateCall(
             SqlCall call,
             SqlValidator validator,
@@ -144,11 +149,13 @@ public class SqlDotOperator extends SqlSpecialOperator {
     public boolean checkOperandTypes(SqlCallBinding callBinding, boolean throwOnFailure) {
         final SqlNode left = callBinding.operand(0);
         final SqlNode right = callBinding.operand(1);
-        final RelDataType type =
-                callBinding.getValidator().deriveType(callBinding.getScope(), left);
+        final RelDataType type = SqlTypeUtil.deriveType(callBinding, left);
         if (type.getSqlTypeName() != SqlTypeName.ROW) {
             return false;
-        } else if (type.getSqlIdentifier().isStar()) {
+        } else if (requireNonNull(
+                        type.getSqlIdentifier(),
+                        () -> "type.getSqlIdentifier() is null for " + type)
+                .isStar()) {
             return false;
         }
         final RelDataType operandType = callBinding.getOperandType(0);
@@ -158,7 +165,7 @@ public class SqlDotOperator extends SqlSpecialOperator {
         return checker.checkSingleOperandType(callBinding, right, 0, throwOnFailure);
     }
 
-    private SqlSingleOperandTypeChecker getChecker(RelDataType operandType) {
+    private static SqlSingleOperandTypeChecker getChecker(RelDataType operandType) {
         switch (operandType.getSqlTypeName()) {
             case ROW:
                 return OperandTypes.family(SqlTypeFamily.STRING);
@@ -183,9 +190,16 @@ public class SqlDotOperator extends SqlSpecialOperator {
         final RelDataType recordType = opBinding.getOperandType(0);
         switch (recordType.getSqlTypeName()) {
             case ROW:
-                final String fieldName = opBinding.getOperandLiteralValue(1, String.class);
+                final String fieldName = getOperandLiteralValueOrThrow(opBinding, 1, String.class);
                 final RelDataType type =
-                        opBinding.getOperandType(0).getField(fieldName, false, false).getType();
+                        requireNonNull(
+                                        recordType.getField(fieldName, false, false),
+                                        () ->
+                                                "field "
+                                                        + fieldName
+                                                        + " is not found in "
+                                                        + recordType)
+                                .getType();
                 if (recordType.isNullable()) {
                     return typeFactory.createTypeWithNullability(type, true);
                 } else {
