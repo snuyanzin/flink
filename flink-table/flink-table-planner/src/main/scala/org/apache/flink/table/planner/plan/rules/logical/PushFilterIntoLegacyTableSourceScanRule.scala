@@ -21,7 +21,6 @@ import org.apache.flink.table.api.TableException
 import org.apache.flink.table.api.config.OptimizerConfigOptions
 import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.planner.expressions.converter.ExpressionConverter
-import org.apache.flink.table.planner.plan.rules.logical.PushFilterIntoLegacyTableSourceScanRule.Config
 import org.apache.flink.table.planner.plan.schema.{FlinkPreparingTableBase, LegacyTableSourceTable}
 import org.apache.flink.table.planner.plan.stats.FlinkStatistic
 import org.apache.flink.table.planner.plan.utils.{FlinkRelOptUtil, FlinkRexUtil, RexNodeExtractor}
@@ -29,7 +28,7 @@ import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapContext, unwrap
 import org.apache.flink.table.planner.utils.TableConfigUtils
 import org.apache.flink.table.sources.FilterableTableSource
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.plan.RelOptRule.{none, operand}
 import org.apache.calcite.rel.`type`.RelDataTypeFactory
 import org.apache.calcite.rel.core.Filter
@@ -41,7 +40,10 @@ import java.util.TimeZone
 import scala.collection.JavaConversions._
 
 /** Planner rule that tries to push a filter into a [[FilterableTableSource]]. */
-class PushFilterIntoLegacyTableSourceScanRule(config: Config) extends RelRule[Config](config) {
+class PushFilterIntoLegacyTableSourceScanRule
+  extends RelOptRule(
+    operand(classOf[Filter], operand(classOf[LogicalTableScan], none)),
+    "PushFilterIntoLegacyTableSourceScanRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val tableConfig = unwrapTableConfig(call)
@@ -161,20 +163,5 @@ class PushFilterIntoLegacyTableSourceScanRule(config: Config) extends RelRule[Co
 }
 
 object PushFilterIntoLegacyTableSourceScanRule {
-  val INSTANCE: RelOptRule = new PushFilterIntoLegacyTableSourceScanRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[Filter])
-            .oneInput(
-              (b1: RelRule.OperandBuilder) => b1.operand(classOf[LogicalTableScan]).noInputs()))
-      .withDescription("PushFilterIntoLegacyTableSourceScanRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new PushFilterIntoLegacyTableSourceScanRule(this)
-  }
+  val INSTANCE: RelOptRule = new PushFilterIntoLegacyTableSourceScanRule
 }

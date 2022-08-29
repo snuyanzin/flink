@@ -40,7 +40,8 @@ import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalWatermarkAs
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.types.logical.RowType;
 
-import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.plan.RelOptRule;
+import org.apache.calcite.plan.RelOptRuleOperand;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexNode;
 
@@ -54,11 +55,10 @@ import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapFunctionD
  * offers a util to push the {@link FlinkLogicalWatermarkAssigner} into the {@link
  * FlinkLogicalTableSourceScan}.
  */
-public abstract class PushWatermarkIntoTableSourceScanRuleBase<T extends RelRule.Config>
-        extends RelRule<T> {
+public abstract class PushWatermarkIntoTableSourceScanRuleBase extends RelOptRule {
 
-    public PushWatermarkIntoTableSourceScanRuleBase(T config) {
-        super(config);
+    public PushWatermarkIntoTableSourceScanRuleBase(RelOptRuleOperand operand, String description) {
+        super(operand, description);
     }
 
     /**

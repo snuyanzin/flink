@@ -43,21 +43,14 @@ import java.util.List;
  */
 public class StreamPhysicalPythonGroupAggregateRule extends ConverterRule {
 
-    public static final Config DEFAULT_CONFIG =
-            Config.EMPTY
-                    .as(Config.class)
-                    .withConversion(
-                            FlinkLogicalAggregate.class,
-                            FlinkConventions.LOGICAL(),
-                            FlinkConventions.STREAM_PHYSICAL(),
-                            "StreamPhysicalPythonGroupAggregateRule")
-                    .withRuleFactory(StreamPhysicalPythonGroupAggregateRule::new);
+    public static final RelOptRule INSTANCE = new StreamPhysicalPythonGroupAggregateRule();
 
-    public static final RelOptRule INSTANCE =
-            new StreamPhysicalPythonGroupAggregateRule(DEFAULT_CONFIG);
-
-    public StreamPhysicalPythonGroupAggregateRule(Config config) {
-        super(config);
+    public StreamPhysicalPythonGroupAggregateRule() {
+        super(
+                FlinkLogicalAggregate.class,
+                FlinkConventions.LOGICAL(),
+                FlinkConventions.STREAM_PHYSICAL(),
+                "StreamPhysicalPythonGroupAggregateRule");
     }
 
     @Override

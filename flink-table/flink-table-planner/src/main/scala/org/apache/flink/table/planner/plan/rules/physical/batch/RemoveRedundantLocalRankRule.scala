@@ -19,9 +19,8 @@ package org.apache.flink.table.planner.plan.rules.physical.batch
 
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalRank
-import org.apache.flink.table.planner.plan.rules.physical.batch.RemoveRedundantLocalRankRule.Config
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.plan.RelOptRule._
 import org.apache.calcite.rel.RelNode
 
@@ -31,7 +30,14 @@ import scala.collection.JavaConversions._
  * Planner rule that matches a global [[BatchPhysicalRank]] on a local [[BatchPhysicalRank]], and
  * merge them into a global [[BatchPhysicalRank]].
  */
-class RemoveRedundantLocalRankRule(config: Config) extends RelRule[Config](config) {
+class RemoveRedundantLocalRankRule
+  extends RelOptRule(
+    operand(
+      classOf[BatchPhysicalRank],
+      operand(
+        classOf[BatchPhysicalRank],
+        operand(classOf[RelNode], FlinkConventions.BATCH_PHYSICAL, any))),
+    "RemoveRedundantLocalRankRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val globalRank: BatchPhysicalRank = call.rel(0)
@@ -52,26 +58,5 @@ class RemoveRedundantLocalRankRule(config: Config) extends RelRule[Config](confi
 }
 
 object RemoveRedundantLocalRankRule {
-  val INSTANCE: RelOptRule = new RemoveRedundantLocalRankRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[BatchPhysicalRank])
-            .oneInput(
-              (b1: RelRule.OperandBuilder) =>
-                b1.operand(classOf[BatchPhysicalRank])
-                  .oneInput(
-                    (b2: RelRule.OperandBuilder) =>
-                      b2.operand(classOf[RelNode])
-                        .`trait`(FlinkConventions.BATCH_PHYSICAL)
-                        .anyInputs())))
-      .withDescription("RemoveRedundantLocalRankRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new RemoveRedundantLocalRankRule(this)
-  }
+  val INSTANCE: RelOptRule = new RemoveRedundantLocalRankRule
 }

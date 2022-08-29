@@ -17,9 +17,9 @@
 
 package org.apache.flink.table.planner.plan.rules.logical;
 
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
-import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.core.RelFactories;
@@ -41,7 +41,7 @@ import org.apache.calcite.tools.RelBuilderFactory;
  * that computes the expression "emp.deptno + 1". The resulting join condition is a simple
  * combination of AND, equals, and input fields, plus the remaining non-equal conditions.
  */
-public class FlinkJoinPushExpressionsRule extends RelRule {
+public class FlinkJoinPushExpressionsRule extends RelOptRule {
 
     public static final FlinkJoinPushExpressionsRule INSTANCE =
             new FlinkJoinPushExpressionsRule(Join.class, RelFactories.LOGICAL_BUILDER);
@@ -49,10 +49,7 @@ public class FlinkJoinPushExpressionsRule extends RelRule {
     /** Creates a JoinPushExpressionsRule. */
     public FlinkJoinPushExpressionsRule(
             Class<? extends Join> clazz, RelBuilderFactory relBuilderFactory) {
-        super(
-                Config.EMPTY
-                        .withOperandSupplier(b0 -> b0.operand(clazz).anyInputs())
-                        .withRelBuilderFactory(relBuilderFactory));
+        super(operand(clazz, any()), relBuilderFactory, null);
     }
 
     @Deprecated // to be removed before 2.0

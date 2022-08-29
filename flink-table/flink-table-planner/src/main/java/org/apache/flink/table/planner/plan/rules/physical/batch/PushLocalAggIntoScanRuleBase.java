@@ -38,8 +38,9 @@ import org.apache.flink.table.planner.utils.JavaScalaConversionUtil;
 import org.apache.flink.table.planner.utils.ShortcutUtils;
 import org.apache.flink.table.types.logical.RowType;
 
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.plan.RelOptRuleOperand;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -66,10 +67,10 @@ import java.util.stream.Collectors;
  *   <li>aggregations with filter.
  * </ul>
  */
-public abstract class PushLocalAggIntoScanRuleBase<T extends RelRule.Config> extends RelRule<T> {
+public abstract class PushLocalAggIntoScanRuleBase extends RelOptRule {
 
-    public PushLocalAggIntoScanRuleBase(T config) {
-        super(config);
+    public PushLocalAggIntoScanRuleBase(RelOptRuleOperand operand, String description) {
+        super(operand, description);
     }
 
     protected boolean canPushDown(

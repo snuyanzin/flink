@@ -45,6 +45,7 @@ import org.apache.calcite.rex.RexProgramBuilder;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.util.mapping.Mappings;
+import org.immutables.value.Value;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,23 +61,28 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  * StreamPhysicalChangelogNormalize}.
  */
 public class WatermarkAssignerChangelogNormalizeTransposeRule
-        extends RelRule<WatermarkAssignerChangelogNormalizeTransposeRule.Config> {
+        extends RelRule<
+                WatermarkAssignerChangelogNormalizeTransposeRule
+                        .WatermarkAssignerChangelogNormalizeTransposeRuleConfig> {
 
     public static final RelOptRule WITH_CALC =
-            Config.EMPTY
-                    .withDescription("WatermarkAssignerChangelogNormalizeTransposeRuleWithCalc")
-                    .as(Config.class)
-                    .withCalc()
-                    .toRule();
+            new WatermarkAssignerChangelogNormalizeTransposeRule(
+                    WatermarkAssignerChangelogNormalizeTransposeRuleConfig.DEFAULT
+                            .withDescription(
+                                    "WatermarkAssignerChangelogNormalizeTransposeRuleWithCalc")
+                            .as(WatermarkAssignerChangelogNormalizeTransposeRuleConfig.class)
+                            .withCalc());
 
     public static final RelOptRule WITHOUT_CALC =
-            Config.EMPTY
-                    .withDescription("WatermarkAssignerChangelogNormalizeTransposeRuleWithoutCalc")
-                    .as(Config.class)
-                    .withoutCalc()
-                    .toRule();
+            new WatermarkAssignerChangelogNormalizeTransposeRule(
+                    WatermarkAssignerChangelogNormalizeTransposeRuleConfig.DEFAULT
+                            .withDescription(
+                                    "WatermarkAssignerChangelogNormalizeTransposeRuleWithoutCalc")
+                            .as(WatermarkAssignerChangelogNormalizeTransposeRuleConfig.class)
+                            .withoutCalc());
 
-    public WatermarkAssignerChangelogNormalizeTransposeRule(Config config) {
+    public WatermarkAssignerChangelogNormalizeTransposeRule(
+            WatermarkAssignerChangelogNormalizeTransposeRuleConfig config) {
         super(config);
     }
 
@@ -369,14 +375,18 @@ public class WatermarkAssignerChangelogNormalizeTransposeRule
     }
 
     /** Rule configuration. */
-    public interface Config extends RelRule.Config {
+    @Value.Immutable(singleton = false)
+    public interface WatermarkAssignerChangelogNormalizeTransposeRuleConfig extends RelRule.Config {
+
+        WatermarkAssignerChangelogNormalizeTransposeRuleConfig DEFAULT =
+                ImmutableWatermarkAssignerChangelogNormalizeTransposeRuleConfig.builder().build();
 
         @Override
         default WatermarkAssignerChangelogNormalizeTransposeRule toRule() {
             return new WatermarkAssignerChangelogNormalizeTransposeRule(this);
         }
 
-        default Config withCalc() {
+        default WatermarkAssignerChangelogNormalizeTransposeRuleConfig withCalc() {
             return withOperandSupplier(
                             b0 ->
                                     b0.operand(StreamPhysicalWatermarkAssigner.class)
@@ -394,10 +404,10 @@ public class WatermarkAssignerChangelogNormalizeTransposeRule
                                                                                                                             StreamPhysicalExchange
                                                                                                                                     .class)
                                                                                                                     .anyInputs()))))
-                    .as(Config.class);
+                    .as(WatermarkAssignerChangelogNormalizeTransposeRuleConfig.class);
         }
 
-        default Config withoutCalc() {
+        default WatermarkAssignerChangelogNormalizeTransposeRuleConfig withoutCalc() {
             return withOperandSupplier(
                             b0 ->
                                     b0.operand(StreamPhysicalWatermarkAssigner.class)
@@ -412,7 +422,7 @@ public class WatermarkAssignerChangelogNormalizeTransposeRule
                                                                                                     StreamPhysicalExchange
                                                                                                             .class)
                                                                                             .anyInputs())))
-                    .as(Config.class);
+                    .as(WatermarkAssignerChangelogNormalizeTransposeRuleConfig.class);
         }
     }
 }

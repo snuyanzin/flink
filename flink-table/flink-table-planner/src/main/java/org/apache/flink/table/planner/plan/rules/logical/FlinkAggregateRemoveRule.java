@@ -31,6 +31,7 @@ import org.apache.calcite.runtime.SqlFunctions;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+import org.immutables.value.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,8 @@ import java.util.List;
  * functions are SUM, MIN, MAX, AUXILIARY_GROUP with no filterArgs, and the underlying relational
  * expression is already distinct.
  */
-public class FlinkAggregateRemoveRule extends RelRule {
+public class FlinkAggregateRemoveRule
+        extends RelRule<FlinkAggregateRemoveRule.FlinkAggregateRemoveRuleConfig> {
     public static final FlinkAggregateRemoveRule INSTANCE =
             new FlinkAggregateRemoveRule(LogicalAggregate.class, RelFactories.LOGICAL_BUILDER);
 
@@ -55,6 +57,10 @@ public class FlinkAggregateRemoveRule extends RelRule {
     @Deprecated // to be removed before 2.0
     public FlinkAggregateRemoveRule(Class<? extends Aggregate> aggregateClass) {
         this(aggregateClass, RelFactories.LOGICAL_BUILDER);
+    }
+
+    protected FlinkAggregateRemoveRule(FlinkAggregateRemoveRuleConfig config) {
+        super(config);
     }
 
     /** Creates an FlinkAggregateRemoveRule. */
@@ -66,13 +72,14 @@ public class FlinkAggregateRemoveRule extends RelRule {
         // about whether the child is distinct.  If we clean up the inference of
         // distinct to make it correct up-front, we can get rid of the reference
         // to the child here.
-        super(
-                RelRule.Config.EMPTY
+        this(
+                FlinkAggregateRemoveRuleConfig.DEFAULT
                         .withOperandSupplier(
                                 b0 ->
                                         b0.operand(aggregateClass)
                                                 .inputs(b1 -> b1.operand(RelNode.class).noInputs()))
-                        .withRelBuilderFactory(relBuilderFactory));
+                        .withRelBuilderFactory(relBuilderFactory)
+                        .as(FlinkAggregateRemoveRuleConfig.class));
     }
 
     @Override
@@ -125,6 +132,17 @@ public class FlinkAggregateRemoveRule extends RelRule {
         // NOT NULL due to aggregate functions are removed
         relBuilder.convert(aggregate.getRowType(), true);
         call.transformTo(relBuilder.build());
+    }
+
+    /** Config for FlinkAggregateRemoveRule. */
+    @Value.Immutable(singleton = false)
+    public interface FlinkAggregateRemoveRuleConfig extends RelRule.Config {
+        FlinkAggregateRemoveRuleConfig DEFAULT =
+                ImmutableFlinkAggregateRemoveRuleConfig.builder().build();
+
+        default FlinkAggregateRemoveRule toRule() {
+            return new FlinkAggregateRemoveRule(this);
+        }
     }
 }
 

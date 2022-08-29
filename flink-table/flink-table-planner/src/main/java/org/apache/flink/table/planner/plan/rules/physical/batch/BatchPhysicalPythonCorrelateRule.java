@@ -42,19 +42,14 @@ import scala.Some;
  */
 public class BatchPhysicalPythonCorrelateRule extends ConverterRule {
 
-    public static final Config DEFAULT_CONFIG =
-            Config.EMPTY
-                    .as(Config.class)
-                    .withConversion(
-                            FlinkLogicalCorrelate.class,
-                            FlinkConventions.LOGICAL(),
-                            FlinkConventions.BATCH_PHYSICAL(),
-                            "BatchPhysicalPythonCorrelateRule")
-                    .withRuleFactory(BatchPhysicalPythonCorrelateRule::new);
-    public static final RelOptRule INSTANCE = new BatchPhysicalPythonCorrelateRule(DEFAULT_CONFIG);
+    public static final RelOptRule INSTANCE = new BatchPhysicalPythonCorrelateRule();
 
-    private BatchPhysicalPythonCorrelateRule(Config config) {
-        super(config);
+    private BatchPhysicalPythonCorrelateRule() {
+        super(
+                FlinkLogicalCorrelate.class,
+                FlinkConventions.LOGICAL(),
+                FlinkConventions.BATCH_PHYSICAL(),
+                "BatchPhysicalPythonCorrelateRule");
     }
 
     @Override

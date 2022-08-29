@@ -23,8 +23,8 @@ import org.apache.flink.util.Preconditions;
 
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.Contexts;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Aggregate;
@@ -82,7 +82,7 @@ import java.util.TreeSet;
  * creates separate {@code Aggregate}s and combines using a {@link
  * org.apache.calcite.rel.core.Join}.
  */
-public final class FlinkAggregateExpandDistinctAggregatesRule extends RelRule {
+public final class FlinkAggregateExpandDistinctAggregatesRule extends RelOptRule {
     // ~ Static fields/initializers ---------------------------------------------
 
     /** The default instance of the rule; operates only on logical expressions. */
@@ -103,10 +103,7 @@ public final class FlinkAggregateExpandDistinctAggregatesRule extends RelRule {
             Class<? extends Aggregate> clazz,
             boolean useGroupingSets,
             RelBuilderFactory relBuilderFactory) {
-        super(
-                RelRule.Config.EMPTY
-                        .withOperandSupplier(b0 -> b0.operand(clazz).anyInputs())
-                        .withRelBuilderFactory(relBuilderFactory));
+        super(operand(clazz, any()), relBuilderFactory, null);
         this.useGroupingSets = useGroupingSets;
     }
 
