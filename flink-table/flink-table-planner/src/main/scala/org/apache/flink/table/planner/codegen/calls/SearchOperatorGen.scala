@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.codegen.calls
 
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
-import org.apache.flink.table.planner.codegen.{CodeGenException, CodeGeneratorContext, GeneratedExpression}
+import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenException, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.newNames
 import org.apache.flink.table.planner.codegen.GenerateUtils.{generateLiteral, generateNullLiteral}
 import org.apache.flink.table.planner.codegen.calls.ScalarOperatorGens._
@@ -26,10 +26,12 @@ import org.apache.flink.table.planner.functions.casting.CastRuleProvider
 import org.apache.flink.table.planner.plan.utils.RexLiteralUtil.toFlinkInternalValue
 import org.apache.flink.table.types.logical.{BooleanType, LogicalType}
 import org.apache.flink.table.types.logical.utils.LogicalTypeMerging.findCommonType
+
 import org.apache.calcite.rex.{RexLiteral, RexUnknownAs}
 import org.apache.calcite.util.{RangeSets, Sarg}
 
 import java.util.Arrays.asList
+
 import scala.collection.JavaConverters._
 
 /**

@@ -18,8 +18,6 @@
 
 package org.apache.flink.table.planner.plan.nodes.exec.serde;
 
-import org.apache.calcite.rex.RexUnknownAs;
-
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.table.api.TableException;
@@ -56,6 +54,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexPatternFieldRef;
+import org.apache.calcite.rex.RexUnknownAs;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.type.SqlTypeName;
