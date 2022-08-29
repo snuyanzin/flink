@@ -20,11 +20,9 @@ package org.apache.flink.sql.parser;
 
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.error.SqlValidateException;
-import org.apache.flink.sql.parser.impl.FlinkSqlParserImpl;
 
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.calcite.sql.parser.SqlParserImplFactory;
 import org.apache.calcite.sql.parser.SqlParserTest;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -41,11 +39,6 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 /** FlinkSqlParserImpl tests. * */
 @Execution(CONCURRENT)
 class FlinkSqlParserImplTest extends SqlParserTest {
-
-    @Override
-    protected SqlParserImplFactory parserImplFactory() {
-        return FlinkSqlParserImpl.FACTORY;
-    }
 
     @Test
     void testShowCatalogs() {
