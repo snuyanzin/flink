@@ -76,10 +76,10 @@ under the License.
 	</dependencyManagement>
 
 	<properties>
-		<calcite.version>1.29.0</calcite.version>
+		<calcite.version>1.30.0</calcite.version>
 		<!-- Keep Janino in sync with calcite. -->
 		<janino.version>3.1.6</janino.version>
-		<jsonpath.version>2.6.0</jsonpath.version>
+		<jsonpath.version>2.7.0</jsonpath.version>
 		<guava.version>29.0-jre</guava.version>
 	</properties>
 </project>

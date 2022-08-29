@@ -20,18 +20,12 @@ package org.apache.flink.sql.parser.hive;
 
 import org.apache.flink.sql.parser.hive.impl.FlinkHiveSqlParserImpl;
 
-import org.apache.calcite.sql.parser.SqlParserImplFactory;
 import org.apache.calcite.sql.parser.SqlParserTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /** Tests for {@link FlinkHiveSqlParserImpl}. */
 class FlinkHiveSqlParserImplTest extends SqlParserTest {
-
-    @Override
-    protected SqlParserImplFactory parserImplFactory() {
-        return FlinkHiveSqlParserImpl.FACTORY;
-    }
 
     // ignore test methods that we don't support
     @Disabled

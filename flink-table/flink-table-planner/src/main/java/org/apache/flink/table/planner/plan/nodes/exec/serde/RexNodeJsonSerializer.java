@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.planner.plan.nodes.exec.serde;
 
+import org.apache.calcite.rex.RexUnknownAs;
+
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.table.api.TableException;
@@ -312,7 +314,7 @@ final class RexNodeJsonSerializer extends StdSerializer<RexNode> {
             gen.writeEndObject();
         }
         gen.writeEndArray();
-        gen.writeBooleanField(FIELD_NAME_CONTAINS_NULL, value.containsNull);
+        gen.writeBooleanField(FIELD_NAME_CONTAINS_NULL, value.nullAs == RexUnknownAs.TRUE);
         gen.writeEndObject();
     }
 

@@ -28,7 +28,7 @@ import java.lang
  * basic SQL type.
  */
 class TimeIndicatorRelDataType(
-    val typeSystem: RelDataTypeSystem,
+    typeSystem: RelDataTypeSystem,
     val originalType: BasicSqlType,
     val nullable: Boolean,
     val isEventTime: Boolean)
@@ -36,6 +36,10 @@ class TimeIndicatorRelDataType(
 
   this.isNullable = nullable
   computeDigest()
+
+  def getTypeSystem: RelDataTypeSystem = {
+    typeSystem
+  }
 
   override def hashCode(): Int = {
     super.hashCode() + 42 // we change the hash code to differentiate from regular timestamps
