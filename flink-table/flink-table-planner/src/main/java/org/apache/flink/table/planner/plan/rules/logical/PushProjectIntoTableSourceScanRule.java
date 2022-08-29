@@ -51,6 +51,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.immutables.value.Value;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,12 +83,16 @@ import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTypeFacto
  */
 @Internal
 public class PushProjectIntoTableSourceScanRule
-        extends RelRule<PushProjectIntoTableSourceScanRule.Config> {
+        extends RelRule<
+                PushProjectIntoTableSourceScanRule.PushProjectIntoTableSourceScanRuleConfig> {
 
-    public static final RelOptRule INSTANCE =
-            Config.EMPTY.as(Config.class).onProjectedScan().toRule();
+    public static final RelRule INSTANCE =
+            new PushProjectIntoTableSourceScanRule(
+                    PushProjectIntoTableSourceScanRule.PushProjectIntoTableSourceScanRuleConfig
+                            .DEFAULT);
 
-    public PushProjectIntoTableSourceScanRule(Config config) {
+    public PushProjectIntoTableSourceScanRule(
+            PushProjectIntoTableSourceScanRule.PushProjectIntoTableSourceScanRuleConfig config) {
         super(config);
     }
 
@@ -410,14 +415,20 @@ public class PushProjectIntoTableSourceScanRule
     // ---------------------------------------------------------------------------------------------
 
     /** Configuration for {@link PushProjectIntoTableSourceScanRule}. */
-    public interface Config extends RelRule.Config {
+    @Value.Immutable(singleton = false)
+    public interface PushProjectIntoTableSourceScanRuleConfig extends RelRule.Config {
+        PushProjectIntoTableSourceScanRuleConfig DEFAULT =
+                ImmutablePushProjectIntoTableSourceScanRuleConfig.builder()
+                        .build()
+                        .onProjectedScan()
+                        .as(PushProjectIntoTableSourceScanRuleConfig.class);
 
         @Override
         default RelOptRule toRule() {
             return new PushProjectIntoTableSourceScanRule(this);
         }
 
-        default Config onProjectedScan() {
+        default PushProjectIntoTableSourceScanRuleConfig onProjectedScan() {
             final RelRule.OperandTransform scanTransform =
                     operandBuilder -> operandBuilder.operand(LogicalTableScan.class).noInputs();
 
@@ -425,7 +436,8 @@ public class PushProjectIntoTableSourceScanRule
                     operandBuilder ->
                             operandBuilder.operand(LogicalProject.class).oneInput(scanTransform);
 
-            return withOperandSupplier(projectTransform).as(Config.class);
+            return withOperandSupplier(projectTransform)
+                    .as(PushProjectIntoTableSourceScanRuleConfig.class);
         }
     }
 }

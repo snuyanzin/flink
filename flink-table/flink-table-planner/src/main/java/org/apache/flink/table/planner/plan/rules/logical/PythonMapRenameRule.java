@@ -21,8 +21,8 @@ package org.apache.flink.table.planner.plan.rules.logical;
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalCalc;
 import org.apache.flink.table.planner.plan.utils.PythonUtil;
 
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
 
@@ -34,31 +34,14 @@ import java.util.stream.Collectors;
  * {@link FlinkLogicalCalc} representing a Python Map operation to the output names of the map
  * function.
  */
-public class PythonMapRenameRule extends RelRule<PythonMapRenameRule.Config> {
+public class PythonMapRenameRule extends RelOptRule {
 
-    public static final PythonMapRenameRule INSTANCE = new PythonMapRenameRule(Config.DEFAULT);
+    public static final PythonMapRenameRule INSTANCE = new PythonMapRenameRule();
 
-    private PythonMapRenameRule(Config config) {
-        super(config);
-    }
-
-    /** Config for PythonMapRenameRule. */
-    public interface Config extends RelRule.Config {
-        Config DEFAULT =
-                EMPTY.withOperandSupplier(
-                                b0 ->
-                                        b0.operand(FlinkLogicalCalc.class)
-                                                .oneInput(
-                                                        b1 ->
-                                                                b1.operand(FlinkLogicalCalc.class)
-                                                                        .noInputs()))
-                        .withDescription("PythonMapRenameRule")
-                        .as(PythonMapRenameRule.Config.class);
-
-        @Override
-        default PythonMapRenameRule toRule() {
-            return new PythonMapRenameRule(this);
-        }
+    private PythonMapRenameRule() {
+        super(
+                operand(FlinkLogicalCalc.class, operand(FlinkLogicalCalc.class, none())),
+                "PythonMapRenameRule");
     }
 
     @Override

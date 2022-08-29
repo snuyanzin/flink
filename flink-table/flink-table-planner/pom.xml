@@ -52,6 +52,18 @@ under the License.
 			<groupId>org.codehaus.janino</groupId>
 			<artifactId>janino</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.immutables</groupId>
+			<artifactId>value</artifactId>
+			<version>2.8.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.immutables</groupId>
+			<artifactId>value-annotations</artifactId>
+			<version>2.8.2</version>
+			<scope>compile</scope>
+		</dependency>
 
 		<!-- Table API Java dependencies (not included in the uber) -->
 		<dependency>

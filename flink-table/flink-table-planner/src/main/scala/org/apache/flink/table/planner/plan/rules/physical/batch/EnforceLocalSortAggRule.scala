@@ -20,7 +20,8 @@ package org.apache.flink.table.planner.plan.rules.physical.batch
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalExchange, BatchPhysicalExpand, BatchPhysicalSort, BatchPhysicalSortAggregate}
 
-import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.RelOptRuleCall
 import org.apache.calcite.rel.{RelCollationTraitDef, RelNode}
 
 /**
@@ -50,8 +51,15 @@ import org.apache.calcite.rel.{RelCollationTraitDef, RelNode}
  *                                 {a=[null], b=[null], $e=[3]}])
  * }}}
  */
-class EnforceLocalSortAggRule(config: EnforceLocalSortAggRule.Config)
-  extends EnforceLocalAggRuleBase(config) {
+class EnforceLocalSortAggRule
+  extends EnforceLocalAggRuleBase(
+    operand(
+      classOf[BatchPhysicalSortAggregate],
+      operand(
+        classOf[BatchPhysicalSort],
+        operand(classOf[BatchPhysicalExchange], operand(classOf[BatchPhysicalExpand], any)))
+    ),
+    "EnforceLocalSortAggRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: BatchPhysicalSortAggregate = call.rel(0)
@@ -99,28 +107,5 @@ class EnforceLocalSortAggRule(config: EnforceLocalSortAggRule.Config)
 }
 
 object EnforceLocalSortAggRule {
-  val INSTANCE = new EnforceLocalSortAggRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[BatchPhysicalSortAggregate])
-            .oneInput(
-              (b1: RelRule.OperandBuilder) =>
-                b1.operand(classOf[BatchPhysicalSort])
-                  .oneInput(
-                    (b2: RelRule.OperandBuilder) =>
-                      b2.operand(classOf[BatchPhysicalExchange])
-                        .oneInput(
-                          (b3: RelRule.OperandBuilder) =>
-                            b3.operand(classOf[BatchPhysicalExpand])
-                              .anyInputs()))))
-      .withDescription("EnforceLocalSortAggRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new EnforceLocalSortAggRule(this)
-  }
+  val INSTANCE = new EnforceLocalSortAggRule
 }

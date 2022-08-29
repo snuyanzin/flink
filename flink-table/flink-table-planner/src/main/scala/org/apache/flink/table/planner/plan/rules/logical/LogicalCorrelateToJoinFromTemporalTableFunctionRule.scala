@@ -24,7 +24,6 @@ import org.apache.flink.table.operations.QueryOperation
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction
 import org.apache.flink.table.planner.functions.utils.TableSqlFunction
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeContext
-import org.apache.flink.table.planner.plan.rules.logical.LogicalCorrelateToJoinFromTemporalTableFunctionRule.Config
 import org.apache.flink.table.planner.plan.utils.{ExpandTableScanShuttle, RexDefaultVisitor}
 import org.apache.flink.table.planner.plan.utils.TemporalJoinUtil.{makeProcTimeTemporalFunctionJoinConCall, makeRowTimeTemporalFunctionJoinConCall}
 import org.apache.flink.table.planner.utils.ShortcutUtils
@@ -32,7 +31,8 @@ import org.apache.flink.table.types.logical.LogicalTypeRoot.{TIMESTAMP_WITH_LOCA
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks.isProctimeAttribute
 import org.apache.flink.util.Preconditions.checkState
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.RelOptRule.{any, none, operand, some}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.{JoinRelType, TableFunctionScan}
 import org.apache.calcite.rel.logical.LogicalCorrelate
@@ -43,8 +43,12 @@ import org.apache.calcite.rex._
  * correlate. Rewrite it into a Join with a special temporal join condition wraps time attribute and
  * primary key information. The join will be translated into [[StreamExecTemporalJoin]] in physical.
  */
-class LogicalCorrelateToJoinFromTemporalTableFunctionRule(config: Config)
-  extends RelRule[Config](config) {
+class LogicalCorrelateToJoinFromTemporalTableFunctionRule
+  extends RelOptRule(
+    operand(
+      classOf[LogicalCorrelate],
+      some(operand(classOf[RelNode], any()), operand(classOf[TableFunctionScan], none()))),
+    "LogicalCorrelateToJoinFromTemporalTableFunctionRule") {
 
   private def extractNameFromTimeAttribute(timeAttribute: Expression): String = {
     timeAttribute match {
@@ -154,23 +158,7 @@ class LogicalCorrelateToJoinFromTemporalTableFunctionRule(config: Config)
 }
 
 object LogicalCorrelateToJoinFromTemporalTableFunctionRule {
-  val INSTANCE: RelOptRule = new LogicalCorrelateToJoinFromTemporalTableFunctionRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[LogicalCorrelate])
-            .inputs(
-              (b1: RelRule.OperandBuilder) => b1.operand(classOf[RelNode]).anyInputs(),
-              (b2: RelRule.OperandBuilder) => b2.operand(classOf[TableFunctionScan]).noInputs()))
-      .withDescription("LogicalCorrelateToJoinFromTemporalTableFunctionRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new LogicalCorrelateToJoinFromTemporalTableFunctionRule(this)
-  }
+  val INSTANCE: RelOptRule = new LogicalCorrelateToJoinFromTemporalTableFunctionRule
 }
 
 /**

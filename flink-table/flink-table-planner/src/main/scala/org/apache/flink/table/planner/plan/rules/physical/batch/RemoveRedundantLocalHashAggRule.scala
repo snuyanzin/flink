@@ -19,16 +19,23 @@ package org.apache.flink.table.planner.plan.rules.physical.batch
 
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalHashAggregate, BatchPhysicalLocalHashAggregate}
-import org.apache.flink.table.planner.plan.rules.physical.batch.RemoveRedundantLocalHashAggRule.Config
 
-import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.RelOptRule._
 import org.apache.calcite.rel.RelNode
 
 /**
  * There maybe exist a subTree like localHashAggregate -> globalHashAggregate which the middle
  * shuffle is removed. The rule could remove redundant localHashAggregate node.
  */
-class RemoveRedundantLocalHashAggRule(config: Config) extends RelRule[Config](config) {
+class RemoveRedundantLocalHashAggRule
+  extends RelOptRule(
+    operand(
+      classOf[BatchPhysicalHashAggregate],
+      operand(
+        classOf[BatchPhysicalLocalHashAggregate],
+        operand(classOf[RelNode], FlinkConventions.BATCH_PHYSICAL, any))),
+    "RemoveRedundantLocalHashAggRule") {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val globalAgg: BatchPhysicalHashAggregate = call.rel(0)
@@ -52,26 +59,5 @@ class RemoveRedundantLocalHashAggRule(config: Config) extends RelRule[Config](co
 }
 
 object RemoveRedundantLocalHashAggRule {
-  val INSTANCE = new RemoveRedundantLocalHashAggRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[BatchPhysicalHashAggregate])
-            .oneInput(
-              (b1: RelRule.OperandBuilder) =>
-                b1.operand(classOf[BatchPhysicalLocalHashAggregate])
-                  .oneInput(
-                    (b2: RelRule.OperandBuilder) =>
-                      b2.operand(classOf[RelNode])
-                        .`trait`(FlinkConventions.BATCH_PHYSICAL)
-                        .anyInputs)))
-      .withDescription("RemoveRedundantLocalHashAggRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new RemoveRedundantLocalHashAggRule(this)
-  }
+  val INSTANCE = new RemoveRedundantLocalHashAggRule
 }

@@ -39,6 +39,7 @@ import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.mapping.MappingType;
 import org.apache.calcite.util.mapping.Mappings;
 import org.apache.calcite.util.mapping.Mappings.TargetMapping;
+import org.immutables.value.Value;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,16 +64,16 @@ import static org.apache.flink.table.functions.BuiltInFunctionDefinitions.JSON_S
  */
 @Internal
 public class WrapJsonAggFunctionArgumentsRule
-        extends RelRule<WrapJsonAggFunctionArgumentsRule.Config> {
+        extends RelRule<WrapJsonAggFunctionArgumentsRule.WrapJsonAggFunctionArgumentsRuleConfig> {
 
     public static final RelOptRule INSTANCE =
-            Config.EMPTY.as(Config.class).onJsonAggregateFunctions().toRule();
+            new WrapJsonAggFunctionArgumentsRule(WrapJsonAggFunctionArgumentsRuleConfig.DEFAULT);
 
     /** Marker hint that a call has already been transformed. */
     private static final RelHint MARKER_HINT =
             RelHint.builder(FlinkHints.HINT_NAME_JSON_AGGREGATE_WRAPPED).build();
 
-    public WrapJsonAggFunctionArgumentsRule(Config config) {
+    public WrapJsonAggFunctionArgumentsRule(WrapJsonAggFunctionArgumentsRuleConfig config) {
         super(config);
     }
 
@@ -165,14 +166,20 @@ public class WrapJsonAggFunctionArgumentsRule
     // ---------------------------------------------------------------------------------------------
 
     /** Configuration for {@link WrapJsonAggFunctionArgumentsRule}. */
-    public interface Config extends RelRule.Config {
+    @Value.Immutable(singleton = false)
+    public interface WrapJsonAggFunctionArgumentsRuleConfig extends RelRule.Config {
+        WrapJsonAggFunctionArgumentsRuleConfig DEFAULT =
+                ImmutableWrapJsonAggFunctionArgumentsRuleConfig.builder()
+                        .build()
+                        .as(WrapJsonAggFunctionArgumentsRuleConfig.class)
+                        .onJsonAggregateFunctions();
 
         @Override
         default RelOptRule toRule() {
             return new WrapJsonAggFunctionArgumentsRule(this);
         }
 
-        default Config onJsonAggregateFunctions() {
+        default WrapJsonAggFunctionArgumentsRuleConfig onJsonAggregateFunctions() {
             final Predicate<LogicalAggregate> jsonAggPredicate =
                     aggregate ->
                             aggregate.getAggCallList().stream()
@@ -185,7 +192,8 @@ public class WrapJsonAggFunctionArgumentsRule
                                     .predicate(jsonAggPredicate)
                                     .anyInputs();
 
-            return withOperandSupplier(aggTransform).as(Config.class);
+            return withOperandSupplier(aggTransform)
+                    .as(WrapJsonAggFunctionArgumentsRuleConfig.class);
         }
     }
 }

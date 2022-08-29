@@ -42,19 +42,14 @@ import scala.Some;
  */
 public class StreamPhysicalPythonCorrelateRule extends ConverterRule {
 
-    public static final Config DEFAULT_CONFIG =
-            Config.EMPTY
-                    .as(Config.class)
-                    .withConversion(
-                            FlinkLogicalCorrelate.class,
-                            FlinkConventions.LOGICAL(),
-                            FlinkConventions.BATCH_PHYSICAL(),
-                            "StreamPhysicalPythonCorrelateRule")
-                    .withRuleFactory(StreamPhysicalPythonCorrelateRule::new);
-    public static final RelOptRule INSTANCE = new StreamPhysicalPythonCorrelateRule(DEFAULT_CONFIG);
+    public static final RelOptRule INSTANCE = new StreamPhysicalPythonCorrelateRule();
 
-    private StreamPhysicalPythonCorrelateRule(Config config) {
-        super(config);
+    private StreamPhysicalPythonCorrelateRule() {
+        super(
+                FlinkLogicalCorrelate.class,
+                FlinkConventions.LOGICAL(),
+                FlinkConventions.STREAM_PHYSICAL(),
+                "StreamPhysicalPythonCorrelateRule");
     }
 
     // find only calc and table function
