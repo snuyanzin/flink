@@ -554,4 +554,36 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
         String expected = "EXPLAIN UPSERT INTO `EMPS1`\n" + "VALUES (ROW(1, 2))";
         this.sql(sql).ok(expected);
     }
+
+    /**
+     * Here we override the super method to avoid test error from `ARRAY_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testArrayAgg() {}
+
+    /**
+     * Here we override the super method to avoid test error from `GROUP CONCAT` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testGroupConcat() {}
+
+    /**
+     * Here we override the super method to avoid test error from `STRING_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testStringAgg() {}
+
+    /**
+     * Here we override the super method to avoid test error from `EXPLAIN AS DOT` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testExplainAsDot() {}
 }
