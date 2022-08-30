@@ -1950,6 +1950,38 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                                         "CREATE TABLE AS SELECT syntax does not support to create partitioned table yet."));
     }
 
+    /**
+     * Here we override the super method to avoid test error from `ARRAY_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testArrayAgg() {}
+
+    /**
+     * Here we override the super method to avoid test error from `GROUP CONCAT` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testGroupConcat() {}
+
+    /**
+     * Here we override the super method to avoid test error from `STRING_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testStringAgg() {}
+
+    /**
+     * Here we override the super method to avoid test error from `EXPLAIN AS DOT` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testExplainAsDot() {}
+
     public static BaseMatcher<SqlNode> validated(String validatedSql) {
         return new TypeSafeDiagnosingMatcher<SqlNode>() {
             @Override
