@@ -46,7 +46,7 @@ import org.apache.flink.types.Row
 
 import org.apache.calcite.plan.hep.{HepPlanner, HepProgramBuilder}
 import org.apache.calcite.rel.RelNode
-import org.apache.calcite.rel.logical.LogicalCalc
+import org.apache.calcite.rel.logical.{LogicalCalc, LogicalValues}
 import org.apache.calcite.rel.rules._
 import org.apache.calcite.rex.RexNode
 import org.apache.calcite.sql.`type`.SqlTypeName.VARCHAR
@@ -314,6 +314,7 @@ abstract class ExpressionTestBase {
     hep.setRoot(relNode)
     val optimized = hep.findBestExp()
 
+    if (optimized.getInputs.isEmpty && optimized.isInstanceOf[LogicalValues]) return
     // throw exception if plan contains more than a calc
     if (!optimized.getInput(0).getInputs.isEmpty) {
       fail("Expression is converted into more than a Calc operation. Use a different test method.")
