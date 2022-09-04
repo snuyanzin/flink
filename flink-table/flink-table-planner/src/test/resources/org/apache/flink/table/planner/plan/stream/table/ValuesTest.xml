@@ -58,14 +58,12 @@ Union(all=[true], union=[f0])
     <Resource name="ast">
       <![CDATA[
 LogicalUnion(all=[true])
-:- LogicalProject(f0=[1:DOUBLE], f1=[_UTF-16LE'ABC':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[null:INTEGER])
-:  +- LogicalValues(tuples=[[{ 0 }]])
+:- LogicalValues(tuples=[[{ 1, _UTF-16LE'ABC', null }]])
 :- LogicalProject(f0=[3.141592653589793E0:DOUBLE], f1=[_UTF-16LE'ABC':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[CAST(1):INTEGER])
 :  +- LogicalValues(tuples=[[{ 0 }]])
 :- LogicalProject(f0=[3.1E0:DOUBLE], f1=[_UTF-16LE'DEF':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[CAST(2):INTEGER])
 :  +- LogicalValues(tuples=[[{ 0 }]])
-:- LogicalProject(f0=[99:DOUBLE], f1=[_UTF-16LE'DEFG':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[null:INTEGER])
-:  +- LogicalValues(tuples=[[{ 0 }]])
+:- LogicalValues(tuples=[[{ 99, _UTF-16LE'DEFG', null }]])
 +- LogicalProject(f0=[0E-1:DOUBLE], f1=[_UTF-16LE'D':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[CAST(4):INTEGER])
    +- LogicalValues(tuples=[[{ 0 }]])
 ]]>
@@ -73,14 +71,12 @@ LogicalUnion(all=[true])
     <Resource name="optimized exec plan">
       <![CDATA[
 Union(all=[true], union=[f0, f1, f2])
-:- Calc(select=[1 AS f0, 'ABC' AS f1, null:INTEGER AS f2])
-:  +- Values(tuples=[[{ 0 }]])(reuse_id=[1])
+:- Values(tuples=[[{ 1, _UTF-16LE'ABC', null }]])
 :- Calc(select=[3.141592653589793E0 AS f0, 'ABC' AS f1, CAST(1 AS INTEGER) AS f2])
-:  +- Reused(reference_id=[1])
+:  +- Values(tuples=[[{ 0 }]])(reuse_id=[1])
 :- Calc(select=[3.1E0 AS f0, 'DEF' AS f1, CAST(2 AS INTEGER) AS f2])
 :  +- Reused(reference_id=[1])
-:- Calc(select=[99 AS f0, 'DEFG' AS f1, null:INTEGER AS f2])
-:  +- Reused(reference_id=[1])
+:- Values(tuples=[[{ 99, _UTF-16LE'DEFG', null }]])
 +- Calc(select=[0E-1 AS f0, 'D' AS f1, CAST(4 AS INTEGER) AS f2])
    +- Reused(reference_id=[1])
 ]]>
@@ -120,8 +116,7 @@ LogicalUnion(all=[true])
 :  +- LogicalValues(tuples=[[{ 0 }]])
 :- LogicalProject(f0=[99:DOUBLE], f1=[_UTF-16LE'DEFG':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[MAP(_UTF-16LE'a':VARCHAR(4) CHARACTER SET "UTF-16LE", 1:DOUBLE)])
 :  +- LogicalValues(tuples=[[{ 0 }]])
-+- LogicalProject(f0=[0E-1:DOUBLE], f1=[_UTF-16LE'D':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[null:(VARCHAR(4) CHARACTER SET "UTF-16LE", DOUBLE) MAP])
-   +- LogicalValues(tuples=[[{ 0 }]])
++- LogicalValues(tuples=[[{ 0E-1, _UTF-16LE'D', null }]])
 ]]>
     </Resource>
     <Resource name="optimized exec plan">
@@ -137,8 +132,7 @@ Union(all=[true], union=[f0, f1, f2])
 :  +- Reused(reference_id=[1])
 :- Calc(select=[99 AS f0, 'DEFG' AS f1, MAP('a', 1) AS f2])
 :  +- Reused(reference_id=[1])
-+- Calc(select=[0E-1 AS f0, 'D' AS f1, null:(VARCHAR(4), DOUBLE) MAP AS f2])
-   +- Reused(reference_id=[1])
++- Values(tuples=[[{ 0E-1, _UTF-16LE'D', null }]])
 ]]>
     </Resource>
   </TestCase>
@@ -146,8 +140,7 @@ Union(all=[true], union=[f0, f1, f2])
     <Resource name="ast">
       <![CDATA[
 LogicalUnion(all=[true])
-:- LogicalProject(f0=[1:DOUBLE], f1=[_UTF-16LE'ABC':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[null:INTEGER])
-:  +- LogicalValues(tuples=[[{ 0 }]])
+:- LogicalValues(tuples=[[{ 1, _UTF-16LE'ABC', null }]])
 :- LogicalProject(f0=[3.141592653589793E0:DOUBLE], f1=[_UTF-16LE'ABC':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[CAST(1):INTEGER])
 :  +- LogicalValues(tuples=[[{ 0 }]])
 :- LogicalProject(f0=[3.1E0:DOUBLE], f1=[_UTF-16LE'DEF':VARCHAR(4) CHARACTER SET "UTF-16LE"], f2=[CAST(2):INTEGER])
@@ -161,10 +154,9 @@ LogicalUnion(all=[true])
     <Resource name="optimized exec plan">
       <![CDATA[
 Union(all=[true], union=[f0, f1, f2])
-:- Calc(select=[1 AS f0, 'ABC' AS f1, null:INTEGER AS f2])
-:  +- Values(tuples=[[{ 0 }]])(reuse_id=[1])
+:- Values(tuples=[[{ 1, _UTF-16LE'ABC', null }]])
 :- Calc(select=[3.141592653589793E0 AS f0, 'ABC' AS f1, CAST(1 AS INTEGER) AS f2])
-:  +- Reused(reference_id=[1])
+:  +- Values(tuples=[[{ 0 }]])(reuse_id=[1])
 :- Calc(select=[3.1E0 AS f0, 'DEF' AS f1, CAST(2 AS INTEGER) AS f2])
 :  +- Reused(reference_id=[1])
 :- Calc(select=[99 AS f0, 'DEFG' AS f1, CAST(3 AS INTEGER) AS f2])
@@ -197,32 +189,12 @@ Union(all=[true], union=[a, b])
   <TestCase name="testValuesFromRowObjectInCollection">
     <Resource name="ast">
       <![CDATA[
-LogicalUnion(all=[true])
-:- LogicalProject(a=[1:DECIMAL(10, 2)], b=[_UTF-16LE'ABC '])
-:  +- LogicalValues(tuples=[[{ 0 }]])
-:- LogicalProject(a=[3.141592653589793E0:DECIMAL(10, 2)], b=[_UTF-16LE'ABC '])
-:  +- LogicalValues(tuples=[[{ 0 }]])
-:- LogicalProject(a=[3.1E0:DECIMAL(10, 2)], b=[_UTF-16LE'DEF '])
-:  +- LogicalValues(tuples=[[{ 0 }]])
-:- LogicalProject(a=[99:DECIMAL(10, 2)], b=[_UTF-16LE'DEFG'])
-:  +- LogicalValues(tuples=[[{ 0 }]])
-+- LogicalProject(a=[0E-1:DECIMAL(10, 2)], b=[_UTF-16LE'D   '])
-   +- LogicalValues(tuples=[[{ 0 }]])
+LogicalValues(tuples=[[{ 1, _UTF-16LE'ABC ' }, { 3.141592653589793E0, _UTF-16LE'ABC ' }, { 3.1E0, _UTF-16LE'DEF ' }, { 99, _UTF-16LE'DEFG' }, { 0E-1, _UTF-16LE'D   ' }]])
 ]]>
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Union(all=[true], union=[a, b])
-:- Calc(select=[1 AS a, 'ABC ' AS b])
-:  +- Values(tuples=[[{ 0 }]])(reuse_id=[1])
-:- Calc(select=[3.141592653589793E0 AS a, 'ABC ' AS b])
-:  +- Reused(reference_id=[1])
-:- Calc(select=[3.1E0 AS a, 'DEF ' AS b])
-:  +- Reused(reference_id=[1])
-:- Calc(select=[99 AS a, 'DEFG' AS b])
-:  +- Reused(reference_id=[1])
-+- Calc(select=[0E-1 AS a, 'D   ' AS b])
-   +- Reused(reference_id=[1])
+Values(tuples=[[{ 1, _UTF-16LE'ABC ' }, { 3.141592653589793E0, _UTF-16LE'ABC ' }, { 3.1E0, _UTF-16LE'DEF ' }, { 99, _UTF-16LE'DEFG' }, { 0E-1, _UTF-16LE'D   ' }]])
 ]]>
     </Resource>
   </TestCase>
