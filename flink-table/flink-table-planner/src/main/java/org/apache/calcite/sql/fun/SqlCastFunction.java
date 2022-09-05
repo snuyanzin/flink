@@ -17,6 +17,9 @@
  */
 package org.apache.calcite.sql.fun;
 
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
+
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
 import org.apache.calcite.rel.type.RelDataType;
@@ -37,6 +40,7 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.type.InferTypes;
 import org.apache.calcite.sql.type.SqlOperandCountRanges;
 import org.apache.calcite.sql.type.SqlTypeFamily;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
@@ -134,7 +138,7 @@ public class SqlCastFunction extends SqlFunction {
         }
         RelDataType validatedNodeType = callBinding.getValidator().getValidatedNodeType(left);
         RelDataType returnType = SqlTypeUtil.deriveType(callBinding, right);
-        if (!SqlTypeUtil.canCastFrom(returnType, validatedNodeType, true)) {
+        if (!canCastFrom(returnType, validatedNodeType)) {
             if (throwOnFailure) {
                 throw callBinding.newError(
                         RESOURCE.cannotCastValue(
@@ -154,6 +158,26 @@ public class SqlCastFunction extends SqlFunction {
             return false;
         }
         return true;
+    }
+
+    private boolean canCastFrom(RelDataType toType, RelDataType fromType) {
+        SqlTypeName fromTypeName = fromType.getSqlTypeName();
+        switch (fromTypeName) {
+            case ARRAY:
+            case MAP:
+            case MULTISET:
+            case STRUCTURED:
+            case ROW:
+            case OTHER:
+                // We use our casting checker logic only for these types,
+                //  as the differences with calcite casting checker logic generates issues
+                //  later in the calcite stack.
+                return LogicalTypeCasts.supportsExplicitCast(
+                        FlinkTypeFactory.toLogicalType(fromType),
+                        FlinkTypeFactory.toLogicalType(toType));
+            default:
+                return SqlTypeUtil.canCastFrom(toType, fromType, true);
+        }
     }
 
     @Override
