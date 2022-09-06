@@ -17,11 +17,11 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.flink.table.planner.plan.rules.logical.ReplaceIntersectWithSemiJoinRule.Config
 import org.apache.flink.table.planner.plan.utils.SetOpRewriteUtil.generateEqualsCondition
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
-import org.apache.calcite.rel.core._
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.rel.core.{Aggregate, Intersect, Join, JoinRelType, RelFactories}
 
 import scala.collection.JavaConversions._
 
@@ -31,7 +31,11 @@ import scala.collection.JavaConversions._
  *
  * Only handle the case of input size 2.
  */
-class ReplaceIntersectWithSemiJoinRule(config: Config) extends RelRule[Config](config) {
+class ReplaceIntersectWithSemiJoinRule
+  extends RelOptRule(
+    operand(classOf[Intersect], any),
+    RelFactories.LOGICAL_BUILDER,
+    "ReplaceIntersectWithSemiJoinRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val intersect: Intersect = call.rel(0)
@@ -56,17 +60,5 @@ class ReplaceIntersectWithSemiJoinRule(config: Config) extends RelRule[Config](c
 }
 
 object ReplaceIntersectWithSemiJoinRule {
-  val INSTANCE: RelOptRule = new ReplaceIntersectWithSemiJoinRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Intersect]).anyInputs)
-      .withDescription("ReplaceIntersectWithSemiJoinRule")
-      .withRelBuilderFactory(RelFactories.LOGICAL_BUILDER)
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new ReplaceIntersectWithSemiJoinRule(this)
-  }
+  val INSTANCE: RelOptRule = new ReplaceIntersectWithSemiJoinRule
 }

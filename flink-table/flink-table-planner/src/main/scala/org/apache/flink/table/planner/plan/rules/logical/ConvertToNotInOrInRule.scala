@@ -18,14 +18,14 @@
 package org.apache.flink.table.planner.plan.rules.logical
 
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
-import org.apache.flink.table.planner.plan.rules.logical.ConvertToNotInOrInRule.Config
 import org.apache.flink.table.types.logical.LogicalTypeRoot
 
-import org.apache.calcite.plan.{RelOptRuleCall, RelOptUtil, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
+import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.core.Filter
 import org.apache.calcite.rex.{RexCall, RexLiteral, RexNode}
 import org.apache.calcite.sql.SqlBinaryOperator
-import org.apache.calcite.sql.fun.SqlStdOperatorTable._
+import org.apache.calcite.sql.fun.SqlStdOperatorTable.{AND, EQUALS, IN, NOT, NOT_EQUALS, NOT_IN, OR}
 import org.apache.calcite.tools.RelBuilder
 
 import scala.collection.JavaConversions._
@@ -39,7 +39,9 @@ import scala.collection.mutable
  *      4) AND y = 5. 2. convert predicate: (x <> 1 AND x <> 2 AND x <> 3 AND x <> 4) AND y = 5 to
  *      predicate: x NOT IN (1, 2, 3, 4) AND y = 5.
  */
-class ConvertToNotInOrInRule(config: Config) extends RelRule[Config](config) {
+class ConvertToNotInOrInRule
+  extends RelOptRule(operand(classOf[Filter], any), "ConvertToNotInOrInRule") {
+
   // these threshold values are set by OptimizableHashSet benchmark test on different type.
   // threshold for non-float and non-double type
   private val THRESHOLD: Int = 4
@@ -186,16 +188,5 @@ class ConvertToNotInOrInRule(config: Config) extends RelRule[Config](config) {
 }
 
 object ConvertToNotInOrInRule {
-  val INSTANCE = new ConvertToNotInOrInRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Filter]).anyInputs)
-      .withDescription("ConvertToNotInOrInRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new ConvertToNotInOrInRule(this)
-  }
+  val INSTANCE = new ConvertToNotInOrInRule
 }

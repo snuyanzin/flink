@@ -24,13 +24,13 @@ import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.stream._
 import org.apache.flink.table.planner.plan.rules.physical.FlinkExpandConversionRule._
-import org.apache.flink.table.planner.plan.rules.physical.stream.TwoStageOptimizedAggregateRule.Config
 import org.apache.flink.table.planner.plan.utils.{AggregateUtil, ChangelogPlanUtils}
 import org.apache.flink.table.planner.utils.AggregatePhaseStrategy
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
 import org.apache.flink.table.planner.utils.TableConfigUtils.getAggPhaseStrategy
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
+import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.RelNode
 
 import java.util
@@ -50,7 +50,12 @@ import java.util
  *         +- input of exchange
  * }}}
  */
-class TwoStageOptimizedAggregateRule(config: Config) extends RelRule[Config](config) {
+class TwoStageOptimizedAggregateRule
+  extends RelOptRule(
+    operand(
+      classOf[StreamPhysicalGroupAggregate],
+      operand(classOf[StreamPhysicalExchange], operand(classOf[RelNode], any))),
+    "TwoStageOptimizedAggregateRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val tableConfig = unwrapTableConfig(call)
@@ -151,23 +156,5 @@ class TwoStageOptimizedAggregateRule(config: Config) extends RelRule[Config](con
 }
 
 object TwoStageOptimizedAggregateRule {
-  val INSTANCE: RelOptRule = new TwoStageOptimizedAggregateRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[StreamPhysicalGroupAggregate])
-            .oneInput(
-              (b1: RelRule.OperandBuilder) =>
-                b1.operand(classOf[StreamPhysicalExchange])
-                  .oneInput(
-                    (b2: RelRule.OperandBuilder) => b2.operand(classOf[RelNode]).anyInputs())))
-      .withDescription("TwoStageOptimizedAggregateRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new TwoStageOptimizedAggregateRule(this)
-  }
+  val INSTANCE: RelOptRule = new TwoStageOptimizedAggregateRule
 }

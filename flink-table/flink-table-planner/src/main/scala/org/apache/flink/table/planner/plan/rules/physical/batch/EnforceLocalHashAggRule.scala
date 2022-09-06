@@ -19,7 +19,8 @@ package org.apache.flink.table.planner.plan.rules.physical.batch
 
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalExchange, BatchPhysicalExpand, BatchPhysicalHashAggregate}
 
-import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.RelOptRuleCall
 
 /**
  * An [[EnforceLocalAggRuleBase]] that matches [[BatchPhysicalHashAggregate]]
@@ -45,8 +46,12 @@ import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
  *                           {a=[null], b=[null], $e=[3]}])
  * }}}
  */
-class EnforceLocalHashAggRule(config: EnforceLocalHashAggRule.Config)
-  extends EnforceLocalAggRuleBase(config) {
+class EnforceLocalHashAggRule
+  extends EnforceLocalAggRuleBase(
+    operand(
+      classOf[BatchPhysicalHashAggregate],
+      operand(classOf[BatchPhysicalExchange], operand(classOf[BatchPhysicalExpand], any))),
+    "EnforceLocalHashAggRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: BatchPhysicalHashAggregate = call.rel(0)
@@ -73,25 +78,5 @@ class EnforceLocalHashAggRule(config: EnforceLocalHashAggRule.Config)
 }
 
 object EnforceLocalHashAggRule {
-  val INSTANCE = new EnforceLocalHashAggRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[BatchPhysicalHashAggregate])
-            .oneInput(
-              (b1: RelRule.OperandBuilder) =>
-                b1.operand(classOf[BatchPhysicalExchange])
-                  .oneInput(
-                    (b2: RelRule.OperandBuilder) =>
-                      b2.operand(classOf[BatchPhysicalExpand])
-                        .anyInputs())))
-      .withDescription("EnforceLocalHashAggRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new EnforceLocalHashAggRule(this)
-  }
+  val INSTANCE = new EnforceLocalHashAggRule
 }

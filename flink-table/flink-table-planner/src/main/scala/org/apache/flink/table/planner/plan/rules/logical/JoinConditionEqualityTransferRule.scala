@@ -17,10 +17,9 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.flink.table.planner.plan.rules.logical.JoinConditionEqualityTransferRule.Config
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
 import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.core.{Join, JoinRelType}
 import org.apache.calcite.rex.{RexBuilder, RexCall, RexInputRef, RexNode}
@@ -38,7 +37,8 @@ import scala.collection.mutable
  * r_c are fields from the right input. After rewrite, condition will be: l_a = r_b and r_b = r_c.
  * r_b = r_c can be pushed down to the right input.
  */
-class JoinConditionEqualityTransferRule(config: Config) extends RelRule[Config](config) {
+class JoinConditionEqualityTransferRule
+  extends RelOptRule(operand(classOf[Join], any), "JoinConditionEqualityTransferRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join: Join = call.rel(0)
@@ -162,16 +162,5 @@ class JoinConditionEqualityTransferRule(config: Config) extends RelRule[Config](
 }
 
 object JoinConditionEqualityTransferRule {
-  val INSTANCE = new JoinConditionEqualityTransferRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier((b0: RelRule.OperandBuilder) => b0.operand(classOf[Join]).anyInputs)
-      .withDescription("JoinConditionEqualityTransferRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new JoinConditionEqualityTransferRule(this)
-  }
+  val INSTANCE = new JoinConditionEqualityTransferRule
 }

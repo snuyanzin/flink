@@ -22,11 +22,10 @@ import org.apache.flink.table.planner.plan.logical.TimeAttributeWindowingStrateg
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.stream.{StreamPhysicalCalc, StreamPhysicalExchange, StreamPhysicalWindowAggregate, StreamPhysicalWindowTableFunction}
-import org.apache.flink.table.planner.plan.rules.physical.stream.PullUpWindowTableFunctionIntoWindowAggregateRule.Config
 import org.apache.flink.table.planner.plan.utils.WindowUtil
 import org.apache.flink.table.planner.plan.utils.WindowUtil.buildNewProgramWithoutWindowColumns
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.{RelCollations, RelNode}
 import org.apache.calcite.util.ImmutableBitSet
@@ -37,8 +36,18 @@ import scala.collection.JavaConversions._
  * Planner rule that tries to pull up [[StreamPhysicalWindowTableFunction]] into a
  * [[StreamPhysicalWindowAggregate]].
  */
-class PullUpWindowTableFunctionIntoWindowAggregateRule(config: Config)
-  extends RelRule[Config](config) {
+class PullUpWindowTableFunctionIntoWindowAggregateRule
+  extends RelOptRule(
+    operand(
+      classOf[StreamPhysicalWindowAggregate],
+      operand(
+        classOf[StreamPhysicalExchange],
+        operand(
+          classOf[StreamPhysicalCalc],
+          operand(classOf[StreamPhysicalWindowTableFunction], any())))
+    ),
+    "PullUpWindowTableFunctionIntoWindowAggregateRule") {
+
   override def matches(call: RelOptRuleCall): Boolean = {
     val windowAgg: StreamPhysicalWindowAggregate = call.rel(0)
     val calc: StreamPhysicalCalc = call.rel(2)
@@ -140,27 +149,5 @@ class PullUpWindowTableFunctionIntoWindowAggregateRule(config: Config)
 }
 
 object PullUpWindowTableFunctionIntoWindowAggregateRule {
-  val INSTANCE = new PullUpWindowTableFunctionIntoWindowAggregateRule(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) =>
-          b0.operand(classOf[StreamPhysicalWindowAggregate])
-            .oneInput(
-              (b1: RelRule.OperandBuilder) =>
-                b1.operand(classOf[StreamPhysicalExchange])
-                  .oneInput(
-                    (b2: RelRule.OperandBuilder) =>
-                      b2.operand(classOf[StreamPhysicalCalc])
-                        .oneInput(
-                          (b3: RelRule.OperandBuilder) =>
-                            b3.operand(classOf[StreamPhysicalWindowTableFunction]).anyInputs()))))
-      .withDescription("PullUpWindowTableFunctionIntoWindowAggregateRule")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new PullUpWindowTableFunctionIntoWindowAggregateRule(this)
-  }
+  val INSTANCE = new PullUpWindowTableFunctionIntoWindowAggregateRule
 }

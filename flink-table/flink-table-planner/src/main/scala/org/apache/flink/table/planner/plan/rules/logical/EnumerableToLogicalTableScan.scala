@@ -17,10 +17,9 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.flink.table.planner.plan.rules.logical.EnumerableToLogicalTableScan.Config
-
 import org.apache.calcite.adapter.enumerable.EnumerableTableScan
-import org.apache.calcite.plan.{RelOptRuleCall, RelRule}
+import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptRuleOperand}
+import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.logical.LogicalTableScan
 
 /**
@@ -29,7 +28,8 @@ import org.apache.calcite.rel.logical.LogicalTableScan
  * LogicalTableScan so we can merge the optimization process with any plan that might be created by
  * the Table API.
  */
-class EnumerableToLogicalTableScan(config: Config) extends RelRule[Config](config) {
+class EnumerableToLogicalTableScan(operand: RelOptRuleOperand, description: String)
+  extends RelOptRule(operand, description) {
 
   override def onMatch(call: RelOptRuleCall): Unit = {
     val oldRel = call.rel(0).asInstanceOf[EnumerableTableScan]
@@ -40,17 +40,7 @@ class EnumerableToLogicalTableScan(config: Config) extends RelRule[Config](confi
 }
 
 object EnumerableToLogicalTableScan {
-  val INSTANCE = new EnumerableToLogicalTableScan(Config.DEFAULT)
-
-  object Config {
-    val DEFAULT: Config = RelRule.Config.EMPTY
-      .withOperandSupplier(
-        (b0: RelRule.OperandBuilder) => b0.operand(classOf[EnumerableTableScan]).anyInputs)
-      .withDescription("EnumerableToLogicalTableScan")
-      .as(classOf[Config])
-  }
-
-  trait Config extends RelRule.Config {
-    override def toRule = new EnumerableToLogicalTableScan(this)
-  }
+  val INSTANCE = new EnumerableToLogicalTableScan(
+    operand(classOf[EnumerableTableScan], any),
+    "EnumerableToLogicalTableScan")
 }
