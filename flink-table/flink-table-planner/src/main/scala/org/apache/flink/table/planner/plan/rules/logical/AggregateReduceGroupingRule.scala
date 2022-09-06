@@ -43,7 +43,7 @@ class AggregateReduceGroupingRule(relBuilderFactory: RelBuilderFactory)
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: Aggregate = call.rel(0)
-    agg.getGroupCount > 1 && agg.getGroupType == Group.SIMPLE && !agg.indicator
+    agg.getGroupCount > 1 && agg.getGroupType == Group.SIMPLE
   }
 
   override def onMatch(call: RelOptRuleCall): Unit = {
@@ -102,7 +102,6 @@ class AggregateReduceGroupingRule(relBuilderFactory: RelBuilderFactory)
     val newAgg = agg.copy(
       agg.getTraitSet,
       input,
-      agg.indicator, // always false here
       newGrouping,
       ImmutableList.of(newGrouping),
       newAggCalls
