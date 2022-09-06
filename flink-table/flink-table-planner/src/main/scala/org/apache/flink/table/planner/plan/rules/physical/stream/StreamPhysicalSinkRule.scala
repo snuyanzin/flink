@@ -30,12 +30,16 @@ import org.apache.flink.table.types.logical.RowType
 import org.apache.calcite.plan.RelOptRule
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
-class StreamPhysicalSinkRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalSinkRule
+  extends ConverterRule(
+    classOf[FlinkLogicalSink],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalSinkRule") {
 
   def convert(rel: RelNode): RelNode = {
     val sink = rel.asInstanceOf[FlinkLogicalSink]
@@ -105,10 +109,5 @@ class StreamPhysicalSinkRule(config: Config) extends ConverterRule(config) {
 }
 
 object StreamPhysicalSinkRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalSink],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalSinkRule")
-  val INSTANCE = new StreamPhysicalSinkRule(INSTANCE_CONFIG)
+  val INSTANCE = new StreamPhysicalSinkRule
 }

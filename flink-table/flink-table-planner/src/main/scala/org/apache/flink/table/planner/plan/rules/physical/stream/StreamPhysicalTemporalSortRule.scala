@@ -27,13 +27,17 @@ import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelFieldCollation.Direction
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 /**
  * Rule that matches [[FlinkLogicalSort]] which is sorted by time attribute in ascending order and
  * its `fetch` and `offset` are null, and converts it to [[StreamPhysicalTemporalSort]].
  */
-class StreamPhysicalTemporalSortRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalTemporalSortRule
+  extends ConverterRule(
+    classOf[FlinkLogicalSort],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalTemporalSortRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val sort: FlinkLogicalSort = call.rel(0)
@@ -58,12 +62,7 @@ class StreamPhysicalTemporalSortRule(config: Config) extends ConverterRule(confi
 }
 
 object StreamPhysicalTemporalSortRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalSort],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalTemporalSortRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalTemporalSortRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalTemporalSortRule
 
   /**
    * Whether the given sort could be converted to [[StreamPhysicalTemporalSort]].

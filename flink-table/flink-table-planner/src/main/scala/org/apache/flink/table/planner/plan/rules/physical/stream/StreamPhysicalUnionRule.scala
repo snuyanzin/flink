@@ -24,12 +24,16 @@ import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalU
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import scala.collection.JavaConversions._
 
 /** Rule that converts [[FlinkLogicalUnion]] to [[StreamPhysicalUnion]]. */
-class StreamPhysicalUnionRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalUnionRule
+  extends ConverterRule(
+    classOf[FlinkLogicalUnion],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalUnionRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     call.rel(0).asInstanceOf[FlinkLogicalUnion].all
@@ -45,10 +49,5 @@ class StreamPhysicalUnionRule(config: Config) extends ConverterRule(config) {
 }
 
 object StreamPhysicalUnionRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalUnion],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalUnionRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalUnionRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalUnionRule
 }

@@ -27,11 +27,15 @@ import org.apache.flink.table.sinks.PartitionableTableSink
 import org.apache.calcite.plan.RelOptRule
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import scala.collection.JavaConversions._
 
-class StreamPhysicalLegacySinkRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalLegacySinkRule
+  extends ConverterRule(
+    classOf[FlinkLogicalLegacySink],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalLegacySinkRule") {
 
   def convert(rel: RelNode): RelNode = {
     val sink = rel.asInstanceOf[FlinkLogicalLegacySink]
@@ -85,10 +89,5 @@ class StreamPhysicalLegacySinkRule(config: Config) extends ConverterRule(config)
 }
 
 object StreamPhysicalLegacySinkRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalLegacySink],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalLegacySinkRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalLegacySinkRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalLegacySinkRule
 }

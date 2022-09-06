@@ -32,7 +32,6 @@ import org.apache.flink.table.runtime.groupwindow._
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.Aggregate.Group
 import org.apache.calcite.rex.{RexInputRef, RexProgram}
 
@@ -40,7 +39,12 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /** Rule to convert a [[FlinkLogicalAggregate]] into a [[StreamPhysicalWindowAggregate]]. */
-class StreamPhysicalWindowAggregateRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalWindowAggregateRule
+  extends ConverterRule(
+    classOf[FlinkLogicalAggregate],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalWindowAggregateRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: FlinkLogicalAggregate = call.rel(0)
@@ -243,12 +247,7 @@ class StreamPhysicalWindowAggregateRule(config: Config) extends ConverterRule(co
 }
 
 object StreamPhysicalWindowAggregateRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalAggregate],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalWindowAggregateRule")
-  val INSTANCE = new StreamPhysicalWindowAggregateRule(INSTANCE_CONFIG)
+  val INSTANCE = new StreamPhysicalWindowAggregateRule
 
   private val WINDOW_START: String = "window_start"
   private val WINDOW_END: String = "window_end"

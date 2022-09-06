@@ -20,19 +20,24 @@ package org.apache.flink.table.planner.plan.rules.physical.stream
 import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalRank
-import org.apache.flink.table.planner.plan.nodes.physical.stream.{StreamPhysicalDeduplicate, StreamPhysicalRank}
+import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalDeduplicate
+import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalRank
 import org.apache.flink.table.planner.plan.utils.{RankProcessStrategy, RankUtil}
 
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 /**
  * Rule that converts [[FlinkLogicalRank]] with fetch to [[StreamPhysicalRank]]. NOTES: the rank can
  * not be converted to [[StreamPhysicalDeduplicate]].
  */
-class StreamPhysicalRankRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalRankRule
+  extends ConverterRule(
+    classOf[FlinkLogicalRank],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalRankRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val rank: FlinkLogicalRank = call.rel(0)
@@ -68,10 +73,5 @@ class StreamPhysicalRankRule(config: Config) extends ConverterRule(config) {
 }
 
 object StreamPhysicalRankRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalRank],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalRankRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalRankRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalRankRule
 }

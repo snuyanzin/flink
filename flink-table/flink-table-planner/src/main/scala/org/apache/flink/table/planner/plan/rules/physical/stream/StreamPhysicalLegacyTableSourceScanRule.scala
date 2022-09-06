@@ -26,14 +26,18 @@ import org.apache.flink.table.sources.StreamTableSource
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.TableScan
 
 /**
  * Rule that converts [[FlinkLogicalLegacyTableSourceScan]] to
  * [[StreamPhysicalLegacyTableSourceScan]].
  */
-class StreamPhysicalLegacyTableSourceScanRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalLegacyTableSourceScanRule
+  extends ConverterRule(
+    classOf[FlinkLogicalLegacyTableSourceScan],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalLegacyTableSourceScanRule") {
 
   /** Rule must only match if TableScan targets a [[StreamTableSource]] */
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -63,10 +67,5 @@ class StreamPhysicalLegacyTableSourceScanRule(config: Config) extends ConverterR
 }
 
 object StreamPhysicalLegacyTableSourceScanRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalLegacyTableSourceScan],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalLegacyTableSourceScanRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalLegacyTableSourceScanRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalLegacyTableSourceScanRule
 }

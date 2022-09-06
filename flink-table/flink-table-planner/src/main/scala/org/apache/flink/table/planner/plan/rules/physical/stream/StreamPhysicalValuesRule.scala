@@ -24,10 +24,14 @@ import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalV
 import org.apache.calcite.plan.{RelOptRule, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 /** Rule that converts [[FlinkLogicalValues]] to [[StreamPhysicalValues]]. */
-class StreamPhysicalValuesRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalValuesRule
+  extends ConverterRule(
+    classOf[FlinkLogicalValues],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalValuesRule") {
 
   def convert(rel: RelNode): RelNode = {
     val values: FlinkLogicalValues = rel.asInstanceOf[FlinkLogicalValues]
@@ -38,10 +42,5 @@ class StreamPhysicalValuesRule(config: Config) extends ConverterRule(config) {
 }
 
 object StreamPhysicalValuesRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalValues],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalValuesRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalValuesRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalValuesRule
 }
