@@ -25,10 +25,14 @@ import org.apache.flink.table.planner.plan.schema.DataStreamTable
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 /** Rule that converts [[FlinkLogicalDataStreamTableScan]] to [[StreamPhysicalDataStreamScan]]. */
-class StreamPhysicalDataStreamScanRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalDataStreamScanRule
+  extends ConverterRule(
+    classOf[FlinkLogicalDataStreamTableScan],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalDataStreamScanRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val scan: FlinkLogicalDataStreamTableScan = call.rel(0)
@@ -51,10 +55,5 @@ class StreamPhysicalDataStreamScanRule(config: Config) extends ConverterRule(con
 }
 
 object StreamPhysicalDataStreamScanRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalDataStreamTableScan],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalDataStreamScanRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalDataStreamScanRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalDataStreamScanRule
 }

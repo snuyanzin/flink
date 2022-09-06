@@ -29,13 +29,17 @@ import org.apache.flink.table.planner.plan.utils.WindowUtil
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.Aggregate.Group
 
 import scala.collection.JavaConversions._
 
 /** Rule to convert a [[FlinkLogicalAggregate]] into a [[StreamPhysicalGroupAggregate]]. */
-class StreamPhysicalGroupAggregateRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalGroupAggregateRule
+  extends ConverterRule(
+    classOf[FlinkLogicalAggregate],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalGroupAggregateRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: FlinkLogicalAggregate = call.rel(0)
@@ -82,10 +86,5 @@ class StreamPhysicalGroupAggregateRule(config: Config) extends ConverterRule(con
 }
 
 object StreamPhysicalGroupAggregateRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalAggregate],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalGroupAggregateRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalGroupAggregateRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalGroupAggregateRule
 }

@@ -28,7 +28,6 @@ import org.apache.flink.table.planner.utils.ShortcutUtils
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import scala.collection.JavaConversions._
 
@@ -36,7 +35,12 @@ import scala.collection.JavaConversions._
  * Rule to convert a [[FlinkLogicalWindowTableAggregate]] into a
  * [[StreamPhysicalGroupWindowTableAggregate]].
  */
-class StreamPhysicalGroupWindowTableAggregateRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalGroupWindowTableAggregateRule
+  extends ConverterRule(
+    classOf[FlinkLogicalWindowTableAggregate],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalGroupWindowTableAggregateRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val agg: FlinkLogicalWindowTableAggregate = call.rel(0)
@@ -82,10 +86,5 @@ class StreamPhysicalGroupWindowTableAggregateRule(config: Config) extends Conver
 }
 
 object StreamPhysicalGroupWindowTableAggregateRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalWindowTableAggregate],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalGroupWindowTableAggregateRule")
-  val INSTANCE: RelOptRule = new StreamPhysicalGroupWindowTableAggregateRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new StreamPhysicalGroupWindowTableAggregateRule
 }

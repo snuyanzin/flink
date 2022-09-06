@@ -24,10 +24,14 @@ import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalScr
 import org.apache.calcite.plan.RelOptRule
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 /** Rule that match [[FlinkLogicalScriptTransform]] */
-class BatchPhysicalScriptTransformRule(config: Config) extends ConverterRule(config) {
+class BatchPhysicalScriptTransformRule
+  extends ConverterRule(
+    classOf[FlinkLogicalScriptTransform],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.BATCH_PHYSICAL,
+    "BatchExecScriptTrans") {
 
   override def convert(rel: RelNode): RelNode = {
     val logicalScriptTransform = rel.asInstanceOf[FlinkLogicalScriptTransform]
@@ -49,10 +53,5 @@ class BatchPhysicalScriptTransformRule(config: Config) extends ConverterRule(con
 }
 
 object BatchPhysicalScriptTransformRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalScriptTransform],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.BATCH_PHYSICAL,
-    "BatchExecScriptTrans")
-  val INSTANCE: RelOptRule = new BatchPhysicalScriptTransformRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new BatchPhysicalScriptTransformRule
 }

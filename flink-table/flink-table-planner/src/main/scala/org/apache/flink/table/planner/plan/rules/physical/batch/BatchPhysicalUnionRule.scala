@@ -24,12 +24,16 @@ import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalUni
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import scala.collection.JavaConversions._
 
 /** Rule that converts [[FlinkLogicalUnion]] to [[BatchPhysicalUnion]]. */
-class BatchPhysicalUnionRule(config: Config) extends ConverterRule(config) {
+class BatchPhysicalUnionRule
+  extends ConverterRule(
+    classOf[FlinkLogicalUnion],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.BATCH_PHYSICAL,
+    "BatchPhysicalUnionRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     call.rel(0).asInstanceOf[FlinkLogicalUnion].all
@@ -45,10 +49,5 @@ class BatchPhysicalUnionRule(config: Config) extends ConverterRule(config) {
 }
 
 object BatchPhysicalUnionRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalUnion],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.BATCH_PHYSICAL,
-    "BatchPhysicalUnionRule")
-  val INSTANCE: RelOptRule = new BatchPhysicalUnionRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new BatchPhysicalUnionRule
 }

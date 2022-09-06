@@ -31,12 +31,16 @@ import org.apache.flink.table.types.logical.RowType
 import org.apache.calcite.plan.RelOptRule
 import org.apache.calcite.rel.{RelCollations, RelCollationTraitDef, RelNode}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
-class BatchPhysicalSinkRule(config: Config) extends ConverterRule(config) {
+class BatchPhysicalSinkRule
+  extends ConverterRule(
+    classOf[FlinkLogicalSink],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.BATCH_PHYSICAL,
+    "BatchPhysicalSinkRule") {
 
   def convert(rel: RelNode): RelNode = {
     val sink = rel.asInstanceOf[FlinkLogicalSink]
@@ -114,10 +118,5 @@ class BatchPhysicalSinkRule(config: Config) extends ConverterRule(config) {
 }
 
 object BatchPhysicalSinkRule {
-  val INSTANCE_CONFIG = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalSink],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.BATCH_PHYSICAL,
-    "BatchPhysicalSinkRule")
-  val INSTANCE = new BatchPhysicalSinkRule(INSTANCE_CONFIG)
+  val INSTANCE = new BatchPhysicalSinkRule
 }

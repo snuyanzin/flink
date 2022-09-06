@@ -27,7 +27,6 @@ import org.apache.flink.table.planner.plan.utils.RankUtil
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 /**
  * Rule that matches [[FlinkLogicalRank]] which is sorted by time attribute and limits 1 and its
@@ -46,7 +45,12 @@ import org.apache.calcite.rel.convert.ConverterRule.Config
  * rowtime DESC) as row_num FROM MyTable ) WHERE row_num <= 1 }}} will be converted to
  * StreamExecDeduplicate which keeps last row in rowtime.
  */
-class StreamPhysicalDeduplicateRule(config: Config) extends ConverterRule(config) {
+class StreamPhysicalDeduplicateRule
+  extends ConverterRule(
+    classOf[FlinkLogicalRank],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.STREAM_PHYSICAL,
+    "StreamPhysicalDeduplicateRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val rank: FlinkLogicalRank = call.rel(0)
@@ -90,10 +94,5 @@ class StreamPhysicalDeduplicateRule(config: Config) extends ConverterRule(config
 }
 
 object StreamPhysicalDeduplicateRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalRank],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.STREAM_PHYSICAL,
-    "StreamPhysicalDeduplicateRule")
-  val INSTANCE = new StreamPhysicalDeduplicateRule(INSTANCE_CONFIG)
+  val INSTANCE = new StreamPhysicalDeduplicateRule
 }
