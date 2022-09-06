@@ -46,8 +46,8 @@ import org.apache.flink.table.planner.utils.ShortcutUtils;
 import org.apache.flink.table.planner.utils.TableConfigUtils;
 import org.apache.flink.table.types.logical.LogicalType;
 
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataType;
@@ -76,32 +76,14 @@ import scala.collection.Seq;
  * Planner rule that tries to push partition evaluated by filter condition into a {@link
  * LogicalTableScan}.
  */
-public class PushPartitionIntoTableSourceScanRule
-        extends RelRule<PushPartitionIntoTableSourceScanRule.Config> {
+public class PushPartitionIntoTableSourceScanRule extends RelOptRule {
     public static final PushPartitionIntoTableSourceScanRule INSTANCE =
-            new PushPartitionIntoTableSourceScanRule(Config.DEFAULT);
+            new PushPartitionIntoTableSourceScanRule();
 
-    public PushPartitionIntoTableSourceScanRule(Config config) {
-        super(config);
-    }
-
-    /** Config for PushPartitionIntoTableSourceScanRule. */
-    public interface Config extends RelRule.Config {
-        Config DEFAULT =
-                EMPTY.withOperandSupplier(
-                                b0 ->
-                                        b0.operand(Filter.class)
-                                                .oneInput(
-                                                        b1 ->
-                                                                b1.operand(LogicalTableScan.class)
-                                                                        .noInputs()))
-                        .withDescription("PushPartitionIntoTableSourceScanRule")
-                        .as(Config.class);
-
-        @Override
-        default PushPartitionIntoTableSourceScanRule toRule() {
-            return new PushPartitionIntoTableSourceScanRule(this);
-        }
+    public PushPartitionIntoTableSourceScanRule() {
+        super(
+                operand(Filter.class, operand(LogicalTableScan.class, none())),
+                "PushPartitionIntoTableSourceScanRule");
     }
 
     @Override

@@ -22,7 +22,6 @@ import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.{RelCollation, RelCollationTraitDef, RelNode}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.Snapshot
 import org.apache.calcite.rel.logical.LogicalSnapshot
 import org.apache.calcite.rel.metadata.{RelMdCollation, RelMetadataQuery}
@@ -80,7 +79,12 @@ class FlinkLogicalSnapshot(
 
 }
 
-class FlinkLogicalSnapshotConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalSnapshotConverter
+  extends ConverterRule(
+    classOf[LogicalSnapshot],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalSnapshotConverter") {
 
   def convert(rel: RelNode): RelNode = {
     val snapshot = rel.asInstanceOf[LogicalSnapshot]
@@ -91,12 +95,7 @@ class FlinkLogicalSnapshotConverter(config: Config) extends ConverterRule(config
 
 object FlinkLogicalSnapshot {
 
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalSnapshot],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalSnapshotConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalSnapshotConverter(CONVERTER_CONFIG)
+  val CONVERTER = new FlinkLogicalSnapshotConverter
 
   def create(input: RelNode, period: RexNode): FlinkLogicalSnapshot = {
     val cluster = input.getCluster

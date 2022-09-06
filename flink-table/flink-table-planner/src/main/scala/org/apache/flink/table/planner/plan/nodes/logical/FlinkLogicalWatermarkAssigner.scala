@@ -23,7 +23,6 @@ import org.apache.flink.table.planner.plan.nodes.calcite.{LogicalWatermarkAssign
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rex.RexNode
 
 /**
@@ -50,7 +49,12 @@ class FlinkLogicalWatermarkAssigner(
 
 }
 
-class FlinkLogicalWatermarkAssignerConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalWatermarkAssignerConverter
+  extends ConverterRule(
+    classOf[LogicalWatermarkAssigner],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalWatermarkAssignerConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val watermark = rel.asInstanceOf[LogicalWatermarkAssigner]
@@ -63,12 +67,7 @@ class FlinkLogicalWatermarkAssignerConverter(config: Config) extends ConverterRu
 }
 
 object FlinkLogicalWatermarkAssigner {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalWatermarkAssigner],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalWatermarkAssignerConverter")
-  val CONVERTER = new FlinkLogicalWatermarkAssignerConverter(CONVERTER_CONFIG)
+  val CONVERTER = new FlinkLogicalWatermarkAssignerConverter
 
   def create(
       input: RelNode,

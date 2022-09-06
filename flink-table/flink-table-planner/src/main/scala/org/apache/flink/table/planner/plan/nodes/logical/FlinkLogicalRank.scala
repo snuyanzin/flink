@@ -26,7 +26,6 @@ import org.apache.calcite.plan._
 import org.apache.calcite.rel.`type`.RelDataTypeField
 import org.apache.calcite.rel.{RelCollation, RelNode, RelWriter}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.util.ImmutableBitSet
 
 import java.util
@@ -84,7 +83,12 @@ class FlinkLogicalRank(
 
 }
 
-private class FlinkLogicalRankConverter(config: Config) extends ConverterRule(config) {
+private class FlinkLogicalRankConverter
+  extends ConverterRule(
+    classOf[LogicalRank],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalRankConverter") {
   override def convert(rel: RelNode): RelNode = {
     val rank = rel.asInstanceOf[LogicalRank]
     val newInput = RelOptRule.convert(rank.getInput, FlinkConventions.LOGICAL)
@@ -101,12 +105,7 @@ private class FlinkLogicalRankConverter(config: Config) extends ConverterRule(co
 }
 
 object FlinkLogicalRank {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalRank],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalRankConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalRankConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalRankConverter
 
   def create(
       input: RelNode,

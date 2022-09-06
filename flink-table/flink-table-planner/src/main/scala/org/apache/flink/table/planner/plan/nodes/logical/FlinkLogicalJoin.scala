@@ -23,7 +23,6 @@ import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.{CorrelationId, Join, JoinRelType}
 import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rel.logical.LogicalJoin
@@ -79,7 +78,12 @@ class FlinkLogicalJoin(
 }
 
 /** Support all joins. */
-private class FlinkLogicalJoinConverter(config: Config) extends ConverterRule(config) {
+private class FlinkLogicalJoinConverter
+  extends ConverterRule(
+    classOf[LogicalJoin],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalJoinConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val join = rel.asInstanceOf[LogicalJoin]
@@ -90,12 +94,7 @@ private class FlinkLogicalJoinConverter(config: Config) extends ConverterRule(co
 }
 
 object FlinkLogicalJoin {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalJoin],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalJoinConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalJoinConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalJoinConverter
 
   def create(
       left: RelNode,

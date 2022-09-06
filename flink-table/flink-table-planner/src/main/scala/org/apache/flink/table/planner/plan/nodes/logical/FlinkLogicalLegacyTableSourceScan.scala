@@ -28,7 +28,6 @@ import org.apache.calcite.plan._
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelCollation, RelCollationTraitDef, RelNode, RelWriter}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.TableScan
 import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rel.logical.LogicalTableScan
@@ -84,7 +83,12 @@ class FlinkLogicalLegacyTableSourceScan(
 
 }
 
-class FlinkLogicalLegacyTableSourceScanConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalLegacyTableSourceScanConverter
+  extends ConverterRule(
+    classOf[LogicalTableScan],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalLegacyTableSourceScanConverter") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val scan: TableScan = call.rel(0)
@@ -99,12 +103,7 @@ class FlinkLogicalLegacyTableSourceScanConverter(config: Config) extends Convert
 }
 
 object FlinkLogicalLegacyTableSourceScan {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalTableScan],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalLegacyTableSourceScanConverter")
-  val CONVERTER = new FlinkLogicalLegacyTableSourceScanConverter(CONVERTER_CONFIG)
+  val CONVERTER = new FlinkLogicalLegacyTableSourceScanConverter
 
   def isTableSourceScan(scan: TableScan): Boolean = {
     val tableSourceTable = scan.getTable.unwrap(classOf[LegacyTableSourceTable[_]])

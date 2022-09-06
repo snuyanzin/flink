@@ -22,7 +22,6 @@ import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.{SetOp, Union}
 import org.apache.calcite.rel.logical.LogicalUnion
 import org.apache.calcite.rel.metadata.RelMetadataQuery
@@ -58,7 +57,12 @@ class FlinkLogicalUnion(
 
 }
 
-private class FlinkLogicalUnionConverter(config: Config) extends ConverterRule(config) {
+private class FlinkLogicalUnionConverter
+  extends ConverterRule(
+    classOf[LogicalUnion],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalUnionConverter") {
 
   /** Only translate UNION ALL. */
   override def matches(call: RelOptRuleCall): Boolean = {
@@ -76,12 +80,7 @@ private class FlinkLogicalUnionConverter(config: Config) extends ConverterRule(c
 }
 
 object FlinkLogicalUnion {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalUnion],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalUnionConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalUnionConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalUnionConverter()
 
   def create(inputs: JList[RelNode], all: Boolean): FlinkLogicalUnion = {
     val cluster = inputs.get(0).getCluster

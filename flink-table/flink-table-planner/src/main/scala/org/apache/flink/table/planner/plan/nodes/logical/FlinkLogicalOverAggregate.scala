@@ -24,7 +24,6 @@ import org.apache.calcite.plan._
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelCollation, RelCollationTraitDef, RelNode}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.Window
 import org.apache.calcite.rel.logical.LogicalWindow
 import org.apache.calcite.rel.metadata.RelMdCollation
@@ -63,7 +62,12 @@ class FlinkLogicalOverAggregate(
 
 }
 
-class FlinkLogicalOverAggregateConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalOverAggregateConverter
+  extends ConverterRule(
+    classOf[LogicalWindow],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalOverAggregateConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val window = rel.asInstanceOf[LogicalWindow]
@@ -105,10 +109,5 @@ class FlinkLogicalOverAggregateConverter(config: Config) extends ConverterRule(c
 }
 
 object FlinkLogicalOverAggregate {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalWindow],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalOverAggregateConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalOverAggregateConverter(CONVERTER_CONFIG)
+  val CONVERTER = new FlinkLogicalOverAggregateConverter
 }

@@ -24,7 +24,6 @@ import org.apache.flink.table.planner.plan.nodes.hive.LogicalDistribution
 import org.apache.calcite.plan.{Convention, RelOptCluster, RelOptRule, RelTraitSet}
 import org.apache.calcite.rel.{RelCollation, RelCollationTraitDef, RelNode, SingleRel}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import java.util.{List => JList}
 
@@ -42,7 +41,12 @@ class FlinkLogicalDistribution(
     new FlinkLogicalDistribution(getCluster, traitSet, inputs.get(0), collation, distKeys)
 }
 
-class FlinkLogicalDistributionBatchConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalDistributionBatchConverter
+  extends ConverterRule(
+    classOf[LogicalDistribution],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalDistributionBatchConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val distribution = rel.asInstanceOf[LogicalDistribution]
@@ -52,13 +56,7 @@ class FlinkLogicalDistributionBatchConverter(config: Config) extends ConverterRu
 }
 
 object FlinkLogicalDistribution {
-  val BATCH_CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalDistribution],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalDistributionBatchConverter")
-  val BATCH_CONVERTER: RelOptRule = new FlinkLogicalDistributionBatchConverter(
-    BATCH_CONVERTER_CONFIG)
+  val BATCH_CONVERTER: RelOptRule = new FlinkLogicalDistributionBatchConverter
 
   def create(
       input: RelNode,

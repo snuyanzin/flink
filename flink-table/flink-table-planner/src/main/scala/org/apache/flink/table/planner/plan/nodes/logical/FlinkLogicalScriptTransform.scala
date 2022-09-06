@@ -25,7 +25,6 @@ import org.apache.calcite.plan.{Convention, RelOptCluster, RelOptRule, RelTraitS
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelNode, SingleRel}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import java.util.{List => JList}
 
@@ -54,7 +53,12 @@ class FlinkLogicalScriptTransform(
   override protected def deriveRowType: RelDataType = outDataType
 }
 
-class FlinkLogicalScriptTransformBatchConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalScriptTransformBatchConverter
+  extends ConverterRule(
+    classOf[LogicalScriptTransform],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalScriptTransformBatchConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val scriptTransform = rel.asInstanceOf[LogicalScriptTransform]
@@ -70,13 +74,7 @@ class FlinkLogicalScriptTransformBatchConverter(config: Config) extends Converte
 }
 
 object FlinkLogicalScriptTransform {
-  val BATCH_CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalScriptTransform],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalScriptTransformBatchConverter")
-  val BATCH_CONVERTER: RelOptRule = new FlinkLogicalScriptTransformBatchConverter(
-    BATCH_CONVERTER_CONFIG)
+  val BATCH_CONVERTER: RelOptRule = new FlinkLogicalScriptTransformBatchConverter
 
   def create(
       input: RelNode,

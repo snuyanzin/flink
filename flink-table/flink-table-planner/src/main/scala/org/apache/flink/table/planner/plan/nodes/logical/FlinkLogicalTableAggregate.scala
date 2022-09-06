@@ -23,7 +23,6 @@ import org.apache.flink.table.planner.plan.nodes.calcite.{LogicalTableAggregate,
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.AggregateCall
 import org.apache.calcite.util.ImmutableBitSet
 
@@ -56,7 +55,12 @@ class FlinkLogicalTableAggregate(
   }
 }
 
-private class FlinkLogicalTableAggregateConverter(config: Config) extends ConverterRule(config) {
+private class FlinkLogicalTableAggregateConverter
+  extends ConverterRule(
+    classOf[LogicalTableAggregate],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalTableAggregateConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val agg = rel.asInstanceOf[LogicalTableAggregate]
@@ -74,10 +78,5 @@ private class FlinkLogicalTableAggregateConverter(config: Config) extends Conver
 }
 
 object FlinkLogicalTableAggregate {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalTableAggregate],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalTableAggregateConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalTableAggregateConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalTableAggregateConverter()
 }

@@ -26,7 +26,6 @@ import org.apache.flink.table.planner.plan.nodes.calcite.{LogicalSink, Sink}
 import org.apache.calcite.plan.{Convention, RelOptCluster, RelOptRule, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.hint.RelHint
 
 import java.util
@@ -63,7 +62,12 @@ class FlinkLogicalSink(
 
 }
 
-private class FlinkLogicalSinkConverter(config: Config) extends ConverterRule(config) {
+private class FlinkLogicalSinkConverter
+  extends ConverterRule(
+    classOf[LogicalSink],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalSinkConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val sink = rel.asInstanceOf[LogicalSink]
@@ -79,12 +83,7 @@ private class FlinkLogicalSinkConverter(config: Config) extends ConverterRule(co
 }
 
 object FlinkLogicalSink {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalSink],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalSinkConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalSinkConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalSinkConverter()
 
   def create(
       input: RelNode,

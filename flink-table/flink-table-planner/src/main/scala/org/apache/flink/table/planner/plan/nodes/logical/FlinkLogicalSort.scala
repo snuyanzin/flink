@@ -26,7 +26,6 @@ import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.{RelCollation, RelCollationTraitDef, RelNode}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.Sort
 import org.apache.calcite.rel.logical.LogicalSort
 import org.apache.calcite.rel.metadata.RelMetadataQuery
@@ -81,7 +80,12 @@ class FlinkLogicalSort(
 
 }
 
-class FlinkLogicalSortStreamConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalSortStreamConverter
+  extends ConverterRule(
+    classOf[LogicalSort],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalSortStreamConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val sort = rel.asInstanceOf[LogicalSort]
@@ -90,7 +94,12 @@ class FlinkLogicalSortStreamConverter(config: Config) extends ConverterRule(conf
   }
 }
 
-class FlinkLogicalSortBatchConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalSortBatchConverter
+  extends ConverterRule(
+    classOf[LogicalSort],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalSortBatchConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val sort = rel.asInstanceOf[LogicalSort]
@@ -117,18 +126,8 @@ class FlinkLogicalSortBatchConverter(config: Config) extends ConverterRule(confi
 }
 
 object FlinkLogicalSort {
-  val BATCH_CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalSort],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalSortBatchConverter")
-  val BATCH_CONVERTER: RelOptRule = new FlinkLogicalSortBatchConverter(BATCH_CONVERTER_CONFIG)
-  val STREAM_CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalSort],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalSortStreamConverter")
-  val STREAM_CONVERTER: RelOptRule = new FlinkLogicalSortStreamConverter(STREAM_CONVERTER_CONFIG)
+  val BATCH_CONVERTER: RelOptRule = new FlinkLogicalSortBatchConverter
+  val STREAM_CONVERTER: RelOptRule = new FlinkLogicalSortStreamConverter
 
   def create(
       input: RelNode,

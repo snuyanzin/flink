@@ -26,7 +26,6 @@ import org.apache.flink.table.planner.plan.utils.SortUtil
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rex.RexLiteral
 import org.apache.calcite.sql.`type`.SqlTypeName
 
@@ -46,7 +45,12 @@ import org.apache.calcite.sql.`type`.SqlTypeName
  * }}}
  * when fetch is null.
  */
-class BatchPhysicalLimitRule(config: Config) extends ConverterRule(config) {
+class BatchPhysicalLimitRule
+  extends ConverterRule(
+    classOf[FlinkLogicalSort],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.BATCH_PHYSICAL,
+    "BatchPhysicalLimitRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val sort: FlinkLogicalSort = call.rel(0)
@@ -98,10 +102,5 @@ class BatchPhysicalLimitRule(config: Config) extends ConverterRule(config) {
 }
 
 object BatchPhysicalLimitRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalSort],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.BATCH_PHYSICAL,
-    "BatchPhysicalLimitRule")
-  val INSTANCE: RelOptRule = new BatchPhysicalLimitRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new BatchPhysicalLimitRule
 }

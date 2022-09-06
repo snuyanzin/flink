@@ -25,7 +25,6 @@ import org.apache.calcite.plan._
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelCollation, RelNode}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.Match
 import org.apache.calcite.rel.logical.LogicalMatch
 import org.apache.calcite.rex.RexNode
@@ -110,7 +109,12 @@ class FlinkLogicalMatch(
   }
 }
 
-private class FlinkLogicalMatchConverter(config: Config) extends ConverterRule(config) {
+private class FlinkLogicalMatchConverter
+  extends ConverterRule(
+    classOf[LogicalMatch],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalMatchConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val logicalMatch = rel.asInstanceOf[LogicalMatch]
@@ -137,10 +141,5 @@ private class FlinkLogicalMatchConverter(config: Config) extends ConverterRule(c
 }
 
 object FlinkLogicalMatch {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalMatch],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalMatchConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalMatchConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalMatchConverter()
 }

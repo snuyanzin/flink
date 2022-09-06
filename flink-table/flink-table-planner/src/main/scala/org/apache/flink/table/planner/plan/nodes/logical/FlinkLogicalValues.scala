@@ -24,7 +24,6 @@ import org.apache.calcite.plan._
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelCollation, RelCollationTraitDef, RelNode}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.Values
 import org.apache.calcite.rel.logical.LogicalValues
 import org.apache.calcite.rel.metadata.{RelMdCollation, RelMetadataQuery}
@@ -59,7 +58,12 @@ class FlinkLogicalValues(
 
 }
 
-private class FlinkLogicalValuesConverter(config: Config) extends ConverterRule(config) {
+private class FlinkLogicalValuesConverter
+  extends ConverterRule(
+    classOf[LogicalValues],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalValuesConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val values = rel.asInstanceOf[LogicalValues]
@@ -72,12 +76,7 @@ private class FlinkLogicalValuesConverter(config: Config) extends ConverterRule(
 }
 
 object FlinkLogicalValues {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalValues],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalValuesConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalValuesConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalValuesConverter()
 
   def create(
       cluster: RelOptCluster,

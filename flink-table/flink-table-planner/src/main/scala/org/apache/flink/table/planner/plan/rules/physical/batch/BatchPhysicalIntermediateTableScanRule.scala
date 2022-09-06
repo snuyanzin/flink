@@ -24,13 +24,17 @@ import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalInt
 import org.apache.calcite.plan.RelOptRule
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 /**
  * Rule that converts [[FlinkLogicalIntermediateTableScan]] to
  * [[BatchPhysicalIntermediateTableScan]].
  */
-class BatchPhysicalIntermediateTableScanRule(config: Config) extends ConverterRule(config) {
+class BatchPhysicalIntermediateTableScanRule
+  extends ConverterRule(
+    classOf[FlinkLogicalIntermediateTableScan],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.BATCH_PHYSICAL,
+    "BatchPhysicalIntermediateTableScanRule") {
 
   def convert(rel: RelNode): RelNode = {
     val scan = rel.asInstanceOf[FlinkLogicalIntermediateTableScan]
@@ -40,10 +44,5 @@ class BatchPhysicalIntermediateTableScanRule(config: Config) extends ConverterRu
 }
 
 object BatchPhysicalIntermediateTableScanRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalIntermediateTableScan],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.BATCH_PHYSICAL,
-    "BatchPhysicalIntermediateTableScanRule")
-  val INSTANCE: RelOptRule = new BatchPhysicalIntermediateTableScanRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new BatchPhysicalIntermediateTableScanRule
 }

@@ -26,10 +26,14 @@ import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
 import org.apache.calcite.plan.volcano.RelSubset
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rex.RexNode
 
-class BatchPhysicalCorrelateRule(config: Config) extends ConverterRule(config) {
+class BatchPhysicalCorrelateRule
+  extends ConverterRule(
+    classOf[FlinkLogicalCorrelate],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.BATCH_PHYSICAL,
+    "BatchPhysicalCorrelateRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val join = call.rel(0).asInstanceOf[FlinkLogicalCorrelate]
@@ -82,10 +86,5 @@ class BatchPhysicalCorrelateRule(config: Config) extends ConverterRule(config) {
 }
 
 object BatchPhysicalCorrelateRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalCorrelate],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.BATCH_PHYSICAL,
-    "BatchPhysicalCorrelateRule")
-  val INSTANCE: RelOptRule = new BatchPhysicalCorrelateRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new BatchPhysicalCorrelateRule
 }

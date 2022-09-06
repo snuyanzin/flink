@@ -25,12 +25,16 @@ import org.apache.flink.table.planner.plan.utils.PythonUtil.containsPythonCall
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 
 import scala.collection.JavaConverters._
 
 /** Rule that converts [[FlinkLogicalCalc]] to [[BatchPhysicalCalc]]. */
-class BatchPhysicalCalcRule(config: Config) extends ConverterRule(config) {
+class BatchPhysicalCalcRule
+  extends ConverterRule(
+    classOf[FlinkLogicalCalc],
+    FlinkConventions.LOGICAL,
+    FlinkConventions.BATCH_PHYSICAL,
+    "BatchPhysicalCalcRule") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val calc: FlinkLogicalCalc = call.rel(0)
@@ -48,10 +52,5 @@ class BatchPhysicalCalcRule(config: Config) extends ConverterRule(config) {
 }
 
 object BatchPhysicalCalcRule {
-  val INSTANCE_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[FlinkLogicalCalc],
-    FlinkConventions.LOGICAL,
-    FlinkConventions.BATCH_PHYSICAL,
-    "BatchPhysicalCalcRule")
-  val INSTANCE: RelOptRule = new BatchPhysicalCalcRule(INSTANCE_CONFIG)
+  val INSTANCE: RelOptRule = new BatchPhysicalCalcRule
 }

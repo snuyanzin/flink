@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.{RelCollation, RelCollationTraitDef, RelNode}
 import org.apache.calcite.rel.convert.ConverterRule
-import org.apache.calcite.rel.convert.ConverterRule.Config
 import org.apache.calcite.rel.core.TableScan
 import org.apache.calcite.rel.logical.LogicalTableScan
 
@@ -46,7 +45,12 @@ class FlinkLogicalIntermediateTableScan(
 
 }
 
-class FlinkLogicalIntermediateTableScanConverter(config: Config) extends ConverterRule(config) {
+class FlinkLogicalIntermediateTableScanConverter
+  extends ConverterRule(
+    classOf[LogicalTableScan],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalIntermediateTableScanConverter") {
 
   override def matches(call: RelOptRuleCall): Boolean = {
     val scan: TableScan = call.rel(0)
@@ -61,12 +65,8 @@ class FlinkLogicalIntermediateTableScanConverter(config: Config) extends Convert
 }
 
 object FlinkLogicalIntermediateTableScan {
-  val CONVERTER_CONFIG: Config = Config.INSTANCE.withConversion(
-    classOf[LogicalTableScan],
-    Convention.NONE,
-    FlinkConventions.LOGICAL,
-    "FlinkLogicalIntermediateTableScanConverter")
-  val CONVERTER: ConverterRule = new FlinkLogicalIntermediateTableScanConverter(CONVERTER_CONFIG)
+
+  val CONVERTER = new FlinkLogicalIntermediateTableScanConverter
 
   def create(
       cluster: RelOptCluster,
