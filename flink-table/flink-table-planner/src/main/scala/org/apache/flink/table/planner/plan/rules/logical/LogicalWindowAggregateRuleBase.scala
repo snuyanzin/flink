@@ -98,7 +98,7 @@ abstract class LogicalWindowAggregateRuleBase(description: String)
     // we don't use the builder here because it uses RelMetadataQuery which affects the plan
     val newAgg = LogicalAggregate.create(
       newProject,
-      agg.indicator,
+      ImmutableList.of[RelHint](),
       newGroupSet,
       ImmutableList.of(newGroupSet),
       finalCalls)
