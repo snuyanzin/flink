@@ -61,7 +61,12 @@ class FlinkLogicalCorrelate(
 
 }
 
-class FlinkLogicalCorrelateConverter(config: ConverterRule.Config) extends ConverterRule(config) {
+class FlinkLogicalCorrelateConverter
+  extends ConverterRule(
+    classOf[LogicalCorrelate],
+    Convention.NONE,
+    FlinkConventions.LOGICAL,
+    "FlinkLogicalCorrelateConverter") {
 
   override def convert(rel: RelNode): RelNode = {
     val correlate = rel.asInstanceOf[LogicalCorrelate]
@@ -77,14 +82,7 @@ class FlinkLogicalCorrelateConverter(config: ConverterRule.Config) extends Conve
 }
 
 object FlinkLogicalCorrelate {
-  val CONVERTER_CONFIG: ConverterRule.Config = ConverterRule.Config.INSTANCE
-    .withConversion(
-      classOf[LogicalCorrelate],
-      Convention.NONE,
-      FlinkConventions.LOGICAL,
-      "FlinkLogicalCorrelateConverter")
-    .withRuleFactory((config: ConverterRule.Config) => new FlinkLogicalCorrelateConverter(config))
-  val CONVERTER: ConverterRule = new FlinkLogicalCorrelateConverter(CONVERTER_CONFIG)
+  val CONVERTER: ConverterRule = new FlinkLogicalCorrelateConverter()
 
   def create(
       left: RelNode,

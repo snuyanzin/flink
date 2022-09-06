@@ -19,8 +19,8 @@ package org.apache.flink.table.planner.plan.rules.logical;
 
 import org.apache.flink.table.planner.functions.sql.internal.SqlAuxiliaryGroupAggFunction;
 
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Aggregate;
 import org.apache.calcite.rel.core.AggregateCall;
@@ -46,7 +46,7 @@ import java.util.List;
  * functions are SUM, MIN, MAX, AUXILIARY_GROUP with no filterArgs, and the underlying relational
  * expression is already distinct.
  */
-public class FlinkAggregateRemoveRule extends RelRule {
+public class FlinkAggregateRemoveRule extends RelOptRule {
     public static final FlinkAggregateRemoveRule INSTANCE =
             new FlinkAggregateRemoveRule(LogicalAggregate.class, RelFactories.LOGICAL_BUILDER);
 
@@ -66,13 +66,7 @@ public class FlinkAggregateRemoveRule extends RelRule {
         // about whether the child is distinct.  If we clean up the inference of
         // distinct to make it correct up-front, we can get rid of the reference
         // to the child here.
-        super(
-                RelRule.Config.EMPTY
-                        .withOperandSupplier(
-                                b0 ->
-                                        b0.operand(aggregateClass)
-                                                .inputs(b1 -> b1.operand(RelNode.class).noInputs()))
-                        .withRelBuilderFactory(relBuilderFactory));
+        super(operand(aggregateClass, operand(RelNode.class, any())), relBuilderFactory, null);
     }
 
     @Override

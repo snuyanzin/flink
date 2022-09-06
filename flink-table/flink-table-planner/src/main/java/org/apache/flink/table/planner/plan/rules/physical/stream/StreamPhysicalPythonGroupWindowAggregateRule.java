@@ -49,20 +49,15 @@ import java.util.List;
  */
 public class StreamPhysicalPythonGroupWindowAggregateRule extends ConverterRule {
 
-    public static final Config DEFAULT_CONFIG =
-            Config.EMPTY
-                    .as(Config.class)
-                    .withConversion(
-                            FlinkLogicalWindowAggregate.class,
-                            FlinkConventions.LOGICAL(),
-                            FlinkConventions.STREAM_PHYSICAL(),
-                            "StreamPhysicalPythonGroupWindowAggregateRule")
-                    .withRuleFactory(StreamPhysicalPythonGroupWindowAggregateRule::new);
     public static final StreamPhysicalPythonGroupWindowAggregateRule INSTANCE =
-            new StreamPhysicalPythonGroupWindowAggregateRule(DEFAULT_CONFIG);
+            new StreamPhysicalPythonGroupWindowAggregateRule();
 
-    private StreamPhysicalPythonGroupWindowAggregateRule(Config config) {
-        super(config);
+    private StreamPhysicalPythonGroupWindowAggregateRule() {
+        super(
+                FlinkLogicalWindowAggregate.class,
+                FlinkConventions.LOGICAL(),
+                FlinkConventions.STREAM_PHYSICAL(),
+                "StreamPhysicalPythonGroupWindowAggregateRule");
     }
 
     @Override

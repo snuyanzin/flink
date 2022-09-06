@@ -41,22 +41,15 @@ import java.util.List;
  * StreamPhysicalPythonOverAggregate}.
  */
 public class StreamPhysicalPythonOverAggregateRule extends ConverterRule {
-
-    public static final Config DEFAULT_CONFIG =
-            Config.EMPTY
-                    .as(Config.class)
-                    .withConversion(
-                            FlinkLogicalOverAggregate.class,
-                            FlinkConventions.LOGICAL(),
-                            FlinkConventions.STREAM_PHYSICAL(),
-                            "StreamPhysicalPythonOverAggregateRule")
-                    .withRuleFactory(StreamPhysicalPythonOverAggregateRule::new);
-
     public static final StreamPhysicalPythonOverAggregateRule INSTANCE =
-            new StreamPhysicalPythonOverAggregateRule(DEFAULT_CONFIG);
+            new StreamPhysicalPythonOverAggregateRule();
 
-    private StreamPhysicalPythonOverAggregateRule(Config config) {
-        super(config);
+    private StreamPhysicalPythonOverAggregateRule() {
+        super(
+                FlinkLogicalOverAggregate.class,
+                FlinkConventions.LOGICAL(),
+                FlinkConventions.STREAM_PHYSICAL(),
+                "StreamPhysicalPythonOverAggregateRule");
     }
 
     @Override
