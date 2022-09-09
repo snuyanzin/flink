@@ -24,9 +24,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/** Tests for the RetryOnException annotation. */
+/** Tests for the {@link RetryOnException} annotation on JUnit5 {@link RetryExtension}. */
 @ExtendWith(RetryExtension.class)
 class RetryOnExceptionExtensionTest {
 
@@ -42,10 +42,10 @@ class RetryOnExceptionExtensionTest {
 
     @AfterAll
     static void verify() {
-        assertEquals(NUMBER_OF_RUNS + 1, runsForTestWithMatchingException);
-        assertEquals(NUMBER_OF_RUNS + 1, runsForTestWithSubclassException);
-        assertEquals(1, runsForSuccessfulTest);
-        assertEquals(2, runsForPassAfterOneFailure);
+        assertThat(runsForTestWithMatchingException).isEqualTo(NUMBER_OF_RUNS + 1);
+        assertThat(runsForTestWithSubclassException).isEqualTo(NUMBER_OF_RUNS + 1);
+        assertThat(runsForSuccessfulTest).isOne();
+        assertThat(runsForPassAfterOneFailure).isEqualTo(2);
     }
 
     @TestTemplate
