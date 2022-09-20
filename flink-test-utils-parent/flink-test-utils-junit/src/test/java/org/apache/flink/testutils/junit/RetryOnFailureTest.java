@@ -25,7 +25,7 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for the {@link RetryOnFailure} annotation on JUnit4 {@link RetryRule}. */
-class RetryOnFailureTest {
+public class RetryOnFailureTest {
 
     @Rule public RetryRule retryRule = new RetryRule();
 
