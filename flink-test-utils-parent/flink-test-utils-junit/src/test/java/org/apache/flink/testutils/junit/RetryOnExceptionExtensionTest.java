@@ -19,12 +19,21 @@
 package org.apache.flink.testutils.junit;
 
 import org.apache.flink.testutils.junit.extensions.retry.RetryExtension;
+import org.apache.flink.testutils.junit.extensions.retry.strategy.RetryOnExceptionStrategy;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.opentest4j.TestAbortedException;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.params.provider.Arguments.of;
 
 /** Tests for the {@link RetryOnException} annotation on JUnit5 {@link RetryExtension}. */
 @ExtendWith(RetryExtension.class)
@@ -79,5 +88,34 @@ class RetryOnExceptionExtensionTest {
         if (runsForPassAfterOneFailure == 1) {
             throw new IllegalArgumentException();
         }
+    }
+
+    @ParameterizedTest(name = "With {0} retries for {1}")
+    @MethodSource("retryTestProvider")
+    void testRetryFailsWithExpectedExceptionAfterNumberOfRetries(
+            final int numberOfRetries, final Throwable expectedException) {
+        RetryOnExceptionStrategy r =
+                new RetryOnExceptionStrategy(numberOfRetries, expectedException.getClass());
+        for (int j = 0; j < numberOfRetries; j++) {
+            final int attemptIndex = j;
+            assertThatThrownBy(
+                            () ->
+                                    r.handleException(
+                                            "Any test name", attemptIndex, expectedException))
+                    .isInstanceOf(TestAbortedException.class);
+        }
+        assertThatThrownBy(
+                        () ->
+                                r.handleException(
+                                        "Any test name", numberOfRetries, expectedException))
+                .isInstanceOf(expectedException.getClass());
+    }
+
+    static class RetryTestException extends Exception {}
+
+    static class RetryTestRuntimeException extends RuntimeException {}
+
+    static Stream<Arguments> retryTestProvider() {
+        return Stream.of(of(4, new RetryTestException()), of(5, new RetryTestRuntimeException()));
     }
 }
