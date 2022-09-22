@@ -94,28 +94,36 @@ class RetryOnExceptionExtensionTest {
     @MethodSource("retryTestProvider")
     void testRetryFailsWithExpectedExceptionAfterNumberOfRetries(
             final int numberOfRetries, final Throwable expectedException) {
-        RetryOnExceptionStrategy r =
+        RetryOnExceptionStrategy retryOnExceptionStrategy =
                 new RetryOnExceptionStrategy(numberOfRetries, expectedException.getClass());
         for (int j = 0; j < numberOfRetries; j++) {
             final int attemptIndex = j;
             assertThatThrownBy(
                             () ->
-                                    r.handleException(
+                                    retryOnExceptionStrategy.handleException(
                                             "Any test name", attemptIndex, expectedException))
                     .isInstanceOf(TestAbortedException.class);
         }
         assertThatThrownBy(
                         () ->
-                                r.handleException(
+                                retryOnExceptionStrategy.handleException(
                                         "Any test name", numberOfRetries, expectedException))
                 .isInstanceOf(expectedException.getClass());
     }
+
+    static class RetryTestError extends Error {}
 
     static class RetryTestException extends Exception {}
 
     static class RetryTestRuntimeException extends RuntimeException {}
 
+    static class RetryTestThrowable extends Throwable {}
+
     static Stream<Arguments> retryTestProvider() {
-        return Stream.of(of(4, new RetryTestException()), of(5, new RetryTestRuntimeException()));
+        return Stream.of(
+                of(3, new RetryTestError()),
+                of(4, new RetryTestException()),
+                of(5, new RetryTestRuntimeException()),
+                of(6, new RetryTestThrowable()));
     }
 }
