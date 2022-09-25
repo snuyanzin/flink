@@ -46,6 +46,14 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
     @Test
     void testDescribeSchema() {}
 
+    /**
+     * Here we override the super method to avoid test error from `EXPLAIN AS DOT` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testExplainAsDot() {}
+
     @Test
     void testShowDatabases() {
         sql("show databases").ok("SHOW DATABASES");
