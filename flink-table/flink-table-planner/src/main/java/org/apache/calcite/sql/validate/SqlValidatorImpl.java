@@ -1,12 +1,13 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to you under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.calcite.sql.validate;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -94,6 +96,7 @@ import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlOperandTypeChecker;
 import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlTypeCoercionRule;
+import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.util.IdPair;
@@ -107,11 +110,11 @@ import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.ImmutableNullableList;
 import org.apache.calcite.util.Litmus;
+import org.apache.calcite.util.Optionality;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.trace.CalciteTrace;
-import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
@@ -155,11 +158,11 @@ import static org.apache.calcite.util.Static.RESOURCE;
  * Default implementation of {@link SqlValidator}, the class was copied over because of
  * CALCITE-4554.
  *
- * <p>Lines 5009 ~ 5022, Flink enables TIMESTAMP and TIMESTAMP_LTZ for system time period
- * specification type at {@link org.apache.calcite.sql.validate.SqlValidatorImpl#validateSnapshot}
+ * <p>Lines 4697 ~ 4716, Flink enables TIMESTAMP and TIMESTAMP_LTZ for system time period
+ * specification type.
  *
- * <p>Lines 5366 ~ 5372, Flink enables TIMESTAMP and TIMESTAMP_LTZ for first orderBy column in
- * matchRecognize at {@link SqlValidatorImpl#validateMatchRecognize}.
+ * <p>Lines 5034 ~ 5038, Flink enables TIMESTAMP and TIMESTAMP_LTZ for first orderBy column in
+ * matchRecognize.
  */
 public class SqlValidatorImpl implements SqlValidatorWithHints {
     // ~ Static fields/initializers ---------------------------------------------
@@ -1204,7 +1207,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlNode)
      */
-    @API(since = "1.27", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlNode node) {
         return requireNonNull(getNamespace(node), () -> "namespace for " + node);
     }
@@ -1217,7 +1219,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlNode)
      */
-    @API(since = "1.27", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlNode node, @Nullable SqlValidatorScope scope) {
         return requireNonNull(
                 getNamespace(node, scope), () -> "namespace for " + node + ", scope " + scope);
@@ -1231,7 +1232,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlIdentifier, DelegatingScope)
      */
-    @API(since = "1.26", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlIdentifier id, @Nullable DelegatingScope scope) {
         return requireNonNull(
                 getNamespace(id, scope), () -> "namespace for " + id + ", scope " + scope);
@@ -1842,7 +1842,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                     // call to this function, so we can use the regular
                     // operator validation.
                     return new SqlBasicCall(
-                            operator, SqlNode.EMPTY_ARRAY, id.getParserPosition(), true, null);
+                                    operator, SqlNode.EMPTY_ARRAY, id.getParserPosition(), null)
+                            .withExpanded(true);
                 }
             }
         }
@@ -5006,7 +5007,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             SqlSnapshot snapshot = (SqlSnapshot) node;
             SqlNode period = snapshot.getPeriod();
             RelDataType dataType = deriveType(requireNonNull(scope, "scope"), period);
-            // ----- FLINK MODIFICATION BEGIN -----
             if (!(dataType.getSqlTypeName() == SqlTypeName.TIMESTAMP
                     || dataType.getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
                 throw newValidationError(
@@ -5019,7 +5019,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 // table to operate on. This will be rechecked later in the planner rules.
                 return;
             }
-            // ----- FLINK MODIFICATION END -----
             SqlValidatorTable table = getTable(ns);
             if (!table.isTemporal()) {
                 List<String> qualifiedName = table.getQualifiedName();
@@ -5363,13 +5362,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         (SqlIdentifier) requireNonNull(firstOrderByColumn, "firstOrderByColumn");
             }
             RelDataType firstOrderByColumnType = deriveType(scope, identifier);
-            // ----- FLINK MODIFICATION BEGIN -----
             if (!(firstOrderByColumnType.getSqlTypeName() == SqlTypeName.TIMESTAMP
                     || firstOrderByColumnType.getSqlTypeName()
                             == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
                 throw newValidationError(interval, RESOURCE.firstColumnOfOrderByMustBeTimestamp());
             }
-            // ----- FLINK MODIFICATION END -----
 
             SqlNode expand = expand(interval, scope);
             RelDataType type = deriveType(scope, expand);
@@ -5855,6 +5852,29 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 break;
             default:
                 throw new AssertionError(op);
+        }
+
+        if (op.isPercentile()) {
+            assert op.requiresGroupOrder() == Optionality.MANDATORY;
+            assert orderList != null;
+
+            // Validate that percentile function have a single ORDER BY expression
+            if (orderList.size() != 1) {
+                throw newValidationError(orderList, RESOURCE.orderByRequiresOneKey(op.getName()));
+            }
+
+            // Validate that the ORDER BY field is of NUMERIC type
+            SqlNode node = orderList.get(0);
+            assert node != null;
+
+            final RelDataType type = deriveType(scope, node);
+            final @Nullable SqlTypeFamily family = type.getSqlTypeName().getFamily();
+            if (family == null || family.allowableDifferenceTypes().isEmpty()) {
+                throw newValidationError(
+                        orderList,
+                        RESOURCE.unsupportedTypeInOrderBy(
+                                type.getSqlTypeName().getName(), op.getName()));
+            }
         }
     }
 

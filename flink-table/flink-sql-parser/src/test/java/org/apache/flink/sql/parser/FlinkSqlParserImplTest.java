@@ -64,38 +64,45 @@ class FlinkSqlParserImplTest extends SqlParserTest {
         sql("desc catalog a").ok("DESCRIBE CATALOG `A`");
     }
 
-    // ignore test methods that we don't support
-    // BEGIN
-    // ARRAY_AGG
-    @Disabled
-    @Test
-    void testArrayAgg() {}
-
-    // DESCRIBE SCHEMA
+    /**
+     * Here we override the super method to avoid test error from `describe schema` supported in
+     * original calcite.
+     */
     @Disabled
     @Test
     void testDescribeSchema() {}
 
-    // DESCRIBE STATEMENT
-    @Disabled
-    @Test
-    void testDescribeStatement() {}
-
-    // GROUP CONCAT
-    @Disabled
-    @Test
-    void testGroupConcat() {}
-
-    // EXPLAIN AS DOT
+    /**
+     * Here we override the super method to avoid test error from `EXPLAIN AS DOT` supported in
+     * original calcite.
+     */
     @Disabled
     @Test
     void testExplainAsDot() {}
 
-    // STRING_AGG
+    /**
+     * Here we override the super method to avoid test error from `ARRAY_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testArrayAgg() {}
+
+    /**
+     * Here we override the super method to avoid test error from `GROUP_CONCAT` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testGroupConcat() {}
+
+    /**
+     * Here we override the super method to avoid test error from `STRING_AGG` supported in original
+     * calcite.
+     */
     @Disabled
     @Test
     void testStringAgg() {}
-    // END
 
     @Test
     void testUseCatalog() {
@@ -310,6 +317,14 @@ class FlinkSqlParserImplTest extends SqlParserTest {
         sql("show columns in catalog1.db1.tbl not like '%'")
                 .ok("SHOW COLUMNS IN `CATALOG1`.`DB1`.`TBL` NOT LIKE '%'");
     }
+
+    /**
+     * Here we override the super method to avoid test error from `describe statement` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testDescribeStatement() {}
 
     @Test
     void testAlterTable() {

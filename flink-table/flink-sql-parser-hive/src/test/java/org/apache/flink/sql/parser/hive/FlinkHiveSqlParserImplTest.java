@@ -34,8 +34,6 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
     }
 
     // ignore test methods that we don't support
-    // BEGIN
-    // DESCRIBE STATEMENT
     @Disabled
     @Test
     void testDescribeStatement() {}
@@ -44,31 +42,41 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
     @Test
     void testTableHintsInInsert() {}
 
-    // ARRAY_AGG
-    @Disabled
-    @Test
-    void testArrayAgg() {}
-
-    // DESCRIBE SCHEMA
     @Disabled
     @Test
     void testDescribeSchema() {}
 
-    // EXPLAIN AS DOT
+    /**
+     * Here we override the super method to avoid test error from `EXPLAIN AS DOT` supported in
+     * original calcite.
+     */
     @Disabled
     @Test
     void testExplainAsDot() {}
 
-    // GROUP CONCAT
+    /**
+     * Here we override the super method to avoid test error from `ARRAY_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testArrayAgg() {}
+
+    /**
+     * Here we override the super method to avoid test error from `GROUP_CONCAT` supported in
+     * original calcite.
+     */
     @Disabled
     @Test
     void testGroupConcat() {}
 
-    // STRING_AGG
+    /**
+     * Here we override the super method to avoid test error from `STRING_AGG` supported in original
+     * calcite.
+     */
     @Disabled
     @Test
     void testStringAgg() {}
-    // END
 
     @Test
     void testShowDatabases() {
@@ -507,8 +515,8 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
     void testLoadModule() {
         sql("load module hive").ok("LOAD MODULE `HIVE`");
 
-        sql("load module hive with ('hive-version' = '3.1.3')")
-                .ok("LOAD MODULE `HIVE` WITH (\n  'hive-version' = '3.1.3'\n)");
+        sql("load module hive with ('hive-version' = '3.1.2')")
+                .ok("LOAD MODULE `HIVE` WITH (\n  'hive-version' = '3.1.2'\n)");
     }
 
     @Test

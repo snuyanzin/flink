@@ -18,6 +18,8 @@
 
 package org.apache.calcite.rel.core;
 
+import com.google.common.collect.ImmutableList;
+import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptCost;
 import org.apache.calcite.plan.RelOptPlanner;
@@ -37,7 +39,6 @@ import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.util.Litmus;
-import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -62,7 +63,7 @@ public abstract class Filter extends SingleRel implements Hintable {
 
     protected final RexNode condition;
 
-    protected final com.google.common.collect.ImmutableList<RelHint> hints;
+    protected final ImmutableList<RelHint> hints;
 
     // ~ Constructors -----------------------------------------------------------
 
@@ -84,9 +85,9 @@ public abstract class Filter extends SingleRel implements Hintable {
             RexNode condition) {
         super(cluster, traits, child);
         this.condition = requireNonNull(condition, "condition");
-        assert RexUtil.isFlat(condition)
-                : "RexUtil.isFlat should be true for condition " + condition;
-        assert isValid(Litmus.THROW, null);
+        assert RexUtil.isFlat(condition) : condition;
+        // Too expensive for everyday use:
+        assert !CalciteSystemProperty.DEBUG.value() || isValid(Litmus.THROW, null);
         this.hints = com.google.common.collect.ImmutableList.copyOf(hints);
     }
 
@@ -139,7 +140,7 @@ public abstract class Filter extends SingleRel implements Hintable {
     }
 
     @Override
-    public boolean isValid(Litmus litmus, @Nullable Context context) {
+    public boolean isValid(Litmus litmus, Context context) {
         if (RexUtil.isNullabilityCast(getCluster().getTypeFactory(), condition)) {
             return litmus.fail("Cast for just nullability not allowed");
         }
@@ -181,7 +182,6 @@ public abstract class Filter extends SingleRel implements Hintable {
         return super.explainTerms(pw).item("condition", condition);
     }
 
-    @API(since = "1.24", status = API.Status.INTERNAL)
     @EnsuresNonNullIf(expression = "#1", result = true)
     protected boolean deepEquals0(@Nullable Object obj) {
         if (this == obj) {
@@ -198,13 +198,12 @@ public abstract class Filter extends SingleRel implements Hintable {
                 && getRowType().equalsSansFieldNames(o.getRowType());
     }
 
-    @API(since = "1.24", status = API.Status.INTERNAL)
     protected int deepHashCode0() {
         return Objects.hash(traitSet, hints, input.deepHashCode(), condition);
     }
 
     @Override
-    public com.google.common.collect.ImmutableList<RelHint> getHints() {
+    public ImmutableList<RelHint> getHints() {
         return hints;
     }
 }

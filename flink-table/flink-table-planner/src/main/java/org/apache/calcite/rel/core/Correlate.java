@@ -94,6 +94,7 @@ public abstract class Correlate extends BiRel implements Hintable {
      * @param requiredColumns Set of columns that are used by correlation
      * @param joinType Join type
      */
+    @SuppressWarnings("method.invocation.invalid")
     protected Correlate(
             RelOptCluster cluster,
             RelTraitSet traitSet,
@@ -283,7 +284,7 @@ public abstract class Correlate extends BiRel implements Hintable {
     }
 
     @Override
-    public com.google.common.collect.ImmutableList<RelHint> getHints() {
+    public ImmutableList<RelHint> getHints() {
         return hints;
     }
 }

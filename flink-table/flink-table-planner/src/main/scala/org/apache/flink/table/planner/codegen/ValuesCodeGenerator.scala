@@ -19,6 +19,7 @@ package org.apache.flink.table.planner.codegen
 
 import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.data.{GenericRowData, RowData}
+import org.apache.flink.table.planner.codegen.calls.ScalarOperatorGens
 import org.apache.flink.table.runtime.operators.values.ValuesInputFormat
 import org.apache.flink.table.runtime.typeutils.InternalTypeInfo
 import org.apache.flink.table.types.logical.RowType
@@ -43,9 +44,17 @@ object ValuesCodeGenerator {
     val generatedRecords = tuples.map {
       r =>
         exprGenerator.generateResultExpression(
-          r.map(exprGenerator.generateExpression),
+          r.zipWithIndex.map {
+            case (t, i) =>
+              ScalarOperatorGens.generateCast(
+                ctx,
+                exprGenerator.generateExpression(t),
+                outputType.getTypeAt(i),
+                nullOnFailure = false)
+          },
           outputType,
-          classOf[GenericRowData])
+          classOf[GenericRowData]
+        )
     }
 
     // generate input format
