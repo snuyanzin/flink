@@ -635,6 +635,22 @@ public class RexSimplify {
             case NOT:
                 // NOT NOT x ==> x
                 return simplify(((RexCall) a).getOperands().get(0), unknownAs);
+            case SEARCH:
+                // NOT SEARCH(x, Sarg[(-inf, 10) OR NULL) ==> SEARCH(x, Sarg[[10, +inf)])
+                final RexCall call2 = (RexCall) a;
+                final RexNode ref = call2.operands.get(0);
+                final RexLiteral literal = (RexLiteral) call2.operands.get(1);
+                final Sarg sarg = literal.getValueAs(Sarg.class);
+                return simplifySearch(
+                        call2.clone(
+                                call2.type,
+                                ImmutableList.of(
+                                        ref,
+                                        rexBuilder.makeLiteral(
+                                                sarg.negate(),
+                                                literal.getType(),
+                                                literal.getTypeName()))),
+                        unknownAs.negate());
             case LITERAL:
                 if (a.getType().getSqlTypeName() == SqlTypeName.BOOLEAN
                         && !RexLiteral.isNullLiteral(a)) {
@@ -2782,7 +2798,7 @@ public class RexSimplify {
                             e,
                             e2 -> addFluent(newTerms, new RexSargBuilder(e2, rexBuilder, negate)));
             if (negate) {
-                kind = kind.negateNullSafe();
+                kind = kind.negateNullSafe2();
             }
             final Comparable value = literal.getValueAs(Comparable.class);
             switch (kind) {
@@ -2906,6 +2922,7 @@ public class RexSimplify {
             return build(negate);
         }
 
+        @SuppressWarnings({"rawtypes", "unchecked", "UnstableApiUsage"})
         <C extends Comparable<C>> Sarg<C> build(boolean negate) {
             if (negate) {
                 return Sarg.of(notNullTermCount == 0, (RangeSet) rangeSet.complement());
@@ -2944,6 +2961,10 @@ public class RexSimplify {
         @Override
         public int hashCode() {
             throw new UnsupportedOperationException();
+        }
+
+        void addAll() {
+            rangeSet.add(Range.all());
         }
 
         void addRange(Range<Comparable> range, RelDataType type) {
