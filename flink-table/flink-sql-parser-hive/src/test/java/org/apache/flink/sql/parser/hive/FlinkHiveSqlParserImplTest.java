@@ -54,6 +54,22 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
     @Test
     void testExplainAsDot() {}
 
+    /**
+     * Here we override the super method to avoid test error from `ARRAY_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testArrayAgg() {}
+
+    /**
+     * Here we override the super method to avoid test error from `STRING_AGG` supported in original
+     * calcite.
+     */
+    @Disabled
+    @Test
+    void testStringAgg() {}
+
     @Test
     void testShowDatabases() {
         sql("show databases").ok("SHOW DATABASES");

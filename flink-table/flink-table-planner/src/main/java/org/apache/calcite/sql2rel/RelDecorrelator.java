@@ -34,11 +34,13 @@ import org.apache.calcite.linq4j.function.Function2;
 import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptCostImpl;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.plan.hep.HepPlanner;
 import org.apache.calcite.plan.hep.HepProgram;
+import org.apache.calcite.plan.hep.HepProgramBuilder;
 import org.apache.calcite.plan.hep.HepRelVertex;
 import org.apache.calcite.rel.BiRel;
 import org.apache.calcite.rel.RelCollation;
@@ -128,27 +130,28 @@ public class RelDecorrelator implements ReflectiveVisitor {
 
     // ~ Instance fields --------------------------------------------------------
 
-    private final RelBuilder relBuilder;
+    protected final RelBuilder relBuilder;
 
     // map built during translation
     protected CorelMap cm;
 
-    private final ReflectUtil.MethodDispatcher<Frame> dispatcher =
-            ReflectUtil.createMethodDispatcher(Frame.class, this, "decorrelateRel", RelNode.class);
+    protected final ReflectUtil.MethodDispatcher<Frame> dispatcher =
+            ReflectUtil.createMethodDispatcher(
+                    Frame.class, getVisitor(), "decorrelateRel", RelNode.class);
 
     // The rel which is being visited
-    private RelNode currentRel;
+    protected RelNode currentRel;
 
-    private final Context context;
+    protected final Context context;
 
     /**
      * Built during decorrelation, of rel to all the newly created correlated variables in its
      * output, and to map old input positions to new input positions. This is from the view point of
      * the parent rel of a new rel.
      */
-    private final Map<RelNode, Frame> map = new HashMap<>();
+    protected final Map<RelNode, Frame> map = new HashMap<>();
 
-    private final HashSet<Correlate> generatedCorRels = new HashSet<>();
+    protected final HashSet<Correlate> generatedCorRels = new HashSet<>();
 
     // ~ Constructors -----------------------------------------------------------
 
@@ -290,7 +293,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         final Frame frame = getInvoke(root, null);
         if (frame != null) {
             // has been rewritten; apply rules post-decorrelation
-            final HepProgram program2 =
+            final HepProgramBuilder builder =
                     HepProgram.builder()
                             .addRuleInstance(
                                     CoreRules.FILTER_INTO_JOIN
@@ -301,8 +304,12 @@ public class RelDecorrelator implements ReflectiveVisitor {
                                     CoreRules.JOIN_CONDITION_PUSH
                                             .config
                                             .withRelBuilderFactory(f)
-                                            .toRule())
-                            .build();
+                                            .toRule());
+
+            if (!getPostDecorrelateRules().isEmpty()) {
+                builder.addRuleCollection(getPostDecorrelateRules());
+            }
+            final HepProgram program2 = builder.build();
 
             final HepPlanner planner2 = createPlanner(program2);
             final RelNode newRoot = frame.r;
@@ -3020,5 +3027,23 @@ public class RelDecorrelator implements ReflectiveVisitor {
 
         /** Sets {@link #decorrelator}. */
         Config withDecorrelator(RelDecorrelator decorrelator);
+    }
+
+    // -------------------------------------------------------------------------
+    //  Getter/Setter
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns the {@code visitor} on which the {@code MethodDispatcher} dispatches each {@code
+     * decorrelateRel} method, the default implementation returns this instance, if you got a
+     * sub-class, override this method to replace the {@code visitor} as the sub-class instance.
+     */
+    protected RelDecorrelator getVisitor() {
+        return this;
+    }
+
+    /** Returns the rules applied on the rel after decorrelation, never null. */
+    protected Collection<RelOptRule> getPostDecorrelateRules() {
+        return Collections.emptyList();
     }
 }
