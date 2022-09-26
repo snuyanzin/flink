@@ -188,6 +188,7 @@ import org.apache.calcite.util.trace.CalciteTrace;
 import org.slf4j.Logger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -824,7 +825,7 @@ public class SqlToRelConverter {
             SqlNode fetch) {
         if (removeSortInSubQuery(bb.top)
                 || select.getOrderList() == null
-                || select.getOrderList().getList().isEmpty()) {
+                || select.getOrderList().isEmpty()) {
             assert removeSortInSubQuery(bb.top) || collation.getFieldCollations().isEmpty();
             if ((offset == null
                             || (offset instanceof SqlLiteral
@@ -1417,7 +1418,7 @@ public class SqlToRelConverter {
     }
 
     private static boolean containsNullLiteral(SqlNodeList valueList) {
-        for (SqlNode node : valueList.getList()) {
+        for (SqlNode node : valueList) {
             if (node instanceof SqlLiteral) {
                 SqlLiteral lit = (SqlLiteral) node;
                 if (lit.getValue() == null) {
@@ -1638,7 +1639,7 @@ public class SqlToRelConverter {
         // expression.  The semantic difference is that a table expression can
         // return multiple rows.
         if (seek instanceof SqlNodeList) {
-            return convertRowValues(bb, seek, ((SqlNodeList) seek).getList(), false, targetRowType);
+            return convertRowValues(bb, seek, (SqlNodeList) seek, false, targetRowType);
         } else {
             return convertQueryRecursive(seek, false, null).project();
         }
@@ -2075,9 +2076,9 @@ public class SqlToRelConverter {
      *       <li>or any combination of the above.
      *     </ul>
      *
-     * @param fieldNames Field aliases, usually come from AS clause
+     * @param fieldNames Field aliases, usually come from AS clause, or null
      */
-    protected void convertFrom(Blackboard bb, SqlNode from, List<String> fieldNames) {
+    protected void convertFrom(Blackboard bb, SqlNode from, @Nullable List<String> fieldNames) {
         if (from == null) {
             bb.setRoot(LogicalValues.createOneRow(cluster), false);
             return;
@@ -2089,12 +2090,10 @@ public class SqlToRelConverter {
             case AS:
                 call = (SqlCall) from;
                 SqlNode firstOperand = call.operand(0);
-                final List<String> fieldNameList = new ArrayList<>();
-                if (call.operandCount() > 2) {
-                    for (SqlNode node : Util.skip(call.getOperandList(), 2)) {
-                        fieldNameList.add(((SqlIdentifier) node).getSimple());
-                    }
-                }
+                final List<String> fieldNameList =
+                        call.operandCount() > 2
+                                ? SqlIdentifier.simpleNames(Util.skip(call.getOperandList(), 2))
+                                : null;
                 convertFrom(bb, firstOperand, fieldNameList);
 
                 // ----- FLINK MODIFICATION BEGIN -----
@@ -2207,7 +2206,7 @@ public class SqlToRelConverter {
 
             case VALUES:
                 convertValuesImpl(bb, (SqlCall) from, null);
-                if (fieldNames.size() > 0) {
+                if (fieldNames != null) {
                     bb.setRoot(relBuilder.push(bb.root).rename(fieldNames).build(), true);
                 }
                 return;
@@ -2252,14 +2251,14 @@ public class SqlToRelConverter {
                             .uncollect(fieldNames, operator.withOrdinality)
                             .build();
         } else {
-            // REVIEW danny 2020-04-26: should we unify the normal field aliases and the item
-            // aliases ?
+            // REVIEW danny 2020-04-26: should we unify the normal field aliases and
+            // the item aliases?
             uncollect =
                     relBuilder
                             .push(child)
                             .project(exprs)
                             .uncollect(Collections.emptyList(), operator.withOrdinality)
-                            .rename(fieldNames)
+                            .let(r -> fieldNames == null ? r : r.rename(fieldNames))
                             .build();
         }
         bb.setRoot(uncollect, true);
@@ -2359,12 +2358,8 @@ public class SqlToRelConverter {
             List<SqlNode> operands = ((SqlCall) node).getOperandList();
             SqlIdentifier left = (SqlIdentifier) operands.get(0);
             patternVarsSet.add(left.getSimple());
-            SqlNodeList rights = (SqlNodeList) operands.get(1);
-            final TreeSet<String> list = new TreeSet<>();
-            for (SqlNode right : rights) {
-                assert right instanceof SqlIdentifier;
-                list.add(((SqlIdentifier) right).getSimple());
-            }
+            final SqlNodeList rights = (SqlNodeList) operands.get(1);
+            final TreeSet<String> list = new TreeSet<>(SqlIdentifier.simpleNames(rights.getList()));
             subsetMap.put(left.getSimple(), list);
         }
 
@@ -2519,7 +2514,7 @@ public class SqlToRelConverter {
                         valueList.add(
                                 Pair.of(
                                         alias,
-                                        nodeList.getList().stream()
+                                        nodeList.stream()
                                                 .map(bb::convertExpression)
                                                 .collect(Util.toImmutableList()))));
 
@@ -2949,16 +2944,11 @@ public class SqlToRelConverter {
             SqlJoin join,
             SqlValidatorNamespace leftNamespace,
             SqlValidatorNamespace rightNamespace) {
-        SqlNode condition = join.getCondition();
-
-        final SqlNodeList list = (SqlNodeList) condition;
-        final List<String> nameList = new ArrayList<>();
-        for (SqlNode columnName : list) {
-            final SqlIdentifier id = (SqlIdentifier) columnName;
-            String name = id.getSimple();
-            nameList.add(name);
-        }
-        return convertUsing(leftNamespace, rightNamespace, nameList);
+        final SqlNodeList list = (SqlNodeList) join.getCondition();
+        return convertUsing(
+                leftNamespace,
+                rightNamespace,
+                ImmutableList.copyOf(SqlIdentifier.simpleNames(list)));
     }
 
     /**
@@ -5479,7 +5469,7 @@ public class SqlToRelConverter {
             } else {
                 collation =
                         RelCollations.of(
-                                orderList.getList().stream()
+                                orderList.stream()
                                         .map(
                                                 order ->
                                                         bb.convertSortExpression(
@@ -5853,7 +5843,7 @@ public class SqlToRelConverter {
                 final SqlNode aggCall = call.getOperandList().get(0);
                 final SqlNodeList orderList = (SqlNodeList) call.getOperandList().get(1);
                 list.add(aggCall);
-                orderList.getList().forEach(this.orderList::add);
+                this.orderList.addAll(orderList);
                 return null;
             }
 
