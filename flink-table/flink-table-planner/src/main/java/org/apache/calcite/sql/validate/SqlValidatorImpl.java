@@ -278,10 +278,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             SqlValidatorCatalogReader catalogReader,
             RelDataTypeFactory typeFactory,
             Config config) {
-        this.opTab = requireNonNull(opTab);
-        this.catalogReader = requireNonNull(catalogReader);
-        this.typeFactory = requireNonNull(typeFactory);
-        this.config = requireNonNull(config);
+        this.opTab = requireNonNull(opTab, "opTab");
+        this.catalogReader = requireNonNull(catalogReader, "catalogReader");
+        this.typeFactory = requireNonNull(typeFactory, "typeFactory");
+        this.config = requireNonNull(config, "config");
 
         unknownType = typeFactory.createUnknownType();
         booleanType = typeFactory.createSqlType(SqlTypeName.BOOLEAN);
@@ -1769,6 +1769,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     public RelDataType getValidatedNodeType(SqlNode node) {
         RelDataType type = getValidatedNodeTypeIfKnown(node);
         if (type == null) {
+            if (node.getKind() == SqlKind.IDENTIFIER) {
+                throw newValidationError(node, RESOURCE.unknownIdentifier(node.toString()));
+            }
             throw Util.needToImplement(node);
         } else {
             return type;
@@ -1811,8 +1814,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     @Override
     public final void setValidatedNodeType(SqlNode node, RelDataType type) {
-        requireNonNull(type);
-        requireNonNull(node);
+        requireNonNull(type, "type");
+        requireNonNull(node, "node");
         if (type.equals(unknownType)) {
             // don't set anything until we know what it is, and don't overwrite
             // a known type with the unknown type
@@ -1848,8 +1851,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     @Override
     public RelDataType deriveType(SqlValidatorScope scope, SqlNode expr) {
-        requireNonNull(scope);
-        requireNonNull(expr);
+        requireNonNull(scope, "scope");
+        requireNonNull(expr, "expr");
 
         // if we already know the type, no need to re-derive
         RelDataType type = nodeToTypeMap.get(expr);
@@ -1962,9 +1965,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     protected void inferUnknownTypes(
             RelDataType inferredType, SqlValidatorScope scope, SqlNode node) {
-        requireNonNull(inferredType);
-        requireNonNull(scope);
-        requireNonNull(node);
+        requireNonNull(inferredType, "inferredType");
+        requireNonNull(scope, "scope");
+        requireNonNull(node, "node");
         final SqlValidatorScope newScope = scopes.get(node);
         if (newScope != null) {
             scope = newScope;
@@ -2711,8 +2714,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             @Nullable String alias,
             boolean forceNullable,
             boolean checkUpdate) {
-        requireNonNull(node);
-        requireNonNull(enclosingNode);
+        requireNonNull(node, "node");
+        requireNonNull(enclosingNode, "enclosingNode");
         Preconditions.checkArgument(usingScope == null || alias != null);
 
         SqlCall call;
@@ -3276,7 +3279,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @param scope Scope
      */
     protected void validateFrom(SqlNode node, RelDataType targetRowType, SqlValidatorScope scope) {
-        requireNonNull(targetRowType);
+        requireNonNull(targetRowType, "targetRowType");
         switch (node.getKind()) {
             case AS:
             case TABLE_REF:
@@ -4094,7 +4097,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             }
         }
         final SqlValidatorScope orderScope = getOrderScope(select);
-        requireNonNull(orderScope);
+        requireNonNull(orderScope, "orderScope");
 
         List<SqlNode> expandList = new ArrayList<>();
         for (SqlNode orderItem : orderList) {
@@ -5258,7 +5261,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         targetWindow.setWindowCall(null);
         call.validate(this, scope);
 
-        validateAggregateParams(call, null, null, scope);
+        validateAggregateParams(call, null, null, null, scope);
 
         // Disable nested aggregates post validation
         inWindow = false;
@@ -5773,6 +5776,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     public void validateAggregateParams(
             SqlCall aggCall,
             @Nullable SqlNode filter,
+            @Nullable SqlNodeList distinctList,
             @Nullable SqlNodeList orderList,
             SqlValidatorScope scope) {
         // For "agg(expr)", expr cannot itself contain aggregate function
@@ -5806,6 +5810,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         if (filter != null) {
             if (a.findAgg(filter) != null) {
                 throw newValidationError(filter, RESOURCE.aggregateInFilterIllegal());
+            }
+        }
+        if (distinctList != null) {
+            for (SqlNode param : distinctList) {
+                if (a.findAgg(param) != null) {
+                    throw newValidationError(aggCall, RESOURCE.aggregateInWithinDistinctIllegal());
+                }
             }
         }
         if (orderList != null) {
@@ -5853,7 +5864,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             // For example, "LOCALTIME()" is illegal. (It should be
             // "LOCALTIME", which would have been handled as a
             // SqlIdentifier.)
-            throw handleUnresolvedFunction(call, (SqlFunction) operator, ImmutableList.of(), null);
+            throw handleUnresolvedFunction(call, operator, ImmutableList.of(), null);
         }
 
         SqlValidatorScope operandScope = scope.getOperandScope(call);
@@ -6055,7 +6066,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 SqlNode enclosingNode,
                 SqlValidatorScope parentScope) {
             super(validator, node.getTargetTable(), enclosingNode, parentScope);
-            this.node = requireNonNull(node);
+            this.node = requireNonNull(node, "node");
         }
 
         @Override
@@ -6074,7 +6085,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 SqlNode enclosingNode,
                 SqlValidatorScope parentScope) {
             super(validator, node.getTargetTable(), enclosingNode, parentScope);
-            this.node = requireNonNull(node);
+            this.node = requireNonNull(node, "node");
         }
 
         @Override
@@ -6093,7 +6104,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 SqlNode enclosingNode,
                 SqlValidatorScope parentScope) {
             super(validator, node.getTargetTable(), enclosingNode, parentScope);
-            this.node = requireNonNull(node);
+            this.node = requireNonNull(node, "node");
         }
 
         @Override
@@ -6112,7 +6123,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 SqlNode enclosingNode,
                 SqlValidatorScope parentScope) {
             super(validator, node.getTargetTable(), enclosingNode, parentScope);
-            this.node = requireNonNull(node);
+            this.node = requireNonNull(node, "node");
         }
 
         @Override

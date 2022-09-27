@@ -1208,6 +1208,7 @@ public class HiveParserCalcitePlanner {
                             false,
                             gbKeyIndices,
                             -1,
+                            null,
                             RelCollations.EMPTY,
                             groupSet.cardinality(),
                             gbInputRel,

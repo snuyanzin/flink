@@ -91,6 +91,7 @@ import org.apache.calcite.schema.impl.ListTransientTable;
 import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlCountAggFunction;
 import org.apache.calcite.sql.fun.SqlLikeOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
@@ -533,8 +534,8 @@ public class RelBuilder {
      * for the relation starting at the top of the stack.
      */
     public RexNode field(int inputCount, String alias, String fieldName) {
-        requireNonNull(alias);
-        requireNonNull(fieldName);
+        requireNonNull(alias, "alias");
+        requireNonNull(fieldName, "fieldName");
         final List<String> fields = new ArrayList<>();
         for (int inputOrdinal = 0; inputOrdinal < inputCount; ++inputOrdinal) {
             final Frame frame = peek_(inputOrdinal);
@@ -733,6 +734,22 @@ public class RelBuilder {
         return call(SqlStdOperatorTable.NOT_EQUALS, operand0, operand1);
     }
 
+    /**
+     * Creates an expression equivalent to "{@code o0 IS NOT DISTINCT FROM o1}". It is also
+     * equivalent to "{@code o0 = o1 OR (o0 IS NULL AND o1 IS NULL)}".
+     */
+    public RexNode isNotDistinctFrom(RexNode operand0, RexNode operand1) {
+        return RelOptUtil.isDistinctFrom(getRexBuilder(), operand0, operand1, true);
+    }
+
+    /**
+     * Creates an expression equivalent to {@code o0 IS DISTINCT FROM o1}. It is also equivalent to
+     * "{@code NOT (o0 = o1 OR (o0 IS NULL AND o1 IS NULL))}.
+     */
+    public RexNode isDistinctFrom(RexNode operand0, RexNode operand1) {
+        return RelOptUtil.isDistinctFrom(getRexBuilder(), operand0, operand1, false);
+    }
+
     /** Creates a {@code BETWEEN}. */
     public RexNode between(RexNode arg, RexNode lower, RexNode upper) {
         return getRexBuilder().makeBetween(arg, lower, upper);
@@ -924,7 +941,7 @@ public class RelBuilder {
         if (groupSet.length() > peek().getRowType().getFieldCount()) {
             throw new IllegalArgumentException("out of bounds: " + groupSet);
         }
-        requireNonNull(groupSets);
+        requireNonNull(groupSets, "groupSets");
         final ImmutableList<RexNode> nodes = fields(groupSet);
         return groupKey_(nodes, Util.transform(groupSets, this::fields));
     }
@@ -942,6 +959,7 @@ public class RelBuilder {
                 false,
                 false,
                 filter,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.copyOf(operands));
@@ -961,6 +979,7 @@ public class RelBuilder {
                 approximate,
                 false,
                 filter,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.copyOf(operands));
@@ -979,6 +998,7 @@ public class RelBuilder {
                 false,
                 false,
                 filter,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.copyOf(operands));
@@ -998,6 +1018,7 @@ public class RelBuilder {
                 approximate,
                 false,
                 filter,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.copyOf(operands));
@@ -1016,6 +1037,7 @@ public class RelBuilder {
                 false,
                 false,
                 false,
+                null,
                 null,
                 ImmutableList.of(),
                 null,
@@ -1036,6 +1058,7 @@ public class RelBuilder {
                 false,
                 false,
                 null,
+                null,
                 ImmutableList.of(),
                 null,
                 ImmutableList.copyOf(operands));
@@ -1049,6 +1072,7 @@ public class RelBuilder {
                 a.isApproximate(),
                 a.ignoreNulls(),
                 a.filterArg < 0 ? null : field(a.filterArg),
+                a.distinctKeys == null ? null : fields(a.distinctKeys),
                 fields(a.collation),
                 a.name,
                 fields(a.getArgList()));
@@ -1065,6 +1089,7 @@ public class RelBuilder {
                 a.isApproximate(),
                 a.ignoreNulls(),
                 a.filterArg < 0 ? null : field(Mappings.apply(mapping, a.filterArg)),
+                a.distinctKeys == null ? null : fields(Mappings.apply(mapping, a.distinctKeys)),
                 fields(RexUtil.apply(mapping, a.collation)),
                 a.name,
                 fields(Mappings.apply2(mapping, a.getArgList())));
@@ -1077,6 +1102,7 @@ public class RelBuilder {
             boolean approximate,
             boolean ignoreNulls,
             @Nullable RexNode filter,
+            @Nullable ImmutableList<RexNode> distinctKeys,
             ImmutableList<RexNode> orderKeys,
             @Nullable String alias,
             ImmutableList<RexNode> operands) {
@@ -1088,6 +1114,7 @@ public class RelBuilder {
                 filter,
                 alias,
                 operands,
+                distinctKeys,
                 orderKeys);
     }
 
@@ -1112,6 +1139,7 @@ public class RelBuilder {
                 false,
                 false,
                 null,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.copyOf(operands));
@@ -1128,6 +1156,7 @@ public class RelBuilder {
                 distinct,
                 false,
                 false,
+                null,
                 null,
                 ImmutableList.of(),
                 alias,
@@ -1154,6 +1183,7 @@ public class RelBuilder {
                 false,
                 false,
                 null,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.of(operand));
@@ -1174,6 +1204,7 @@ public class RelBuilder {
                 false,
                 false,
                 null,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.of(operand));
@@ -1192,6 +1223,7 @@ public class RelBuilder {
                 false,
                 false,
                 null,
+                null,
                 ImmutableList.of(),
                 alias,
                 ImmutableList.of(operand));
@@ -1209,6 +1241,7 @@ public class RelBuilder {
                 false,
                 false,
                 false,
+                null,
                 null,
                 ImmutableList.of(),
                 alias,
@@ -1829,7 +1862,7 @@ public class RelBuilder {
                                 cluster.traitSetOf(Convention.NONE),
                                 frame.rel,
                                 withOrdinality,
-                                requireNonNull(itemAliases))));
+                                requireNonNull(itemAliases, "itemAliases"))));
         return this;
     }
 
@@ -1975,9 +2008,9 @@ public class RelBuilder {
             groupSets = ImmutableList.copyOf(groupSetMultiset.elementSet());
             if (registrar.extraNodes.size() > sizeBefore) {
                 throw new IllegalArgumentException(
-                        "group sets contained expressions not in group key: "
-                                + registrar.extraNodes.subList(
-                                        sizeBefore, registrar.extraNodes.size()));
+                        "group sets contained expressions "
+                                + "not in group key: "
+                                + Util.skip(registrar.extraNodes, sizeBefore));
             }
         } else {
             groupSets = ImmutableList.of(groupSet);
@@ -2915,7 +2948,7 @@ public class RelBuilder {
      * @param nodes Sort expressions
      */
     public RelBuilder sortLimit(int offset, int fetch, Iterable<? extends RexNode> nodes) {
-        final Registrar registrar = new Registrar(fields());
+        final Registrar registrar = new Registrar(fields(), ImmutableList.of());
         final List<RelFieldCollation> fieldCollations = registrar.registerFieldCollations(nodes);
 
         final RexNode offsetNode = offset <= 0 ? null : literal(offset);
@@ -3415,7 +3448,7 @@ public class RelBuilder {
      *     org.apache.calcite.rel.hint.Hintable}
      */
     public RelBuilder hints(Iterable<RelHint> hints) {
-        requireNonNull(hints);
+        requireNonNull(hints, "hints");
         final List<RelHint> relHintList =
                 hints instanceof List ? (List<RelHint>) hints : Lists.newArrayList(hints);
         if (relHintList.isEmpty()) {
@@ -3457,7 +3490,23 @@ public class RelBuilder {
          * Returns a copy of this AggCall that sorts its input values by {@code orderKeys} before
          * aggregating, as in SQL's {@code WITHIN GROUP} clause.
          */
-        AggCall sort(RexNode... orderKeys);
+        default AggCall sort(RexNode... orderKeys) {
+            return sort(ImmutableList.copyOf(orderKeys));
+        }
+
+        /**
+         * Returns a copy of this AggCall that makes its input values unique by {@code distinctKeys}
+         * before aggregating, as in SQL's {@code WITHIN DISTINCT} clause.
+         */
+        AggCall unique(@Nullable Iterable<RexNode> distinctKeys);
+
+        /**
+         * Returns a copy of this AggCall that makes its input values unique by {@code distinctKeys}
+         * before aggregating, as in SQL's {@code WITHIN DISTINCT} clause.
+         */
+        default AggCall unique(RexNode... distinctKeys) {
+            return unique(ImmutableList.copyOf(distinctKeys));
+        }
 
         /**
          * Returns a copy of this AggCall that may return approximate results if {@code approximate}
@@ -3475,7 +3524,9 @@ public class RelBuilder {
         AggCall distinct(boolean distinct);
 
         /** Returns a copy of this AggCall that is distinct. */
-        AggCall distinct();
+        default AggCall distinct() {
+            return distinct(true);
+        }
     }
 
     /** Internal methods shared by all implementations of {@link AggCall}. */
@@ -3527,7 +3578,7 @@ public class RelBuilder {
                 ImmutableList<RexNode> nodes,
                 @Nullable ImmutableList<ImmutableList<RexNode>> nodeLists,
                 @Nullable String alias) {
-            this.nodes = requireNonNull(nodes);
+            this.nodes = requireNonNull(nodes, "nodes");
             this.nodeLists = nodeLists;
             this.alias = alias;
         }
@@ -3560,10 +3611,11 @@ public class RelBuilder {
         private final boolean distinct;
         private final boolean approximate;
         private final boolean ignoreNulls;
-        private final @Nullable RexNode filter; // may be null
-        private final @Nullable String alias; // may be null
-        private final ImmutableList<RexNode> operands; // may be empty, never null
-        private final ImmutableList<RexNode> orderKeys; // may be empty, never null
+        private final @Nullable RexNode filter;
+        private final @Nullable String alias;
+        private final ImmutableList<RexNode> operands; // may be empty
+        private final @Nullable ImmutableList<RexNode> distinctKeys; // may be empty or null
+        private final ImmutableList<RexNode> orderKeys; // may be empty
 
         AggCallImpl(
                 SqlAggFunction aggFunction,
@@ -3573,16 +3625,18 @@ public class RelBuilder {
                 @Nullable RexNode filter,
                 @Nullable String alias,
                 ImmutableList<RexNode> operands,
+                @Nullable ImmutableList<RexNode> distinctKeys,
                 ImmutableList<RexNode> orderKeys) {
-            this.aggFunction = requireNonNull(aggFunction);
+            this.aggFunction = requireNonNull(aggFunction, "aggFunction");
             // If the aggregate function ignores DISTINCT,
             // make the DISTINCT flag FALSE.
             this.distinct = distinct && aggFunction.getDistinctOptionality() != Optionality.IGNORED;
             this.approximate = approximate;
             this.ignoreNulls = ignoreNulls;
             this.alias = alias;
-            this.operands = requireNonNull(operands);
-            this.orderKeys = requireNonNull(orderKeys);
+            this.operands = requireNonNull(operands, "operands");
+            this.distinctKeys = distinctKeys;
+            this.orderKeys = requireNonNull(orderKeys, "orderKeys");
             if (filter != null) {
                 if (filter.getType().getSqlTypeName() != SqlTypeName.BOOLEAN) {
                     throw RESOURCE.filterMustBeBoolean().ex();
@@ -3613,6 +3667,9 @@ public class RelBuilder {
             if (filter != null) {
                 b.append(" FILTER (WHERE ").append(filter).append(')');
             }
+            if (distinctKeys != null) {
+                b.append(" WITHIN DISTINCT (").append(distinctKeys).append(')');
+            }
             return b.toString();
         }
 
@@ -3628,6 +3685,11 @@ public class RelBuilder {
 
         @Override
         public AggregateCall aggregateCall() {
+            // Use dummy values for collation and type. This method only promises to
+            // return a call that is "approximately equivalent ... and is good for
+            // deriving field names", so dummy values are good enough.
+            final RelCollation collation = RelCollations.EMPTY;
+            final RelDataType type = getTypeFactory().createSqlType(SqlTypeName.BOOLEAN);
             return AggregateCall.create(
                     aggFunction,
                     distinct,
@@ -3635,15 +3697,16 @@ public class RelBuilder {
                     ignoreNulls,
                     ImmutableList.of(),
                     -1,
-                    requireNonNull(null, "CALCITE-4234: collation is null"),
-                    requireNonNull(null, "CALCITE-4234: type is null"),
+                    null,
+                    collation,
+                    type,
                     alias);
         }
 
         @Override
         public AggregateCall aggregateCall(
                 Registrar registrar, ImmutableBitSet groupSet, RelNode r) {
-            final List<Integer> args = registrar.registerExpressions(this.operands);
+            List<Integer> args = registrar.registerExpressions(this.operands);
             final int filterArg =
                     this.filter == null ? -1 : registrar.registerExpression(this.filter);
             if (this.distinct && !this.aggFunction.isQuantifierAllowed()) {
@@ -3652,7 +3715,11 @@ public class RelBuilder {
             if (this.filter != null && !this.aggFunction.allowsFilter()) {
                 throw new IllegalArgumentException("FILTER not allowed");
             }
-            RelCollation collation =
+            final @Nullable ImmutableBitSet distinctKeys =
+                    this.distinctKeys == null
+                            ? null
+                            : ImmutableBitSet.of(registrar.registerExpressions(this.distinctKeys));
+            final RelCollation collation =
                     RelCollations.of(
                             this.orderKeys.stream()
                                     .map(
@@ -3663,6 +3730,9 @@ public class RelBuilder {
                                                             null,
                                                             Collections.emptyList()))
                                     .collect(Collectors.toList()));
+            if (aggFunction instanceof SqlCountAggFunction && !distinct) {
+                args = args.stream().filter(r::fieldIsNullable).collect(Util.toImmutableList());
+            }
             return AggregateCall.create(
                     aggFunction,
                     distinct,
@@ -3670,6 +3740,7 @@ public class RelBuilder {
                     ignoreNulls,
                     args,
                     filterArg,
+                    distinctKeys,
                     collation,
                     groupSet.cardinality(),
                     r,
@@ -3683,6 +3754,10 @@ public class RelBuilder {
             if (filter != null) {
                 registrar.registerExpression(filter);
             }
+            if (distinctKeys != null) {
+                registrar.registerExpressions(distinctKeys);
+            }
+            registrar.registerExpressions(orderKeys);
         }
 
         @Override
@@ -3698,12 +3773,31 @@ public class RelBuilder {
                             filter,
                             alias,
                             operands,
+                            distinctKeys,
                             orderKeyList);
         }
 
         @Override
         public AggCall sort(RexNode... orderKeys) {
             return sort(ImmutableList.copyOf(orderKeys));
+        }
+
+        @Override
+        public AggCall unique(@Nullable Iterable<RexNode> distinctKeys) {
+            final @Nullable ImmutableList<RexNode> distinctKeyList =
+                    distinctKeys == null ? null : ImmutableList.copyOf(distinctKeys);
+            return Objects.equals(distinctKeyList, this.distinctKeys)
+                    ? this
+                    : new AggCallImpl(
+                            aggFunction,
+                            distinct,
+                            approximate,
+                            ignoreNulls,
+                            filter,
+                            alias,
+                            operands,
+                            distinctKeyList,
+                            orderKeys);
         }
 
         @Override
@@ -3718,6 +3812,7 @@ public class RelBuilder {
                             filter,
                             alias,
                             operands,
+                            distinctKeys,
                             orderKeys);
         }
 
@@ -3733,6 +3828,7 @@ public class RelBuilder {
                             condition,
                             alias,
                             operands,
+                            distinctKeys,
                             orderKeys);
         }
 
@@ -3748,6 +3844,7 @@ public class RelBuilder {
                             filter,
                             alias,
                             operands,
+                            distinctKeys,
                             orderKeys);
         }
 
@@ -3763,12 +3860,8 @@ public class RelBuilder {
                             filter,
                             alias,
                             operands,
+                            distinctKeys,
                             orderKeys);
-        }
-
-        @Override
-        public AggCall distinct() {
-            return distinct(true);
         }
 
         @Override
@@ -3783,6 +3876,7 @@ public class RelBuilder {
                             filter,
                             alias,
                             operands,
+                            distinctKeys,
                             orderKeys);
         }
     }
@@ -3792,7 +3886,7 @@ public class RelBuilder {
         private final AggregateCall aggregateCall;
 
         AggCallImpl2(AggregateCall aggregateCall) {
-            this.aggregateCall = requireNonNull(aggregateCall);
+            this.aggregateCall = requireNonNull(aggregateCall, "aggregateCall");
         }
 
         @Override
@@ -3837,6 +3931,11 @@ public class RelBuilder {
         }
 
         @Override
+        public AggCall unique(@Nullable Iterable<RexNode> distinctKeys) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public AggCall approximate(boolean approximate) {
             throw new UnsupportedOperationException();
         }
@@ -3857,11 +3956,6 @@ public class RelBuilder {
         }
 
         @Override
-        public AggCall distinct() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public AggCall ignoreNulls(boolean ignoreNulls) {
             throw new UnsupportedOperationException();
         }
@@ -3876,35 +3970,34 @@ public class RelBuilder {
     private static class Registrar {
         final List<RexNode> originalExtraNodes;
         final List<RexNode> extraNodes;
-        final List<@Nullable String> names = new ArrayList<>();
-
-        Registrar(Iterable<RexNode> fields) {
-            this(fields, ImmutableList.of());
-        }
+        final List<@Nullable String> names;
 
         Registrar(Iterable<RexNode> fields, List<String> fieldNames) {
             originalExtraNodes = ImmutableList.copyOf(fields);
             extraNodes = new ArrayList<>(originalExtraNodes);
-            names.addAll(fieldNames);
+            names = new ArrayList<>(fieldNames);
         }
 
         int registerExpression(RexNode node) {
             switch (node.getKind()) {
                 case AS:
                     final List<RexNode> operands = ((RexCall) node).operands;
-                    int i = registerExpression(operands.get(0));
+                    final int i = registerExpression(operands.get(0));
                     names.set(i, RexLiteral.stringValue(operands.get(1)));
                     return i;
+                case DESCENDING:
+                case NULLS_FIRST:
+                case NULLS_LAST:
+                    return registerExpression(((RexCall) node).operands.get(0));
                 default:
-                    break;
+                    final int i2 = extraNodes.indexOf(node);
+                    if (i2 >= 0) {
+                        return i2;
+                    }
+                    extraNodes.add(node);
+                    names.add(null);
+                    return extraNodes.size() - 1;
             }
-            int i = extraNodes.indexOf(node);
-            if (i < 0) {
-                i = extraNodes.size();
-                extraNodes.add(node);
-                names.add(null);
-            }
-            return i;
         }
 
         List<Integer> registerExpressions(Iterable<? extends RexNode> nodes) {
