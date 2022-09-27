@@ -63,6 +63,14 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
     void testArrayAgg() {}
 
     /**
+     * Here we override the super method to avoid test error from `GROUP_CONCAT` supported in
+     * original calcite.
+     */
+    @Disabled
+    @Test
+    void testGroupConcat() {}
+
+    /**
      * Here we override the super method to avoid test error from `STRING_AGG` supported in original
      * calcite.
      */
