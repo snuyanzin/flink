@@ -1480,7 +1480,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return node;
     }
 
-    private @Nullable SqlSelect getInnerSelect(SqlNode node) {
+    private static @Nullable SqlSelect getInnerSelect(SqlNode node) {
         for (; ; ) {
             if (node instanceof SqlSelect) {
                 return (SqlSelect) node;
@@ -1494,7 +1494,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
     }
 
-    private void rewriteMerge(SqlMerge call) {
+    private static void rewriteMerge(SqlMerge call) {
         SqlNodeList selectList;
         SqlUpdate updateStmt = call.getUpdateCall();
         if (updateStmt != null) {
@@ -3593,7 +3593,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
     }
 
-    private @Nullable SqlNode stripDot(@Nullable SqlNode node) {
+    private static @Nullable SqlNode stripDot(@Nullable SqlNode node) {
         if (node != null && node.getKind() == SqlKind.DOT) {
             return stripDot(((SqlCall) node).operand(0));
         }
@@ -3641,7 +3641,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         checkRollUp(grandParent, parent, current, scope, null);
     }
 
-    private @Nullable SqlWindow getWindowInOver(SqlNode over) {
+    private static @Nullable SqlWindow getWindowInOver(SqlNode over) {
         if (over.getKind() == SqlKind.OVER) {
             SqlNode window = ((SqlCall) over).getOperandList().get(1);
             if (window instanceof SqlWindow) {
@@ -3700,7 +3700,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return true;
     }
 
-    private @Nullable Table resolveTable(SqlIdentifier identifier, SqlValidatorScope scope) {
+    private static @Nullable Table resolveTable(SqlIdentifier identifier, SqlValidatorScope scope) {
         SqlQualified fullyQualified = scope.fullyQualify(identifier);
         assert fullyQualified.namespace != null : "namespace must not be null in " + fullyQualified;
         SqlValidatorTable sqlValidatorTable = fullyQualified.namespace.getTable();
@@ -3727,7 +3727,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return false;
     }
 
-    private boolean shouldCheckForRollUp(@Nullable SqlNode from) {
+    private static boolean shouldCheckForRollUp(@Nullable SqlNode from) {
         if (from != null) {
             SqlKind kind = stripAs(from).getKind();
             return kind != SqlKind.VALUES && kind != SqlKind.SELECT;
@@ -3765,7 +3765,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     /** Return the intended modality of a SELECT or set-op. */
-    private SqlModality deduceModality(SqlNode query) {
+    private static SqlModality deduceModality(SqlNode query) {
         if (query instanceof SqlSelect) {
             SqlSelect select = (SqlSelect) query;
             return select.getModifierNode(SqlSelectKeyword.STREAM) != null
@@ -3876,11 +3876,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     /** Returns whether the prefix is sorted. */
-    private boolean hasSortedPrefix(SelectScope scope, SqlNodeList orderList) {
+    private static boolean hasSortedPrefix(SelectScope scope, SqlNodeList orderList) {
         return isSortCompatible(scope, orderList.get(0), false);
     }
 
-    private boolean isSortCompatible(SelectScope scope, SqlNode node, boolean descending) {
+    private static boolean isSortCompatible(SelectScope scope, SqlNode node, boolean descending) {
         switch (node.getKind()) {
             case DESCENDING:
                 return isSortCompatible(scope, ((SqlCall) node).getOperandList().get(0), true);
@@ -4668,7 +4668,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     /** Returns whether a query uses {@code DEFAULT} to populate a given column. */
-    private boolean isValuesWithDefault(SqlNode source, int column) {
+    private static boolean isValuesWithDefault(SqlNode source, int column) {
         switch (source.getKind()) {
             case VALUES:
                 for (SqlNode operand : ((SqlCall) source).getOperandList()) {
@@ -4683,7 +4683,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return false;
     }
 
-    private boolean isRowWithDefault(SqlNode operand, int column) {
+    private static boolean isRowWithDefault(SqlNode operand, int column) {
         switch (operand.getKind()) {
             case ROW:
                 final SqlCall row = (SqlCall) operand;
@@ -4808,7 +4808,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @param sourceCount Number of expressions
      * @return Ordinal'th expression, never null
      */
-    private SqlNode getNthExpr(SqlNode query, int ordinal, int sourceCount) {
+    private static SqlNode getNthExpr(SqlNode query, int ordinal, int sourceCount) {
         if (query instanceof SqlInsert) {
             SqlInsert insert = (SqlInsert) query;
             if (insert.getTargetColumnList() != null) {

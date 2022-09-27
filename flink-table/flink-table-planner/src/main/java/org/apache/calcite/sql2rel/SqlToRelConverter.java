@@ -659,7 +659,7 @@ public class SqlToRelConverter {
         }
     }
 
-    private RelCollation requiredCollation(RelNode r) {
+    private static RelCollation requiredCollation(RelNode r) {
         if (r instanceof Sort) {
             return ((Sort) r).collation;
         }
@@ -1802,7 +1802,7 @@ public class SqlToRelConverter {
         return literal;
     }
 
-    private boolean isRowConstructor(SqlNode node) {
+    private static boolean isRowConstructor(SqlNode node) {
         if (!(node.getKind() == SqlKind.ROW)) {
             return false;
         }
@@ -2669,7 +2669,7 @@ public class SqlToRelConverter {
         bb.setRoot(snapshotRel, false);
     }
 
-    private @Nullable Set<RelColumnMapping> getColumnMappings(SqlOperator op) {
+    private static @Nullable Set<RelColumnMapping> getColumnMappings(SqlOperator op) {
         SqlReturnTypeInference rti = op.getReturnTypeInference();
         if (rti == null) {
             return null;
@@ -3554,7 +3554,7 @@ public class SqlToRelConverter {
         }
     }
 
-    private boolean all(SqlCall call) {
+    private static boolean all(SqlCall call) {
         return ((SqlSetOperator) call.getOperator()).isAll();
     }
 
@@ -3814,7 +3814,7 @@ public class SqlToRelConverter {
         return createBlackboard(null, nameToNodeMap, false);
     }
 
-    private InitializerExpressionFactory getInitializerFactory(
+    private static InitializerExpressionFactory getInitializerFactory(
             @Nullable SqlValidatorTable validatorTable) {
         // We might unwrap a null instead of a InitializerExpressionFactory.
         final Table table = unwrap(validatorTable, Table.class);
@@ -5185,7 +5185,7 @@ public class SqlToRelConverter {
         }
     }
 
-    private SqlQuantifyOperator negate(SqlQuantifyOperator operator) {
+    private static SqlQuantifyOperator negate(SqlQuantifyOperator operator) {
         assert operator.kind == SqlKind.ALL;
         return SqlStdOperatorTable.some(operator.comparisonKind.negateNullSafe());
     }
