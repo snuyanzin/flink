@@ -117,6 +117,8 @@ import java.math.BigDecimal;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -131,6 +133,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
@@ -2706,26 +2709,35 @@ public class RelBuilder {
         }
         final ImmutableList<ImmutableList<RexLiteral>> tupleList =
                 tupleList(fieldNames.length, values);
+        assert tupleList.size() == rowCount;
+        final List<String> fieldNameList =
+                Util.transformIndexed(
+                        Arrays.asList(fieldNames), (name, i) -> name != null ? name : "expr$" + i);
+        return values(tupleList, fieldNameList);
+    }
+
+    private RelBuilder values(List<? extends List<RexLiteral>> tupleList, List<String> fieldNames) {
         final RelDataTypeFactory typeFactory = cluster.getTypeFactory();
         final RelDataTypeFactory.Builder builder = typeFactory.builder();
-        for (final Ord<@Nullable String> fieldName : Ord.zip(fieldNames)) {
-            final String name = fieldName.e != null ? fieldName.e : "expr$" + fieldName.i;
-            final RelDataType type =
-                    typeFactory.leastRestrictive(
-                            new AbstractList<RelDataType>() {
-                                @Override
-                                public RelDataType get(int index) {
-                                    return tupleList.get(index).get(fieldName.i).getType();
-                                }
+        Ord.forEach(
+                fieldNames,
+                (fieldName, i) -> {
+                    final RelDataType type =
+                            typeFactory.leastRestrictive(
+                                    new AbstractList<RelDataType>() {
+                                        @Override
+                                        public RelDataType get(int index) {
+                                            return tupleList.get(index).get(i).getType();
+                                        }
 
-                                @Override
-                                public int size() {
-                                    return rowCount;
-                                }
-                            });
-            assert type != null : "can't infer type for field " + fieldName.i + ", " + fieldName.e;
-            builder.add(name, type);
-        }
+                                        @Override
+                                        public int size() {
+                                            return tupleList.size();
+                                        }
+                                    });
+                    assert type != null : "can't infer type for field " + i + ", " + fieldName;
+                    builder.add(fieldName, type);
+                });
         final RelDataType rowType = builder.build();
         return values(tupleList, rowType);
     }
@@ -3006,6 +3018,8 @@ public class RelBuilder {
      * Creates a projection that converts the current relational expression's output to a desired
      * row type.
      *
+     * <p>The desired row type and the row type to be converted must have the same number of fields.
+     *
      * @param castRowType row type after cast
      * @param rename if true, use field names from castRowType; if false, preserve field names from
      *     rel
@@ -3196,6 +3210,188 @@ public class RelBuilder {
                             });
                 });
         return aggregate(groupKey, multipliedAggCalls);
+    }
+
+    /**
+     * Creates an Unpivot.
+     *
+     * <p>To achieve the same effect as the SQL
+     *
+     * <blockquote>
+     *
+     * <pre>{@code
+     * SELECT *
+     * FROM (SELECT deptno, job, sal, comm FROM emp)
+     *   UNPIVOT INCLUDE NULLS (remuneration
+     *     FOR remuneration_type IN (comm AS 'commission',
+     *                               sal AS 'salary'))
+     * }</pre>
+     *
+     * </blockquote>
+     *
+     * <p>use the builder as follows:
+     *
+     * <blockquote>
+     *
+     * <pre>{@code
+     * RelBuilder b;
+     * b.scan("EMP");
+     * final List<String> measureNames = Arrays.asList("REMUNERATION");
+     * final List<String> axisNames = Arrays.asList("REMUNERATION_TYPE");
+     * final Map<List<RexLiteral>, List<RexNode>> axisMap =
+     *     ImmutableMap.<List<RexLiteral>, List<RexNode>>builder()
+     *         .put(Arrays.asList(b.literal("commission")),
+     *             Arrays.asList(b.field("COMM")))
+     *         .put(Arrays.asList(b.literal("salary")),
+     *             Arrays.asList(b.field("SAL")))
+     *         .build();
+     * b.unpivot(false, measureNames, axisNames, axisMap);
+     * }</pre>
+     *
+     * </blockquote>
+     *
+     * <p>The query generates two columns: {@code remuneration_type} (an axis column) and {@code
+     * remuneration} (a measure column). Axis columns contain values to indicate the source of the
+     * row (in this case, {@code 'salary'} if the row came from the {@code sal} column, and {@code
+     * 'commission'} if the row came from the {@code comm} column).
+     *
+     * @param includeNulls Whether to include NULL values in the output
+     * @param measureNames Names of columns to be generated to hold pivoted measures
+     * @param axisNames Names of columns to be generated to hold qualifying values
+     * @param axisMap Mapping from the columns that hold measures to the values that the axis
+     *     columns will hold in the generated rows
+     * @return This RelBuilder
+     */
+    public RelBuilder unpivot(
+            boolean includeNulls,
+            Iterable<String> measureNames,
+            Iterable<String> axisNames,
+            Iterable<
+                            ? extends
+                                    Map.Entry<
+                                            ? extends List<? extends RexLiteral>,
+                                            ? extends List<? extends RexNode>>>
+                    axisMap) {
+        // Make immutable copies of all arguments.
+        final List<String> measureNameList = ImmutableList.copyOf(measureNames);
+        final List<String> axisNameList = ImmutableList.copyOf(axisNames);
+        final List<Pair<List<RexLiteral>, List<RexNode>>> map =
+                StreamSupport.stream(axisMap.spliterator(), false)
+                        .map(
+                                pair ->
+                                        Pair.<List<RexLiteral>, List<RexNode>>of(
+                                                ImmutableList.<RexLiteral>copyOf(pair.getKey()),
+                                                ImmutableList.<RexNode>copyOf(pair.getValue())))
+                        .collect(Util.toImmutableList());
+
+        // Check that counts match.
+        Pair.forEach(
+                map,
+                (valueList, inputMeasureList) -> {
+                    if (inputMeasureList.size() != measureNameList.size()) {
+                        throw new IllegalArgumentException(
+                                "Number of measures ("
+                                        + inputMeasureList.size()
+                                        + ") must match number of measure names ("
+                                        + measureNameList.size()
+                                        + ")");
+                    }
+                    if (valueList.size() != axisNameList.size()) {
+                        throw new IllegalArgumentException(
+                                "Number of axis values ("
+                                        + valueList.size()
+                                        + ") match match number of axis names ("
+                                        + axisNameList.size()
+                                        + ")");
+                    }
+                });
+
+        final RelDataType leftRowType = peek().getRowType();
+        final BitSet usedFields = new BitSet();
+        Pair.forEach(
+                map,
+                (aliases, nodes) ->
+                        nodes.forEach(
+                                node -> {
+                                    if (node instanceof RexInputRef) {
+                                        usedFields.set(((RexInputRef) node).getIndex());
+                                    }
+                                }));
+
+        // Create "VALUES (('commission'), ('salary')) AS t (remuneration_type)"
+        values(ImmutableList.copyOf(Pair.left(map)), axisNameList);
+
+        join(JoinRelType.INNER);
+
+        final ImmutableBitSet unusedFields =
+                ImmutableBitSet.range(leftRowType.getFieldCount())
+                        .except(ImmutableBitSet.fromBitSet(usedFields));
+        final List<RexNode> projects = new ArrayList<>(fields(unusedFields));
+        Ord.forEach(
+                axisNameList,
+                (dimensionName, d) ->
+                        projects.add(alias(field(leftRowType.getFieldCount() + d), dimensionName)));
+
+        final List<RexNode> conditions = new ArrayList<>();
+        Ord.forEach(
+                measureNameList,
+                (measureName, m) -> {
+                    final List<RexNode> caseOperands = new ArrayList<>();
+                    Pair.forEach(
+                            map,
+                            (literals, nodes) -> {
+                                Ord.forEach(
+                                        literals,
+                                        (literal, d) ->
+                                                conditions.add(
+                                                        call(
+                                                                SqlStdOperatorTable.EQUALS,
+                                                                field(
+                                                                        leftRowType.getFieldCount()
+                                                                                + d),
+                                                                literal)));
+                                caseOperands.add(and(conditions));
+                                conditions.clear();
+                                caseOperands.add(nodes.get(m));
+                            });
+                    caseOperands.add(literal(null));
+                    projects.add(alias(call(SqlStdOperatorTable.CASE, caseOperands), measureName));
+                });
+        project(projects);
+
+        if (!includeNulls) {
+            // Add 'WHERE m1 IS NOT NULL OR m2 IS NOT NULL'
+            final BitSet notNullFields = new BitSet();
+            Ord.forEach(
+                    measureNameList,
+                    (measureName, m) -> {
+                        final int f = unusedFields.cardinality() + axisNameList.size() + m;
+                        conditions.add(isNotNull(field(f)));
+                        notNullFields.set(f);
+                    });
+            filter(or(conditions));
+            if (measureNameList.size() == 1) {
+                // If there is one field, EXCLUDE NULLS will have converted it to NOT
+                // NULL.
+                final RelDataTypeFactory.Builder builder = getTypeFactory().builder();
+                peek().getRowType()
+                        .getFieldList()
+                        .forEach(
+                                field -> {
+                                    final RelDataType type = field.getType();
+                                    builder.add(
+                                            field.getName(),
+                                            notNullFields.get(field.getIndex())
+                                                    ? getTypeFactory()
+                                                            .createTypeWithNullability(type, false)
+                                                    : type);
+                                });
+                convert(builder.build(), false);
+            }
+            conditions.clear();
+        }
+
+        return this;
     }
 
     /**
