@@ -82,6 +82,16 @@ under the License.
 			</exclusions>
 		</dependency>
 		<dependency>
+			<artifactId>apiguardian-api</artifactId>
+			<groupId>org.apiguardian</groupId>
+			<version>1.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.checkerframework</groupId>
+			<artifactId>checker-qual</artifactId>
+			<version>3.7.0</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-sql-parser-hive</artifactId>
 			<version>${project.version}</version>
@@ -173,11 +183,6 @@ under the License.
 				<exclusion>
 					<groupId>net.hydromatic</groupId>
 					<artifactId>aggdesigner-algorithm</artifactId>
-				</exclusion>
-				<!-- Excluding org.apiguardian:apiguardian-api v1.1.0 because org.junit.jupiter:junit-jupiter contains newer version v1.1.2 -->
-				<exclusion>
-					<groupId>org.apiguardian</groupId>
-					<artifactId>apiguardian-api</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
