@@ -247,7 +247,7 @@ public class SqlToRelConverter {
     protected final RelOptCluster cluster;
     private SubQueryConverter subQueryConverter;
     protected final Map<RelNode, Integer> leaves = new HashMap<>();
-    private final List<SqlDynamicParam> dynamicParamSqlNodes = new ArrayList<>();
+    private final List<@Nullable SqlDynamicParam> dynamicParamSqlNodes = new ArrayList<>();
     private final SqlOperatorTable opTab;
     protected final RelDataTypeFactory typeFactory;
     private final SqlNodeToRexConverter exprConverter;
@@ -360,8 +360,8 @@ public class SqlToRelConverter {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends SqlValidatorNamespace> T getNamespaceOrNull(SqlNode node) {
-        return (T) validator().getNamespace(node);
+    private <T extends SqlValidatorNamespace> @Nullable T getNamespaceOrNull(SqlNode node) {
+        return (@Nullable T) validator().getNamespace(node);
     }
 
     /** Returns the RelOptCluster in use. */
@@ -1498,7 +1498,7 @@ public class SqlToRelConverter {
         // Check whether query is guaranteed to produce a single value.
         if (query instanceof SqlSelect) {
             SqlSelect select = (SqlSelect) query;
-            SqlNodeList selectList = requireNonNull(select.getSelectList(), "selectList");
+            SqlNodeList selectList = select.getSelectList();
             SqlNodeList groupList = select.getGroup();
 
             if ((selectList.size() == 1) && ((groupList == null) || (groupList.size() == 0))) {
@@ -3177,7 +3177,6 @@ public class SqlToRelConverter {
         assert bb.root != null : "precondition: child != null";
         SqlNodeList groupList = select.getGroup();
         SqlNodeList selectList = select.getSelectList();
-        assert selectList != null : "selectList must not be null for " + select;
         SqlNode having = select.getHaving();
 
         final AggConverter aggConverter = new AggConverter(bb, select);
@@ -3888,7 +3887,7 @@ public class SqlToRelConverter {
         return NullInitializerExpressionFactory.INSTANCE;
     }
 
-    private static <T extends Object> T unwrap(@Nullable Object o, Class<T> clazz) {
+    private static <T extends Object> @Nullable T unwrap(@Nullable Object o, Class<T> clazz) {
         if (o instanceof Wrapper) {
             return ((Wrapper) o).unwrap(clazz);
         }
@@ -4346,8 +4345,7 @@ public class SqlToRelConverter {
     }
 
     private void convertSelectList(Blackboard bb, SqlSelect select, List<SqlNode> orderList) {
-        SqlNodeList selectList =
-                requireNonNull(select.getSelectList(), () -> "null selectList for " + select);
+        SqlNodeList selectList = select.getSelectList();
         selectList = validator().expandStar(selectList, select, false);
 
         replaceSubQueries(bb, selectList, RelOptUtil.Logic.TRUE_FALSE_UNKNOWN);
@@ -4730,7 +4728,7 @@ public class SqlToRelConverter {
          * @return a {@link RexFieldAccess} or {@link RexRangeRef}, or null if not found
          */
         @Nullable
-        Pair<RexNode, Map<String, Integer>> lookupExp(SqlQualified qualified) {
+        Pair<RexNode, @Nullable Map<String, Integer>> lookupExp(SqlQualified qualified) {
             if (nameToNodeMap != null && qualified.prefixLength == 1) {
                 RexNode node = nameToNodeMap.get(qualified.identifier.names.get(0));
                 if (node == null) {
@@ -5329,7 +5327,7 @@ public class SqlToRelConverter {
          * remaining elements are for aggregates. The right field of each pair is the name of the
          * expression, where the expressions are simple mappings to input fields.
          */
-        private final List<Pair<RexNode, String>> convertedInputExprs = new ArrayList<>();
+        private final List<Pair<RexNode, @Nullable String>> convertedInputExprs = new ArrayList<>();
 
         /**
          * Expressions to be evaluated as rows are being placed into the aggregate's hash table.
@@ -5362,10 +5360,7 @@ public class SqlToRelConverter {
 
             // Collect all expressions used in the select list so that aggregate
             // calls can be named correctly.
-            final SqlNodeList selectList =
-                    requireNonNull(
-                            select.getSelectList(),
-                            () -> "selectList must not be null in " + select);
+            final SqlNodeList selectList = select.getSelectList();
             for (int i = 0; i < selectList.size(); i++) {
                 SqlNode selectItem = selectList.get(i);
                 String name = null;
@@ -5807,7 +5802,7 @@ public class SqlToRelConverter {
             return aggMapping.get(call);
         }
 
-        public List<Pair<RexNode, String>> getPreExprs() {
+        public List<Pair<RexNode, @Nullable String>> getPreExprs() {
             return convertedInputExprs;
         }
 
