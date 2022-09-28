@@ -247,7 +247,7 @@ public class SqlToRelConverter {
     protected final RelOptCluster cluster;
     private SubQueryConverter subQueryConverter;
     protected final Map<RelNode, Integer> leaves = new HashMap<>();
-    private final List<@Nullable SqlDynamicParam> dynamicParamSqlNodes = new ArrayList<>();
+    private final List<SqlDynamicParam> dynamicParamSqlNodes = new ArrayList<>();
     private final SqlOperatorTable opTab;
     protected final RelDataTypeFactory typeFactory;
     private final SqlNodeToRexConverter exprConverter;
@@ -360,8 +360,8 @@ public class SqlToRelConverter {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends SqlValidatorNamespace> @Nullable T getNamespaceOrNull(SqlNode node) {
-        return (@Nullable T) validator().getNamespace(node);
+    private <T extends SqlValidatorNamespace> T getNamespaceOrNull(SqlNode node) {
+        return (T) validator().getNamespace(node);
     }
 
     /** Returns the RelOptCluster in use. */
@@ -3888,7 +3888,7 @@ public class SqlToRelConverter {
         return NullInitializerExpressionFactory.INSTANCE;
     }
 
-    private static <T extends Object> @Nullable T unwrap(@Nullable Object o, Class<T> clazz) {
+    private static <T extends Object> T unwrap(@Nullable Object o, Class<T> clazz) {
         if (o instanceof Wrapper) {
             return ((Wrapper) o).unwrap(clazz);
         }
@@ -4730,7 +4730,7 @@ public class SqlToRelConverter {
          * @return a {@link RexFieldAccess} or {@link RexRangeRef}, or null if not found
          */
         @Nullable
-        Pair<RexNode, @Nullable Map<String, Integer>> lookupExp(SqlQualified qualified) {
+        Pair<RexNode, Map<String, Integer>> lookupExp(SqlQualified qualified) {
             if (nameToNodeMap != null && qualified.prefixLength == 1) {
                 RexNode node = nameToNodeMap.get(qualified.identifier.names.get(0));
                 if (node == null) {
@@ -5329,7 +5329,7 @@ public class SqlToRelConverter {
          * remaining elements are for aggregates. The right field of each pair is the name of the
          * expression, where the expressions are simple mappings to input fields.
          */
-        private final List<Pair<RexNode, @Nullable String>> convertedInputExprs = new ArrayList<>();
+        private final List<Pair<RexNode, String>> convertedInputExprs = new ArrayList<>();
 
         /**
          * Expressions to be evaluated as rows are being placed into the aggregate's hash table.
@@ -5807,7 +5807,7 @@ public class SqlToRelConverter {
             return aggMapping.get(call);
         }
 
-        public List<Pair<RexNode, @Nullable String>> getPreExprs() {
+        public List<Pair<RexNode, String>> getPreExprs() {
             return convertedInputExprs;
         }
 

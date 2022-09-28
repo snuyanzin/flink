@@ -195,7 +195,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * Maps {@link SqlNode query node} objects to the {@link SqlValidatorScope} scope created from
      * them.
      */
-    protected final Map<SqlNode, SqlValidatorScope> scopes = new IdentityHashMap<>();
+    protected final IdentityHashMap<SqlNode, SqlValidatorScope> scopes = new IdentityHashMap<>();
 
     /** Maps a {@link SqlSelect} and a clause to the scope used by that clause. */
     private final Map<IdPair<SqlSelect, Clause>, SqlValidatorScope> clauseScopes = new HashMap<>();
@@ -207,7 +207,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * Maps a {@link SqlNode node} to the {@link SqlValidatorNamespace namespace} which describes
      * what columns they contain.
      */
-    protected final Map<SqlNode, SqlValidatorNamespace> namespaces = new IdentityHashMap<>();
+    protected final IdentityHashMap<SqlNode, SqlValidatorNamespace> namespaces =
+            new IdentityHashMap<>();
 
     /**
      * Set of select expressions used as cursor definitions. In standard SQL, only the top-level
@@ -234,10 +235,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * Map of derived RelDataType for each node. This is an IdentityHashMap since in some cases
      * (such as null literals) we need to discriminate by instance.
      */
-    private final Map<SqlNode, RelDataType> nodeToTypeMap = new IdentityHashMap<>();
+    private final IdentityHashMap<SqlNode, RelDataType> nodeToTypeMap = new IdentityHashMap<>();
 
     /** Provides the data for {@link #getValidatedOperandTypes(SqlCall)}. */
-    public final Map<SqlCall, List<RelDataType>> callToOperandTypesMap = new IdentityHashMap<>();
+    public final IdentityHashMap<SqlCall, List<RelDataType>> callToOperandTypesMap =
+            new IdentityHashMap<>();
 
     private final AggFinder aggFinder;
     private final AggFinder aggOrOverFinder;
@@ -5927,7 +5929,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     @Override
-    public List<@Nullable List<String>> getFieldOrigins(SqlNode sqlQuery) {
+    public List<List<String>> getFieldOrigins(SqlNode sqlQuery) {
         if (sqlQuery instanceof SqlExplain) {
             return Collections.emptyList();
         }
@@ -6806,7 +6808,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     /** Validates that within one navigation function, the pattern var is the same. */
-    private class PatternValidator extends SqlBasicVisitor<@Nullable Set<String>> {
+    private class PatternValidator extends SqlBasicVisitor<Set<String>> {
         private final boolean isMeasure;
         int firstLastCount;
         int prevNextCount;

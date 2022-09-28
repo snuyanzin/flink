@@ -377,6 +377,10 @@ public class RelBuilder {
     }
 
     private Frame peek_(int n) {
+        if (n == 0) {
+            // more efficient than starting an iterator
+            return Objects.requireNonNull(stack.peek(), "stack.peek");
+        }
         return Iterables.get(stack, n);
     }
 
@@ -404,6 +408,16 @@ public class RelBuilder {
             offset += peek(inputCount, i).getRowType().getFieldCount();
         }
         return offset;
+    }
+
+    /** Evaluates an expression with a relational expression temporarily on the stack. */
+    public <E> E with(RelNode r, Function<RelBuilder, E> fn) {
+        try {
+            push(r);
+            return fn.apply(this);
+        } finally {
+            stack.pop();
+        }
     }
 
     // Methods that return scalar expressions
@@ -1517,7 +1531,7 @@ public class RelBuilder {
      * @param fieldNames field names for expressions
      */
     public RelBuilder project(
-            Iterable<? extends RexNode> nodes, Iterable<? extends @Nullable String> fieldNames) {
+            Iterable<? extends RexNode> nodes, Iterable<? extends String> fieldNames) {
         return project(nodes, fieldNames, false);
     }
 
@@ -1544,7 +1558,7 @@ public class RelBuilder {
      */
     public RelBuilder project(
             Iterable<? extends RexNode> nodes,
-            Iterable<? extends @Nullable String> fieldNames,
+            Iterable<? extends String> fieldNames,
             boolean force) {
         return project_(nodes, fieldNames, ImmutableList.of(), force);
     }
@@ -1617,7 +1631,7 @@ public class RelBuilder {
      */
     private RelBuilder project_(
             Iterable<? extends RexNode> nodes,
-            Iterable<? extends @Nullable String> fieldNames,
+            Iterable<? extends String> fieldNames,
             Iterable<RelHint> hints,
             boolean force) {
         final Frame frame = requireNonNull(peek_(), "frame stack is empty");
@@ -1794,7 +1808,7 @@ public class RelBuilder {
      */
     public RelBuilder projectNamed(
             Iterable<? extends RexNode> nodes,
-            @Nullable Iterable<? extends @Nullable String> fieldNames,
+            @Nullable Iterable<? extends String> fieldNames,
             boolean force) {
         @SuppressWarnings("unchecked")
         final List<? extends RexNode> nodeList =

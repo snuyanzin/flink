@@ -138,9 +138,9 @@ public class RelDecorrelator implements ReflectiveVisitor {
     protected CorelMap cm;
 
     @SuppressWarnings("method.invocation.invalid")
-    protected final ReflectUtil.MethodDispatcher<@Nullable Frame> dispatcher =
+    protected final ReflectUtil.MethodDispatcher<Frame> dispatcher =
             ReflectUtil.<RelNode, @Nullable Frame>createMethodDispatcher(
-                    Frame.class, getVisitor(), "decorrelateRel", RelNode.class);
+                    Frame.class, getVisitor(), "decorrelateRel", RelNode.class, boolean.class);
 
     // The rel which is being visited
     protected @Nullable RelNode currentRel;
@@ -293,7 +293,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         // Perform decorrelation.
         map.clear();
 
-        final Frame frame = getInvoke(root, null);
+        final Frame frame = getInvoke(root, false, null);
         if (frame != null) {
             // has been rewritten; apply rules post-decorrelation
             final HepProgramBuilder builder =
@@ -323,7 +323,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         return root;
     }
 
-    private Function2<RelNode, RelNode, @Nullable Void> createCopyHook() {
+    private Function2<RelNode, RelNode, Void> createCopyHook() {
         return (oldNode, newNode) -> {
             if (cm.mapRefRelToCorRef.containsKey(oldNode)) {
                 cm.mapRefRelToCorRef.putAll(newNode, cm.mapRefRelToCorRef.get(oldNode));
@@ -405,14 +405,14 @@ public class RelDecorrelator implements ReflectiveVisitor {
     }
 
     /** Fallback if none of the other {@code decorrelateRel} methods match. */
-    public @Nullable Frame decorrelateRel(RelNode rel) {
+    public @Nullable Frame decorrelateRel(RelNode rel, boolean isCorVarDefined) {
         RelNode newRel = rel.copy(rel.getTraitSet(), rel.getInputs());
 
         if (rel.getInputs().size() > 0) {
             List<RelNode> oldInputs = rel.getInputs();
             List<RelNode> newInputs = new ArrayList<>();
             for (int i = 0; i < oldInputs.size(); ++i) {
-                final Frame frame = getInvoke(oldInputs.get(i), rel);
+                final Frame frame = getInvoke(oldInputs.get(i), isCorVarDefined, rel);
                 if (frame == null || !frame.corDefOutputs.isEmpty()) {
                     // if input is not rewritten, or if it produces correlated
                     // variables, terminate rewrite
@@ -436,7 +436,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 ImmutableSortedMap.of());
     }
 
-    public @Nullable Frame decorrelateRel(Sort rel) {
+    public @Nullable Frame decorrelateRel(Sort rel, boolean isCorVarDefined) {
         //
         // Rewrite logic:
         //
@@ -453,7 +453,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         // need to call propagateExpr.
 
         final RelNode oldInput = rel.getInput();
-        final Frame frame = getInvoke(oldInput, rel);
+        final Frame frame = getInvoke(oldInput, isCorVarDefined, rel);
         if (frame == null) {
             // If input has not been rewritten, do not rewrite this rel.
             return null;
@@ -483,16 +483,16 @@ public class RelDecorrelator implements ReflectiveVisitor {
         return register(rel, newSort, frame.oldToNewOutputs, frame.corDefOutputs);
     }
 
-    public @Nullable Frame decorrelateRel(Values rel) {
+    public @Nullable Frame decorrelateRel(Values rel, boolean isCorVarDefined) {
         // There are no inputs, so rel does not need to be changed.
         return null;
     }
 
-    public @Nullable Frame decorrelateRel(LogicalAggregate rel) {
-        return decorrelateRel((Aggregate) rel);
+    public @Nullable Frame decorrelateRel(LogicalAggregate rel, boolean isCorVarDefined) {
+        return decorrelateRel((Aggregate) rel, isCorVarDefined);
     }
 
-    public @Nullable Frame decorrelateRel(Aggregate rel) {
+    public @Nullable Frame decorrelateRel(Aggregate rel, boolean isCorVarDefined) {
         //
         // Rewrite logic:
         //
@@ -506,7 +506,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         assert !cm.mapRefRelToCorRef.containsKey(rel);
 
         final RelNode oldInput = rel.getInput();
-        final Frame frame = getInvoke(oldInput, rel);
+        final Frame frame = getInvoke(oldInput, isCorVarDefined, rel);
         if (frame == null) {
             // If input has not been rewritten, do not rewrite this rel.
             return null;
@@ -707,10 +707,10 @@ public class RelDecorrelator implements ReflectiveVisitor {
         }
     }
 
-    public @Nullable Frame getInvoke(RelNode r, @Nullable RelNode parent) {
-        final Frame frame = dispatcher.invoke(r);
+    public @Nullable Frame getInvoke(RelNode r, boolean isCorVarDefined, @Nullable RelNode parent) {
+        final Frame frame = dispatcher.invoke(r, isCorVarDefined);
         currentRel = parent;
-        if (frame != null && parent != null && r instanceof Sort) {
+        if (frame != null && isCorVarDefined && r instanceof Sort) {
             final Sort sort = (Sort) r;
             // Can not decorrelate if the sort has per-correlate-key attributes like
             // offset or fetch limit, because these attributes scope would change to
@@ -738,11 +738,11 @@ public class RelDecorrelator implements ReflectiveVisitor {
         return null;
     }
 
-    public @Nullable Frame decorrelateRel(LogicalProject rel) {
-        return decorrelateRel((Project) rel);
+    public @Nullable Frame decorrelateRel(LogicalProject rel, boolean isCorVarDefined) {
+        return decorrelateRel((Project) rel, isCorVarDefined);
     }
 
-    public @Nullable Frame decorrelateRel(Project rel) {
+    public @Nullable Frame decorrelateRel(Project rel, boolean isCorVarDefined) {
         //
         // Rewrite logic:
         //
@@ -750,7 +750,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         //
 
         final RelNode oldInput = rel.getInput();
-        Frame frame = getInvoke(oldInput, rel);
+        Frame frame = getInvoke(oldInput, isCorVarDefined, rel);
         if (frame == null) {
             // If input has not been rewritten, do not rewrite this rel.
             return null;
@@ -1129,25 +1129,25 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 && type.getPrecision() >= type1.getPrecision();
     }
 
-    public @Nullable Frame decorrelateRel(LogicalSnapshot rel) {
+    public @Nullable Frame decorrelateRel(LogicalSnapshot rel, boolean isCorVarDefined) {
         if (RexUtil.containsCorrelation(rel.getPeriod())) {
             return null;
         }
-        return decorrelateRel((RelNode) rel);
+        return decorrelateRel((RelNode) rel, isCorVarDefined);
     }
 
-    public @Nullable Frame decorrelateRel(LogicalTableFunctionScan rel) {
+    public @Nullable Frame decorrelateRel(LogicalTableFunctionScan rel, boolean isCorVarDefined) {
         if (RexUtil.containsCorrelation(rel.getCall())) {
             return null;
         }
-        return decorrelateRel((RelNode) rel);
+        return decorrelateRel((RelNode) rel, isCorVarDefined);
     }
 
-    public @Nullable Frame decorrelateRel(LogicalFilter rel) {
-        return decorrelateRel((Filter) rel);
+    public @Nullable Frame decorrelateRel(LogicalFilter rel, boolean isCorVarDefined) {
+        return decorrelateRel((Filter) rel, isCorVarDefined);
     }
 
-    public @Nullable Frame decorrelateRel(Filter rel) {
+    public @Nullable Frame decorrelateRel(Filter rel, boolean isCorVarDefined) {
         //
         // Rewrite logic:
         //
@@ -1165,7 +1165,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         //
 
         final RelNode oldInput = rel.getInput();
-        Frame frame = getInvoke(oldInput, rel);
+        Frame frame = getInvoke(oldInput, isCorVarDefined, rel);
         if (frame == null) {
             // If input has not been rewritten, do not rewrite this rel.
             return null;
@@ -1196,11 +1196,11 @@ public class RelDecorrelator implements ReflectiveVisitor {
         return register(rel, relBuilder.build(), frame.oldToNewOutputs, frame.corDefOutputs);
     }
 
-    public @Nullable Frame decorrelateRel(LogicalCorrelate rel) {
-        return decorrelateRel((Correlate) rel);
+    public @Nullable Frame decorrelateRel(LogicalCorrelate rel, boolean isCorVarDefined) {
+        return decorrelateRel((Correlate) rel, isCorVarDefined);
     }
 
-    public @Nullable Frame decorrelateRel(Correlate rel) {
+    public @Nullable Frame decorrelateRel(Correlate rel, boolean isCorVarDefined) {
         //
         // Rewrite logic:
         //
@@ -1214,8 +1214,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
         final RelNode oldLeft = rel.getInput(0);
         final RelNode oldRight = rel.getInput(1);
 
-        final Frame leftFrame = getInvoke(oldLeft, rel);
-        final Frame rightFrame = getInvoke(oldRight, rel);
+        final Frame leftFrame = getInvoke(oldLeft, isCorVarDefined, rel);
+        final Frame rightFrame = getInvoke(oldRight, true, rel);
 
         if (leftFrame == null || rightFrame == null) {
             // If any input has not been rewritten, do not rewrite this rel.
@@ -1298,16 +1298,16 @@ public class RelDecorrelator implements ReflectiveVisitor {
         return register(rel, newJoin, mapOldToNewOutputs, corDefOutputs);
     }
 
-    public @Nullable Frame decorrelateRel(LogicalJoin rel) {
-        return decorrelateRel((Join) rel);
+    public @Nullable Frame decorrelateRel(LogicalJoin rel, boolean isCorVarDefined) {
+        return decorrelateRel((Join) rel, isCorVarDefined);
     }
 
-    public @Nullable Frame decorrelateRel(Join rel) {
+    public @Nullable Frame decorrelateRel(Join rel, boolean isCorVarDefined) {
         // For SEMI/ANTI join decorrelate it's input directly,
         // because the correlate variables can only be propagated from
         // the left side, which is not supported yet.
         if (!rel.getJoinType().projectsRight()) {
-            return decorrelateRel((RelNode) rel);
+            return decorrelateRel((RelNode) rel, isCorVarDefined);
         }
         //
         // Rewrite logic:
@@ -1319,8 +1319,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
         final RelNode oldLeft = rel.getInput(0);
         final RelNode oldRight = rel.getInput(1);
 
-        final Frame leftFrame = getInvoke(oldLeft, rel);
-        final Frame rightFrame = getInvoke(oldRight, rel);
+        final Frame leftFrame = getInvoke(oldLeft, isCorVarDefined, rel);
+        final Frame rightFrame = getInvoke(oldRight, isCorVarDefined, rel);
 
         if (leftFrame == null || rightFrame == null) {
             // If any input has not been rewritten, do not rewrite this rel.
@@ -1645,9 +1645,9 @@ public class RelDecorrelator implements ReflectiveVisitor {
         private final CorelMap cm;
 
         private DecorrelateRexShuttle(RelNode currentRel, Map<RelNode, Frame> map, CorelMap cm) {
-            this.currentRel = requireNonNull(currentRel);
-            this.map = requireNonNull(map);
-            this.cm = requireNonNull(cm);
+            this.currentRel = requireNonNull(currentRel, "currentRel");
+            this.map = requireNonNull(map, "map");
+            this.cm = requireNonNull(cm, "cm");
         }
 
         @Override
@@ -3041,7 +3041,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 RelNode r,
                 NavigableMap<CorDef, Integer> corDefOutputs,
                 Map<Integer, Integer> oldToNewOutputs) {
-            this.r = requireNonNull(r);
+            this.r = requireNonNull(r, "r");
             this.corDefOutputs = ImmutableSortedMap.copyOf(corDefOutputs);
             this.oldToNewOutputs = ImmutableSortedMap.copyOf(oldToNewOutputs);
             assert allLessThan(
