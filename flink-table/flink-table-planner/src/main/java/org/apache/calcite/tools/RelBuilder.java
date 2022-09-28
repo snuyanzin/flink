@@ -1488,22 +1488,29 @@ public class RelBuilder {
      * Creates a {@link Filter} of a list of correlation variables and a list of predicates.
      *
      * <p>The predicates are combined using AND, and optimized in a similar way to the {@link #and}
-     * method. If the result is TRUE no filter is created.
+     * method. If simplification is on and the result is TRUE, no filter is created.
      */
     public RelBuilder filter(
             Iterable<CorrelationId> variablesSet, Iterable<? extends RexNode> predicates) {
-        final RexNode simplifiedPredicates = simplifier.simplifyFilterPredicates(predicates);
-        if (simplifiedPredicates == null) {
-            return empty();
+        final RexNode conjunctionPredicates;
+        if (config.simplify()) {
+            conjunctionPredicates = simplifier.simplifyFilterPredicates(predicates);
+        } else {
+            conjunctionPredicates = RexUtil.composeConjunction(simplifier.rexBuilder, predicates);
         }
 
-        if (!simplifiedPredicates.isAlwaysTrue()) {
-            final Frame frame = stack.pop();
-            final RelNode filter =
-                    struct.filterFactory.createFilter(
-                            frame.rel, simplifiedPredicates, ImmutableSet.copyOf(variablesSet));
-            stack.push(new Frame(filter, frame.fields));
+        if (conjunctionPredicates == null || conjunctionPredicates.isAlwaysFalse()) {
+            return empty();
         }
+        if (conjunctionPredicates.isAlwaysTrue()) {
+            return this;
+        }
+
+        final Frame frame = stack.pop();
+        final RelNode filter =
+                struct.filterFactory.createFilter(
+                        frame.rel, conjunctionPredicates, ImmutableSet.copyOf(variablesSet));
+        stack.push(new Frame(filter, frame.fields));
         return this;
     }
 
@@ -1531,7 +1538,7 @@ public class RelBuilder {
      * @param fieldNames field names for expressions
      */
     public RelBuilder project(
-            Iterable<? extends RexNode> nodes, Iterable<? extends String> fieldNames) {
+            Iterable<? extends RexNode> nodes, Iterable<? extends @Nullable String> fieldNames) {
         return project(nodes, fieldNames, false);
     }
 
@@ -1558,7 +1565,7 @@ public class RelBuilder {
      */
     public RelBuilder project(
             Iterable<? extends RexNode> nodes,
-            Iterable<? extends String> fieldNames,
+            Iterable<? extends @Nullable String> fieldNames,
             boolean force) {
         return project_(nodes, fieldNames, ImmutableList.of(), force);
     }
@@ -1631,7 +1638,7 @@ public class RelBuilder {
      */
     private RelBuilder project_(
             Iterable<? extends RexNode> nodes,
-            Iterable<? extends String> fieldNames,
+            Iterable<? extends @Nullable String> fieldNames,
             Iterable<RelHint> hints,
             boolean force) {
         final Frame frame = requireNonNull(peek_(), "frame stack is empty");
@@ -1808,7 +1815,7 @@ public class RelBuilder {
      */
     public RelBuilder projectNamed(
             Iterable<? extends RexNode> nodes,
-            @Nullable Iterable<? extends String> fieldNames,
+            @Nullable Iterable<? extends @Nullable String> fieldNames,
             boolean force) {
         @SuppressWarnings("unchecked")
         final List<? extends RexNode> nodeList =
@@ -2515,23 +2522,29 @@ public class RelBuilder {
         }
         if (correlate) {
             final CorrelationId id = Iterables.getOnlyElement(variablesSet);
-            final ImmutableBitSet requiredColumns = RelOptUtil.correlationColumns(id, right.rel);
             if (!RelOptUtil.notContainsCorrelation(left.rel, id, Litmus.IGNORE)) {
                 throw new IllegalArgumentException(
                         "variable " + id + " must not be used by left input to correlation");
             }
+            // Correlate does not have an ON clause.
             switch (joinType) {
                 case LEFT:
-                    // Correlate does not have an ON clause.
-                    // For a LEFT correlate, predicate must be evaluated first.
-                    // For INNER, we can defer.
+                case SEMI:
+                case ANTI:
+                    // For a LEFT/SEMI/ANTI, predicate must be evaluated first.
                     stack.push(right);
                     filter(condition.accept(new Shifter(left.rel, id, right.rel)));
                     right = stack.pop();
                     break;
-                default:
+                case INNER:
+                    // For INNER, we can defer.
                     postCondition = condition;
+                    break;
+                default:
+                    throw new IllegalArgumentException(
+                            "Correlated " + joinType + " join is not supported");
             }
+            final ImmutableBitSet requiredColumns = RelOptUtil.correlationColumns(id, right.rel);
             join =
                     struct.correlateFactory.createCorrelate(
                             left.rel, right.rel, id, requiredColumns, joinType);
