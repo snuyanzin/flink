@@ -18,7 +18,6 @@
 
 package org.apache.calcite.rel.logical;
 
-import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
@@ -30,10 +29,11 @@ import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.util.ImmutableBitSet;
-import org.apache.calcite.util.Litmus;
 
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * A relational operator that performs nested-loop joins.
@@ -75,7 +75,6 @@ public final class LogicalCorrelate extends Correlate {
             ImmutableBitSet requiredColumns,
             JoinRelType joinType) {
         super(cluster, traitSet, hints, left, right, correlationId, requiredColumns, joinType);
-        assert !CalciteSystemProperty.DEBUG.value() || isValid(Litmus.THROW, null);
     }
 
     /**
@@ -114,9 +113,10 @@ public final class LogicalCorrelate extends Correlate {
                 input.getTraitSet(),
                 input.getInputs().get(0),
                 input.getInputs().get(1),
-                new CorrelationId((Integer) input.get("correlation")),
+                new CorrelationId(
+                        (Integer) requireNonNull(input.get("correlation"), "correlation")),
                 input.getBitSet("requiredColumns"),
-                input.getEnum("joinType", JoinRelType.class));
+                requireNonNull(input.getEnum("joinType", JoinRelType.class), "joinType"));
     }
 
     /** Creates a LogicalCorrelate. */
