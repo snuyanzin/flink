@@ -138,7 +138,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
     protected CorelMap cm;
 
     @SuppressWarnings("method.invocation.invalid")
-    protected final ReflectUtil.MethodDispatcher<Frame> dispatcher =
+    protected final ReflectUtil.MethodDispatcher<@Nullable Frame> dispatcher =
             ReflectUtil.<RelNode, @Nullable Frame>createMethodDispatcher(
                     Frame.class, getVisitor(), "decorrelateRel", RelNode.class, boolean.class);
 
@@ -283,13 +283,35 @@ public class RelDecorrelator implements ReflectiveVisitor {
                                 FilterCorrelateRule.Config.DEFAULT
                                         .withRelBuilderFactory(f)
                                         .toRule())
+                        /*
+                        FLINK MODIFICATION BEGIN
+                        to avoid NPE
+                        .addRuleInstance(FilterFlattenCorrelatedConditionRule.Config.DEFAULT
+                                        .withRelBuilderFactory(f)
+                        .toRule())
+                        FLINK MODIFICATION END
+                        */
                         .build();
 
         HepPlanner planner = createPlanner(program);
 
         planner.setRoot(root);
         root = planner.findBestExp();
-
+        if (SQL2REL_LOGGER.isDebugEnabled()) {
+            SQL2REL_LOGGER.debug(
+                    "Plan before extracting correlated computations:\n"
+                            + RelOptUtil.toString(root));
+        }
+        /* FLINK MODIFICATION BEGIN
+        root = root.accept(new CorrelateProjectExtractor(f));
+        // Necessary to update cm (CorrelMap) since CorrelateProjectExtractor above may modify the
+        // plan
+        this.cm = new CorelMapBuilder().build(root);
+        FLINK MODIFICATION END */
+        if (SQL2REL_LOGGER.isDebugEnabled()) {
+            SQL2REL_LOGGER.debug(
+                    "Plan after extracting correlated computations:\n" + RelOptUtil.toString(root));
+        }
         // Perform decorrelation.
         map.clear();
 
@@ -323,7 +345,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         return root;
     }
 
-    private Function2<RelNode, RelNode, Void> createCopyHook() {
+    private Function2<RelNode, RelNode, @Nullable Void> createCopyHook() {
         return (oldNode, newNode) -> {
             if (cm.mapRefRelToCorRef.containsKey(oldNode)) {
                 cm.mapRefRelToCorRef.putAll(newNode, cm.mapRefRelToCorRef.get(oldNode));
