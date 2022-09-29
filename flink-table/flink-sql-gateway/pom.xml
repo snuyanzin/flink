@@ -128,6 +128,18 @@
 					<groupId>com.google.uzaygezen</groupId>
 					<artifactId>uzaygezen-core</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apiguardian</groupId>
+					<artifactId>apiguardian-api</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.google.errorprone</groupId>
+					<artifactId>error_prone_annotations</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.checkerframework</groupId>
+					<artifactId>checker-qual</artifactId>
+				</exclusion>
 			</exclusions>
 			<scope>test</scope>
 			<type>test-jar</type>
