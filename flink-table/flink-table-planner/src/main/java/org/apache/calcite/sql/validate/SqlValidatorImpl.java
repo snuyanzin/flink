@@ -113,7 +113,6 @@ import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.trace.CalciteTrace;
-import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
@@ -1206,7 +1205,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlNode)
      */
-    @API(since = "1.27", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlNode node) {
         return requireNonNull(getNamespace(node), () -> "namespace for " + node);
     }
@@ -1219,7 +1217,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlNode)
      */
-    @API(since = "1.27", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlNode node, @Nullable SqlValidatorScope scope) {
         return requireNonNull(
                 getNamespace(node, scope), () -> "namespace for " + node + ", scope " + scope);
@@ -1233,7 +1230,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlIdentifier, DelegatingScope)
      */
-    @API(since = "1.26", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlIdentifier id, @Nullable DelegatingScope scope) {
         return requireNonNull(
                 getNamespace(id, scope), () -> "namespace for " + id + ", scope " + scope);

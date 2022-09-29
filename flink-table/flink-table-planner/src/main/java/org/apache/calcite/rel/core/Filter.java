@@ -39,7 +39,6 @@ import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.util.Litmus;
-import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNullIf;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -183,7 +182,6 @@ public abstract class Filter extends SingleRel implements Hintable {
         return super.explainTerms(pw).item("condition", condition);
     }
 
-    @API(since = "1.24", status = API.Status.INTERNAL)
     @EnsuresNonNullIf(expression = "#1", result = true)
     protected boolean deepEquals0(@Nullable Object obj) {
         if (this == obj) {
@@ -200,7 +198,6 @@ public abstract class Filter extends SingleRel implements Hintable {
                 && getRowType().equalsSansFieldNames(o.getRowType());
     }
 
-    @API(since = "1.24", status = API.Status.INTERNAL)
     protected int deepHashCode0() {
         return Objects.hash(traitSet, hints, input.deepHashCode(), condition);
     }
