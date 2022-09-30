@@ -86,7 +86,6 @@
 							<artifactSet>
 								<includes>
 									<include>org.apache.flink:flink-table-planner_${scala.binary.version}</include>
-									<include>org.checkerframework:checker-qual</include>
 									<!-- flink-table-planner scala dependencies -->
 									<include>org.scala-lang:*</include>
 									<include>org.apache.flink:flink-scala_${scala.binary.version}</include>
