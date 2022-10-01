@@ -2569,7 +2569,9 @@ public class RelBuilder {
         Frame right = stack.pop();
         final Frame left = stack.pop();
         final RelNode join;
+        // FLINK BEGIN MODIFICATION WA for CALCITE-4668
         final boolean correlate = variablesSet.size() == 1;
+        // FLINK END MODIFICATION
         RexNode postCondition = literal(true);
         if (config.simplify()) {
             // Normalize expanded versions IS NOT DISTINCT FROM so that simplifier does not
@@ -2583,10 +2585,6 @@ public class RelBuilder {
         }
         if (correlate) {
             final CorrelationId id = Iterables.getOnlyElement(variablesSet);
-            if (!RelOptUtil.notContainsCorrelation(left.rel, id, Litmus.IGNORE)) {
-                throw new IllegalArgumentException(
-                        "variable " + id + " must not be used by left input to correlation");
-            }
             // Correlate does not have an ON clause.
             switch (joinType) {
                 case LEFT:
@@ -3728,6 +3726,39 @@ public class RelBuilder {
 
         boolean isSimple() {
             return nodeLists == null || nodeLists.size() == 1;
+        }
+    }
+
+    /**
+     * Checks for {@link CorrelationId}, then validates the id is not used on left, and finally
+     * checks if id is actually used on right.
+     *
+     * @return true if a correlate id is present and used
+     * @throws IllegalArgumentException if the {@link CorrelationId} is used by left side or if the
+     *     a {@link CorrelationId} is present and the {@link JoinRelType} is FULL or RIGHT.
+     */
+    private static boolean checkIfCorrelated(
+            Set<CorrelationId> variablesSet,
+            JoinRelType joinType,
+            RelNode leftNode,
+            RelNode rightRel) {
+        if (variablesSet.size() != 1) {
+            return false;
+        }
+        CorrelationId id = Iterables.getOnlyElement(variablesSet);
+        if (!RelOptUtil.notContainsCorrelation(leftNode, id, Litmus.IGNORE)) {
+            throw new IllegalArgumentException(
+                    "variable " + id + " must not be used by left input to correlation");
+        }
+        switch (joinType) {
+            case RIGHT:
+            case FULL:
+                throw new IllegalArgumentException(
+                        "Correlated " + joinType + " join is not supported");
+            default:
+                return !RelOptUtil.correlationColumns(
+                                Iterables.getOnlyElement(variablesSet), rightRel)
+                        .isEmpty();
         }
     }
 
