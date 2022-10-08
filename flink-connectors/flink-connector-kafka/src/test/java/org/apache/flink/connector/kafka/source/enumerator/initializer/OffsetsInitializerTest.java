@@ -25,9 +25,9 @@ import org.apache.flink.connector.kafka.testutils.KafkaSourceTestEnv;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Unit tests for {@link OffsetsInitializer}. */
 public class OffsetsInitializerTest {
@@ -44,7 +45,7 @@ public class OffsetsInitializerTest {
     private static final String EMPTY_TOPIC3 = "topic3";
     private static KafkaSourceEnumerator.PartitionOffsetsRetrieverImpl retriever;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws Throwable {
         KafkaSourceTestEnv.setup();
         KafkaSourceTestEnv.setupTopic(TOPIC, true, true, KafkaSourceTestEnv::getRecordsForTopic);
@@ -56,7 +57,7 @@ public class OffsetsInitializerTest {
                         KafkaSourceTestEnv.getAdminClient(), KafkaSourceTestEnv.GROUP_ID);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         retriever.close();
         KafkaSourceTestEnv.tearDown();
@@ -161,10 +162,14 @@ public class OffsetsInitializerTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSpecifiedOffsetsInitializerWithoutOffsetResetStrategy() {
         OffsetsInitializer initializer =
                 OffsetsInitializer.offsets(Collections.emptyMap(), OffsetResetStrategy.NONE);
-        initializer.getPartitionOffsets(KafkaSourceTestEnv.getPartitionsForTopic(TOPIC), retriever);
+        assertThatThrownBy(
+                        () ->
+                                initializer.getPartitionOffsets(
+                                        KafkaSourceTestEnv.getPartitionsForTopic(TOPIC), retriever))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
