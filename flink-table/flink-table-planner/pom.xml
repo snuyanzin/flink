@@ -384,6 +384,10 @@ under the License.
 
 						<!-- Calcite's dependencies -->
 						<relocation>
+							<pattern>org.checkerframework</pattern>
+							<shadedPattern>org.apache.flink.calcite.shaded.org.checkerframework</shadedPattern>
+						</relocation>
+						<relocation>
 							<pattern>com.google</pattern>
 							<shadedPattern>org.apache.flink.calcite.shaded.com.google</shadedPattern>
 						</relocation>
