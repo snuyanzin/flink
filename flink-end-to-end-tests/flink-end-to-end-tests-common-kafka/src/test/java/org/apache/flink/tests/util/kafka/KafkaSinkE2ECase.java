@@ -30,6 +30,7 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.test.resources.ResourceTestUtils;
 import org.apache.flink.util.DockerImageVersions;
 
+import org.junit.jupiter.api.Order;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -37,6 +38,7 @@ import java.util.Arrays;
 
 /** Kafka sink E2E test based on connector testing framework. */
 @SuppressWarnings("unused")
+@Order(1)
 public class KafkaSinkE2ECase extends SinkTestSuiteBase<String> {
     private static final String KAFKA_HOSTNAME = "kafka";
 

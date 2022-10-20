@@ -30,6 +30,7 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.test.resources.ResourceTestUtils;
 import org.apache.flink.util.DockerImageVersions;
 
+import org.junit.jupiter.api.Order;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -39,6 +40,7 @@ import static org.apache.flink.connector.kafka.testutils.KafkaSourceExternalCont
 import static org.apache.flink.connector.kafka.testutils.KafkaSourceExternalContext.SplitMappingMode.TOPIC;
 
 /** Kafka E2E test based on connector testing framework. */
+@Order(2)
 public class KafkaSourceE2ECase extends SourceTestSuiteBase<String> {
     private static final String KAFKA_HOSTNAME = "kafka";
 
