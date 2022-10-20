@@ -70,9 +70,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** smoke test for the kafka connectors. */
 @ExtendWith({TestLoggerExtension.class})
 @Testcontainers
-class SmokeKafkaITCase {
+class KafkaSmokeKafkaITCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SmokeKafkaITCase.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaSmokeKafkaITCase.class);
     private static final String INTER_CONTAINER_KAFKA_ALIAS = "kafka";
     private static final Network NETWORK = Network.newNetwork();
     private static final String EXAMPLE_JAR_MATCHER = "flink-streaming-kafka-test.*";
