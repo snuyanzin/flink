@@ -71,6 +71,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** smoke test for the kafka connectors. */
 @ExtendWith({TestLoggerExtension.class})
 @Testcontainers
+@Order(1000)
 class KafkaSmokeKafkaITCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(KafkaSmokeKafkaITCase.class);
