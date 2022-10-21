@@ -17,6 +17,8 @@
 
 package org.apache.flink.streaming.connectors.kafka;
 
+import com.github.dockerjava.api.DockerClient;
+
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.KafkaSourceBuilder;
@@ -49,6 +51,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import javax.annotation.Nullable;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -188,7 +191,7 @@ public class KafkaTestEnvironmentImpl extends KafkaTestEnvironment {
                             topicDescriptions =
                                     adminClient
                                             .describeTopics(Collections.singleton(topic))
-                                            .all()
+                                            .allTopicNames()
                                             .get(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                         } catch (Exception e) {
                             LOG.warn("Exception caught when describing Kafka topics", e);
@@ -339,7 +342,7 @@ public class KafkaTestEnvironmentImpl extends KafkaTestEnvironment {
     public int getLeaderToShutDown(String topic) throws Exception {
         try (final AdminClient client = AdminClient.create(getStandardProperties())) {
             TopicDescription result =
-                    client.describeTopics(Collections.singleton(topic)).all().get().get(topic);
+                    client.describeTopics(Collections.singleton(topic)).allTopicNames().get().get(topic);
             return result.partitions().get(0).leader().id();
         }
     }
@@ -382,9 +385,10 @@ public class KafkaTestEnvironmentImpl extends KafkaTestEnvironment {
 
         @Override
         public Long getCommittedOffset(String topicName, int partition) {
-            OffsetAndMetadata committed =
-                    offsetClient.committed(new TopicPartition(topicName, partition));
-            return (committed != null) ? committed.offset() : null;
+            Map<TopicPartition, OffsetAndMetadata> committed =
+                    offsetClient.committed(Collections.singleton(new TopicPartition(topicName, partition)));
+            return (committed != null && !committed.isEmpty()) ? committed.values().iterator().next()
+                    .offset() : null;
         }
 
         @Override
@@ -465,12 +469,15 @@ public class KafkaTestEnvironmentImpl extends KafkaTestEnvironment {
             LOG.warn("Broker {} is already paused. Skipping pause operation", brokerId);
             return;
         }
-        DockerClientFactory.instance()
-                .client()
-                .pauseContainerCmd(brokers.get(brokerId).getContainerId())
-                .exec();
-        pausedBroker.add(brokerId);
-        LOG.info("Broker {} is paused", brokerId);
+        try (DockerClient client = DockerClientFactory.instance()
+                .client()) {
+                client.pauseContainerCmd(brokers.get(brokerId).getContainerId())
+                    .exec();
+            pausedBroker.add(brokerId);
+            LOG.info("Broker {} is paused", brokerId);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void unpause(int brokerId) throws Exception {
@@ -478,10 +485,11 @@ public class KafkaTestEnvironmentImpl extends KafkaTestEnvironment {
             LOG.warn("Broker {} is already running. Skipping unpause operation", brokerId);
             return;
         }
-        DockerClientFactory.instance()
-                .client()
-                .unpauseContainerCmd(brokers.get(brokerId).getContainerId())
-                .exec();
+        try (DockerClient client = DockerClientFactory.instance()
+                .client()) {
+                client.unpauseContainerCmd(brokers.get(brokerId).getContainerId())
+                    .exec();
+        }
         try (AdminClient adminClient = AdminClient.create(getStandardProperties())) {
             CommonTestUtils.waitUtil(
                     () -> {
