@@ -38,7 +38,7 @@ import java.util.Arrays;
 
 /** Kafka sink E2E test based on connector testing framework. */
 @SuppressWarnings("unused")
-@Order(1)
+@Order(2)
 public class KafkaSinkE2ECase extends SinkTestSuiteBase<String> {
     private static final String KAFKA_HOSTNAME = "kafka";
 
