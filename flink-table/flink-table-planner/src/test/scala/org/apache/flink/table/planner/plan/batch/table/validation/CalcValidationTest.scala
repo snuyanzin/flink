@@ -21,6 +21,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.table.api._
 import org.apache.flink.table.planner.utils.TableTestBase
 
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit._
 import org.junit.Assert._
 
@@ -28,13 +29,16 @@ class CalcValidationTest extends TableTestBase {
 
   @Test
   def testSelectInvalidFieldFields(): Unit = {
-    expectedException.expect(classOf[ValidationException])
-    expectedException.expectMessage("Cannot resolve field [foo], input field list:[a, b, c].")
-    val util = batchTestUtil()
-    util
-      .addTableSource[(Int, Long, String)]("Table3", 'a, 'b, 'c)
-      // must fail. Field 'foo does not exist
-      .select('a, 'foo)
+    assertThatThrownBy(
+      () => {
+        val util = batchTestUtil()
+        util
+          .addTableSource[(Int, Long, String)]("Table3", 'a, 'b, 'c)
+          // must fail. Field 'foo does not exist
+          .select('a, 'foo)
+      })
+      .isInstanceOf(classOf[ValidationException])
+      .hasMessageContaining("Cannot resolve field [foo], input field list:[a, b, c].")
   }
 
   @Test(expected = classOf[ValidationException])

@@ -24,6 +24,7 @@ import org.apache.flink.table.planner.utils.{StreamTableTestUtil, TableTestBase}
 
 import org.apache.calcite.plan.hep.HepMatchOrder
 import org.apache.calcite.tools.RuleSets
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.{Before, Test}
 
 /** Test for [[TemporalJoinRewriteWithUniqueKeyRule]]. */
@@ -116,13 +117,14 @@ class TemporalJoinRewriteWithUniqueKeyRuleTest extends TableTestBase {
 
   @Test
   def testPrimaryKeyInTemporalJoinOnTrue(): Unit = {
-    expectedException.expect(classOf[ValidationException])
-    expectedException.expectMessage(
-      "Currently the join key in " +
+    assertThatThrownBy(
+      () =>
+        util.verifyRelPlan(
+          "SELECT * FROM T1 JOIN T2 FOR SYSTEM_TIME AS OF T1.rowtime AS T " +
+            "ON TRUE"))
+      .isInstanceOf(classOf[ValidationException])
+      .hasMessageContaining("Currently the join key in " +
         "Temporal Table Join can not be empty.")
-    util.verifyRelPlan(
-      "SELECT * FROM T1 JOIN T2 FOR SYSTEM_TIME AS OF T1.rowtime AS T " +
-        "ON TRUE")
   }
 
   @Test
@@ -139,15 +141,17 @@ class TemporalJoinRewriteWithUniqueKeyRuleTest extends TableTestBase {
                     |)
       """.stripMargin)
 
-    expectedException.expect(classOf[ValidationException])
-    expectedException.expectMessage(
-      "Temporal Table Join requires primary key in versioned table," +
-        " but no primary key can be found. The physical plan is:\nFlinkLogicalJoin(" +
-        "condition=[AND(=($0, $4), __INITIAL_TEMPORAL_JOIN_CONDITION($3, $6," +
-        " __TEMPORAL_JOIN_LEFT_KEY($0), __TEMPORAL_JOIN_RIGHT_KEY($4)))], joinType=[left])")
-    util.verifyRelPlan(
-      "SELECT * FROM T1 LEFT JOIN noPkTable FOR SYSTEM_TIME AS OF " +
-        "T1.rowtime AS T ON T1.id = T.id")
+    assertThatThrownBy(
+      () =>
+        util.verifyRelPlan(
+          "SELECT * FROM T1 LEFT JOIN noPkTable FOR SYSTEM_TIME AS OF " +
+            "T1.rowtime AS T ON T1.id = T.id"))
+      .isInstanceOf(classOf[ValidationException])
+      .hasMessageContaining(
+        "Temporal Table Join requires primary key in versioned table," +
+          " but no primary key can be found. The physical plan is:\nFlinkLogicalJoin(" +
+          "condition=[AND(=($0, $4), __INITIAL_TEMPORAL_JOIN_CONDITION($3, $6," +
+          " __TEMPORAL_JOIN_LEFT_KEY($0), __TEMPORAL_JOIN_RIGHT_KEY($4)))], joinType=[left])")
   }
 
   @Test
@@ -160,25 +164,27 @@ class TemporalJoinRewriteWithUniqueKeyRuleTest extends TableTestBase {
         "  ) T " +
         "  WHERE rowNum = 2")
 
-    expectedException.expect(classOf[ValidationException])
-    expectedException.expectMessage(
-      "Temporal Table Join requires primary key in versioned table," +
+    assertThatThrownBy(
+      () =>
+        util.verifyRelPlan(
+          "SELECT * FROM T1 JOIN noPkView FOR SYSTEM_TIME AS OF " +
+            "T1.rowtime AS T ON T1.id = T.id"))
+      .isInstanceOf(classOf[ValidationException])
+      .hasMessageContaining("Temporal Table Join requires primary key in versioned table," +
         " but no primary key can be found. The physical plan is:\n" +
         "FlinkLogicalJoin(condition=[AND(=($0, $4), __INITIAL_TEMPORAL_JOIN_CONDITION(" +
         "$3, $6, __TEMPORAL_JOIN_LEFT_KEY($0), __TEMPORAL_JOIN_RIGHT_KEY($4)))], joinType=[inner])")
-    util.verifyRelPlan(
-      "SELECT * FROM T1 JOIN noPkView FOR SYSTEM_TIME AS OF " +
-        "T1.rowtime AS T ON T1.id = T.id")
   }
 
   @Test
   def testInferredPrimaryKeyInTemporalJoinOnTrue(): Unit = {
-    expectedException.expect(classOf[ValidationException])
-    expectedException.expectMessage(
-      "Currently the join key in " +
+    assertThatThrownBy(
+      () =>
+        util.verifyRelPlan(
+          "SELECT * FROM T1 JOIN DeduplicatedView FOR SYSTEM_TIME AS OF " +
+            "T1.rowtime AS T ON TRUE"))
+      .isInstanceOf(classOf[ValidationException])
+      .hasMessageContaining("Currently the join key in " +
         "Temporal Table Join can not be empty.")
-    util.verifyRelPlan(
-      "SELECT * FROM T1 JOIN DeduplicatedView FOR SYSTEM_TIME AS OF " +
-        "T1.rowtime AS T ON TRUE")
   }
 }

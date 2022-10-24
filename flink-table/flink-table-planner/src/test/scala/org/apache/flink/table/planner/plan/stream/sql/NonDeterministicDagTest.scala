@@ -233,6 +233,7 @@ class NonDeterministicDagTest(nonDeterministicUpdateStrategy: NonDeterministicUp
         "metadata column(s): 'metadata_3' in cdc source may cause wrong result or error")
       thrown.expect(classOf[TableException])
     }
+
     util.verifyExecPlanInsert(s"""
                                  |insert into sink_without_pk
                                  |select a, metadata_3, c

@@ -20,6 +20,7 @@ package org.apache.flink.table.planner.plan.batch.sql.join
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.api.config.{ExecutionConfigOptions, OptimizerConfigOptions}
 
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.{Before, Test}
 
 class BroadcastHashSemiAntiJoinTest extends SemiAntiJoinTestBase {
@@ -39,141 +40,141 @@ class BroadcastHashSemiAntiJoinTest extends SemiAntiJoinTestBase {
   // because NestedLoopJoin(non-singleRowJoin) is disabled.
   @Test
   override def testNotInWithCorrelated_NonEquiCondition1(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithCorrelated_NonEquiCondition1()
+    assertThatThrownBy(() => super.testNotInWithCorrelated_NonEquiCondition1())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithCorrelated_NonEquiCondition2(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithCorrelated_NonEquiCondition2()
+    assertThatThrownBy(() => super.testNotInWithCorrelated_NonEquiCondition2())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testInNotInExistsNotExists(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testInNotInExistsNotExists()
+    assertThatThrownBy(() => super.testInNotInExistsNotExists())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testInWithUncorrelated_ComplexCondition3(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testInWithUncorrelated_ComplexCondition3()
+    assertThatThrownBy(() => super.testInWithUncorrelated_ComplexCondition3())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testExistsWithUncorrelated_JoinInSubQuery(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testExistsWithUncorrelated_JoinInSubQuery()
+    assertThatThrownBy(() => super.testExistsWithUncorrelated_JoinInSubQuery())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotExistsWithCorrelated_NonEquiCondition1(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotExistsWithCorrelated_NonEquiCondition1()
+    assertThatThrownBy(() => super.testNotExistsWithCorrelated_NonEquiCondition1())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotExistsWithCorrelated_NonEquiCondition2(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotExistsWithCorrelated_NonEquiCondition2()
+    assertThatThrownBy(() => super.testNotExistsWithCorrelated_NonEquiCondition2())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithUncorrelated_ComplexCondition1(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithUncorrelated_ComplexCondition1()
+    assertThatThrownBy(() => super.testNotInWithUncorrelated_ComplexCondition1())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithUncorrelated_ComplexCondition2(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithUncorrelated_ComplexCondition2()
+    assertThatThrownBy(() => super.testNotInWithUncorrelated_ComplexCondition2())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithUncorrelated_ComplexCondition3(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithUncorrelated_ComplexCondition3()
+    assertThatThrownBy(() => super.testNotInWithUncorrelated_ComplexCondition3())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testExistsWithCorrelated_NonEquiCondition1(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testExistsWithCorrelated_NonEquiCondition1()
+    assertThatThrownBy(() => super.testExistsWithCorrelated_NonEquiCondition1())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testExistsWithCorrelated_NonEquiCondition2(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testExistsWithCorrelated_NonEquiCondition2()
+    assertThatThrownBy(() => super.testExistsWithCorrelated_NonEquiCondition2())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testMultiExistsWithCorrelate1(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testMultiExistsWithCorrelate1()
+    assertThatThrownBy(() => super.testMultiExistsWithCorrelate1())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithUncorrelated_MultiFields(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithUncorrelated_MultiFields()
+    assertThatThrownBy(() => super.testNotInWithUncorrelated_MultiFields())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testMultiNotInWithCorrelated(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testMultiNotInWithCorrelated()
+    assertThatThrownBy(() => super.testMultiNotInWithCorrelated())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testInWithCorrelated_ComplexCondition3(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testInWithCorrelated_ComplexCondition3()
+    assertThatThrownBy(() => super.testInWithCorrelated_ComplexCondition3())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithUncorrelated_SimpleCondition1(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithUncorrelated_SimpleCondition1()
+    assertThatThrownBy(() => super.testNotInWithUncorrelated_SimpleCondition1())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithUncorrelated_SimpleCondition2(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithUncorrelated_SimpleCondition2()
+    assertThatThrownBy(() => super.testNotInWithUncorrelated_SimpleCondition2())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testNotInWithUncorrelated_SimpleCondition3(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testNotInWithUncorrelated_SimpleCondition3()
+    assertThatThrownBy(() => super.testNotInWithUncorrelated_SimpleCondition3())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 
   @Test
   override def testInWithUncorrelated_JoinInSubQuery(): Unit = {
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage("Cannot generate a valid execution plan for the given query")
-    super.testInWithUncorrelated_JoinInSubQuery()
+    assertThatThrownBy(() => super.testInWithUncorrelated_JoinInSubQuery())
+      .isInstanceOf(classOf[TableException])
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
   }
 }

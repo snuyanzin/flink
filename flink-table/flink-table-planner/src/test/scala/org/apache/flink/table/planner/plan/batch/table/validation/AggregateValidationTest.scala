@@ -22,35 +22,39 @@ import org.apache.flink.table.api._
 import org.apache.flink.table.planner.plan.utils.JavaUserDefinedAggFunctions.WeightedAvgWithMergeAndReset
 import org.apache.flink.table.planner.utils.TableTestBase
 
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit._
 
 class AggregateValidationTest extends TableTestBase {
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testNonWorkingAggregationDataTypes(): Unit = {
     val util = batchTestUtil()
     val t = util.addTableSource[(String, Int)]("Table2")
 
     // Must fail. Field '_1 is not a numeric type.
-    t.select('_1.sum)
+    assertThatThrownBy(() => t.select('_1.sum))
+      .isInstanceOf(classOf[ValidationException])
   }
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testNoNestedAggregations(): Unit = {
     val util = batchTestUtil()
     val t = util.addTableSource[(String, Int)]("Table2")
 
     // Must fail. Sum aggregation can not be chained.
-    t.select('_2.sum.sum)
+    assertThatThrownBy(() => t.select('_2.sum.sum))
+      .isInstanceOf(classOf[ValidationException])
   }
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testGroupingOnNonExistentField(): Unit = {
     val util = batchTestUtil()
     val t = util.addTableSource[(Int, Long, String)]("Table3", 'a, 'b, 'c)
 
     // must fail. '_foo not a valid field
-    t.groupBy('_foo).select('a.avg)
+    assertThatThrownBy(() => t.groupBy('_foo).select('a.avg))
+      .isInstanceOf(classOf[ValidationException])
   }
 
   @Test(expected = classOf[ValidationException])

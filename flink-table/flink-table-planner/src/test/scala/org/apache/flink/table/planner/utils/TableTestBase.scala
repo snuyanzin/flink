@@ -76,9 +76,11 @@ import org.apache.calcite.avatica.util.TimeUnit
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.sql.{SqlExplainLevel, SqlIntervalQualifier}
 import org.apache.calcite.sql.parser.SqlParserPos
-import org.junit.Assert.{assertEquals, assertTrue, fail}
+import org.assertj.core.api.Assertions.{assertThat, fail}
+import org.assertj.core.api.BooleanAssert
+import org.assertj.core.description.Description
 import org.junit.Rule
-import org.junit.rules.{ExpectedException, TemporaryFolder, TestName}
+import org.junit.rules.{TemporaryFolder, TestName}
 
 import java.io.{File, IOException}
 import java.net.URL
@@ -88,9 +90,6 @@ import java.time.Duration
 /** Test base for testing Table API / SQL plans. */
 abstract class TableTestBase {
 
-  // used for accurate exception information checking.
-  val expectedException: ExpectedException = ExpectedException.none()
-
   // used for get test case method name
   val testName: TestName = new TestName
 
@@ -98,9 +97,6 @@ abstract class TableTestBase {
 
   @Rule
   def tempFolder: TemporaryFolder = _tempFolder
-
-  @Rule
-  def thrown: ExpectedException = expectedException
 
   @Rule
   def name: TestName = testName
@@ -122,10 +118,11 @@ abstract class TableTestBase {
   def verifyTableEquals(expected: Table, actual: Table): Unit = {
     val expectedString = FlinkRelOptUtil.toString(TableTestUtil.toRelNode(expected))
     val actualString = FlinkRelOptUtil.toString(TableTestUtil.toRelNode(actual))
-    assertEquals(
-      "Logical plans do not match",
-      LogicalPlanFormatUtils.formatTempTableId(expectedString),
-      LogicalPlanFormatUtils.formatTempTableId(actualString))
+    assertThat(LogicalPlanFormatUtils.formatTempTableId(actualString))
+      .as(new Description() {
+        override def value(): String = "Logical plans do not match"
+      })
+      .isEqualTo(LogicalPlanFormatUtils.formatTempTableId(expectedString))
   }
 }
 
@@ -618,7 +615,7 @@ abstract class TableTestUtilBase(test: TableTestBase, isStreamingMode: Boolean) 
     val optimizedPlan = getOptimizedRelPlan(Array(optimizedRel), Array.empty, withRowType = false)
     val result = notExpected.forall(!optimizedPlan.contains(_))
     val message = s"\nactual plan:\n$optimizedPlan\nnot expected:\n${notExpected.mkString(", ")}"
-    assertTrue(message, result)
+    assertThat(result).as(message).asInstanceOf[BooleanAssert].isTrue
   }
 
   /**
@@ -804,16 +801,16 @@ abstract class TableTestUtilBase(test: TableTestBase, isStreamingMode: Boolean) 
     if (!file.exists() || "true".equalsIgnoreCase(System.getenv(PLAN_TEST_FORCE_OVERWRITE))) {
       Files.deleteIfExists(path)
       file.getParentFile.mkdirs()
-      assertTrue(file.createNewFile())
+      assertThat(file.createNewFile()).isTrue
       val prettyJson = TableTestUtil.getPrettyJson(jsonPlanWithoutFlinkVersion)
       Files.write(path, prettyJson.getBytes)
       fail(s"$testMethodFileName regenerated.")
     } else {
       val expected = String.join("\n", Files.readAllLines(path))
-      assertEquals(
-        TableTestUtil.replaceExecNodeId(TableTestUtil.getFormattedJson(expected)),
-        TableTestUtil.replaceExecNodeId(TableTestUtil.getFormattedJson(jsonPlanWithoutFlinkVersion))
-      )
+      assertThat(
+        TableTestUtil.replaceExecNodeId(
+          TableTestUtil.getFormattedJson(jsonPlanWithoutFlinkVersion)))
+        .isEqualTo(TableTestUtil.replaceExecNodeId(TableTestUtil.getFormattedJson(expected)))
     }
   }
 
