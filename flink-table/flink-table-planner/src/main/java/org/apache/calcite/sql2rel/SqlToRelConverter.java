@@ -1,11 +1,10 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -15,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql2rel;
 
 import org.apache.flink.table.planner.alias.ClearJoinHintWithInvalidPropagationShuttle;
@@ -2704,6 +2702,7 @@ public class SqlToRelConverter {
         RexNode rexCall = bb.convertExpression(call);
         final List<RelNode> inputs = bb.retrieveCursors();
         Set<RelColumnMapping> columnMappings = getColumnMappings(operator);
+
         LogicalTableFunctionScan callRel =
                 LogicalTableFunctionScan.create(
                         cluster,
@@ -5651,6 +5650,7 @@ public class SqlToRelConverter {
                             ignoreNulls,
                             outerCall);
                     return;
+
                 case COUNTIF:
                     // COUNTIF(b)  ==> COUNT(*) FILTER (WHERE b)
                     // COUNTIF(b) FILTER (WHERE b2)  ==> COUNT(*) FILTER (WHERE b2 AND b)
@@ -5658,6 +5658,7 @@ public class SqlToRelConverter {
                     final SqlNode filter2 = SqlUtil.andExpressions(filter, call.operand(0));
                     translateAgg(call2, filter2, distinctList, orderList, ignoreNulls, outerCall);
                     return;
+
                 case STRING_AGG:
                     // Translate "STRING_AGG(s, sep ORDER BY x, y)"
                     // as if it were "LISTAGG(s, sep) WITHIN GROUP (ORDER BY x, y)";
@@ -5702,6 +5703,7 @@ public class SqlToRelConverter {
                                     call.getFunctionQuantifier(), pos, operands2);
                     translateAgg(call2, filter, distinctList, orderList, ignoreNulls, outerCall);
                     return;
+
                 case ARRAY_AGG:
                 case ARRAY_CONCAT_AGG:
                     // Translate "ARRAY_AGG(s ORDER BY x, y)"
@@ -5721,6 +5723,7 @@ public class SqlToRelConverter {
                     }
                     // "ARRAY_AGG" and "ARRAY_CONCAT_AGG" without "ORDER BY"
                     // are handled normally; fall through.
+
                 default:
                     break;
             }

@@ -951,6 +951,7 @@ public class RexSimplify {
                     return simplified;
                 }
                 break;
+
             case IS_TRUE:
                 // x IS TRUE ==> x (if x is not nullable)
                 if (predicates.isEffectivelyNotNull(a)) {
@@ -981,6 +982,7 @@ public class RexSimplify {
                     return simplify(not(a), unknownAs);
                 }
                 break;
+
             default:
                 break;
         }
@@ -2883,7 +2885,6 @@ public class RexSimplify {
         final Map<RexNode, RexSargBuilder> map = new HashMap<>();
         private final RexBuilder rexBuilder;
         private final boolean negate;
-
         /**
          * Count of the new terms after converting all the operands to {@code SEARCH} on a {@link
          * Sarg}. It is used to decide whether the new terms are simpler.

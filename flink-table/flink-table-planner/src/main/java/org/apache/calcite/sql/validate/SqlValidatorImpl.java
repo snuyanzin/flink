@@ -1,13 +1,12 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.validate;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -1329,30 +1327,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         final SqlKind kind = node.getKind();
         switch (kind) {
             case VALUES:
-                // CHECKSTYLE: IGNORE 1
-                if (underFrom || true) {
-                    // leave FROM (VALUES(...)) [ AS alias ] clauses alone,
-                    // otherwise they grow cancerously if this rewrite is invoked
-                    // over and over
-                    return node;
-                } else {
-                    final SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
-                    selectList.add(SqlIdentifier.star(SqlParserPos.ZERO));
-                    return new SqlSelect(
-                            node.getParserPosition(),
-                            null,
-                            selectList,
-                            node,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null);
-                }
-
+                // Do not rewrite VALUES clauses.
+                // At some point we used to rewrite VALUES(...) clauses
+                // to (SELECT * FROM VALUES(...)) but this was problematic
+                // in various cases such as FROM (VALUES(...)) [ AS alias ]
+                // where the rewrite was invoked over and over making the
+                // expression grow indefinitely.
+                return node;
             case ORDER_BY:
                 {
                     SqlOrderBy orderBy = (SqlOrderBy) node;
