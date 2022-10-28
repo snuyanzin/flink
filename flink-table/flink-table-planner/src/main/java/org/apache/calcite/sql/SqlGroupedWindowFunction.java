@@ -18,12 +18,14 @@ package org.apache.calcite.sql;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.type.ExplicitReturnTypeInference;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlOperandTypeChecker;
 import org.apache.calcite.sql.type.SqlOperandTypeInference;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 
@@ -35,21 +37,20 @@ import java.util.List;
  * and its auxiliary functions are {@code HOP_START} and {@code HOP_END}. Here they are used in a
  * streaming query:
  *
- * <blockquote>
+ * <p>Note: we copied the implementation from Calcite's {@link
+ * org.apache.calcite.sql.SqlGroupedWindowFunction} because of CALCITE-4563, Calcite currently
+ * doesn't allow to set the SqlReturnTypeInference of auxiliary SqlGroupedWindowFunction.
  *
- * <pre>
- * SELECT STREAM HOP_START(rowtime, INTERVAL '1' HOUR),
- *   HOP_END(rowtime, INTERVAL '1' HOUR),
- *   MIN(unitPrice)
- * FROM Orders
- * GROUP BY HOP(rowtime, INTERVAL '1' HOUR), productId
- * </pre>
- *
- * </blockquote>
+ * <p>The motivation is using TIMESTAMP type for the window start and window end no matter the time
+ * attribute column is TIMESTAMP or TIMESTAMP_LTZ.
  */
 public class SqlGroupedWindowFunction extends SqlFunction {
+
     /** The grouped function, if this an auxiliary function; null otherwise. */
-    public final @Nullable SqlGroupedWindowFunction groupFunction;
+    public final SqlGroupedWindowFunction groupFunction;
+
+    private final WindowStartEndReturnTypeInference windowStartEndInf =
+            new WindowStartEndReturnTypeInference();
 
     /**
      * Creates a SqlGroupedWindowFunction.
@@ -66,39 +67,31 @@ public class SqlGroupedWindowFunction extends SqlFunction {
     public SqlGroupedWindowFunction(
             String name,
             SqlKind kind,
-            @Nullable SqlGroupedWindowFunction groupFunction,
+            SqlGroupedWindowFunction groupFunction,
             SqlReturnTypeInference returnTypeInference,
-            @Nullable SqlOperandTypeInference operandTypeInference,
-            @Nullable SqlOperandTypeChecker operandTypeChecker,
+            SqlOperandTypeInference operandTypeInference,
+            SqlOperandTypeChecker operandTypeChecker,
             SqlFunctionCategory category) {
         super(name, kind, returnTypeInference, operandTypeInference, operandTypeChecker, category);
         this.groupFunction = groupFunction;
         Preconditions.checkArgument(groupFunction == null || groupFunction.groupFunction == null);
     }
 
-    @Deprecated // to be removed before 2.0
+    /**
+     * Creates a SqlGroupedWindowFunction.
+     *
+     * @param name Function name
+     * @param kind Kind
+     * @param groupFunction Group function, if this is an auxiliary; null, if this is a group
+     *     function
+     */
     public SqlGroupedWindowFunction(
             String name,
             SqlKind kind,
-            @Nullable SqlGroupedWindowFunction groupFunction,
-            @Nullable SqlOperandTypeChecker operandTypeChecker) {
+            SqlGroupedWindowFunction groupFunction,
+            SqlOperandTypeChecker operandTypeChecker) {
         this(
                 name,
-                kind,
-                groupFunction,
-                ReturnTypes.ARG0,
-                null,
-                operandTypeChecker,
-                SqlFunctionCategory.SYSTEM);
-    }
-
-    @Deprecated // to be removed before 2.0
-    public SqlGroupedWindowFunction(
-            SqlKind kind,
-            @Nullable SqlGroupedWindowFunction groupFunction,
-            @Nullable SqlOperandTypeChecker operandTypeChecker) {
-        this(
-                kind.name(),
                 kind,
                 groupFunction,
                 ReturnTypes.ARG0,
@@ -123,14 +116,31 @@ public class SqlGroupedWindowFunction extends SqlFunction {
      * @param kind Kind
      */
     public SqlGroupedWindowFunction auxiliary(String name, SqlKind kind) {
-        return new SqlGroupedWindowFunction(
-                name,
-                kind,
-                this,
-                ReturnTypes.ARG0,
-                null,
-                getOperandTypeChecker(),
-                SqlFunctionCategory.SYSTEM);
+        switch (kind) {
+            case TUMBLE_START:
+            case TUMBLE_END:
+            case HOP_START:
+            case HOP_END:
+            case SESSION_START:
+            case SESSION_END:
+                return new SqlGroupedWindowFunction(
+                        name,
+                        kind,
+                        this,
+                        windowStartEndInf,
+                        null,
+                        getOperandTypeChecker(),
+                        SqlFunctionCategory.SYSTEM);
+            default:
+                return new SqlGroupedWindowFunction(
+                        name,
+                        kind,
+                        this,
+                        ReturnTypes.ARG0,
+                        null,
+                        getOperandTypeChecker(),
+                        SqlFunctionCategory.SYSTEM);
+        }
     }
 
     /** Returns a list of this grouped window function's auxiliary functions. */
@@ -157,5 +167,24 @@ public class SqlGroupedWindowFunction extends SqlFunction {
         // (HOP, TUMBLE, SESSION). When there are exceptions to this rule, we'll
         // make the method abstract.
         return call.getOperandMonotonicity(0).unstrict();
+    }
+
+    /**
+     * ReturnTypeInference that returns TIMESTAMP(3) as the type of window start and window end.
+     *
+     * <p>We use the first operand of window function to decide the return type which can avoid many
+     * necessary `CAST(w$end) AS EXPR$1` expressions that will be produced we directly use
+     * `ReturnTypes.explicit(SqlTypeName.TIMESTAMP, 3)`.
+     */
+    private static class WindowStartEndReturnTypeInference implements SqlReturnTypeInference {
+
+        private static final ExplicitReturnTypeInference explicit =
+                ReturnTypes.explicit(SqlTypeName.TIMESTAMP, 3);
+
+        public WindowStartEndReturnTypeInference() {}
+
+        public RelDataType inferReturnType(SqlOperatorBinding opBinding) {
+            return explicit.inferReturnType(opBinding);
+        }
     }
 }

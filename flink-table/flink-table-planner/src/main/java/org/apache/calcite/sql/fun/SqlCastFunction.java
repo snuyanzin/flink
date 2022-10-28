@@ -16,6 +16,9 @@
  */
 package org.apache.calcite.sql.fun;
 
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
+
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
 import org.apache.calcite.rel.type.RelDataType;
@@ -40,9 +43,6 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
-
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
 
 import java.text.Collator;
 import java.util.Objects;
