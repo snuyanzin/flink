@@ -16,8 +16,8 @@ specific language governing permissions and limitations
 under the License.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -49,7 +49,6 @@ under the License.
 			<version>${guava.version}</version>
 			<scope>provided</scope>
 			<exclusions>
-				<!-- calcite-core has a newer version which is used by calcite during runtime -->
 				<exclusion>
 					<groupId>org.checkerframework</groupId>
 					<artifactId>checker-qual</artifactId>
@@ -63,11 +62,11 @@ under the License.
 			<version>${calcite.version}</version>
 			<exclusions>
 				<!--
-				"mvn dependency:tree" as of Calcite 1.26.0:
+				"mvn dependency:tree" as of Calcite 1.28.0:
 
-				[INFO] +- org.apache.calcite:calcite-core:jar:1.26.0:compile
-				[INFO] |  +- org.apache.calcite.avatica:avatica-core:jar:1.17.0:compile
-				[INFO] |  +- org.apiguardian:apiguardian-api:jar:1.1.0:compile
+				[INFO] +- org.apache.calcite:calcite-core:jar:1.28.0:compile
+				[INFO] |  +- org.apache.calcite.avatica:avatica-core:jar:1.19.0:compile
+				[INFO] |  \- org.checkerframework:checker-qual:jar:3.10.0:compile
 
 				Dependencies that are not needed for how we use Calcite right now.
 				-->
@@ -176,6 +175,10 @@ under the License.
 					<groupId>org.jetbrains</groupId>
 					<artifactId>annotations</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.jetbrains.kotlin</groupId>
+					<artifactId>kotlin-stdlib-jdk8</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -187,6 +190,34 @@ under the License.
 					<groupId>org.apache.commons</groupId>
 					<artifactId>commons-dbcp2</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-lang3</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-pool2</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.jetbrains.kotlin</groupId>
+					<artifactId>kotlin-stdlib-jdk8</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.hydromatic</groupId>
+					<artifactId>quidem</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.hydromatic</groupId>
+					<artifactId>foodmart-data-hsqldb</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.hydromatic</groupId>
+					<artifactId>foodmart-queries</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>net.hydromatic</groupId>
+					<artifactId>scott-data-hsqldb</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -195,6 +226,7 @@ under the License.
 			<version>${calcite.version}</version>
 			<scope>test</scope>
 			<exclusions>
+				<!-- Excluding org.apiguardian:apiguardian-api v1.1.0 because org.junit.jupiter:junit-jupiter contains newer version v1.1.2 -->
 				<exclusion>
 					<groupId>org.apiguardian</groupId>
 					<artifactId>apiguardian-api</artifactId>

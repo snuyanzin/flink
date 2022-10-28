@@ -79,7 +79,7 @@ object FlinkLogicalRelFactories {
 
   /** Implementation of [[ProjectFactory]] that returns a [[FlinkLogicalCalc]]. */
   class ProjectFactoryImpl extends ProjectFactory {
-    override def createProject(
+    def createProject(
         input: RelNode,
         hints: util.List[RelHint],
         childExprs: util.List[_ <: RexNode],

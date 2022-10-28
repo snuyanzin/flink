@@ -80,7 +80,6 @@ object InputFormatCodeGenerator {
 
         @Override
         public Object nextRecord(Object reuse) {
-                      | ${ctx.reuseLocalVariableCode()}
           ${records.zipWithIndex
                        .map {
                          case (r, i) =>

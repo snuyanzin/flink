@@ -125,7 +125,17 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
 
-/** Copied to fix calcite issues. */
+/**
+ * Copied to fix calcite issues. FLINK modifications are at lines
+ *
+ * <ol>
+ *   <li>Was changed within FLINK-29280, FLINK-28682: Line 224 ~ 234
+ *   <li>Should be removed after fix of FLINK-29540: Line 296 ~ 302
+ *   <li>Should be removed after fix of FLINK-29540: Line 314 ~ 320
+ *   <li>Was changed within FLINK-21592: Line 1954 ~ 1962, Should be removed after update to Calcite
+ *       1.28.0 as it is fixed at CALCITE-4773
+ * </ol>
+ */
 public class RelDecorrelator implements ReflectiveVisitor {
     // ~ Static fields/initializers ---------------------------------------------
 
@@ -288,14 +298,13 @@ public class RelDecorrelator implements ReflectiveVisitor {
                                 FilterCorrelateRule.Config.DEFAULT
                                         .withRelBuilderFactory(f)
                                         .toRule())
-                        /*
-                        FLINK MODIFICATION BEGIN
-                        to avoid NPE
-                        .addRuleInstance(FilterFlattenCorrelatedConditionRule.Config.DEFAULT
-                                        .withRelBuilderFactory(f)
-                        .toRule())
-                        FLINK MODIFICATION END
-                        */
+                        /* ----- FLINK MODIFICATION BEGIN -----
+                        This is commented as a workaround for https://issues.apache.org/jira/browse/FLINK-29540
+                        .addRuleInstance(
+                                 FilterFlattenCorrelatedConditionRule.Config.DEFAULT
+                                         .withRelBuilderFactory(f)
+                                         .toRule())
+                                         ----- FLINK MODIFICATION END -----*/
                         .build();
 
         HepPlanner planner = createPlanner(program);
@@ -307,12 +316,13 @@ public class RelDecorrelator implements ReflectiveVisitor {
                     "Plan before extracting correlated computations:\n"
                             + RelOptUtil.toString(root));
         }
-        /* FLINK MODIFICATION BEGIN
+        /* ----- FLINK MODIFICATION BEGIN -----
+        This is commented as a workaround for https://issues.apache.org/jira/browse/FLINK-29540
         root = root.accept(new CorrelateProjectExtractor(f));
         // Necessary to update cm (CorrelMap) since CorrelateProjectExtractor above may modify the
         // plan
         this.cm = new CorelMapBuilder().build(root);
-        FLINK MODIFICATION END */
+         ----- FLINK MODIFICATION END ----- */
         if (SQL2REL_LOGGER.isDebugEnabled()) {
             SQL2REL_LOGGER.debug(
                     "Plan after extracting correlated computations:\n" + RelOptUtil.toString(root));

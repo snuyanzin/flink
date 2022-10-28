@@ -115,6 +115,7 @@ import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Static;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.trace.CalciteTrace;
+import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.KeyFor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.nullness.qual.PolyNull;
@@ -158,10 +159,10 @@ import static org.apache.calcite.util.Static.RESOURCE;
  * Default implementation of {@link SqlValidator}, the class was copied over because of
  * CALCITE-4554.
  *
- * <p>Lines 4697 ~ 4716, Flink enables TIMESTAMP and TIMESTAMP_LTZ for system time period
+ * <p>Lines 5014 ~ 5027, Flink enables TIMESTAMP and TIMESTAMP_LTZ for system time period
  * specification type.
  *
- * <p>Lines 5034 ~ 5038, Flink enables TIMESTAMP and TIMESTAMP_LTZ for first orderBy column in
+ * <p>Lines 5371 ~ 5377, Flink enables TIMESTAMP and TIMESTAMP_LTZ for first orderBy column in
  * matchRecognize.
  */
 public class SqlValidatorImpl implements SqlValidatorWithHints {
@@ -1207,6 +1208,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlNode)
      */
+    @API(since = "1.27", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlNode node) {
         return requireNonNull(getNamespace(node), () -> "namespace for " + node);
     }
@@ -1219,6 +1221,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlNode)
      */
+    @API(since = "1.27", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlNode node, @Nullable SqlValidatorScope scope) {
         return requireNonNull(
                 getNamespace(node, scope), () -> "namespace for " + node + ", scope " + scope);
@@ -1232,6 +1235,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      * @return namespace for the given node, never null
      * @see #getNamespace(SqlIdentifier, DelegatingScope)
      */
+    @API(since = "1.26", status = API.Status.INTERNAL)
     SqlValidatorNamespace getNamespaceOrThrow(SqlIdentifier id, @Nullable DelegatingScope scope) {
         return requireNonNull(
                 getNamespace(id, scope), () -> "namespace for " + id + ", scope " + scope);
@@ -5007,6 +5011,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             SqlSnapshot snapshot = (SqlSnapshot) node;
             SqlNode period = snapshot.getPeriod();
             RelDataType dataType = deriveType(requireNonNull(scope, "scope"), period);
+            // ----- FLINK MODIFICATION BEGIN -----
             if (!(dataType.getSqlTypeName() == SqlTypeName.TIMESTAMP
                     || dataType.getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
                 throw newValidationError(
@@ -5019,6 +5024,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 // table to operate on. This will be rechecked later in the planner rules.
                 return;
             }
+            // ----- FLINK MODIFICATION END -----
             SqlValidatorTable table = getTable(ns);
             if (!table.isTemporal()) {
                 List<String> qualifiedName = table.getQualifiedName();
@@ -5362,11 +5368,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         (SqlIdentifier) requireNonNull(firstOrderByColumn, "firstOrderByColumn");
             }
             RelDataType firstOrderByColumnType = deriveType(scope, identifier);
+            // ----- FLINK MODIFICATION BEGIN -----
             if (!(firstOrderByColumnType.getSqlTypeName() == SqlTypeName.TIMESTAMP
                     || firstOrderByColumnType.getSqlTypeName()
                             == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
                 throw newValidationError(interval, RESOURCE.firstColumnOfOrderByMustBeTimestamp());
             }
+            // ----- FLINK MODIFICATION END -----
 
             SqlNode expand = expand(interval, scope);
             RelDataType type = deriveType(scope, expand);

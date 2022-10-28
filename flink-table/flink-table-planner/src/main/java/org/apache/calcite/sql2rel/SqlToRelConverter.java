@@ -218,6 +218,15 @@ import static org.apache.calcite.sql.SqlUtil.stripAs;
  * relational algebra expression (consisting of {@link org.apache.calcite.rel.RelNode} objects).
  *
  * <p>The public entry points are: {@link #convertQuery}, {@link #convertExpression(SqlNode)}.
+ *
+ * <p>FLINK modifications are at lines
+ *
+ * <ol>
+ *   <li>Added in FLINK-29081, FLINK-28682: Lines 634 ~ 644
+ *   <li>Added in FLINK-28682: Lines 2097 ~ 2114
+ *   <li>Added in FLINK-28682: Lines 2152 ~ 2180
+ *   <li>Added in FLINK-20873: Lines 5159 ~ 5168
+ * </ol>
  */
 @SuppressWarnings("UnstableApiUsage")
 @Value.Enclosing
@@ -5155,12 +5164,16 @@ public class SqlToRelConverter {
             if (direction == RelFieldCollation.Direction.DESCENDING) {
                 node = relBuilder.desc(node);
             }
+            // ----- FLINK MODIFICATION BEGIN -----
+            // if null direction is unspecified then check default
+            // to keep same behavior as before Calcite 1.27.0
             if (nullDirection == RelFieldCollation.NullDirection.UNSPECIFIED) {
                 nullDirection =
                         validator().config().defaultNullCollation().last(desc(direction))
                                 ? RelFieldCollation.NullDirection.LAST
                                 : RelFieldCollation.NullDirection.FIRST;
             }
+            // ----- FLINK MODIFICATION END -----
             if (nullDirection == RelFieldCollation.NullDirection.FIRST) {
                 node = relBuilder.nullsFirst(node);
             }
