@@ -63,7 +63,7 @@ public interface CodeGeneratorCastRule<IN, OUT> extends CastRule<IN, OUT> {
          *
          * @return the variable name
          */
-        String declareVariable(String type, String variablePrefix);
+        String declareVariable(String type, String variablePrefix, String defaultValue);
 
         /** @return the term for the type serializer. */
         String declareTypeSerializer(LogicalType type);

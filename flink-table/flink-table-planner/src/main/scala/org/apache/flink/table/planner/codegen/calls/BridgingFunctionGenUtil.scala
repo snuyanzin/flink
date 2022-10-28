@@ -276,7 +276,13 @@ object BridgingFunctionGenUtil {
     } else {
       s"($externalResultTypeTerm) (${typeTerm(externalResultClassBoxed)})"
     }
-    val externalResultTerm = ctx.addReusableLocalVariable(externalResultTypeTerm, "externalResult")
+    val defValue = if (externalResultClass == classOf[String]) {
+      "\"\""
+    } else {
+      s"${primitiveDefaultValue(outputDataType.getLogicalType)}"
+    }
+    val externalResultTerm =
+      ctx.addReusableLocalVariable(externalResultTypeTerm, "externalResult", defValue)
     val externalCode =
       s"""
          |${externalOperands.map(_.code).mkString("\n")}

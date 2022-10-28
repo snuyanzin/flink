@@ -335,9 +335,10 @@ object LongHashJoinGenerator {
                              |
                              |      ${classOf[ProbeIterator].getCanonicalName} probeIter =
                              |      table.getSpilledPartitionProbeSideIter(p);
-                             |      $BINARY_ROW probeNext;
-                             |      while ((probeNext = probeIter.next()) != null) {
+                             |      $BINARY_ROW probeNext = probeIter.next();
+                             |      while (probeNext != null) {
                              |        processSortMergeJoinElement2(probeNext);
+                             |        probeNext = probeIter.next();
                              |      }
                              |    }
                              |

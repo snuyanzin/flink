@@ -16,6 +16,9 @@
  */
 package org.apache.calcite.sql2rel;
 
+import org.apache.flink.table.planner.alias.ClearJoinHintWithInvalidPropagationShuttle;
+import org.apache.flink.table.planner.hint.FlinkHints;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -65,7 +68,6 @@ import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.rules.FilterCorrelateRule;
-import org.apache.calcite.rel.rules.FilterFlattenCorrelatedConditionRule;
 import org.apache.calcite.rel.rules.FilterJoinRule;
 import org.apache.calcite.rel.rules.FilterProjectTransposeRule;
 import org.apache.calcite.rel.type.RelDataType;
@@ -123,23 +125,7 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
 
-/**
- * RelDecorrelator replaces all correlated expressions (corExp) in a relational expression (RelNode)
- * tree with non-correlated expressions that are produced from joining the RelNode that produces the
- * corExp with the RelNode that references it.
- *
- * <p>TODO:
- *
- * <ul>
- *   <li>replace {@code CorelMap} constructor parameter with a RelNode
- *   <li>make {@link #currentRel} immutable (would require a fresh RelDecorrelator for each node
- *       being decorrelated)
- *   <li>make fields of {@code CorelMap} immutable
- *   <li>make sub-class rules static, and have them create their own de-correlator
- * </ul>
- *
- * <p>Note: make all the members protected scope so that they can be accessed by the sub-class.
- */
+/** Copied to fix calcite issues. */
 public class RelDecorrelator implements ReflectiveVisitor {
     // ~ Static fields/initializers ---------------------------------------------
 
@@ -226,6 +212,18 @@ public class RelDecorrelator implements ReflectiveVisitor {
         // Re-propagate the hints.
         newRootRel = RelOptUtil.propagateRelHints(newRootRel, true);
 
+        // ----- FLINK MODIFICATION BEGIN -----
+
+        // replace all join hints with upper case
+        newRootRel = FlinkHints.capitalizeJoinHints(newRootRel);
+
+        // clear join hints which are propagated into wrong query block
+        // The hint QueryBlockAlias will be added when building a RelNode tree before. It is used to
+        // distinguish the query block in the SQL.
+        newRootRel = newRootRel.accept(new ClearJoinHintWithInvalidPropagationShuttle());
+
+        // ----- FLINK MODIFICATION END -----
+
         return newRootRel;
     }
 
@@ -290,10 +288,14 @@ public class RelDecorrelator implements ReflectiveVisitor {
                                 FilterCorrelateRule.Config.DEFAULT
                                         .withRelBuilderFactory(f)
                                         .toRule())
-                        .addRuleInstance(
-                                FilterFlattenCorrelatedConditionRule.Config.DEFAULT
+                        /*
+                        FLINK MODIFICATION BEGIN
+                        to avoid NPE
+                        .addRuleInstance(FilterFlattenCorrelatedConditionRule.Config.DEFAULT
                                         .withRelBuilderFactory(f)
-                                        .toRule())
+                        .toRule())
+                        FLINK MODIFICATION END
+                        */
                         .build();
 
         HepPlanner planner = createPlanner(program);
@@ -305,10 +307,12 @@ public class RelDecorrelator implements ReflectiveVisitor {
                     "Plan before extracting correlated computations:\n"
                             + RelOptUtil.toString(root));
         }
+        /* FLINK MODIFICATION BEGIN
         root = root.accept(new CorrelateProjectExtractor(f));
         // Necessary to update cm (CorrelMap) since CorrelateProjectExtractor above may modify the
         // plan
         this.cm = new CorelMapBuilder().build(root);
+        FLINK MODIFICATION END */
         if (SQL2REL_LOGGER.isDebugEnabled()) {
             SQL2REL_LOGGER.debug(
                     "Plan after extracting correlated computations:\n" + RelOptUtil.toString(root));
@@ -331,6 +335,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                                             .config
                                             .withRelBuilderFactory(f)
                                             .toRule());
+
             if (!getPostDecorrelateRules().isEmpty()) {
                 builder.addRuleCollection(getPostDecorrelateRules());
             }
@@ -1948,16 +1953,17 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 return;
             }
 
-            // ensure we keep the same type after removing the SINGLE_VALUE Aggregate
+            // BEGIN FLINK MODIFICATION
+            // Reason: fix the nullability mismatch issue
             final RelBuilder relBuilder = call.builder();
-            final RelDataType singleAggType =
-                    singleAggregate.getRowType().getFieldList().get(0).getType();
-            final RexNode oldProjectExp = projExprs.get(0);
-            final RexNode newProjectExp =
-                    singleAggType.equals(oldProjectExp.getType())
-                            ? oldProjectExp
-                            : relBuilder.getRexBuilder().makeCast(singleAggType, oldProjectExp);
-            relBuilder.push(aggregate).project(newProjectExp);
+            final boolean nullable = singleAggregate.getAggCallList().get(0).getType().isNullable();
+            final RelDataType type =
+                    relBuilder
+                            .getTypeFactory()
+                            .createTypeWithNullability(projExprs.get(0).getType(), nullable);
+            // END FLINK MODIFICATION
+            final RexNode cast = relBuilder.getRexBuilder().makeCast(type, projExprs.get(0));
+            relBuilder.push(aggregate).project(cast);
             call.transformTo(relBuilder.build());
         }
 

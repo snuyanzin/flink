@@ -126,6 +126,10 @@ object CodeGenUtils {
     s"$name$$${nameCounter.getAndIncrement}"
   }
 
+  def newValue(name: String): String = {
+    s"$name$$${nameCounter.getAndIncrement}"
+  }
+
   def newNames(names: String*): Seq[String] = {
     require(names.toSet.size == names.length, "Duplicated names")
     val newId = nameCounter.getAndIncrement
@@ -922,7 +926,7 @@ object CodeGenUtils {
     if (targetDataType.getConversionClass.isPrimitive) {
       externalResultTerm
     } else {
-      s"${internalExpr.nullTerm} ? null : ($externalResultTerm)"
+      s"${internalExpr.nullTerm} ? (${typeTerm(targetDataType.getConversionClass)}) null : ($externalResultTerm)"
     }
   }
 

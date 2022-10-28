@@ -185,11 +185,14 @@ class CodeGeneratorContext(val tableConfig: ReadableConfig, val classLoader: Cla
    * @return
    *   a new generated unique field name
    */
-  def addReusableLocalVariable(fieldTypeTerm: String, fieldName: String): String = {
+  def addReusableLocalVariable(
+      fieldTypeTerm: String,
+      fieldName: String,
+      defValue: String): String = {
     val fieldTerm = newName(fieldName)
     reusableLocalVariableStatements
       .getOrElse(currentMethodNameForLocalVariables, mutable.LinkedHashSet[String]())
-      .add(s"$fieldTypeTerm $fieldTerm;")
+      .add(s"$fieldTypeTerm $fieldTerm = $defValue;")
     fieldTerm
   }
 
@@ -202,13 +205,14 @@ class CodeGeneratorContext(val tableConfig: ReadableConfig, val classLoader: Cla
    * @return
    *   the new generated unique field names for each variable pairs
    */
-  def addReusableLocalVariables(fieldTypeAndNames: (String, String)*): Seq[String] = {
+  def addReusableLocalVariables(fieldTypeAndNames: (String, String, String)*): Seq[String] = {
     val fieldTerms = newNames(fieldTypeAndNames.map(_._2): _*)
-    fieldTypeAndNames.map(_._1).zip(fieldTerms).foreach {
-      case (fieldTypeTerm, fieldTerm) =>
+
+    fieldTypeAndNames.zip(fieldTerms).foreach {
+      case ((a, b, c), d) =>
         reusableLocalVariableStatements
           .getOrElse(currentMethodNameForLocalVariables, mutable.LinkedHashSet[String]())
-          .add(s"$fieldTypeTerm $fieldTerm;")
+          .add(s"$a $d = $c;")
     }
     fieldTerms
   }

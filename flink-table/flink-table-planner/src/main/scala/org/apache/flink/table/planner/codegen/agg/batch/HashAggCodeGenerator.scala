@@ -23,6 +23,7 @@ import org.apache.flink.table.data.binary.BinaryRowData
 import org.apache.flink.table.data.utils.JoinedRowData
 import org.apache.flink.table.functions.AggregateFunction
 import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenUtils, ProjectionCodeGenerator}
+import org.apache.flink.table.planner.codegen.CodeGenUtils.primitiveDefaultValue
 import org.apache.flink.table.planner.functions.aggfunctions.DeclarativeAggregateFunction
 import org.apache.flink.table.planner.plan.utils.{AggregateInfo, AggregateInfoList}
 import org.apache.flink.table.planner.typeutils.RowTypeUtils
@@ -101,7 +102,7 @@ class HashAggCodeGenerator(
     // gen code to aggregate and output using hash map
     val aggregateMapTerm = CodeGenUtils.newName("aggregateMap")
     val lookupInfoTypeTerm = classOf[BytesMap.LookupInfo[_, _]].getCanonicalName
-    val lookupInfo = ctx.addReusableLocalVariable(lookupInfoTypeTerm, "lookupInfo")
+    val lookupInfo = ctx.addReusableLocalVariable(lookupInfoTypeTerm, "lookupInfo", "null")
     HashAggCodeGenHelper.prepareHashAggMap(
       ctx,
       groupKeyTypesTerm,
@@ -116,7 +117,8 @@ class HashAggCodeGenerator(
         outputType,
         if (grouping.isEmpty) classOf[GenericRowData] else classOf[JoinedRowData])
 
-    val currentAggBufferTerm = ctx.addReusableLocalVariable(binaryRowTypeTerm, "currentAggBuffer")
+    val currentAggBufferTerm =
+      ctx.addReusableLocalVariable(binaryRowTypeTerm, "currentAggBuffer", "null")
     val (initedAggBuffer, aggregate, outputExpr) = HashAggCodeGenHelper.genHashAggCodes(
       isMerge,
       isFinal,
