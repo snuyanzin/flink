@@ -24,14 +24,16 @@ import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalSnapshot;
+import org.immutables.value.Value;
 
 /** Transpose {@link LogicalProject} past into {@link LogicalSnapshot}. */
-public class ProjectSnapshotTransposeRule extends RelRule<ProjectSnapshotTransposeRule.Config> {
+public class ProjectSnapshotTransposeRule
+        extends RelRule<ProjectSnapshotTransposeRule.ProjectSnapshotTransposeRuleConfig> {
 
     public static final RelOptRule INSTANCE =
-            ProjectSnapshotTransposeRule.Config.EMPTY.as(Config.class).withOperator().toRule();
+            ProjectSnapshotTransposeRule.ProjectSnapshotTransposeRuleConfig.DEFAULT.toRule();
 
-    public ProjectSnapshotTransposeRule(Config config) {
+    public ProjectSnapshotTransposeRule(ProjectSnapshotTransposeRuleConfig config) {
         super(config);
     }
 
@@ -54,14 +56,20 @@ public class ProjectSnapshotTransposeRule extends RelRule<ProjectSnapshotTranspo
     }
 
     /** Configuration for {@link ProjectSnapshotTransposeRule}. */
-    public interface Config extends RelRule.Config {
+    @Value.Immutable(singleton = false)
+    public interface ProjectSnapshotTransposeRuleConfig extends RelRule.Config {
+        ProjectSnapshotTransposeRuleConfig DEFAULT =
+                ImmutableProjectSnapshotTransposeRuleConfig.builder()
+                        .build()
+                        .withOperator()
+                        .as(ProjectSnapshotTransposeRuleConfig.class);
 
         @Override
         default RelOptRule toRule() {
             return new ProjectSnapshotTransposeRule(this);
         }
 
-        default ProjectSnapshotTransposeRule.Config withOperator() {
+        default ProjectSnapshotTransposeRuleConfig withOperator() {
             final RelRule.OperandTransform snapshotTransform =
                     operandBuilder -> operandBuilder.operand(LogicalSnapshot.class).noInputs();
 
@@ -71,7 +79,8 @@ public class ProjectSnapshotTransposeRule extends RelRule<ProjectSnapshotTranspo
                                     .operand(LogicalProject.class)
                                     .oneInput(snapshotTransform);
 
-            return withOperandSupplier(projectTransform).as(Config.class);
+            return withOperandSupplier(projectTransform)
+                    .as(ProjectSnapshotTransposeRuleConfig.class);
         }
     }
 }

@@ -353,6 +353,11 @@ public class RelBuilder {
         return this;
     }
 
+    /** Returns the size of the stack. */
+    public int size() {
+        return stack.size();
+    }
+
     /**
      * Returns the final relational expression.
      *
@@ -1331,19 +1336,6 @@ public class RelBuilder {
     public GroupKey groupKey(
             ImmutableBitSet groupSet, Iterable<? extends ImmutableBitSet> groupSets) {
         return groupKey_(groupSet, ImmutableList.copyOf(groupSets));
-    }
-
-    // CHECKSTYLE: IGNORE 1
-    /**
-     * @deprecated Use {@link #groupKey(ImmutableBitSet)} or {@link #groupKey(ImmutableBitSet,
-     *     Iterable)}.
-     */
-    @Deprecated // to be removed before 2.0
-    public GroupKey groupKey(
-            ImmutableBitSet groupSet, @Nullable ImmutableList<ImmutableBitSet> groupSets) {
-        return groupKey_(
-                groupSet,
-                groupSets == null ? ImmutableList.of(groupSet) : ImmutableList.copyOf(groupSets));
     }
 
     // CHECKSTYLE: IGNORE 1
@@ -2932,8 +2924,7 @@ public class RelBuilder {
         Frame right = stack.pop();
         final Frame left = stack.pop();
         final RelNode join;
-        // FLINK BEGIN MODIFICATION
-        // keep behavior of Calcite 1.27.0
+        // FLINK BEGIN MODIFICATION WA for CALCITE-4668
         final boolean correlate = variablesSet.size() == 1;
         // FLINK END MODIFICATION
         RexNode postCondition = literal(true);
