@@ -28,7 +28,7 @@ import java.lang
  * basic SQL type.
  */
 class TimeIndicatorRelDataType(
-    val typeSystem: RelDataTypeSystem,
+    typeSystem: RelDataTypeSystem,
     val originalType: BasicSqlType,
     val nullable: Boolean,
     val isEventTime: Boolean)
@@ -51,5 +51,9 @@ class TimeIndicatorRelDataType(
 
   override def generateTypeString(sb: lang.StringBuilder, withDetail: Boolean): Unit = {
     sb.append(toString)
+  }
+
+  def getTypeSystem: RelDataTypeSystem = {
+    typeSystem
   }
 }

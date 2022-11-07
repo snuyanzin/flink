@@ -54,6 +54,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexPatternFieldRef;
+import org.apache.calcite.rex.RexUnknownAs;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -312,7 +313,7 @@ final class RexNodeJsonSerializer extends StdSerializer<RexNode> {
             gen.writeEndObject();
         }
         gen.writeEndArray();
-        gen.writeBooleanField(FIELD_NAME_CONTAINS_NULL, value.containsNull);
+        gen.writeBooleanField(FIELD_NAME_CONTAINS_NULL, value.nullAs == RexUnknownAs.TRUE);
         gen.writeEndObject();
     }
 
