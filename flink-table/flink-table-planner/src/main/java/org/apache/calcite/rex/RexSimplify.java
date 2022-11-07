@@ -241,7 +241,7 @@ public class RexSimplify {
      * <p>In particular:
      *
      * <ul>
-     *   <li>{@code simplify(x = 1 AND y = 2 AND NOT x = 1)} returns {@code y = 2}
+     *   <li>{@code simplify(x = 1 OR NOT x = 1 OR x IS NULL)} returns {@code TRUE}
      *   <li>{@code simplify(x = 1 AND FALSE)} returns {@code FALSE}
      * </ul>
      *
@@ -916,7 +916,7 @@ public class RexSimplify {
     }
 
     private @Nullable RexNode simplifyIsPredicate(SqlKind kind, RexNode a) {
-        if (!RexUtil.isReferenceOrAccess(a, true)) {
+        if (!(RexUtil.isReferenceOrAccess(a, true) || RexUtil.isDeterministic(a))) {
             return null;
         }
 
@@ -2792,7 +2792,7 @@ public class RexSimplify {
                 case IS_NULL:
                 case IS_NOT_NULL:
                     RexNode pA = ((RexCall) e).getOperands().get(0);
-                    if (!RexUtil.isReferenceOrAccess(pA, true)) {
+                    if (!(RexUtil.isReferenceOrAccess(pA, true) || RexUtil.isDeterministic(pA))) {
                         return null;
                     }
                     return new IsPredicate(pA, e.getKind());
@@ -2932,6 +2932,7 @@ public class RexSimplify {
             switch (left.getKind()) {
                 case INPUT_REF:
                 case FIELD_ACCESS:
+                case CAST:
                     switch (right.getKind()) {
                         case LITERAL:
                             return accept2b(left, kind, (RexLiteral) right, newTerms);
@@ -2943,6 +2944,7 @@ public class RexSimplify {
                     switch (right.getKind()) {
                         case INPUT_REF:
                         case FIELD_ACCESS:
+                        case CAST:
                             return accept2b(right, kind.reverse(), (RexLiteral) left, newTerms);
                         default:
                             break;
