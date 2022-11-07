@@ -50,9 +50,9 @@ class RowFunctionITCase extends BuiltInFunctionTestBase {
                                 "ROW(f0, f1)",
                                 Row.of(12, "Hello world"),
                                 DataTypes.ROW(
-                                                DataTypes.FIELD("EXPR$0", DataTypes.INT()),
-                                                DataTypes.FIELD("EXPR$1", DataTypes.STRING()))
-                                        .notNull()),
+                                        DataTypes.FIELD("EXPR$0", DataTypes.INT()),
+                                        DataTypes.FIELD("EXPR$1", DataTypes.STRING()))),
+                //  .notNull()),
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.ROW, "within function call")
                         .onFieldsWithData(12, "Hello world")
                         .andDataTypes(DataTypes.INT(), DataTypes.STRING())
@@ -70,11 +70,9 @@ class RowFunctionITCase extends BuiltInFunctionTestBase {
                                 row($("f0").plus(12), "Hello world")
                                         .cast(
                                                 DataTypes.ROW(
-                                                                DataTypes.FIELD(
-                                                                        "i", DataTypes.INT()),
-                                                                DataTypes.FIELD(
-                                                                        "s", DataTypes.STRING()))
-                                                        .notNull()),
+                                                        DataTypes.FIELD("i", DataTypes.INT()),
+                                                        DataTypes.FIELD("s", DataTypes.STRING()))),
+                                // .notNull()),
                                 "CAST((f0 + 12, 'Hello world') AS ROW<i INT, s STRING>)",
                                 Row.of(13, "Hello world"),
                                 DataTypes.ROW(
