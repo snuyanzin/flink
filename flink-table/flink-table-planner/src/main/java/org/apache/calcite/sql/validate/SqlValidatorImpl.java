@@ -446,7 +446,14 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         if (expanded != null) {
             inferUnknownTypes(targetType, scope, expanded);
         }
-        final RelDataType type = deriveType(selectScope, expanded);
+        RelDataType type = deriveType(selectScope, expanded);
+        // Re-derive SELECT ITEM's data type that may be nullable in AggregatingSelectScope when it
+        // appears in advanced grouping elements such as CUBE, ROLLUP , GROUPING SETS.
+        // For example, SELECT CASE WHEN c = 1 THEN '1' ELSE '23' END AS x FROM t GROUP BY CUBE(x),
+        // the 'x' should be nullable even if x's literal values are not null.
+        if (selectScope instanceof AggregatingSelectScope) {
+            type = requireNonNull(selectScope.nullifyType(stripAs(expanded), type));
+        }
         setValidatedNodeType(expanded, type);
         fields.add(Pair.of(alias, type));
         return false;
@@ -3607,11 +3614,21 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
     }
 
-    private static @Nullable SqlNode stripDot(@Nullable SqlNode node) {
-        if (node != null && node.getKind() == SqlKind.DOT) {
-            return stripDot(((SqlCall) node).operand(0));
+    /**
+     * If the {@code node} is a DOT call, returns its first operand. Recurse, if the first operand
+     * is another DOT call.
+     *
+     * <p>In other words, it converts {@code a DOT b DOT c} to {@code a}.
+     *
+     * @param node The node to strip DOT
+     * @return the DOT's first operand
+     */
+    private static SqlNode stripDot(SqlNode node) {
+        SqlNode res = node;
+        while (res.getKind() == SqlKind.DOT) {
+            res = requireNonNull(((SqlCall) res).operand(0), "operand");
         }
-        return node;
+        return res;
     }
 
     private void checkRollUp(
@@ -3619,18 +3636,23 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             @Nullable SqlNode parent,
             @Nullable SqlNode current,
             SqlValidatorScope scope,
-            @Nullable String optionalClause) {
+            @Nullable String contextClause) {
         current = stripAs(current);
         if (current instanceof SqlCall && !(current instanceof SqlSelect)) {
             // Validate OVER separately
             checkRollUpInWindow(getWindowInOver(current), scope);
             current = stripOver(current);
 
-            SqlNode stripDot = requireNonNull(stripDot(current), "stripDot(current)");
-            List<? extends @Nullable SqlNode> children =
-                    ((SqlCall) stripAs(stripDot)).getOperandList();
-            for (SqlNode child : children) {
-                checkRollUp(parent, current, child, scope, optionalClause);
+            SqlNode stripDot = stripDot(current);
+            if (stripDot != current) {
+                // we stripped the field access. Recurse to this method, the DOT's operand
+                // can be another SqlCall, or an SqlIdentifier.
+                checkRollUp(grandParent, parent, stripDot, scope, contextClause);
+            } else {
+                List<? extends @Nullable SqlNode> children = ((SqlCall) stripDot).getOperandList();
+                for (SqlNode child : children) {
+                    checkRollUp(parent, current, child, scope, contextClause);
+                }
             }
         } else if (current instanceof SqlIdentifier) {
             SqlIdentifier id = (SqlIdentifier) current;
@@ -3639,7 +3661,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         || !isRolledUpColumnAllowedInAgg(
                                 id, scope, (SqlCall) parent, grandParent)) {
                     String context =
-                            optionalClause != null ? optionalClause : parent.getKind().toString();
+                            contextClause != null ? contextClause : parent.getKind().toString();
                     throw newValidationError(
                             id, RESOURCE.rolledUpNotAllowed(deriveAliasNonNull(id, 0), context));
                 }
