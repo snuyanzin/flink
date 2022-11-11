@@ -76,9 +76,9 @@ under the License.
 	</dependencyManagement>
 
 	<properties>
-		<calcite.version>1.31.0-SNAPSHOT</calcite.version>
+		<calcite.version>1.31.0</calcite.version>
 		<janino.version>3.0.11</janino.version>
 		<jsonpath.version>2.7.0</jsonpath.version>
-		<guava.version>29.0-jre</guava.version>
+		<guava.version>31.1-jre</guava.version>
 	</properties>
 </project>
