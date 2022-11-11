@@ -25,7 +25,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.calcite.avatica.util.Spaces;
+import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Ord;
+import org.apache.calcite.linq4j.tree.TableExpressionFactory;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptSamplingParameters;
@@ -98,6 +100,7 @@ import org.apache.calcite.rex.RexWindowBounds;
 import org.apache.calcite.schema.ColumnStrategy;
 import org.apache.calcite.schema.ModifiableTable;
 import org.apache.calcite.schema.ModifiableView;
+import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TranslatableTable;
 import org.apache.calcite.schema.Wrapper;
@@ -2741,8 +2744,19 @@ public class SqlToRelConverter {
             final SqlUserDefinedTableMacro udf = (SqlUserDefinedTableMacro) operator;
             final TranslatableTable table = udf.getTable(callBinding);
             final RelDataType rowType = table.getRowType(typeFactory);
+            CalciteSchema schema =
+                    Schemas.subSchema(
+                            catalogReader.getRootSchema(), udf.getNameAsId().skipLast(1).names);
+            TableExpressionFactory expressionFunction =
+                    clazz ->
+                            Schemas.getTableExpression(
+                                    Objects.requireNonNull(schema, "schema").plus(),
+                                    Util.last(udf.getNameAsId().names),
+                                    table,
+                                    clazz);
             RelOptTable relOptTable =
-                    RelOptTableImpl.create(null, rowType, table, udf.getNameAsId().names);
+                    RelOptTableImpl.create(
+                            null, rowType, udf.getNameAsId().names, table, expressionFunction);
             RelNode converted = toRel(relOptTable, ImmutableList.of());
             bb.setRoot(converted, true);
             return;
@@ -2768,15 +2782,6 @@ public class SqlToRelConverter {
                         elementType,
                         validator().getValidatedNodeType(call),
                         columnMappings);
-
-        final SqlValidatorScope selectScope = ((DelegatingScope) bb.scope()).getParent();
-        final Blackboard seekBb = createBlackboard(selectScope, null, false);
-
-        final CorrelationUse p = getCorrelationUse(seekBb, callRel);
-        if (p != null) {
-            assert p.r instanceof LogicalTableFunctionScan;
-            callRel = (LogicalTableFunctionScan) p.r;
-        }
 
         bb.setRoot(callRel, true);
         afterTableFunction(bb, call, callRel);
@@ -4458,7 +4463,18 @@ public class SqlToRelConverter {
                         fieldNames, catalogReader.nameMatcher().isCaseSensitive());
 
         relBuilder.push(bb.root()).projectNamed(exprs, fieldNames, true);
-        bb.setRoot(relBuilder.build(), false);
+
+        RelNode project = relBuilder.build();
+
+        final RelNode r;
+        final CorrelationUse p = getCorrelationUse(bb, project);
+        if (p != null) {
+            r = p.r;
+        } else {
+            r = project;
+        }
+
+        bb.setRoot(r, false);
 
         assert bb.columnMonotonicities.isEmpty();
         bb.columnMonotonicities.addAll(columnMonotonicityList);
@@ -4893,7 +4909,15 @@ public class SqlToRelConverter {
                     int i = 0;
                     int offset = 0;
                     for (SqlValidatorNamespace c : ancestorScope1.getChildren()) {
-                        builder.addAll(c.getRowType().getFieldList());
+                        if (ancestorScope1.isChildNullable(i)) {
+                            for (final RelDataTypeField f : c.getRowType().getFieldList()) {
+                                builder.add(
+                                        f.getName(),
+                                        typeFactory.createTypeWithNullability(f.getType(), true));
+                            }
+                        } else {
+                            builder.addAll(c.getRowType().getFieldList());
+                        }
                         if (i == resolve.path.steps().get(0).i) {
                             for (RelDataTypeField field : c.getRowType().getFieldList()) {
                                 fields.put(field.getName(), field.getIndex() + offset);
