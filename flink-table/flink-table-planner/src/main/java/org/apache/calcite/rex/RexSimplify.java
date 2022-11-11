@@ -3029,14 +3029,15 @@ public class RexSimplify {
         boolean needToFix() {
             // Fix and converts to SEARCH if:
             // 1. A Sarg has complexity greater than 1;
-            // 2. The terms are reduced as simpler Sarg points;
-            // 3. The terms are reduced as simpler Sarg comparison.
+            // 2. A Sarg was merged with another Sarg or range;
+            // 3. The terms are reduced as simpler Sarg points;
+            // 4. The terms are reduced as simpler Sarg comparison.
 
             // Ignore 'negate' just to be compatible with previous versions of this
             // method. "build().complexity()" would be a better estimate, if we could
             // switch to it breaking lots of plans.
             final Collection<RexSargBuilder> builders = map.values();
-            return builders.stream().anyMatch(b -> b.build(false).complexity() > 1)
+            return builders.stream().anyMatch(b -> b.build(false).complexity() > 1 || b.mergedSarg)
                     || newTermsCount == 1 && builders.stream().allMatch(b -> simpleSarg(b.build()));
         }
 
@@ -3100,6 +3101,8 @@ public class RexSimplify {
         final boolean negate;
         final List<RelDataType> types = new ArrayList<>();
         final RangeSet<Comparable> rangeSet = TreeRangeSet.create();
+        boolean hasSarg;
+        boolean mergedSarg;
         RexUnknownAs nullAs = FALSE;
 
         RexSargBuilder(RexNode ref, RexBuilder rexBuilder, boolean negate) {
@@ -3173,6 +3176,7 @@ public class RexSimplify {
         void addRange(Range<Comparable> range, RelDataType type) {
             types.add(type);
             rangeSet.add(range);
+            mergedSarg |= hasSarg;
             nullAs = nullAs.or(UNKNOWN);
         }
 
@@ -3189,6 +3193,8 @@ public class RexSimplify {
             }
             types.add(type);
             rangeSet.addAll(r);
+            mergedSarg |= !rangeSet.isEmpty();
+            hasSarg = true;
             switch (nullAs) {
                 case TRUE:
                     this.nullAs = this.nullAs.or(TRUE);

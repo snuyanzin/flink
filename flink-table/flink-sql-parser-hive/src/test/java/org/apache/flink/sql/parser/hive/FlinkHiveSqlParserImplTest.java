@@ -258,12 +258,12 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
                 .ok(
                         "INSERT INTO `TBL`\n"
                                 + "PARTITION (`P1` = 1, `P2`, `P3`)\n"
-                                + "(SELECT *\n"
-                                + "FROM `SRC`)");
+                                + "SELECT *\n"
+                                + "FROM `SRC`");
         sql("insert overwrite table tbl select * from src")
-                .ok("INSERT OVERWRITE `TBL`\n" + "(SELECT *\n" + "FROM `SRC`)");
+                .ok("INSERT OVERWRITE `TBL`\n" + "SELECT *\n" + "FROM `SRC`");
         sql("insert into table tbl(x,y) select * from src")
-                .ok("INSERT INTO `TBL` (`X`, `Y`)\n" + "(SELECT *\n" + "FROM `SRC`)");
+                .ok("INSERT INTO `TBL` (`X`, `Y`)\n" + "SELECT *\n" + "FROM `SRC`");
     }
 
     @Test
@@ -574,7 +574,7 @@ class FlinkHiveSqlParserImplTest extends SqlParserTest {
 
     @Test
     void testExplainInsert() {
-        String expected = "EXPLAIN INSERT INTO `EMPS1`\n" + "(SELECT *\n" + "FROM `EMPS2`)";
+        String expected = "EXPLAIN INSERT INTO `EMPS1`\n" + "SELECT *\n" + "FROM `EMPS2`";
         this.sql("explain plan for insert into emps1 select * from emps2").ok(expected);
     }
 
