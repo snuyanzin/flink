@@ -1643,8 +1643,8 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                 "INSERT INTO `EMPS` "
                         + "PARTITION (`X` = 'ab', `Y` = 'bc')\n"
                         + "(`X`, `Y`)\n"
-                        + "(SELECT *\n"
-                        + "FROM `EMPS`)";
+                        + "SELECT *\n"
+                        + "FROM `EMPS`";
         sql(sql1).ok(expected);
         final String sql2 =
                 "insert into emp\n"
@@ -1660,8 +1660,8 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                                 + "PARTITION (`EMPNO` = '1', `JOB` = 'job')\n"
                                 + "(`EMPNO`, `ENAME`, `JOB`, `MGR`, `HIREDATE`, `SAL`,"
                                 + " `COMM`, `DEPTNO`, `SLACKER`)\n"
-                                + "(SELECT 'nom', 0, TIMESTAMP '1970-01-01 00:00:00', 1, 1, 1, FALSE\n"
-                                + "FROM (VALUES (ROW('a'))))");
+                                + "SELECT 'nom', 0, TIMESTAMP '1970-01-01 00:00:00', 1, 1, 1, FALSE\n"
+                                + "FROM (VALUES (ROW('a')))");
         final String sql3 =
                 "insert into empnullables\n"
                         + "partition(ename='b')\n"
@@ -1672,8 +1672,8 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                         "INSERT INTO `EMPNULLABLES` "
                                 + "PARTITION (`ENAME` = 'b')\n"
                                 + "(`EMPNO`, `ENAME`)\n"
-                                + "(SELECT 1\n"
-                                + "FROM (VALUES (ROW('a'))))");
+                                + "SELECT 1\n"
+                                + "FROM (VALUES (ROW('a')))");
     }
 
     @Test
@@ -1682,8 +1682,8 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                 "INSERT INTO `emps` "
                         + "PARTITION (`x` = 'ab', `y` = 'bc')\n"
                         + "(`x`, `y`)\n"
-                        + "(SELECT *\n"
-                        + "FROM `EMPS`)";
+                        + "SELECT *\n"
+                        + "FROM `EMPS`";
         sql("insert into \"emps\" "
                         + "partition (\"x\"='ab', \"y\"='bc')(\"x\",\"y\") select * from emps")
                 .ok(expected);
@@ -1695,8 +1695,8 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                 "INSERT INTO `EMPS` EXTEND (`Z` BOOLEAN) "
                         + "PARTITION (`Z` = 'ab')\n"
                         + "(`X`, `Y`)\n"
-                        + "(SELECT *\n"
-                        + "FROM `EMPS`)";
+                        + "SELECT *\n"
+                        + "FROM `EMPS`";
         sql("insert into emps(z boolean) partition (z='ab') (x,y) select * from emps").ok(expected);
     }
 
@@ -1716,7 +1716,7 @@ class FlinkSqlParserImplTest extends SqlParserTest {
     void testInsertOverwrite() {
         // non-partitioned
         final String sql = "INSERT OVERWRITE myDB.myTbl SELECT * FROM src";
-        final String expected = "INSERT OVERWRITE `MYDB`.`MYTBL`\n" + "(SELECT *\n" + "FROM `SRC`)";
+        final String expected = "INSERT OVERWRITE `MYDB`.`MYTBL`\n" + "SELECT *\n" + "FROM `SRC`";
         sql(sql).ok(expected);
 
         // partitioned
@@ -1725,8 +1725,8 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                 "INSERT OVERWRITE `MYTBL` "
                         + "PARTITION (`P1` = 'v1', `P2` = 'v2')\n"
                         + "\n"
-                        + "(SELECT *\n"
-                        + "FROM `SRC`)";
+                        + "SELECT *\n"
+                        + "FROM `SRC`";
         sql(sql1).ok(expected1);
     }
 
@@ -2026,12 +2026,12 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                 .ok(
                         "EXECUTE STATEMENT SET BEGIN\n"
                                 + "INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T2`\n"
                                 + ";\n"
                                 + "INSERT INTO `T2`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T3`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T3`\n"
                                 + ";\n"
                                 + "END");
     }
@@ -2042,12 +2042,12 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                 .ok(
                         "EXPLAIN STATEMENT SET BEGIN\n"
                                 + "INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T2`\n"
                                 + ";\n"
                                 + "INSERT INTO `T2`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T3`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T3`\n"
                                 + ";\n"
                                 + "END");
     }
@@ -2155,13 +2155,13 @@ class FlinkSqlParserImplTest extends SqlParserTest {
 
     @Test
     void testExplainInsert() {
-        String expected = "EXPLAIN INSERT INTO `EMPS1`\n" + "(SELECT *\n" + "FROM `EMPS2`)";
+        String expected = "EXPLAIN INSERT INTO `EMPS1`\n" + "SELECT *\n" + "FROM `EMPS2`";
         this.sql("explain plan for insert into emps1 select * from emps2").ok(expected);
     }
 
     @Test
     void testExecuteInsert() {
-        String expected = "EXECUTE INSERT INTO `EMPS1`\n" + "(SELECT *\n" + "FROM `EMPS2`)";
+        String expected = "EXECUTE INSERT INTO `EMPS1`\n" + "SELECT *\n" + "FROM `EMPS2`";
         this.sql("execute insert into emps1 select * from emps2").ok(expected);
     }
 
@@ -2177,25 +2177,25 @@ class FlinkSqlParserImplTest extends SqlParserTest {
         sql("compile plan './test.json' for insert into t1 select * from t2")
                 .ok(
                         "COMPILE PLAN './test.json' FOR INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)");
+                                + "SELECT *\n"
+                                + "FROM `T2`");
         sql("compile plan './test.json' if not exists for insert into t1 select * from t2")
                 .ok(
                         "COMPILE PLAN './test.json' IF NOT EXISTS FOR INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)");
+                                + "SELECT *\n"
+                                + "FROM `T2`");
 
         sql("compile plan './test.json' for statement set "
                         + "begin insert into t1 select * from t2; insert into t2 select * from t3; end")
                 .ok(
                         "COMPILE PLAN './test.json' FOR STATEMENT SET BEGIN\n"
                                 + "INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T2`\n"
                                 + ";\n"
                                 + "INSERT INTO `T2`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T3`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T3`\n"
                                 + ";\n"
                                 + "END");
         sql("compile plan './test.json' if not exists for statement set "
@@ -2203,12 +2203,12 @@ class FlinkSqlParserImplTest extends SqlParserTest {
                 .ok(
                         "COMPILE PLAN './test.json' IF NOT EXISTS FOR STATEMENT SET BEGIN\n"
                                 + "INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T2`\n"
                                 + ";\n"
                                 + "INSERT INTO `T2`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T3`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T3`\n"
                                 + ";\n"
                                 + "END");
     }
@@ -2218,20 +2218,20 @@ class FlinkSqlParserImplTest extends SqlParserTest {
         sql("compile and execute plan './test.json' for insert into t1 select * from t2")
                 .ok(
                         "COMPILE AND EXECUTE PLAN './test.json' FOR INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)");
+                                + "SELECT *\n"
+                                + "FROM `T2`");
 
         sql("compile and execute plan './test.json' for statement set "
                         + "begin insert into t1 select * from t2; insert into t2 select * from t3; end")
                 .ok(
                         "COMPILE AND EXECUTE PLAN './test.json' FOR STATEMENT SET BEGIN\n"
                                 + "INSERT INTO `T1`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T2`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T2`\n"
                                 + ";\n"
                                 + "INSERT INTO `T2`\n"
-                                + "(SELECT *\n"
-                                + "FROM `T3`)\n"
+                                + "SELECT *\n"
+                                + "FROM `T3`\n"
                                 + ";\n"
                                 + "END");
     }
