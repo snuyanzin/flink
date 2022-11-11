@@ -139,6 +139,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -163,7 +164,7 @@ public class RelBuilder {
     protected final RelOptCluster cluster;
     protected final @Nullable RelOptSchema relOptSchema;
     private final Deque<Frame> stack = new ArrayDeque<>();
-    private final RexSimplify simplifier;
+    private RexSimplify simplifier;
     private final Config config;
     private final RelOptTable.ViewExpander viewExpander;
     private RelFactories.Struct struct;
@@ -427,6 +428,25 @@ public class RelBuilder {
         } finally {
             stack.pop();
         }
+    }
+
+    /** Performs an action with a temporary simplifier. */
+    public <E> E withSimplifier(
+            BiFunction<RelBuilder, RexSimplify, RexSimplify> simplifierTransform,
+            Function<RelBuilder, E> fn) {
+        final RexSimplify previousSimplifier = this.simplifier;
+        try {
+            this.simplifier = simplifierTransform.apply(this, previousSimplifier);
+            return fn.apply(this);
+        } finally {
+            this.simplifier = previousSimplifier;
+        }
+    }
+
+    /** Performs an action using predicates of the {@link #peek() current node} to simplify. */
+    public <E> E withPredicates(RelMetadataQuery mq, Function<RelBuilder, E> fn) {
+        final RelOptPredicateList predicates = mq.getPulledUpPredicates(peek());
+        return withSimplifier((r, s) -> s.withPredicates(predicates), fn);
     }
 
     // Methods that return scalar expressions
