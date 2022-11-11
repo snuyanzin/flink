@@ -4285,7 +4285,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
     }
 
-    private boolean isReturnBooleanType(RelDataType relDataType) {
+    private static boolean isReturnBooleanType(RelDataType relDataType) {
         if (relDataType instanceof RelRecordType) {
             RelRecordType recordType = (RelRecordType) relDataType;
             Preconditions.checkState(
