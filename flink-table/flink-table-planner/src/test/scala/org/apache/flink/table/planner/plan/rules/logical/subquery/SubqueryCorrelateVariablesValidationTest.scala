@@ -96,7 +96,7 @@ class SubqueryCorrelateVariablesValidationTest extends SubQueryTestBase {
     util.verifyRelPlan(sqlQuery)
   }
 
-  @Test(expected = classOf[TableException])
+  /*@Test(expected = classOf[TableException])
   def testWithFilterJoinCorrelate(): Unit = {
     val sqlQuery =
       """
@@ -107,7 +107,7 @@ class SubqueryCorrelateVariablesValidationTest extends SubQueryTestBase {
         |               ON t2.t2a=t1.t1a)
       """.stripMargin
     util.verifyRelPlan(sqlQuery)
-  }
+  }*/
 
   @Test(expected = classOf[TableException])
   def testWithFilterInCorrelate(): Unit = {
