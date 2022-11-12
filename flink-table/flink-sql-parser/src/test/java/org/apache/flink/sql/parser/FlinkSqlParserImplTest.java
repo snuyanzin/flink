@@ -2091,11 +2091,11 @@ class FlinkSqlParserImplTest extends SqlParserTest {
     void testExplainUnion() {
         String sql = "explain estimated_cost select * from emps union all select * from emps";
         String expected =
-                "EXPLAIN ESTIMATED_COST (SELECT *\n"
+                "EXPLAIN ESTIMATED_COST SELECT *\n"
                         + "FROM `EMPS`\n"
                         + "UNION ALL\n"
                         + "SELECT *\n"
-                        + "FROM `EMPS`)";
+                        + "FROM `EMPS`";
         this.sql(sql).ok(expected);
     }
 
