@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.calcite.avatica.util.Spaces;
+import org.apache.calcite.config.NullCollation;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.tree.TableExpressionFactory;
@@ -2481,7 +2482,7 @@ public class SqlToRelConverter {
                 nodes,
                 (node, i) -> {
                     final RexNode e = bb.convertExpression(node);
-                    final String alias = validator().deriveAlias(node, i);
+                    final String alias = SqlValidatorUtil.alias(node, i);
                     exprs.add(relBuilder.alias(e, alias));
                 });
         RelNode child = (null != bb.root) ? bb.root : LogicalValues.createOneRow(cluster);
@@ -5357,6 +5358,7 @@ public class SqlToRelConverter {
          * Converts an item in an ORDER BY clause inside a window (OVER) clause, extracting DESC,
          * NULLS LAST and NULLS FIRST flags first.
          */
+        @Deprecated // to be removed before 2.0
         public RexFieldCollation convertSortExpression(
                 SqlNode expr,
                 RelFieldCollation.Direction direction,
@@ -5398,6 +5400,8 @@ public class SqlToRelConverter {
             }
         }
 
+        // Only used by deprecated method "convertSortExpression", and will be
+        // removed with that method.
         private RexFieldCollation sortToRexFieldCollation(
                 SqlNode expr,
                 RelFieldCollation.Direction direction,
@@ -5437,19 +5441,21 @@ public class SqlToRelConverter {
                 RelFieldCollation.Direction direction,
                 RelFieldCollation.NullDirection nullDirection) {
             RexNode node = convertExpression(expr);
-            if (direction == RelFieldCollation.Direction.DESCENDING) {
+            final boolean desc = direction == RelFieldCollation.Direction.DESCENDING;
+            if (desc) {
                 node = relBuilder.desc(node);
             }
-            // ----- FLINK MODIFICATION BEGIN -----
-            // if null direction is unspecified then check default
-            // to keep same behavior as before Calcite 1.27.0
             if (nullDirection == RelFieldCollation.NullDirection.UNSPECIFIED) {
-                nullDirection =
-                        validator().config().defaultNullCollation().last(desc(direction))
-                                ? RelFieldCollation.NullDirection.LAST
-                                : RelFieldCollation.NullDirection.FIRST;
+                final NullCollation nullCollation = validator().config().defaultNullCollation();
+                final boolean nullsLast = nullCollation.last(desc);
+                final boolean nullsFirst = !nullsLast;
+                if (!NullCollation.HIGH.isDefaultOrder(nullsFirst, desc)) {
+                    nullDirection =
+                            nullsLast
+                                    ? RelFieldCollation.NullDirection.LAST
+                                    : RelFieldCollation.NullDirection.FIRST;
+                }
             }
-            // ----- FLINK MODIFICATION END -----
             if (nullDirection == RelFieldCollation.NullDirection.FIRST) {
                 node = relBuilder.nullsFirst(node);
             }
