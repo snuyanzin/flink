@@ -24,8 +24,14 @@ import org.apache.flink.annotation.PublicEvolving;
 @PublicEvolving
 public class SqlParserEOFException extends SqlParserException {
 
-    public SqlParserEOFException(String message, Throwable cause) {
-        super(message, cause);
+    public SqlParserEOFException(
+            String message,
+            Throwable cause,
+            int columnNum,
+            int lineNum,
+            int columnNumEnd,
+            int lineNumEnd) {
+        super(message, cause, columnNum, lineNum, columnNumEnd, lineNumEnd);
     }
 
     public SqlParserEOFException(String message) {

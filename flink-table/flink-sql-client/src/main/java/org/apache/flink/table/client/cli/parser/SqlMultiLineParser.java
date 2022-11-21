@@ -19,6 +19,7 @@
 package org.apache.flink.table.client.cli.parser;
 
 import org.apache.flink.table.api.SqlParserEOFException;
+import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.client.gateway.SqlExecutionException;
 import org.apache.flink.table.operations.Operation;
 
@@ -72,6 +73,31 @@ public class SqlMultiLineParser extends DefaultParser {
         } catch (SqlExecutionException e) {
             if (e.getCause() instanceof SqlParserEOFException) {
                 throw new EOFError(-1, -1, "The statement is incomplete.", NEW_LINE_PROMPT);
+            } else if (e.getCause() instanceof SqlParserException) {
+                final SqlParserException spe = (SqlParserException) e.getCause();
+                if (spe.getLineNum() > -1
+                        && spe.getColumnNum() > -1
+                        && spe.getLineEnd() == spe.getLineNum()) {
+                    if (spe.getColumnNum() == spe.getColumnNumEnd() && spe.getColumnNumEnd() == 0) {
+                        throw new EOFError(-1, -1, "The statement is incomplete.", NEW_LINE_PROMPT);
+                    }
+                    final String[] splitted = line.split("\n");
+                    final String issueStr =
+                            splitted[spe.getLineNum() - 1].substring(
+                                    spe.getColumnNum() - 1,
+                                    Math.min(
+                                            splitted[spe.getLineNum() - 1].length(),
+                                            spe.getColumnNumEnd()));
+                    if (issueStr.equals("'") || issueStr.equals("`")) {
+                        throw new EOFError(
+                                spe.getLineNum(),
+                                spe.getColumnNum(),
+                                "The statement is incomplete.",
+                                NEW_LINE_PROMPT);
+                    } else {
+                        // ignore: let user to finish the query
+                    }
+                }
             }
             // cache the exception so that we can print details in the terminal.
             parseException = e;

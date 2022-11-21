@@ -99,7 +99,9 @@ public class ParserImpl implements Parser {
 
         // parse the sql query
         // use parseSqlList here because we need to support statement end with ';' in sql client.
-        SqlNodeList sqlNodeList = parser.parseSqlList(statement);
+        // \n is required to workaround calcite issue while parsing multiline comment whose line
+        // ends with ';'
+        SqlNodeList sqlNodeList = parser.parseSqlList(statement + "\n");
         List<SqlNode> parsed = sqlNodeList.getList();
         Preconditions.checkArgument(parsed.size() == 1, "only single statement supported");
         return Collections.singletonList(

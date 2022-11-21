@@ -290,3 +290,37 @@ Was expecting one of:
     "UPSERT" ...
 
 !error
+
+SELECT ';
+';
+!output
++--------+
+| EXPR$0 |
++--------+
+|     ;
+ |
++--------+
+1 row in set
+!ok
+
+SELECT /*;
+'*/ 1;
+!output
++--------+
+| EXPR$0 |
++--------+
+|      1 |
++--------+
+1 row in set
+!ok
+
+SELECT --;
+1;
+!output
++--------+
+| EXPR$0 |
++--------+
+|      1 |
++--------+
+1 row in set
+!ok

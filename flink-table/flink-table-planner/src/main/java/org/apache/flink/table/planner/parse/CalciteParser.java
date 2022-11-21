@@ -29,6 +29,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlAbstractParserImpl;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.SourceStringReader;
 
 import java.io.Reader;
@@ -56,10 +57,23 @@ public class CalciteParser {
             SqlParser parser = SqlParser.create(sql, config);
             return parser.parseStmt();
         } catch (SqlParseException e) {
+            final SqlParserPos pos = e.getPos();
             if (e.getMessage().contains("Encountered \"<EOF>\"")) {
-                throw new SqlParserEOFException(e.getMessage(), e);
+                throw new SqlParserEOFException(
+                        e.getMessage(),
+                        e,
+                        pos.getColumnNum(),
+                        pos.getLineNum(),
+                        pos.getEndColumnNum(),
+                        pos.getEndLineNum());
             }
-            throw new SqlParserException("SQL parse failed. " + e.getMessage(), e);
+            throw new SqlParserException(
+                    "SQL parse failed. " + e.getMessage(),
+                    e,
+                    pos.getColumnNum(),
+                    pos.getLineNum(),
+                    pos.getEndColumnNum(),
+                    pos.getEndLineNum());
         }
     }
 
@@ -76,10 +90,23 @@ public class CalciteParser {
             SqlParser parser = SqlParser.create(sql, config);
             return parser.parseStmtList();
         } catch (SqlParseException e) {
+            final SqlParserPos pos = e.getPos();
             if (e.getMessage().contains("Encountered \"<EOF>\"")) {
-                throw new SqlParserEOFException(e.getMessage(), e);
+                throw new SqlParserEOFException(
+                        e.getMessage(),
+                        e,
+                        pos.getColumnNum(),
+                        pos.getLineNum(),
+                        pos.getEndColumnNum(),
+                        pos.getEndLineNum());
             }
-            throw new SqlParserException("SQL parse failed. " + e.getMessage(), e);
+            throw new SqlParserException(
+                    "SQL parse failed. " + e.getMessage(),
+                    e,
+                    pos.getColumnNum(),
+                    pos.getLineNum(),
+                    pos.getEndColumnNum(),
+                    pos.getEndLineNum());
         }
     }
 
@@ -94,8 +121,16 @@ public class CalciteParser {
         try {
             final SqlParser parser = SqlParser.create(sqlExpression, config);
             return parser.parseExpression();
+
         } catch (SqlParseException e) {
-            throw new SqlParserException("SQL parse failed. " + e.getMessage(), e);
+            final SqlParserPos pos = e.getPos();
+            throw new SqlParserException(
+                    "SQL parse failed. " + e.getMessage(),
+                    e,
+                    pos.getColumnNum(),
+                    pos.getLineNum(),
+                    pos.getEndColumnNum(),
+                    pos.getEndLineNum());
         }
     }
 

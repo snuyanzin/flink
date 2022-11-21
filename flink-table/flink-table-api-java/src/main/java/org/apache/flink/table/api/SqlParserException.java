@@ -28,11 +28,50 @@ import org.apache.flink.annotation.PublicEvolving;
 @PublicEvolving
 public class SqlParserException extends RuntimeException {
 
-    public SqlParserException(String message, Throwable cause) {
+    private final int lineNum;
+    private final int lineNumEnd;
+    private final int columnNum;
+    private final int columnNumEnd;
+
+    public SqlParserException(
+            String message,
+            Throwable cause,
+            int columnNum,
+            int lineNum,
+            int columnNumEnd,
+            int lineNumEnd) {
         super(message, cause);
+        this.columnNum = columnNum;
+        this.lineNum = lineNum;
+        this.columnNumEnd = columnNumEnd;
+        this.lineNumEnd = lineNumEnd;
+    }
+
+    public SqlParserException(String message, Throwable cause) {
+        this(message, cause, -1, -1, -1, -1);
     }
 
     public SqlParserException(String message) {
         super(message);
+        this.columnNum = -1;
+        this.lineNum = -1;
+        this.columnNumEnd = -1;
+        this.lineNumEnd = -1;
+    }
+
+    public int getLineNum() {
+        return lineNum;
+    }
+
+    public int getColumnNum() {
+        return columnNum;
+    }
+
+    public int getLineEnd() {
+        return lineNumEnd;
+    }
+
+    public int getColumnNumEnd() {
+        return columnNumEnd;
     }
 }
