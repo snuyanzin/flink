@@ -59,8 +59,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
@@ -322,7 +322,7 @@ public class CheckpointCoordinatorMasterHooksTest {
 
         verify(statefulHook1, times(1)).restoreCheckpoint(eq(checkpointId), eq(state1));
         verify(statefulHook2, times(1)).restoreCheckpoint(eq(checkpointId), eq(state2));
-        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull(Void.class));
+        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull());
     }
 
     @Test
@@ -391,7 +391,7 @@ public class CheckpointCoordinatorMasterHooksTest {
         cc.restoreLatestCheckpointedStateToAll(Collections.emptySet(), true);
 
         verify(statefulHook, times(1)).restoreCheckpoint(eq(checkpointId), eq(state1));
-        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull(Void.class));
+        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull());
     }
 
     // ------------------------------------------------------------------------
