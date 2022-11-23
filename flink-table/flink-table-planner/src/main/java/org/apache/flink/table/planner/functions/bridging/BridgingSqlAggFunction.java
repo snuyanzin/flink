@@ -154,15 +154,12 @@ public final class BridgingSqlAggFunction extends SqlAggFunction {
 
     @Override
     public List<RelDataType> getParamTypes() {
-        return paramTypes;
+        return null;
     }
 
     @Override
     public List<String> getParamNames() {
-        if (typeInference.getNamedArguments().isPresent()) {
-            return typeInference.getNamedArguments().get();
-        }
-        return super.getParamNames();
+        return null;
     }
 
     @Override
