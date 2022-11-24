@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.mockito.Mockito.mock;
 
 /** Test base for handlers that extend {@link AbstractAggregatingMetricsHandler}. */
 public abstract class AggregatingMetricsHandlerTestBase<

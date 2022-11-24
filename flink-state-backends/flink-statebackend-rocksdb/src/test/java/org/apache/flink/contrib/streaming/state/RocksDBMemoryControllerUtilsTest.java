@@ -22,11 +22,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.rocksdb.Cache;
 import org.rocksdb.LRUCache;
 import org.rocksdb.NativeLibraryLoader;
@@ -43,11 +41,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 /** Tests to guard {@link RocksDBMemoryControllerUtils}. */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(RocksDBMemoryControllerUtils.class)
 public class RocksDBMemoryControllerUtilsTest {
 
     @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -60,57 +55,78 @@ public class RocksDBMemoryControllerUtilsTest {
 
     @Test
     public void testCreateSharedResourcesWithExpectedCapacity() {
-        PowerMockito.mockStatic(RocksDBMemoryControllerUtils.class);
-        final AtomicLong actualCacheCapacity = new AtomicLong(0L);
-        final AtomicLong actualWbmCapacity = new AtomicLong(0L);
+        try (MockedStatic<RocksDBMemoryControllerUtils> mocked =
+                Mockito.mockStatic(RocksDBMemoryControllerUtils.class)) {
+            final AtomicLong actualCacheCapacity = new AtomicLong(0L);
+            final AtomicLong actualWbmCapacity = new AtomicLong(0L);
 
-        when(RocksDBMemoryControllerUtils.allocateRocksDBSharedResources(
-                        anyLong(), anyDouble(), anyDouble(), anyBoolean()))
-                .thenCallRealMethod();
+            mocked.when(
+                            () ->
+                                    RocksDBMemoryControllerUtils.allocateRocksDBSharedResources(
+                                            anyLong(), anyDouble(), anyDouble(), anyBoolean()))
+                    .thenCallRealMethod();
 
-        when(RocksDBMemoryControllerUtils.calculateActualCacheCapacity(anyLong(), anyDouble()))
-                .thenCallRealMethod();
+            mocked.when(
+                            () ->
+                                    RocksDBMemoryControllerUtils.allocateRocksDBSharedResources(
+                                            anyLong(), anyDouble(), anyDouble(), anyBoolean()))
+                    .thenCallRealMethod();
 
-        when(RocksDBMemoryControllerUtils.calculateWriteBufferManagerCapacity(
-                        anyLong(), anyDouble()))
-                .thenCallRealMethod();
+            mocked.when(
+                            () ->
+                                    RocksDBMemoryControllerUtils.calculateActualCacheCapacity(
+                                            anyLong(), anyDouble()))
+                    .thenCallRealMethod();
 
-        // because PowerMockito cannot mock on native static method easily,
-        // we introduce `createCache` and `createWriteBufferManager` wrappers here.
-        when(RocksDBMemoryControllerUtils.createCache(anyLong(), anyDouble()))
-                .thenAnswer(
-                        (Answer<LRUCache>)
-                                invocation -> {
-                                    Object[] arguments = invocation.getArguments();
-                                    actualCacheCapacity.set((long) arguments[0]);
-                                    return (LRUCache) invocation.callRealMethod();
-                                });
+            mocked.when(
+                            () ->
+                                    RocksDBMemoryControllerUtils
+                                            .calculateWriteBufferManagerCapacity(
+                                                    anyLong(), anyDouble()))
+                    .thenCallRealMethod();
 
-        when(RocksDBMemoryControllerUtils.createWriteBufferManager(anyLong(), any(Cache.class)))
-                .thenAnswer(
-                        (Answer<WriteBufferManager>)
-                                invocation -> {
-                                    Object[] arguments = invocation.getArguments();
-                                    actualWbmCapacity.set((long) arguments[0]);
-                                    return (WriteBufferManager) invocation.callRealMethod();
-                                });
+            // because PowerMockito cannot mock on native static method easily,
+            // we introduce `createCache` and `createWriteBufferManager` wrappers here.
+            mocked.when(() -> RocksDBMemoryControllerUtils.createCache(anyLong(), anyDouble()))
+                    .thenAnswer(
+                            (Answer<LRUCache>)
+                                    invocation -> {
+                                        Object[] arguments = invocation.getArguments();
+                                        actualCacheCapacity.set((long) arguments[0]);
+                                        return (LRUCache) invocation.callRealMethod();
+                                    });
 
-        long totalMemorySize = 2048L;
-        double writeBufferRatio = 0.5;
-        double highPriPoolRatio = 0.1;
-        RocksDBSharedResources rocksDBSharedResources =
-                RocksDBMemoryControllerUtils.allocateRocksDBSharedResources(
-                        totalMemorySize, writeBufferRatio, highPriPoolRatio, false);
-        long expectedCacheCapacity =
-                RocksDBMemoryControllerUtils.calculateActualCacheCapacity(
-                        totalMemorySize, writeBufferRatio);
-        long expectedWbmCapacity =
-                RocksDBMemoryControllerUtils.calculateWriteBufferManagerCapacity(
-                        totalMemorySize, writeBufferRatio);
+            mocked.when(
+                            () ->
+                                    RocksDBMemoryControllerUtils.createWriteBufferManager(
+                                            anyLong(), any(Cache.class)))
+                    .thenAnswer(
+                            (Answer<WriteBufferManager>)
+                                    invocation -> {
+                                        Object[] arguments = invocation.getArguments();
+                                        actualWbmCapacity.set((long) arguments[0]);
+                                        return (WriteBufferManager) invocation.callRealMethod();
+                                    });
 
-        assertThat(actualCacheCapacity.get(), is(expectedCacheCapacity));
-        assertThat(actualWbmCapacity.get(), is(expectedWbmCapacity));
-        assertThat(rocksDBSharedResources.getWriteBufferManagerCapacity(), is(expectedWbmCapacity));
+            long totalMemorySize = 2048L;
+            double writeBufferRatio = 0.5;
+            double highPriPoolRatio = 0.1;
+            RocksDBSharedResources rocksDBSharedResources =
+                    RocksDBMemoryControllerUtils.allocateRocksDBSharedResources(
+                            totalMemorySize, writeBufferRatio, highPriPoolRatio, false);
+            long expectedCacheCapacity =
+                    RocksDBMemoryControllerUtils.calculateActualCacheCapacity(
+                            totalMemorySize, writeBufferRatio);
+            long expectedWbmCapacity =
+                    RocksDBMemoryControllerUtils.calculateWriteBufferManagerCapacity(
+                            totalMemorySize, writeBufferRatio);
+
+            assertThat(actualCacheCapacity.get(), is(expectedCacheCapacity));
+            assertThat(actualWbmCapacity.get(), is(expectedWbmCapacity));
+            assertThat(
+                    rocksDBSharedResources.getWriteBufferManagerCapacity(),
+                    is(expectedWbmCapacity));
+        }
     }
 
     @Test

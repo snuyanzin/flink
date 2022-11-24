@@ -21,10 +21,8 @@ package org.apache.flink.runtime.net;
 import org.apache.flink.util.NetUtils;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.net.Inet4Address;
@@ -38,7 +36,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /** Tests for the network utilities. */
-@RunWith(PowerMockRunner.class)
 public class ConnectionUtilsTest {
 
     @Test
@@ -64,37 +61,39 @@ public class ConnectionUtilsTest {
 
     @Test
     public void testFindConnectingAddressWhenGetLocalHostThrows() throws Exception {
-        PowerMockito.mockStatic(InetAddress.class);
-        Mockito.when(InetAddress.getLocalHost())
-                .thenThrow(new UnknownHostException())
-                .thenCallRealMethod();
+        try (MockedStatic<InetAddress> mocked =
+                Mockito.mockStatic(InetAddress.class, Mockito.CALLS_REAL_METHODS)) {
+            mocked.when(InetAddress::getLocalHost)
+                    .thenThrow(new UnknownHostException())
+                    .thenCallRealMethod();
 
-        final InetAddress loopbackAddress = Inet4Address.getByName("127.0.0.1");
-        Thread socketServerThread;
-        try (ServerSocket socket = new ServerSocket(0, 1, loopbackAddress)) {
-            // Make sure that the thread will eventually die even if something else goes wrong
-            socket.setSoTimeout(10_000);
-            socketServerThread =
-                    new Thread(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        NetUtils.acceptWithoutTimeout(socket);
-                                    } catch (IOException e) {
-                                        // ignore
+            final InetAddress loopbackAddress = Inet4Address.getByName("127.0.0.1");
+            Thread socketServerThread;
+            try (ServerSocket socket = new ServerSocket(0, 1, loopbackAddress)) {
+                // Make sure that the thread will eventually die even if something else goes wrong
+                socket.setSoTimeout(10_000);
+                socketServerThread =
+                        new Thread(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            NetUtils.acceptWithoutTimeout(socket);
+                                        } catch (IOException e) {
+                                            // ignore
+                                        }
                                     }
-                                }
-                            });
-            socketServerThread.start();
+                                });
+                socketServerThread.start();
 
-            final InetSocketAddress socketAddress =
-                    new InetSocketAddress(loopbackAddress, socket.getLocalPort());
-            final InetAddress address =
-                    ConnectionUtils.findConnectingAddress(socketAddress, 2000, 400);
+                final InetSocketAddress socketAddress =
+                        new InetSocketAddress(loopbackAddress, socket.getLocalPort());
+                final InetAddress address =
+                        ConnectionUtils.findConnectingAddress(socketAddress, 2000, 400);
 
-            // Make sure we got an address via alternative means
-            assertNotNull(address);
+                // Make sure we got an address via alternative means
+                assertNotNull(address);
+            }
         }
     }
 }

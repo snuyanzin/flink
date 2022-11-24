@@ -26,8 +26,6 @@ import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,7 +43,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 /** Tests for KinesisConfigUtil. */
-@RunWith(PowerMockRunner.class)
 public class KinesisConfigUtilTest {
 
     @Rule public ExpectedException exception = ExpectedException.none();

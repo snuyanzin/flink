@@ -35,8 +35,6 @@ import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 import java.lang.reflect.InvocationTargetException;
@@ -44,7 +42,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
 public class ExpressionKeysTest {
 
     @Test

@@ -149,7 +149,7 @@ under the License.
 		<junit4.version>4.13.2</junit4.version>
 		<junit5.version>5.9.1</junit5.version>
 		<archunit.version>0.22.0</archunit.version>
-		<mockito.version>3.12.4</mockito.version>
+		<mockito.version>4.9.0</mockito.version>
 		<powermock.version>2.0.9</powermock.version>
 		<hamcrest.version>1.3</hamcrest.version>
 		<assertj.version>3.23.1</assertj.version>
@@ -590,14 +590,20 @@ under the License.
 				<!-- mockito/powermock mismatch -->
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy</artifactId>
-				<version>1.10.14</version>
+				<version>1.12.16</version>
+				<exclusions>
+					<exclusion>
+						<groupId>net.java.dev.jna</groupId>
+						<artifactId>jna</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 			<dependency>
 				<!-- mockito/powermock mismatch -->
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy-agent</artifactId>
-				<version>1.10.14</version>
+				<version>1.12.16</version>
 			</dependency>
 
 			<!-- For dependency convergence -->

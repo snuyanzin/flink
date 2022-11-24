@@ -34,10 +34,6 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URI;
 import java.text.SimpleDateFormat;
@@ -58,12 +54,9 @@ import static org.apache.flink.streaming.connectors.kinesis.model.SentinelSequen
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Tests for AWSUtil. */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(AWSUtil.class)
-@PowerMockIgnore({"javax.net.ssl.*", "javax.security.*"})
 public class AWSUtilTest {
 
-    @Rule private final ExpectedException exception = ExpectedException.none();
+    @Rule public final ExpectedException exception = ExpectedException.none();
 
     @Test
     public void testDefaultCredentialsProvider() {
