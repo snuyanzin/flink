@@ -320,7 +320,7 @@ class CheckpointCoordinatorMasterHooksTest {
 
         verify(statefulHook1, times(1)).restoreCheckpoint(eq(checkpointId), eq(state1));
         verify(statefulHook2, times(1)).restoreCheckpoint(eq(checkpointId), eq(state2));
-        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull(Void.class));
+        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull());
     }
 
     @Test
@@ -389,7 +389,7 @@ class CheckpointCoordinatorMasterHooksTest {
         cc.restoreLatestCheckpointedStateToAll(Collections.emptySet(), true);
 
         verify(statefulHook, times(1)).restoreCheckpoint(eq(checkpointId), eq(state1));
-        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull(Void.class));
+        verify(statelessHook, times(1)).restoreCheckpoint(eq(checkpointId), isNull());
     }
 
     // ------------------------------------------------------------------------
