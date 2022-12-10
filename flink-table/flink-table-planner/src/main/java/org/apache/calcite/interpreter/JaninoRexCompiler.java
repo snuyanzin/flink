@@ -52,15 +52,11 @@ import java.io.StringReader;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Copied to fix calcite issues. This class should be removed together with upgrade Janino to
- * 3.1.9+(https://issues.apache.org/jira/browse/FLINK-27995). FLINK modifications are at lines
- *
- * <ol>
- *   <li>Line 229 ~ 235
- *   <li>Line 239 ~ 241
- * </ol>
+ * Compiles a scalar expression ({@link RexNode}) to an expression that can be evaluated ({@link
+ * Scalar}) by generating a Java AST and compiling it to a class using Janino.
  */
 public class JaninoRexCompiler implements Interpreter.ScalarCompiler {
     private final RexBuilder rexBuilder;
@@ -226,19 +222,17 @@ public class JaninoRexCompiler implements Interpreter.ScalarCompiler {
     static Scalar.Producer getScalar(ClassDeclaration expr, String s)
             throws CompileException, IOException {
         ICompilerFactory compilerFactory;
-        // FLINK MODIFICATION BEGIN
+        ClassLoader classLoader =
+                Objects.requireNonNull(JaninoRexCompiler.class.getClassLoader(), "classLoader");
         try {
             compilerFactory = CompilerFactoryFactory.getDefaultCompilerFactory();
         } catch (Exception e) {
             throw new IllegalStateException("Unable to instantiate java compiler", e);
         }
-        // FLINK MODIFICATION END
         IClassBodyEvaluator cbe = compilerFactory.newClassBodyEvaluator();
         cbe.setClassName(expr.name);
         cbe.setImplementedInterfaces(new Class[] {Scalar.Producer.class});
-        // FLINK MODIFICATION BEGIN
-        cbe.setParentClassLoader(JaninoRexCompiler.class.getClassLoader());
-        // FLINK MODIFICATION END
+        cbe.setParentClassLoader(classLoader);
         if (CalciteSystemProperty.DEBUG.value()) {
             // Add line numbers to the generated janino class
             cbe.setDebuggingInformation(true, true, true);

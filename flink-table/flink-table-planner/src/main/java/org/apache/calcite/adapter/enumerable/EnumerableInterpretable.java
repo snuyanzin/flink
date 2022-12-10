@@ -57,6 +57,7 @@ import java.io.StringReader;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -139,14 +140,15 @@ public class EnumerableInterpretable extends ConverterImpl implements Interpreta
 
     static Bindable getBindable(ClassDeclaration expr, String s, int fieldCount)
             throws CompileException, IOException, ExecutionException {
-        // FLINK MODIFICATION BEGIN
         ICompilerFactory compilerFactory;
+        ClassLoader classLoader =
+                Objects.requireNonNull(
+                        EnumerableInterpretable.class.getClassLoader(), "classLoader");
         try {
             compilerFactory = CompilerFactoryFactory.getDefaultCompilerFactory();
         } catch (Exception e) {
             throw new IllegalStateException("Unable to instantiate java compiler", e);
         }
-        // FLINK MODIFICATION END
         final IClassBodyEvaluator cbe = compilerFactory.newClassBodyEvaluator();
         cbe.setClassName(expr.name);
         cbe.setExtendedClass(Utilities.class);
@@ -154,9 +156,7 @@ public class EnumerableInterpretable extends ConverterImpl implements Interpreta
                 fieldCount == 1
                         ? new Class[] {Bindable.class, Typed.class}
                         : new Class[] {ArrayBindable.class});
-        // FLINK MODIFICATION BEGIN
-        cbe.setParentClassLoader(EnumerableInterpretable.class.getClassLoader());
-        // FLINK MODIFICATION END
+        cbe.setParentClassLoader(classLoader);
         if (CalciteSystemProperty.DEBUG.value()) {
             // Add line numbers to the generated janino class
             cbe.setDebuggingInformation(true, true, true);

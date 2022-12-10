@@ -23,7 +23,6 @@ import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
 
-import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
@@ -36,9 +35,12 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
+import org.immutables.value.Value;
 
 import java.util.List;
 import java.util.function.Predicate;
+
+import static org.apache.flink.table.planner.plan.rules.logical.RemoveUnreachableCoalesceArgumentsRule.RemoveUnreachableCoalesceArgumentsRuleConfig.DEFAULT;
 
 /**
  * Removes unreachable {@link BuiltInFunctionDefinitions#COALESCE} arguments.
@@ -48,18 +50,29 @@ import java.util.function.Predicate;
  */
 @Internal
 public class RemoveUnreachableCoalesceArgumentsRule
-        extends RelRule<RemoveUnreachableCoalesceArgumentsRule.Config> {
+        extends RelRule<
+                RemoveUnreachableCoalesceArgumentsRule
+                        .RemoveUnreachableCoalesceArgumentsRuleConfig> {
 
-    public static final RelOptRule PROJECT_INSTANCE =
-            Config.EMPTY.as(Config.class).withProject().toRule();
-    public static final RelOptRule FILTER_INSTANCE =
-            Config.EMPTY.as(Config.class).withFilter().toRule();
-    public static final RelOptRule JOIN_INSTANCE =
-            Config.EMPTY.as(Config.class).withJoin().toRule();
-    public static final RelOptRule CALC_INSTANCE =
-            Config.EMPTY.as(Config.class).withCalc().toRule();
+    public static final RelRule<
+                    RemoveUnreachableCoalesceArgumentsRule
+                            .RemoveUnreachableCoalesceArgumentsRuleConfig>
+            PROJECT_INSTANCE = DEFAULT.withProject().toRule();
+    public static final RelRule<
+                    RemoveUnreachableCoalesceArgumentsRule
+                            .RemoveUnreachableCoalesceArgumentsRuleConfig>
+            FILTER_INSTANCE = DEFAULT.withFilter().toRule();
+    public static final RelRule<
+                    RemoveUnreachableCoalesceArgumentsRule
+                            .RemoveUnreachableCoalesceArgumentsRuleConfig>
+            JOIN_INSTANCE = DEFAULT.withJoin().toRule();
+    public static final RelRule<
+                    RemoveUnreachableCoalesceArgumentsRule
+                            .RemoveUnreachableCoalesceArgumentsRuleConfig>
+            CALC_INSTANCE = DEFAULT.withCalc().toRule();
 
-    public RemoveUnreachableCoalesceArgumentsRule(Config config) {
+    public RemoveUnreachableCoalesceArgumentsRule(
+            RemoveUnreachableCoalesceArgumentsRuleConfig config) {
         super(config);
     }
 
@@ -137,14 +150,20 @@ public class RemoveUnreachableCoalesceArgumentsRule
     // ---------------------------------------------------------------------------------------------
 
     /** Configuration for {@link RemoveUnreachableCoalesceArgumentsRule}. */
-    public interface Config extends RelRule.Config {
+    @Value.Immutable(singleton = false)
+    public interface RemoveUnreachableCoalesceArgumentsRuleConfig extends RelRule.Config {
+
+        RemoveUnreachableCoalesceArgumentsRuleConfig DEFAULT =
+                ImmutableRemoveUnreachableCoalesceArgumentsRuleConfig.builder()
+                        .build()
+                        .as(RemoveUnreachableCoalesceArgumentsRuleConfig.class);
 
         @Override
-        default RelOptRule toRule() {
+        default RelRule toRule() {
             return new RemoveUnreachableCoalesceArgumentsRule(this);
         }
 
-        default Config withProject() {
+        default RemoveUnreachableCoalesceArgumentsRuleConfig withProject() {
             Predicate<Project> projectPredicate =
                     lp ->
                             lp.getProjects().stream()
@@ -158,10 +177,11 @@ public class RemoveUnreachableCoalesceArgumentsRule
                                     .predicate(projectPredicate)
                                     .anyInputs();
 
-            return withOperandSupplier(projectTransform).as(Config.class);
+            return withOperandSupplier(projectTransform)
+                    .as(RemoveUnreachableCoalesceArgumentsRuleConfig.class);
         }
 
-        default Config withFilter() {
+        default RemoveUnreachableCoalesceArgumentsRuleConfig withFilter() {
             Predicate<Filter> filterPredicate =
                     lf ->
                             RemoveUnreachableCoalesceArgumentsRule.hasCoalesceInvocation(
@@ -173,10 +193,11 @@ public class RemoveUnreachableCoalesceArgumentsRule
                                     .predicate(filterPredicate)
                                     .anyInputs();
 
-            return withOperandSupplier(filterTransform).as(Config.class);
+            return withOperandSupplier(filterTransform)
+                    .as(RemoveUnreachableCoalesceArgumentsRuleConfig.class);
         }
 
-        default Config withJoin() {
+        default RemoveUnreachableCoalesceArgumentsRuleConfig withJoin() {
             Predicate<Join> joinPredicate =
                     lj ->
                             RemoveUnreachableCoalesceArgumentsRule.hasCoalesceInvocation(
@@ -185,10 +206,11 @@ public class RemoveUnreachableCoalesceArgumentsRule
                     operandBuilder ->
                             operandBuilder.operand(Join.class).predicate(joinPredicate).anyInputs();
 
-            return withOperandSupplier(joinTransform).as(Config.class);
+            return withOperandSupplier(joinTransform)
+                    .as(RemoveUnreachableCoalesceArgumentsRuleConfig.class);
         }
 
-        default Config withCalc() {
+        default RemoveUnreachableCoalesceArgumentsRuleConfig withCalc() {
             Predicate<Calc> calcPredicate =
                     lc ->
                             lc.getProgram().getExprList().stream()
@@ -199,7 +221,8 @@ public class RemoveUnreachableCoalesceArgumentsRule
                     operandBuilder ->
                             operandBuilder.operand(Calc.class).predicate(calcPredicate).anyInputs();
 
-            return withOperandSupplier(joinTransform).as(Config.class);
+            return withOperandSupplier(joinTransform)
+                    .as(RemoveUnreachableCoalesceArgumentsRuleConfig.class);
         }
     }
 }
