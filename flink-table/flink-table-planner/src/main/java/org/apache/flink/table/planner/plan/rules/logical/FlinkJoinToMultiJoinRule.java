@@ -40,6 +40,7 @@ import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.ImmutableIntList;
 import org.apache.calcite.util.Pair;
+import org.immutables.value.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,29 +95,30 @@ import java.util.Map;
  * @see ProjectMultiJoinMergeRule
  * @see CoreRules#JOIN_TO_MULTI_JOIN
  */
-public class FlinkJoinToMultiJoinRule extends RelRule<FlinkJoinToMultiJoinRule.Config>
+public class FlinkJoinToMultiJoinRule
+        extends RelRule<FlinkJoinToMultiJoinRule.FlinkJoinToMultiJoinRuleConfig>
         implements TransformationRule {
 
     public static final FlinkJoinToMultiJoinRule INSTANCE =
-            FlinkJoinToMultiJoinRule.Config.DEFAULT.toRule();
+            FlinkJoinToMultiJoinRule.FlinkJoinToMultiJoinRuleConfig.DEFAULT.toRule();
 
     /** Creates a JoinToMultiJoinRule. */
-    public FlinkJoinToMultiJoinRule(Config config) {
+    public FlinkJoinToMultiJoinRule(FlinkJoinToMultiJoinRuleConfig config) {
         super(config);
     }
 
     @Deprecated // to be removed before 2.0
     public FlinkJoinToMultiJoinRule(Class<? extends Join> clazz) {
-        this(Config.DEFAULT.withOperandFor(clazz));
+        this(FlinkJoinToMultiJoinRuleConfig.DEFAULT.withOperandFor(clazz));
     }
 
     @Deprecated // to be removed before 2.0
     public FlinkJoinToMultiJoinRule(
             Class<? extends Join> joinClass, RelBuilderFactory relBuilderFactory) {
         this(
-                Config.DEFAULT
+                FlinkJoinToMultiJoinRuleConfig.DEFAULT
                         .withRelBuilderFactory(relBuilderFactory)
-                        .as(Config.class)
+                        .as(FlinkJoinToMultiJoinRuleConfig.class)
                         .withOperandFor(joinClass));
     }
 
@@ -533,8 +535,13 @@ public class FlinkJoinToMultiJoinRule extends RelRule<FlinkJoinToMultiJoinRule.C
     }
 
     /** Rule configuration. */
-    public interface Config extends RelRule.Config {
-        Config DEFAULT = EMPTY.as(Config.class).withOperandFor(LogicalJoin.class);
+    @Value.Immutable(singleton = false)
+    public interface FlinkJoinToMultiJoinRuleConfig extends RelRule.Config {
+        FlinkJoinToMultiJoinRuleConfig DEFAULT =
+                ImmutableFlinkJoinToMultiJoinRuleConfig.builder()
+                        .build()
+                        .as(FlinkJoinToMultiJoinRuleConfig.class)
+                        .withOperandFor(LogicalJoin.class);
 
         @Override
         default FlinkJoinToMultiJoinRule toRule() {
@@ -542,14 +549,14 @@ public class FlinkJoinToMultiJoinRule extends RelRule<FlinkJoinToMultiJoinRule.C
         }
 
         /** Defines an operand tree for the given classes. */
-        default Config withOperandFor(Class<? extends Join> joinClass) {
+        default FlinkJoinToMultiJoinRuleConfig withOperandFor(Class<? extends Join> joinClass) {
             return withOperandSupplier(
                             b0 ->
                                     b0.operand(joinClass)
                                             .inputs(
                                                     b1 -> b1.operand(RelNode.class).anyInputs(),
                                                     b2 -> b2.operand(RelNode.class).anyInputs()))
-                    .as(Config.class);
+                    .as(FlinkJoinToMultiJoinRuleConfig.class);
         }
     }
 }
