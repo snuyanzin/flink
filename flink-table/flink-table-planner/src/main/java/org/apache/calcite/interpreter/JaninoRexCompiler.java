@@ -52,6 +52,7 @@ import java.io.StringReader;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Copied to fix calcite issues. This class should be removed together with upgrade Janino to
@@ -226,19 +227,17 @@ public class JaninoRexCompiler implements Interpreter.ScalarCompiler {
     static Scalar.Producer getScalar(ClassDeclaration expr, String s)
             throws CompileException, IOException {
         ICompilerFactory compilerFactory;
-        // FLINK MODIFICATION BEGIN
+        ClassLoader classLoader =
+                Objects.requireNonNull(JaninoRexCompiler.class.getClassLoader(), "classLoader");
         try {
             compilerFactory = CompilerFactoryFactory.getDefaultCompilerFactory();
         } catch (Exception e) {
             throw new IllegalStateException("Unable to instantiate java compiler", e);
         }
-        // FLINK MODIFICATION END
         IClassBodyEvaluator cbe = compilerFactory.newClassBodyEvaluator();
         cbe.setClassName(expr.name);
         cbe.setImplementedInterfaces(new Class[] {Scalar.Producer.class});
-        // FLINK MODIFICATION BEGIN
-        cbe.setParentClassLoader(JaninoRexCompiler.class.getClassLoader());
-        // FLINK MODIFICATION END
+        cbe.setParentClassLoader(classLoader);
         if (CalciteSystemProperty.DEBUG.value()) {
             // Add line numbers to the generated janino class
             cbe.setDebuggingInformation(true, true, true);
