@@ -158,7 +158,9 @@ public class EnumerableInterpretable extends ConverterImpl implements Interpreta
                 fieldCount == 1
                         ? new Class[] {Bindable.class, Typed.class}
                         : new Class[] {ArrayBindable.class});
-        cbe.setParentClassLoader(classLoader);
+        // FLINK MODIFICATION BEGIN
+        cbe.setParentClassLoader(EnumerableInterpretable.class.getClassLoader());
+        // FLINK MODIFICATION END
         if (CalciteSystemProperty.DEBUG.value()) {
             // Add line numbers to the generated janino class
             cbe.setDebuggingInformation(true, true, true);

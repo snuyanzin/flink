@@ -237,7 +237,9 @@ public class JaninoRexCompiler implements Interpreter.ScalarCompiler {
         IClassBodyEvaluator cbe = compilerFactory.newClassBodyEvaluator();
         cbe.setClassName(expr.name);
         cbe.setImplementedInterfaces(new Class[] {Scalar.Producer.class});
-        cbe.setParentClassLoader(classLoader);
+        // FLINK MODIFICATION BEGIN
+        cbe.setParentClassLoader(JaninoRexCompiler.class.getClassLoader());
+        // FLINK MODIFICATION END
         if (CalciteSystemProperty.DEBUG.value()) {
             // Add line numbers to the generated janino class
             cbe.setDebuggingInformation(true, true, true);

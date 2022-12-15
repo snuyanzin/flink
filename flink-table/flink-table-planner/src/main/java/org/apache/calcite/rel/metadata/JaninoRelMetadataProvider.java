@@ -25,7 +25,6 @@ import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.calcite.interpreter.JaninoRexCompiler;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.janino.RelMetadataHandlerGeneratorUtil;
-import org.apache.calcite.util.ControlFlowException;
 import org.apache.calcite.util.Util;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.codehaus.commons.compiler.CompileException;
@@ -37,9 +36,12 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Copied to fix calcite issues. This class should be removed together with upgrade Janino to
@@ -49,7 +51,7 @@ import java.util.stream.Collectors;
  *   <li>Line 347 ~ 354
  * </ol>
  */
-public class JaninoRelMetadataProvider implements RelMetadataProvider {
+public class JaninoRelMetadataProvider implements RelMetadataProvider, MetadataHandlerProvider {
     private final RelMetadataProvider provider;
 
     // Constants and static fields
@@ -187,7 +189,8 @@ public class JaninoRelMetadataProvider implements RelMetadataProvider {
         return handlerClass.cast(o);
     }
 
-    synchronized <H extends MetadataHandler<?>> H revise(Class<H> handlerClass) {
+    @Override
+    public synchronized <H extends MetadataHandler<?>> H revise(Class<H> handlerClass) {
         try {
             final Key key = new Key(handlerClass, provider);
             //noinspection unchecked
@@ -207,13 +210,13 @@ public class JaninoRelMetadataProvider implements RelMetadataProvider {
 
     /**
      * Exception that indicates there there should be a handler for this class but there is not. The
-     * action is probably to re-generate the handler class.
+     * action is probably to re-generate the handler class. Use {@link
+     * MetadataHandlerProvider.NoHandler} instead.
      */
-    public static class NoHandler extends ControlFlowException {
-        public final Class<? extends RelNode> relClass;
-
+    @Deprecated
+    public static class NoHandler extends MetadataHandlerProvider.NoHandler {
         public NoHandler(Class<? extends RelNode> relClass) {
-            this.relClass = relClass;
+            super(relClass);
         }
     }
 
@@ -240,5 +243,19 @@ public class JaninoRelMetadataProvider implements RelMetadataProvider {
                             && ((Key) obj).handlerClass.equals(handlerClass)
                             && ((Key) obj).provider.equals(provider);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public <MH extends MetadataHandler<?>> MH handler(final Class<MH> handlerClass) {
+        return handlerClass.cast(
+                Proxy.newProxyInstance(
+                        RelMetadataQuery.class.getClassLoader(),
+                        new Class[] {handlerClass},
+                        (proxy, method, args) -> {
+                            final RelNode r =
+                                    requireNonNull((RelNode) args[0], "(RelNode) args[0]");
+                            throw new NoHandler(r.getClass());
+                        }));
     }
 }
