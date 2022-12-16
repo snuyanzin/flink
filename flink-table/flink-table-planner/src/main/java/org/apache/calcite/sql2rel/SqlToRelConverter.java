@@ -2813,7 +2813,8 @@ public class SqlToRelConverter {
                 requiredCols = ImmutableBitSet.fromBitSet(shuttle.varCols).union(p.requiredColumns);
             }
 
-            return LogicalCorrelate.create(leftRel, innerRel, p.id, requiredCols, joinType);
+            return LogicalCorrelate.create(
+                    leftRel, innerRel, ImmutableList.of(), p.id, requiredCols, joinType);
         }
 
         final RelNode node =
