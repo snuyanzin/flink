@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.rel.metadata;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -26,6 +27,7 @@ import org.apache.calcite.interpreter.JaninoRexCompiler;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.janino.RelMetadataHandlerGeneratorUtil;
 import org.apache.calcite.util.Util;
+import org.apiguardian.api.API;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.commons.compiler.CompilerFactoryFactory;
@@ -257,5 +259,11 @@ public class JaninoRelMetadataProvider implements RelMetadataProvider, MetadataH
                                     requireNonNull((RelNode) args[0], "(RelNode) args[0]");
                             throw new NoHandler(r.getClass());
                         }));
+    }
+
+    @API(status = API.Status.INTERNAL)
+    @VisibleForTesting
+    public static void clearStaticCache() {
+        HANDLERS.invalidateAll();
     }
 }
