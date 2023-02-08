@@ -75,7 +75,7 @@ class FlinkPlannerImpl(
       catalogReaderSupplier.apply(true), // ignore cases for lenient completion
       typeFactory,
       SqlValidator.Config.DEFAULT
-        .withSqlConformance(config.getParserConfig.conformance()))
+        .withConformance(config.getParserConfig.conformance()))
   }
 
   /**
