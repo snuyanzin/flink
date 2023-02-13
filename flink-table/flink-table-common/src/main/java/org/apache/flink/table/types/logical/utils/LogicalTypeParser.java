@@ -47,6 +47,7 @@ import org.apache.flink.table.types.logical.SmallIntType;
 import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TinyIntType;
+import org.apache.flink.table.types.logical.UnknownType;
 import org.apache.flink.table.types.logical.UnresolvedUserDefinedType;
 import org.apache.flink.table.types.logical.VarBinaryType;
 import org.apache.flink.table.types.logical.VarCharType;
@@ -338,7 +339,8 @@ public final class LogicalTypeParser {
         NULL,
         RAW,
         LEGACY,
-        NOT
+        NOT,
+        UNKNOWN
     }
 
     private static final Set<String> KEYWORDS =
@@ -576,6 +578,8 @@ public final class LogicalTypeParser {
                     return parseRowType();
                 case NULL:
                     return new NullType();
+                case UNKNOWN:
+                    return new UnknownType();
                 case RAW:
                     return parseRawType();
                 case LEGACY:

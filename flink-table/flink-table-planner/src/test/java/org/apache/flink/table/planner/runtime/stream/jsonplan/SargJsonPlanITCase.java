@@ -38,7 +38,7 @@ public class SargJsonPlanITCase extends JsonPlanTestBase {
         createTestNonInsertOnlyValuesSinkTable("`result`", "a int");
         String sql =
                 "insert into `result` SELECT a\n"
-                        + "FROM MyTable WHERE a = 1 OR a = 2 OR a IS NOT NULL";
+                        + "FROM MyTable WHERE a = 1 OR a = 2 OR a IS NULL";
         compileSqlAndExecutePlan(sql).await();
         List<String> expected = Arrays.asList("+I[1]", "+I[2]", "+I[null]");
         assertResult(expected, TestValuesTableFactory.getResults("result"));

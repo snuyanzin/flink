@@ -45,6 +45,7 @@ import org.apache.flink.table.types.logical.SymbolType;
 import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TinyIntType;
+import org.apache.flink.table.types.logical.UnknownType;
 import org.apache.flink.table.types.logical.VarBinaryType;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.table.types.logical.YearMonthIntervalType;
@@ -185,6 +186,11 @@ public abstract class LogicalTypeDefaultVisitor<R> implements LogicalTypeVisitor
     @Override
     public R visit(NullType nullType) {
         return defaultMethod(nullType);
+    }
+
+    @Override
+    public R visit(UnknownType unknownType) {
+        return defaultMethod(unknownType);
     }
 
     @Override

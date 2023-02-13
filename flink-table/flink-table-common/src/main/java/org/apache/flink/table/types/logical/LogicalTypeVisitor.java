@@ -84,6 +84,8 @@ public interface LogicalTypeVisitor<R> {
 
     R visit(NullType nullType);
 
+    R visit(UnknownType unknownType);
+
     R visit(RawType<?> rawType);
 
     R visit(SymbolType<?> symbolType);

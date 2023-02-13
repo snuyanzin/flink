@@ -445,6 +445,11 @@ public final class LogicalRelDataTypeConverter {
         }
 
         @Override
+        public RelDataType visit(UnknownType unknownType) {
+            return relDataTypeFactory.createSqlType(SqlTypeName.UNKNOWN);
+        }
+
+        @Override
         public RelDataType visit(RawType<?> rawType) {
             return new RawRelDataType(rawType);
         }

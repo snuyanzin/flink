@@ -144,13 +144,13 @@
             "value" : "l",
             "type" : "CHAR(1) NOT NULL"
           } ],
-          "type" : "NULL"
+          "type" : "UNKNOWN"
         }, {
           "kind" : "LITERAL",
           "value" : "C",
           "type" : "CHAR(1) NOT NULL"
         } ],
-        "type" : "NULL"
+        "type" : "UNKNOWN"
       },
       "patternDefinitions" : {
         "A\"" : {
