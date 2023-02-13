@@ -21,6 +21,7 @@ package org.apache.flink.table.planner.delegation.hive.copy;
 import org.apache.flink.table.planner.delegation.hive.HiveParserIN;
 import org.apache.flink.table.planner.delegation.hive.SqlFunctionConverter;
 import org.apache.flink.table.planner.delegation.hive.parse.HiveASTParser;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlAggFunction;
@@ -42,9 +43,6 @@ import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.util.Util;
 import org.apache.commons.lang3.StringUtils;
-
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
-
 import org.apache.hadoop.hive.ql.exec.Description;
 import org.apache.hadoop.hive.ql.exec.FunctionInfo;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
@@ -192,7 +190,9 @@ public class HiveParserSqlFunctionConverter {
                     HiveParserBetween.INSTANCE,
                     hToken(HiveASTParser.Identifier, "between"));
             registerFunction(
-                    "struct", FlinkSqlOperatorTable.ROW, hToken(HiveASTParser.Identifier, "struct"));
+                    "struct",
+                    FlinkSqlOperatorTable.ROW,
+                    hToken(HiveASTParser.Identifier, "struct"));
             registerFunction(
                     "isnotnull",
                     SqlStdOperatorTable.IS_NOT_NULL,
