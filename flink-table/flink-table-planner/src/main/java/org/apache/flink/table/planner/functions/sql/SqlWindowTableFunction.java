@@ -139,7 +139,8 @@ public class SqlWindowTableFunction extends SqlFunction implements SqlTableFunct
         final RelDataType descriptorType = opBinding.getOperandType(1);
         final RelDataTypeField timeField = descriptorType.getFieldList().get(0);
         final RelDataType timeAttributeType;
-        if (timeField.getType().getSqlTypeName() == SqlTypeName.NULL) {
+        if (timeField.getType().getSqlTypeName() == SqlTypeName.NULL
+                || timeField.getType().getSqlTypeName() == SqlTypeName.UNKNOWN) {
             // the type is not inferred yet, we should infer the type here,
             // see org.apache.flink.table.planner.functions.sql.SqlDescriptorOperator.deriveType
             RelDataTypeField field = inputRowType.getField(timeField.getName(), false, false);

@@ -30,7 +30,7 @@ import org.apache.calcite.plan.RelOptTable
 import org.apache.calcite.prepare.CalciteCatalogReader
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory, RelDataTypeField}
 import org.apache.calcite.runtime.{CalciteContextException, Resources}
-import org.apache.calcite.sql.`type`.SqlTypeUtil
+import org.apache.calcite.sql.`type`.{SqlTypeName, SqlTypeUtil}
 import org.apache.calcite.sql.{SqlCall, SqlDataTypeSpec, SqlIdentifier, SqlKind, SqlLiteral, SqlNode, SqlNodeList, SqlOrderBy, SqlSelect, SqlTableRef, SqlUtil}
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.sql.parser.SqlParserPos
@@ -417,7 +417,11 @@ object PreValidateReWriter {
     } else {
       // See FLINK-26460 for more details
       val sqlDataTypeSpec =
-        if (SqlTypeUtil.isNull(currentType) && SqlTypeUtil.isMap(desiredType)) {
+        if (
+          (SqlTypeUtil.isNull(
+            currentType) || currentType.getSqlTypeName == SqlTypeName.UNKNOWN) && SqlTypeUtil.isMap(
+            desiredType)
+        ) {
           val keyType = desiredType.getKeyType
           val valueType = desiredType.getValueType
           new SqlDataTypeSpec(

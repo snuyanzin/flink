@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.planner.typeutils;
 
+import org.apache.calcite.rex.RexUnknownAs;
+
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.JsonExistsOnError;
 import org.apache.flink.table.api.JsonOnNull;
@@ -473,6 +475,11 @@ public final class SymbolUtil {
         // BOUND
         addSymbolMapping(null, null, BoundType.OPEN, "BOUND", "OPEN");
         addSymbolMapping(null, null, BoundType.CLOSED, "BOUND", "CLOSED");
+
+        // REX_UNKNOWN_AS
+        addSymbolMapping(null, null, RexUnknownAs.TRUE, "REX_UNKNOWN_AS", "TRUE");
+        addSymbolMapping(null, null, RexUnknownAs.FALSE, "REX_UNKNOWN_AS", "FALSE");
+        addSymbolMapping(null, null, RexUnknownAs.UNKNOWN, "REX_UNKNOWN_AS", "UNKNOWN");
     }
 
     /**

@@ -71,6 +71,7 @@ public abstract class JsonPlanTestBase extends AbstractTestBase {
         checkTransformationUids(compiledPlan);
         // try to execute the string json plan to validate to ser/de result
         String jsonPlan = compiledPlan.asJsonString();
+        System.out.println(jsonPlan);
         CompiledPlan newCompiledPlan = tableEnv.loadPlan(PlanReference.fromJsonString(jsonPlan));
         return newCompiledPlan.execute();
     }
