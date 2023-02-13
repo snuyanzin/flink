@@ -18,8 +18,6 @@
 
 package org.apache.flink.table.planner.plan.nodes.exec.serde;
 
-import org.apache.calcite.rex.RexUnknownAs;
-
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.config.TableConfigOptions.CatalogPlanCompilation;
@@ -47,6 +45,7 @@ import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexUnknownAs;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
@@ -219,9 +218,10 @@ final class RexNodeJsonDeserializer extends StdDeserializer<RexNode> {
                 builder.add(range);
             }
         }
-        final RexUnknownAs nullAs = serializableToCalcite(RexUnknownAs.class, sargNode.required(FIELD_NAME_NULL_AS).asText());
-        return rexBuilder.makeSearchArgumentLiteral(
-                Sarg.of(nullAs, builder.build()), relDataType);
+        final RexUnknownAs nullAs =
+                serializableToCalcite(
+                        RexUnknownAs.class, sargNode.required(FIELD_NAME_NULL_AS).asText());
+        return rexBuilder.makeSearchArgumentLiteral(Sarg.of(nullAs, builder.build()), relDataType);
     }
 
     private static @Nullable Object deserializeLiteralValue(
