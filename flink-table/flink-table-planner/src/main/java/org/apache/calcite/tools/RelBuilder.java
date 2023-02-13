@@ -2879,7 +2879,8 @@ public class RelBuilder {
                 tableSpool(Spool.Type.LAZY, Spool.Type.LAZY, finder.relOptTable).build();
         RelNode seed = tableSpool(Spool.Type.LAZY, Spool.Type.LAZY, finder.relOptTable).build();
         RelNode repeatUnion =
-                struct.repeatUnionFactory.createRepeatUnion(seed, iterative, all, iterationLimit);
+                struct.repeatUnionFactory.createRepeatUnion(
+                        seed, iterative, all, iterationLimit, finder.relOptTable);
         return push(repeatUnion);
     }
 
