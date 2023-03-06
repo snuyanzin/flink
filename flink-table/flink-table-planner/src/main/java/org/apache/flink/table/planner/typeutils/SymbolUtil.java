@@ -18,8 +18,6 @@
 
 package org.apache.flink.table.planner.typeutils;
 
-import org.apache.calcite.rex.RexUnknownAs;
-
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.JsonExistsOnError;
 import org.apache.flink.table.api.JsonOnNull;
@@ -35,6 +33,7 @@ import org.apache.flink.table.utils.DateTimeUtils;
 import com.google.common.collect.BoundType;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.avatica.util.TimeUnitRange;
+import org.apache.calcite.rex.RexUnknownAs;
 import org.apache.calcite.sql.SqlJsonConstructorNullClause;
 import org.apache.calcite.sql.SqlJsonEmptyOrError;
 import org.apache.calcite.sql.SqlJsonExistsErrorBehavior;

@@ -547,9 +547,10 @@ public final class LogicalRelDataTypeConverter {
                 }
                 return new VarBinaryType(false, relDataType.getPrecision());
             case NULL:
-                return new NullType();
             case UNKNOWN:
-                return new UnknownType();
+                return new NullType();
+            /*case UNKNOWN:
+                return new UnknownType();*/
             case SYMBOL:
                 return new SymbolType<>(false);
             case MULTISET:

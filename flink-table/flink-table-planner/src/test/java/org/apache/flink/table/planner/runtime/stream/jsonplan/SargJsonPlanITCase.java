@@ -14,14 +14,8 @@ public class SargJsonPlanITCase extends JsonPlanTestBase {
     @Test
     public void test() throws ExecutionException, InterruptedException {
         List<Row> data =
-                Arrays.asList(
-                        Row.of(1),
-                        Row.of(2),
-                        Row.of((Integer) null),
-                        Row.of(4),
-                        Row.of(5));
-        createTestValuesSourceTable(
-                "MyTable", data, "a int");
+                Arrays.asList(Row.of(1), Row.of(2), Row.of((Integer) null), Row.of(4), Row.of(5));
+        createTestValuesSourceTable("MyTable", data, "a int");
         createTestNonInsertOnlyValuesSinkTable("`result`", "a int");
         String sql =
                 "insert into `result` SELECT a\n"
