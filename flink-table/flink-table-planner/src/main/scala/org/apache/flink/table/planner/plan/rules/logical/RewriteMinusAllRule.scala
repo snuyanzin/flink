@@ -24,6 +24,7 @@ import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.core.{Minus, RelFactories}
 import org.apache.calcite.sql.`type`.SqlTypeName.BIGINT
+import org.apache.calcite.tools.RelBuilder
 import org.apache.calcite.util.Util
 
 import scala.collection.JavaConversions._
@@ -77,7 +78,8 @@ class RewriteMinusAllRule
     val fields = Util.range(minus.getRowType.getFieldCount)
 
     // 1. add vcol_marker to left rel node
-    val leftBuilder = call.builder
+    val leftBuilder =
+      call.builder.transform((t: RelBuilder.Config) => t.withConvertCorrelateToJoin(false))
     val leftWithAddedVirtualCols = leftBuilder
       .push(left)
       .project(leftBuilder.fields(fields) ++
@@ -85,7 +87,8 @@ class RewriteMinusAllRule
       .build()
 
     // 2. add vcol_marker to right rel node
-    val rightBuilder = call.builder
+    val rightBuilder =
+      call.builder.transform((t: RelBuilder.Config) => t.withConvertCorrelateToJoin(false))
     val rightWithAddedVirtualCols = rightBuilder
       .push(right)
       .project(rightBuilder.fields(fields) ++
@@ -93,7 +96,8 @@ class RewriteMinusAllRule
       .build()
 
     // 3. add union all and aggregate
-    val builder = call.builder
+    val builder =
+      call.builder.transform((t: RelBuilder.Config) => t.withConvertCorrelateToJoin(false))
     builder
       .push(leftWithAddedVirtualCols)
       .push(rightWithAddedVirtualCols)

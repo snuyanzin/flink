@@ -24,6 +24,7 @@ import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall}
 import org.apache.calcite.plan.RelOptRule.{any, operand}
 import org.apache.calcite.rel.core.{Intersect, RelFactories}
 import org.apache.calcite.sql.`type`.SqlTypeName
+import org.apache.calcite.tools.RelBuilder
 import org.apache.calcite.util.Util
 
 import scala.collection.JavaConversions._
@@ -81,7 +82,8 @@ class RewriteIntersectAllRule
     val fields = Util.range(intersect.getRowType.getFieldCount)
 
     // 1. add marker to left rel node
-    val leftBuilder = call.builder
+    val leftBuilder =
+      call.builder.transform((t: RelBuilder.Config) => t.withConvertCorrelateToJoin(false))
     val boolType = leftBuilder.getTypeFactory.createSqlType(SqlTypeName.BOOLEAN)
     val leftWithMarker = leftBuilder
       .push(left)
@@ -92,7 +94,8 @@ class RewriteIntersectAllRule
       .build()
 
     // 2. add marker to right rel node
-    val rightBuilder = call.builder
+    val rightBuilder =
+      call.builder.transform((t: RelBuilder.Config) => t.withConvertCorrelateToJoin(false))
     val rightWithMarker = rightBuilder
       .push(right)
       .project(rightBuilder.fields(fields) ++ Seq(
@@ -102,8 +105,9 @@ class RewriteIntersectAllRule
       ))
       .build()
 
-    // 3. union and aggregate
-    val builder = call.builder
+    // 3. union and aggregateMinusA
+    val builder =
+      call.builder.transform((t: RelBuilder.Config) => t.withConvertCorrelateToJoin(false))
     builder
       .push(leftWithMarker)
       .push(rightWithMarker)
