@@ -119,18 +119,14 @@ public class TableSchemaUtils {
     }
 
     /** Removes time attributes from the {@link ResolvedSchema} and build a {@link TableSchema}. */
-    public static TableSchema removeTimeAttributeFromResolvedSchema(ResolvedSchema resolvedSchema) {
-        return TableSchema.fromResolvedSchema(
-                new ResolvedSchema(
-                        resolvedSchema.getColumns().stream()
-                                .map(
-                                        col ->
-                                                col.copy(
-                                                        DataTypeUtils.removeTimeAttribute(
-                                                                col.getDataType())))
-                                .collect(Collectors.toList()),
-                        resolvedSchema.getWatermarkSpecs(),
-                        resolvedSchema.getPrimaryKey().orElse(null)));
+    public static ResolvedSchema removeTimeAttributeFromResolvedSchema(
+            ResolvedSchema resolvedSchema) {
+        return new ResolvedSchema(
+                resolvedSchema.getColumns().stream()
+                        .map(col -> col.copy(DataTypeUtils.removeTimeAttribute(col.getDataType())))
+                        .collect(Collectors.toList()),
+                resolvedSchema.getWatermarkSpecs(),
+                resolvedSchema.getPrimaryKey().orElse(null));
     }
 
     /**

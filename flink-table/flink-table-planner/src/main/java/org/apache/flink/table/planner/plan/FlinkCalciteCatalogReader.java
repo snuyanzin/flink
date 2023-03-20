@@ -19,10 +19,10 @@
 package org.apache.flink.table.planner.plan;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.CatalogTable;
-import org.apache.flink.table.catalog.CatalogTableImpl;
 import org.apache.flink.table.catalog.CatalogView;
 import org.apache.flink.table.catalog.ConnectorCatalogTable;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -233,12 +233,20 @@ public class FlinkCalciteCatalogReader extends CalciteCatalogReader {
                 TableFactoryUtil.findAndCreateTableSource(
                         schemaTable.getContextResolvedTable().getCatalog().orElse(null),
                         schemaTable.getContextResolvedTable().getIdentifier(),
-                        new CatalogTableImpl(
+                        new ResolvedCatalogTable(
+                                CatalogTable.of(
+                                        Schema.newBuilder()
+                                                .fromResolvedSchema(
+                                                        TableSchemaUtils
+                                                                .removeTimeAttributeFromResolvedSchema(
+                                                                        originTable
+                                                                                .getResolvedSchema()))
+                                                .build(),
+                                        originTable.getComment(),
+                                        originTable.getPartitionKeys(),
+                                        originTable.getOptions()),
                                 TableSchemaUtils.removeTimeAttributeFromResolvedSchema(
-                                        originTable.getResolvedSchema()),
-                                originTable.getPartitionKeys(),
-                                originTable.getOptions(),
-                                originTable.getComment()),
+                                        originTable.getResolvedSchema())),
                         new Configuration(),
                         schemaTable.isTemporary());
                 // success, then we will use the legacy factories
