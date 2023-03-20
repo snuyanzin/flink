@@ -26,13 +26,13 @@ import org.apache.flink.api.java.typeutils.RowTypeInfo
 import org.apache.flink.core.io.InputSplit
 import org.apache.flink.streaming.api.datastream.{DataStream, DataStreamSink}
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.apache.flink.table.api.internal.TableEnvironmentInternal
 import org.apache.flink.table.api.{DataTypes, TableEnvironment, TableSchema}
-import org.apache.flink.table.catalog.{CatalogPartitionImpl, CatalogPartitionSpec, CatalogTable, ObjectPath}
-import org.apache.flink.table.descriptors.ConnectorDescriptorValidator.{CONNECTOR, CONNECTOR_TYPE}
+import org.apache.flink.table.api.internal.TableEnvironmentInternal
+import org.apache.flink.table.catalog._
 import org.apache.flink.table.descriptors._
-import org.apache.flink.table.expressions.ApiExpressionUtils.unresolvedCall
+import org.apache.flink.table.descriptors.ConnectorDescriptorValidator.{CONNECTOR, CONNECTOR_TYPE}
 import org.apache.flink.table.expressions.{CallExpression, Expression, FieldReferenceExpression, ValueLiteralExpression}
+import org.apache.flink.table.expressions.ApiExpressionUtils.unresolvedCall
 import org.apache.flink.table.factories.{StreamTableSourceFactory, TableSinkFactory, TableSourceFactory}
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions.AND
@@ -1142,12 +1142,14 @@ class TestPartitionableSourceFactory extends TableSourceFactory[Row] {
 }
 
 object TestPartitionableSourceFactory {
-  private val tableSchema: TableSchema = TableSchema
-    .builder()
-    .field("id", DataTypes.INT())
-    .field("name", DataTypes.STRING())
-    .field("part1", DataTypes.STRING())
-    .field("part2", DataTypes.INT())
+  private val tableSchema: org.apache.flink.table.api.Schema = org.apache.flink.table.api.Schema
+    .newBuilder()
+    .fromResolvedSchema(ResolvedSchema.of(
+      Column.physical("id", DataTypes.INT()),
+      Column.physical("name", DataTypes.STRING()),
+      Column.physical("part1", DataTypes.STRING()),
+      Column.physical("part2", DataTypes.INT())
+    ))
     .build()
 
   /** For java invoking. */
@@ -1159,7 +1161,7 @@ object TestPartitionableSourceFactory {
       tEnv: TableEnvironment,
       tableName: String,
       isBounded: Boolean,
-      tableSchema: TableSchema = tableSchema,
+      tableSchema: org.apache.flink.table.api.Schema = tableSchema,
       remainingPartitions: JList[JMap[String, String]] = null,
       sourceFetchPartitions: Boolean = false): Unit = {
     val properties = new DescriptorProperties()
@@ -1179,8 +1181,8 @@ object TestPartitionableSourceFactory {
     val table = CatalogTable.of(
       tableSchema,
       "",
-      properties.asMap(),
-      util.Arrays.asList[String]("part1", "part2")
+      util.Arrays.asList[String]("part1", "part2"),
+      properties.asMap()
     )
     val catalog = tEnv.getCatalog(tEnv.getCurrentCatalog).get()
     val path = new ObjectPath(tEnv.getCurrentDatabase, tableName)
