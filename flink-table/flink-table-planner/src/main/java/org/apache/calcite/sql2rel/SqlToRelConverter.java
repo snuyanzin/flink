@@ -5499,7 +5499,7 @@ public class SqlToRelConverter {
                     subQuery = requireNonNull(getSubQuery(expr, null));
                     rex = requireNonNull(subQuery.expr);
                     return StandardConvertletTable.castToValidatedType(
-                            expr, rex, validator(), rexBuilder);
+                            expr, rex, validator(), rexBuilder, false);
 
                 case SELECT:
                 case EXISTS:
