@@ -112,6 +112,6 @@ echo "BUILDING flink-shaded 17-SNAPSHOT"
 git clone https://github.com/MartijnVisser/flink-shaded.git
 cd flink-shaded
 git checkout FLINK-30772
-mvn clean install -Dshade-sources
+run_mvn clean install -Dshade-sources
 cd ..
 rm -rf flink-shaded
