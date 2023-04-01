@@ -354,6 +354,8 @@ public class AvroSchemaConverter {
                 org.apache.avro.LogicalType avroLogicalType;
                 if (precision <= 3) {
                     avroLogicalType = LogicalTypes.timestampMillis();
+                } else if (precision <= 6) {
+                    avroLogicalType = LogicalTypes.timestampMicros();
                 } else {
                     throw new IllegalArgumentException(
                             "Avro does not support TIMESTAMP type "
@@ -369,15 +371,21 @@ public class AvroSchemaConverter {
                 return nullable ? nullableSchema(date) : date;
             case TIME_WITHOUT_TIME_ZONE:
                 precision = ((TimeType) logicalType).getPrecision();
-                if (precision > 3) {
+                if (precision > 6) {
                     throw new IllegalArgumentException(
                             "Avro does not support TIME type with precision: "
                                     + precision
                                     + ", it only supports precision less than 3.");
                 }
                 // use int to represents Time, we only support millisecond when deserialization
-                Schema time =
-                        LogicalTypes.timeMillis().addToSchema(SchemaBuilder.builder().intType());
+                final Schema time;
+                if (precision == 3) {
+                    time = LogicalTypes.timeMillis().addToSchema(SchemaBuilder.builder().intType());
+                } else {
+                    time =
+                            LogicalTypes.timeMicros()
+                                    .addToSchema(SchemaBuilder.builder().longType());
+                }
                 return nullable ? nullableSchema(time) : time;
             case DECIMAL:
                 DecimalType decimalType = (DecimalType) logicalType;

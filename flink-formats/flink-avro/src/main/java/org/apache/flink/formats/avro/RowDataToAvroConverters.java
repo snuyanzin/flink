@@ -27,6 +27,7 @@ import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.TimestampType;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -35,6 +36,7 @@ import org.apache.avro.util.Utf8;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -113,7 +115,7 @@ public class RowDataToAvroConverters {
             case INTERVAL_DAY_TIME: // long
             case FLOAT: // float
             case DOUBLE: // double
-            case TIME_WITHOUT_TIME_ZONE: // int
+            case TIME_WITHOUT_TIME_ZONE: // int, long
             case DATE: // int
                 converter =
                         new RowDataToAvroConverter() {
@@ -156,7 +158,14 @@ public class RowDataToAvroConverters {
 
                             @Override
                             public Object convert(Schema schema, Object object) {
-                                return ((TimestampData) object).toInstant().toEpochMilli();
+                                int precision = ((TimestampType) type).getPrecision();
+                                final Instant instant = ((TimestampData) object).toInstant();
+                                if (precision <= 3) {
+                                    return instant.toEpochMilli();
+                                } else {
+                                    return instant.toEpochMilli() * 1000
+                                            + (instant.getNano() / 1000) % 1000;
+                                }
                             }
                         };
                 break;

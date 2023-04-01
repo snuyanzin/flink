@@ -32,6 +32,7 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.RowType.RowField;
 import org.apache.flink.table.types.logical.StructuredType;
+import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.ZonedTimestampType;
 import org.apache.flink.util.Preconditions;
@@ -77,8 +78,12 @@ public final class LogicalTypeUtils {
                 return Short.class;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
+                return Integer.class;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (((TimeType) type).getPrecision() > 3) {
+                    return Long.class;
+                }
                 return Integer.class;
             case BIGINT:
             case INTERVAL_DAY_TIME:

@@ -22,6 +22,7 @@ import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.TimeType;
 
 import javax.annotation.Nullable;
 
@@ -169,9 +170,15 @@ public interface ArrayData {
                 break;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
                 elementGetter = ArrayData::getInt;
+                break;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (((TimeType) elementType).getPrecision() > 3) {
+                    elementGetter = ArrayData::getLong;
+                } else {
+                    elementGetter = ArrayData::getInt;
+                }
                 break;
             case BIGINT:
             case INTERVAL_DAY_TIME:

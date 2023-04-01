@@ -100,10 +100,10 @@ class AvroRowDataDeSerializationSchemaTest {
                                 FIELD("bytes", BYTES()),
                                 FIELD("decimal", DECIMAL(19, 6)),
                                 FIELD("doubles", ARRAY(DOUBLE())),
-                                FIELD("time", TIME(0)),
+                                FIELD("time", TIME(6)),
                                 FIELD("date", DATE()),
                                 FIELD("timestamp3", TIMESTAMP(3)),
-                                FIELD("timestamp3_2", TIMESTAMP(3)),
+                                FIELD("timestamp3_2", TIMESTAMP(6)),
                                 FIELD("map", MAP(STRING(), BIGINT())),
                                 FIELD("map2map", MAP(STRING(), MAP(STRING(), INT()))),
                                 FIELD("map2array", MAP(STRING(), ARRAY(INT()))),
@@ -132,10 +132,10 @@ class AvroRowDataDeSerializationSchemaTest {
         doubles.add(567.8901);
         record.put(10, doubles);
 
-        record.put(11, 18397);
+        record.put(11, 18397L);
         record.put(12, 10087);
         record.put(13, 1589530213123L);
-        record.put(14, 1589530213122L);
+        record.put(14, 1589530213122123L);
 
         Map<String, Long> map = new HashMap<>();
         map.put("flink", 12L);
