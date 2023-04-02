@@ -145,11 +145,11 @@ public class RowDataToAvroConverters {
                                     if (object instanceof Integer) {
                                         return object;
                                     } else if (object instanceof Long) {
-                                        return ((Long)object).intValue();
+                                        return ((Long) object).intValue();
                                     }
                                 } else {
                                     if (object instanceof Integer) {
-                                        return ((Integer)object).longValue();
+                                        return ((Integer) object).longValue();
                                     } else if (object instanceof Long) {
                                         return object;
                                     }
