@@ -267,6 +267,8 @@ public class RowDataToAvroConverters {
                         actualSchema = types.get(0);
                     } else if (size == 2 && types.get(0).getType() == Schema.Type.NULL) {
                         actualSchema = types.get(1);
+                    } else if (size == 3 && types.get(0).getType() == Schema.Type.NULL) {
+                        actualSchema = Schema.createUnion(types.get(1), types.get(2));
                     } else {
                         throw new IllegalArgumentException(
                                 "The Avro schema is not a nullable type: " + schema.toString());

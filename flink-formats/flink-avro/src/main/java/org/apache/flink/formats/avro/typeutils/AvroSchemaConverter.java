@@ -381,13 +381,24 @@ public class AvroSchemaConverter {
                 // use int to represents Time, we only support millisecond when deserialization
                 final Schema time;
                 if (precision == 3) {
-                    time = LogicalTypes.timeMillis().addToSchema(SchemaBuilder.builder().intType());
+                    return nullable
+                            ? nullableSchema(
+                                    LogicalTypes.timeMillis()
+                                            .addToSchema(SchemaBuilder.builder().intType()))
+                            : LogicalTypes.timeMillis()
+                                    .addToSchema(SchemaBuilder.builder().intType());
                 } else {
-                    time =
-                            LogicalTypes.timeMicros()
-                                    .addToSchema(SchemaBuilder.builder().longType());
+                    return nullable
+                            ? Schema.createUnion(
+                                    SchemaBuilder.builder().nullType(),
+                                    LogicalTypes.timeMicros()
+                                            .addToSchema(SchemaBuilder.builder().longType()),
+                                    SchemaBuilder.builder().intType())
+                            : Schema.createUnion(
+                                    LogicalTypes.timeMicros()
+                                            .addToSchema(SchemaBuilder.builder().longType()),
+                                    SchemaBuilder.builder().intType());
                 }
-                return nullable ? nullableSchema(time) : time;
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
                 precision = ((LocalZonedTimestampType) logicalType).getPrecision();
                 if (precision > 6) {
