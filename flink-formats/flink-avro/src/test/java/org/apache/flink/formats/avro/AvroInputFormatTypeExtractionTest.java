@@ -18,6 +18,8 @@
 
 package org.apache.flink.formats.avro;
 
+import org.apache.avro.LogicalTypes;
+
 import org.apache.flink.api.common.io.InputFormat;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;

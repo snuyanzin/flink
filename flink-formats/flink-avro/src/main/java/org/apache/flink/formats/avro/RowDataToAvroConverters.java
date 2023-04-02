@@ -28,6 +28,7 @@ import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 
 import org.apache.avro.Schema;
@@ -117,7 +118,7 @@ public class RowDataToAvroConverters {
             case INTERVAL_DAY_TIME: // long
             case FLOAT: // float
             case DOUBLE: // double
-            case TIME_WITHOUT_TIME_ZONE: // int, long
+
             case DATE: // int
                 converter =
                         new RowDataToAvroConverter() {
@@ -125,6 +126,34 @@ public class RowDataToAvroConverters {
 
                             @Override
                             public Object convert(Schema schema, Object object) {
+                                return object;
+                            }
+                        };
+                break;
+            case TIME_WITHOUT_TIME_ZONE: // int, long
+                converter =
+                        new RowDataToAvroConverter() {
+                            private static final long serialVersionUID = 1L;
+
+                            @Override
+                            public Object convert(Schema schema, Object object) {
+                                if (object == null) {
+                                    return null;
+                                }
+                                int precision = ((TimeType) type).getPrecision();
+                                if (precision <= 3) {
+                                    if (object instanceof Integer) {
+                                        return object;
+                                    } else if (object instanceof Long) {
+                                        return ((Long)object).intValue();
+                                    }
+                                } else {
+                                    if (object instanceof Integer) {
+                                        return ((Integer)object).longValue();
+                                    } else if (object instanceof Long) {
+                                        return object;
+                                    }
+                                }
                                 return object;
                             }
                         };
