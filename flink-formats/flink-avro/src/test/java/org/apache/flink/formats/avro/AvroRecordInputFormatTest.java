@@ -223,8 +223,8 @@ public class AvroRecordInputFormatTest {
 
         // check arrays
         List<CharSequence> sl = u.getTypeArrayString();
-        assertThat(sl.get(0).toString()).isEqualTo(TEST_ARRAY_STRING_1);
-        assertThat(sl.get(1).toString()).isEqualTo(TEST_ARRAY_STRING_2);
+        assertThat(sl.get(0)).hasToString(TEST_ARRAY_STRING_1);
+        assertThat(sl.get(1)).hasToString(TEST_ARRAY_STRING_2);
 
         List<Boolean> bl = u.getTypeArrayBoolean();
         assertThat(bl).containsExactly(TEST_ARRAY_BOOLEAN_1, TEST_ARRAY_BOOLEAN_2);
@@ -271,8 +271,8 @@ public class AvroRecordInputFormatTest {
 
         // check arrays
         List<CharSequence> sl = u.getTypeArrayString();
-        assertThat(sl.get(0).toString()).isEqualTo(TEST_ARRAY_STRING_1);
-        assertThat(sl.get(1).toString()).isEqualTo(TEST_ARRAY_STRING_2);
+        assertThat(sl.get(0)).hasToString(TEST_ARRAY_STRING_1);
+        assertThat(sl.get(1)).hasToString(TEST_ARRAY_STRING_2);
 
         List<Boolean> bl = u.getTypeArrayBoolean();
         assertThat(bl).containsExactly(TEST_ARRAY_BOOLEAN_1, TEST_ARRAY_BOOLEAN_2);
@@ -317,8 +317,8 @@ public class AvroRecordInputFormatTest {
 
             // check if record has been read correctly
             assertThat(rec).isNotNull();
-            assertThat(rec.get("name").toString()).isEqualTo(TEST_NAME);
-            assertThat(rec.get("type_enum").toString()).isEqualTo(TEST_ENUM_COLOR.toString());
+            assertThat(rec.get("name")).hasToString(TEST_NAME);
+            assertThat(rec.get("type_enum")).hasToString(TEST_ENUM_COLOR.toString());
             assertThat(rec.get("type_long_test")).isNull(); // it is null for the first record.
 
             // now serialize it with our framework:
@@ -349,8 +349,8 @@ public class AvroRecordInputFormatTest {
 
             // check if it is still the same
             assertThat(newRec).isNotNull();
-            assertThat(newRec.get("name").toString()).isEqualTo(TEST_NAME);
-            assertThat(newRec.get("type_enum").toString()).isEqualTo(TEST_ENUM_COLOR.toString());
+            assertThat(newRec.get("name")).hasToString(TEST_NAME);
+            assertThat(newRec.get("type_enum")).hasToString(TEST_ENUM_COLOR.toString());
             assertThat(newRec.get("type_long_test")).isNull();
         }
     }
@@ -366,8 +366,8 @@ public class AvroRecordInputFormatTest {
 
             // check if record has been read correctly
             assertThat(rec).isNotNull();
-            assertThat(rec.get("name").toString()).isEqualTo(TEST_NAME);
-            assertThat(rec.get("type_enum").toString()).isEqualTo(TEST_ENUM_COLOR.toString());
+            assertThat(rec.get("name")).hasToString(TEST_NAME);
+            assertThat(rec.get("type_enum")).hasToString(TEST_ENUM_COLOR.toString());
 
             // now serialize it with our framework:
             ExecutionConfig ec = new ExecutionConfig();
@@ -389,8 +389,8 @@ public class AvroRecordInputFormatTest {
 
             // check if it is still the same
             assertThat(newRec).isNotNull();
-            assertThat(newRec.get("name").toString()).isEqualTo(TEST_NAME);
-            assertThat(newRec.get("type_enum").toString()).isEqualTo(TEST_ENUM_COLOR.toString());
+            assertThat(newRec.get("name")).hasToString(TEST_NAME);
+            assertThat(newRec.get("type_enum")).hasToString(TEST_ENUM_COLOR.toString());
         }
     }
 
@@ -434,8 +434,8 @@ public class AvroRecordInputFormatTest {
 
             // check arrays
             List<CharSequence> sl = (List<CharSequence>) u.get("type_array_string");
-            assertThat(sl.get(0).toString()).isEqualTo(TEST_ARRAY_STRING_1);
-            assertThat(sl.get(1).toString()).isEqualTo(TEST_ARRAY_STRING_2);
+            assertThat(sl.get(0)).hasToString(TEST_ARRAY_STRING_1);
+            assertThat(sl.get(1)).hasToString(TEST_ARRAY_STRING_2);
 
             List<Boolean> bl = (List<Boolean>) u.get("type_array_boolean");
             assertThat(bl).containsExactly(TEST_ARRAY_BOOLEAN_1, TEST_ARRAY_BOOLEAN_2);

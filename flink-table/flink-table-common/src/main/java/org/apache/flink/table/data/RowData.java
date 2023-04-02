@@ -24,7 +24,6 @@ import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.StructuredType;
-import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.types.RowKind;
 
 import javax.annotation.Nullable;
@@ -241,15 +240,9 @@ public interface RowData {
                 break;
             case INTEGER:
             case DATE:
+            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
                 fieldGetter = row -> row.getInt(fieldPos);
-                break;
-            case TIME_WITHOUT_TIME_ZONE:
-                if (((TimeType) fieldType).getPrecision() > 3) {
-                    fieldGetter = row -> row.getLong(fieldPos);
-                } else {
-                    fieldGetter = row -> row.getInt(fieldPos);
-                }
                 break;
             case BIGINT:
             case INTERVAL_DAY_TIME:

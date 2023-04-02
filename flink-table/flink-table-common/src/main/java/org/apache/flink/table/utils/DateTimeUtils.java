@@ -770,6 +770,19 @@ public class DateTimeUtils {
         return buf.toString();
     }
 
+    private static void formatTimestampMillis(StringBuilder buf, long time, int precision) {
+        if (precision == 4) {
+            formatTimestampMillis(buf, (int) (time / 10), precision);
+            buf.append(time % 10);
+        } else if (precision == 5) {
+            formatTimestampMillis(buf, (int) (time / 100), precision);
+            buf.append(time % 100);
+        } else {
+            formatTimestampMillis(buf, (int) (time / 1000), precision);
+            buf.append(time % 1000);
+        }
+    }
+
     private static void formatTimestampMillis(StringBuilder buf, int time, int precision) {
         // we copy this method from Calcite DateTimeUtils but add the following changes
         // time may be negative which means time milli seconds before 00:00:00

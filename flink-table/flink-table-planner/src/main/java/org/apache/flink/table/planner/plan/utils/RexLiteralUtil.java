@@ -152,15 +152,9 @@ public class RexLiteralUtil {
                 break;
             case TIME_WITHOUT_TIME_ZONE:
                 if (value instanceof TimeString) {
-                    if (LogicalTypeChecks.getPrecision(valueType) > 3) {
-                        return ((TimeString) value).getMillisOfDay() * 1000L;
-                    }
                     return ((TimeString) value).getMillisOfDay();
                 }
                 if (value instanceof Number) {
-                    if (LogicalTypeChecks.getPrecision(valueType) > 3) {
-                        return ((Number) value).longValue();
-                    }
                     return ((Number) value).intValue();
                 }
                 break;

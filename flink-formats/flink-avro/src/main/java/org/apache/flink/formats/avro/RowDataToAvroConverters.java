@@ -25,6 +25,7 @@ import org.apache.flink.table.data.MapData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.TimestampType;
@@ -37,6 +38,7 @@ import org.apache.avro.util.Utf8;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -160,6 +162,28 @@ public class RowDataToAvroConverters {
                             public Object convert(Schema schema, Object object) {
                                 int precision = ((TimestampType) type).getPrecision();
                                 final Instant instant = ((TimestampData) object).toInstant();
+                                if (precision <= 3) {
+                                    return instant.toEpochMilli();
+                                } else {
+                                    return instant.toEpochMilli() * 1000
+                                            + (instant.getNano() / 1000) % 1000;
+                                }
+                            }
+                        };
+                break;
+            case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                converter =
+                        new RowDataToAvroConverter() {
+                            private static final long serialVersionUID = 1L;
+
+                            @Override
+                            public Object convert(Schema schema, Object object) {
+                                int precision = ((LocalZonedTimestampType) type).getPrecision();
+                                final Instant instant =
+                                        ((TimestampData) object)
+                                                .toInstant()
+                                                .atOffset(ZoneOffset.UTC)
+                                                .toInstant();
                                 if (precision <= 3) {
                                     return instant.toEpochMilli();
                                 } else {

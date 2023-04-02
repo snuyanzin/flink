@@ -110,16 +110,17 @@ public class AvroOutputFormatITCase extends JavaProgramTestBase {
         DatumReader<User> userDatumReader1 = new SpecificDatumReader<>(User.class);
         for (File avroOutput : output1) {
 
-            DataFileReader<User> dataFileReader1 =
-                    new DataFileReader<>(avroOutput, userDatumReader1);
-            while (dataFileReader1.hasNext()) {
-                User user = dataFileReader1.next();
-                result1.add(
-                        user.getName()
-                                + "|"
-                                + user.getFavoriteNumber()
-                                + "|"
-                                + user.getFavoriteColor());
+            try (DataFileReader<User> dataFileReader1 =
+                    new DataFileReader<>(avroOutput, userDatumReader1)) {
+                while (dataFileReader1.hasNext()) {
+                    User user = dataFileReader1.next();
+                    result1.add(
+                            user.getName()
+                                    + "|"
+                                    + user.getFavoriteNumber()
+                                    + "|"
+                                    + user.getFavoriteColor());
+                }
             }
         }
         assertThat(result1).contains(userData.split("\n"));
@@ -136,16 +137,17 @@ public class AvroOutputFormatITCase extends JavaProgramTestBase {
         DatumReader<ReflectiveUser> userDatumReader2 =
                 new ReflectDatumReader<>(ReflectiveUser.class);
         for (File avroOutput : Objects.requireNonNull(output2)) {
-            DataFileReader<ReflectiveUser> dataFileReader2 =
-                    new DataFileReader<>(avroOutput, userDatumReader2);
-            while (dataFileReader2.hasNext()) {
-                ReflectiveUser user = dataFileReader2.next();
-                result2.add(
-                        user.getName()
-                                + "|"
-                                + user.getFavoriteNumber()
-                                + "|"
-                                + user.getFavoriteColor());
+            try (DataFileReader<ReflectiveUser> dataFileReader2 =
+                    new DataFileReader<>(avroOutput, userDatumReader2)) {
+                while (dataFileReader2.hasNext()) {
+                    ReflectiveUser user = dataFileReader2.next();
+                    result2.add(
+                            user.getName()
+                                    + "|"
+                                    + user.getFavoriteNumber()
+                                    + "|"
+                                    + user.getFavoriteColor());
+                }
             }
         }
         assertThat(result2).contains(userData.split("\n"));

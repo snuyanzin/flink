@@ -149,14 +149,14 @@ class AvroSchemaConverterTest {
                 (RowType)
                         ResolvedSchema.of(
                                         Column.physical("a", DataTypes.STRING()),
-                                        Column.physical("b", DataTypes.TIME(6)))
+                                        Column.physical("b", DataTypes.TIME(7)))
                                 .toSourceRowDataType()
                                 .getLogicalType();
 
         assertThatThrownBy(() -> AvroSchemaConverter.convertToSchema(rowType))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(
-                        "Avro does not support TIME type with precision: 6, it only supports precision less than 3.");
+                        "Avro does not support TIME type with precision: 7, it only supports precision less than 7.");
     }
 
     @Test

@@ -20,6 +20,7 @@ package org.apache.flink.formats.avro;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 
@@ -64,6 +65,11 @@ class JodaConverter {
     public long convertTimestamp(Object object) {
         final DateTime value = (DateTime) object;
         return value.toDate().getTime();
+    }
+
+    public long convertTimestampLtz(Object object) {
+        final DateTime value = (DateTime) object;
+        return value.withZone(DateTimeZone.UTC).toDate().getTime();
     }
 
     private JodaConverter() {}

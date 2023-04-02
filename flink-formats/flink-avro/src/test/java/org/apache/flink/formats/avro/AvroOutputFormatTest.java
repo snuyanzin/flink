@@ -210,14 +210,15 @@ class AvroOutputFormatTest {
         output(outputFormat, schema);
 
         GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
-        DataFileReader<GenericRecord> dataFileReader =
-                new DataFileReader<>(new File(outputPath.getPath()), reader);
+        try (DataFileReader<GenericRecord> dataFileReader =
+                new DataFileReader<>(new File(outputPath.getPath()), reader)) {
 
-        while (dataFileReader.hasNext()) {
-            GenericRecord record = dataFileReader.next();
-            assertThat(record.get("user_name").toString()).isEqualTo("testUser");
-            assertThat(record.get("favorite_number")).isEqualTo(1);
-            assertThat(record.get("favorite_color").toString()).isEqualTo("blue");
+            while (dataFileReader.hasNext()) {
+                GenericRecord record = dataFileReader.next();
+                assertThat(record.get("user_name")).hasToString("testUser");
+                assertThat(record.get("favorite_number")).isEqualTo(1);
+                assertThat(record.get("favorite_color")).hasToString("blue");
+            }
         }
 
         // cleanup

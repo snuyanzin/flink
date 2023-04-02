@@ -29,6 +29,7 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.IntType;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.MapType;
@@ -375,7 +376,7 @@ public class AvroSchemaConverter {
                     throw new IllegalArgumentException(
                             "Avro does not support TIME type with precision: "
                                     + precision
-                                    + ", it only supports precision less than 3.");
+                                    + ", it only supports precision less than 7.");
                 }
                 // use int to represents Time, we only support millisecond when deserialization
                 final Schema time;
@@ -387,6 +388,27 @@ public class AvroSchemaConverter {
                                     .addToSchema(SchemaBuilder.builder().longType());
                 }
                 return nullable ? nullableSchema(time) : time;
+            case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                precision = ((LocalZonedTimestampType) logicalType).getPrecision();
+                if (precision > 6) {
+                    throw new IllegalArgumentException(
+                            "Avro does not support TIME type with precision: "
+                                    + precision
+                                    + ", it only supports precision less than 7.");
+                }
+                // use long to represents Time, we only support millisecond and microsecond when
+                // deserialization
+                final Schema localZonedTimestamp;
+                if (precision == 3) {
+                    localZonedTimestamp =
+                            LogicalTypes.localTimestampMillis()
+                                    .addToSchema(SchemaBuilder.builder().longType());
+                } else {
+                    localZonedTimestamp =
+                            LogicalTypes.timeMicros()
+                                    .addToSchema(SchemaBuilder.builder().longType());
+                }
+                return nullable ? nullableSchema(localZonedTimestamp) : localZonedTimestamp;
             case DECIMAL:
                 DecimalType decimalType = (DecimalType) logicalType;
                 // store BigDecimal as byte[]
@@ -432,7 +454,6 @@ public class AvroSchemaConverter {
                                 .items(convertToSchema(arrayType.getElementType(), rowName));
                 return nullable ? nullableSchema(array) : array;
             case RAW:
-            case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
             default:
                 throw new UnsupportedOperationException(
                         "Unsupported to derive Schema for type: " + logicalType);

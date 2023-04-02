@@ -21,7 +21,6 @@ package org.apache.flink.table.planner.functions.casting;
 import org.apache.flink.table.planner.codegen.CodeGenUtils;
 import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
-import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.utils.EncodingUtils;
 
 import java.lang.reflect.Method;
@@ -117,12 +116,8 @@ final class CastRuleUtils {
                 return methodCall(term, "shortValue");
             case INTEGER:
             case DATE:
-            case INTERVAL_YEAR_MONTH:
-                return methodCall(term, "intValue");
             case TIME_WITHOUT_TIME_ZONE:
-                if (((TimeType) type).getPrecision() > 3) {
-                    return methodCall(term, "longValue");
-                }
+            case INTERVAL_YEAR_MONTH:
                 return methodCall(term, "intValue");
             case BIGINT:
             case INTERVAL_DAY_TIME:
@@ -148,12 +143,8 @@ final class CastRuleUtils {
                 return staticCall(Short.class, "valueOf", term);
             case INTEGER:
             case DATE:
-            case INTERVAL_YEAR_MONTH:
-                return staticCall(Integer.class, "valueOf", term);
             case TIME_WITHOUT_TIME_ZONE:
-                if (((TimeType) type).getPrecision() > 3) {
-                    return staticCall(Long.class, "valueOf", term);
-                }
+            case INTERVAL_YEAR_MONTH:
                 return staticCall(Integer.class, "valueOf", term);
             case BIGINT:
             case INTERVAL_DAY_TIME:

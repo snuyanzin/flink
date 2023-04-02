@@ -46,7 +46,9 @@ import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -69,6 +71,7 @@ import static org.apache.flink.table.api.DataTypes.SMALLINT;
 import static org.apache.flink.table.api.DataTypes.STRING;
 import static org.apache.flink.table.api.DataTypes.TIME;
 import static org.apache.flink.table.api.DataTypes.TIMESTAMP;
+import static org.apache.flink.table.api.DataTypes.TIMESTAMP_LTZ;
 import static org.apache.flink.table.api.DataTypes.TINYINT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -103,7 +106,9 @@ class AvroRowDataDeSerializationSchemaTest {
                                 FIELD("time", TIME(6)),
                                 FIELD("date", DATE()),
                                 FIELD("timestamp3", TIMESTAMP(3)),
-                                FIELD("timestamp3_2", TIMESTAMP(6)),
+                                FIELD("timestamp6", TIMESTAMP(6)),
+                                FIELD("timestamp_ltz3", TIMESTAMP_LTZ(3)),
+                                FIELD("timestamp_ltz6", TIMESTAMP_LTZ(6)),
                                 FIELD("map", MAP(STRING(), BIGINT())),
                                 FIELD("map2map", MAP(STRING(), MAP(STRING(), INT()))),
                                 FIELD("map2array", MAP(STRING(), ARRAY(INT()))),
@@ -136,29 +141,32 @@ class AvroRowDataDeSerializationSchemaTest {
         record.put(12, 10087);
         record.put(13, 1589530213123L);
         record.put(14, 1589530213122123L);
+        Instant instant = LocalDateTime.of(2000, 12, 12, 23, 23, 23).toInstant(ZoneOffset.UTC);
+        record.put(15, instant.toEpochMilli());
+        record.put(16, instant.toEpochMilli() + (instant.getNano() / 1000) % 1000);
 
         Map<String, Long> map = new HashMap<>();
         map.put("flink", 12L);
         map.put("avro", 23L);
-        record.put(15, map);
+        record.put(17, map);
 
         Map<String, Map<String, Integer>> map2map = new HashMap<>();
         Map<String, Integer> innerMap = new HashMap<>();
         innerMap.put("inner_key1", 123);
         innerMap.put("inner_key2", 234);
         map2map.put("outer_key", innerMap);
-        record.put(16, map2map);
+        record.put(18, map2map);
 
         List<Integer> list1 = Arrays.asList(1, 2, 3, 4, 5, 6);
         List<Integer> list2 = Arrays.asList(11, 22, 33, 44, 55);
         Map<String, List<Integer>> map2list = new HashMap<>();
         map2list.put("list1", list1);
         map2list.put("list2", list2);
-        record.put(17, map2list);
+        record.put(19, map2list);
 
         Map<String, String> map2 = new HashMap<>();
         map2.put("key1", null);
-        record.put(18, map2);
+        record.put(20, map2);
 
         AvroRowDataSerializationSchema serializationSchema = createSerializationSchema(dataType);
         AvroRowDataDeserializationSchema deserializationSchema =
@@ -288,16 +296,10 @@ class AvroRowDataDeSerializationSchemaTest {
         assertThat(rowData2).isEqualTo(rowData);
         assertThat(rowData.getTimestamp(0, 3).toInstant()).isEqualTo(timestamp);
 
-        assertThat(
-                        DataFormatConverters.LocalDateConverter.INSTANCE
-                                .toExternal(rowData.getInt(1))
-                                .toString())
-                .isEqualTo("2014-03-01");
-        assertThat(
-                        DataFormatConverters.LocalTimeConverter.INSTANCE
-                                .toExternal(rowData.getInt(2))
-                                .toString())
-                .isEqualTo("12:12:12");
+        assertThat(DataFormatConverters.LocalDateConverter.INSTANCE.toExternal(rowData.getInt(1)))
+                .hasToString("2014-03-01");
+        assertThat(DataFormatConverters.LocalTimeConverter.INSTANCE.toExternal(rowData.getInt(2)))
+                .hasToString("12:12:12");
     }
 
     @Test

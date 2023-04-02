@@ -29,6 +29,7 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.DecimalType;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.TimeType;
@@ -45,6 +46,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoField;
 import java.util.HashMap;
 import java.util.List;
@@ -123,16 +125,20 @@ public class AvroToRowDataConverters {
                 int timePrecision = ((TimeType) type).getPrecision();
                 if (timePrecision <= 3) {
                     return AvroToRowDataConverters::convertToTime;
-                } else {
-                    return AvroToRowDataConverters::convertToTimeMicros;
                 }
+                return AvroToRowDataConverters::convertToTimeMicros;
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 int timestampPrecision = ((TimestampType) type).getPrecision();
                 if (timestampPrecision <= 3) {
                     return AvroToRowDataConverters::convertToTimestamp;
-                } else {
-                    return AvroToRowDataConverters::convertToTimestampMicros;
                 }
+                return AvroToRowDataConverters::convertToTimestampMicros;
+            case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                int timestampLtzPrecision = ((LocalZonedTimestampType) type).getPrecision();
+                if (timestampLtzPrecision <= 3) {
+                    return AvroToRowDataConverters::convertToTimestampLtz;
+                }
+                return AvroToRowDataConverters::convertToTimestampLtzMicros;
             case CHAR:
             case VARCHAR:
                 return avroObject -> StringData.fromString(avroObject.toString());
@@ -217,6 +223,42 @@ public class AvroToRowDataConverters {
             JodaConverter jodaConverter = JodaConverter.getConverter();
             if (jodaConverter != null) {
                 micros = jodaConverter.convertTimestamp(object) * 1000;
+            } else {
+                throw new IllegalArgumentException(
+                        "Unexpected object type for TIMESTAMP logical type. Received: " + object);
+            }
+        }
+        return TimestampData.fromEpochMillis(micros / 1000, (int) ((micros % 1000) * 1000));
+    }
+
+    private static TimestampData convertToTimestampLtz(Object object) {
+        final long millis;
+        if (object instanceof Long) {
+            millis = (Long) object;
+        } else if (object instanceof Instant) {
+            millis = ((Instant) object).atOffset(ZoneOffset.UTC).toInstant().toEpochMilli();
+        } else {
+            JodaConverter jodaConverter = JodaConverter.getConverter();
+            if (jodaConverter != null) {
+                millis = jodaConverter.convertTimestampLtz(object);
+            } else {
+                throw new IllegalArgumentException(
+                        "Unexpected object type for TIMESTAMP logical type. Received: " + object);
+            }
+        }
+        return TimestampData.fromEpochMillis(millis);
+    }
+
+    private static TimestampData convertToTimestampLtzMicros(Object object) {
+        final long micros;
+        if (object instanceof Long) {
+            micros = (Long) object;
+        } else if (object instanceof Instant) {
+            micros = ((Instant) object).atOffset(ZoneOffset.UTC).toInstant().toEpochMilli();
+        } else {
+            JodaConverter jodaConverter = JodaConverter.getConverter();
+            if (jodaConverter != null) {
+                micros = jodaConverter.convertTimestampLtz(object);
             } else {
                 throw new IllegalArgumentException(
                         "Unexpected object type for TIMESTAMP logical type. Received: " + object);
