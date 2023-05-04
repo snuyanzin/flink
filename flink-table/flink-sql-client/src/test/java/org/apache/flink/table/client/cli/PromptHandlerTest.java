@@ -18,7 +18,6 @@
 
 package org.apache.flink.table.client.cli;
 
-import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.table.client.config.SqlClientOptions;
@@ -36,13 +35,18 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.tuple.Pair.of;
+import static org.apache.flink.table.client.cli.PromptHandlerTest.TestSpec.forPromptPattern;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jline.utils.AttributedStyle.DEFAULT;
 import static org.jline.utils.AttributedStyle.RED;
@@ -52,33 +56,75 @@ import static org.junit.jupiter.params.provider.Arguments.of;
 class PromptHandlerTest {
     private static final String CURRENT_CATALOG = "current_catalog";
     private static final String CURRENT_DATABASE = "current_database";
+    private static final Map<String, SimpleDateFormat> FORMATTER_CACHE = new HashMap<>();
+
     private static final Terminal TERMINAL;
 
     static {
         try {
             TERMINAL = TerminalBuilder.terminal();
+            FORMATTER_CACHE.put("D", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.ROOT));
+            FORMATTER_CACHE.put("m", new SimpleDateFormat("mm", Locale.ROOT));
+            FORMATTER_CACHE.put("o", new SimpleDateFormat("MM", Locale.ROOT));
+            FORMATTER_CACHE.put("O", new SimpleDateFormat("MMM", Locale.ROOT));
+            FORMATTER_CACHE.put("P", new SimpleDateFormat("a", Locale.ROOT));
+            FORMATTER_CACHE.put("r", new SimpleDateFormat("hh:mm", Locale.ROOT));
+            FORMATTER_CACHE.put("R", new SimpleDateFormat("HH:mm", Locale.ROOT));
+            FORMATTER_CACHE.put("s", new SimpleDateFormat("ss", Locale.ROOT));
+            FORMATTER_CACHE.put("w", new SimpleDateFormat("d", Locale.ROOT));
+            FORMATTER_CACHE.put("W", new SimpleDateFormat("E", Locale.ROOT));
+            FORMATTER_CACHE.put("y", new SimpleDateFormat("yy", Locale.ROOT));
+            FORMATTER_CACHE.put("Y", new SimpleDateFormat("yyyy", Locale.ROOT));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("promptSupplier")
+    public void promptTest(TestSpec spec) {
+        Map<String, String> map = new HashMap<>();
+        map.put(SqlClientOptions.VERBOSE.key(), Boolean.FALSE.toString());
+        map.put(SqlClientOptions.PROMPT.key(), spec.promptPattern);
+        map.put("my_prop", "my_prop_value");
+        map.put("my_another_prop", "my_another_prop_value");
+        map.put("test", "my_prop_value");
+        PromptHandler dumbPromptHandler = getDumbPromptHandler(map);
+
+        SimpleDateFormat sdf;
+        if (spec.promptPattern.length() > 1
+                && (sdf = FORMATTER_CACHE.get(spec.promptPattern.substring(1))) != null) {
+            final Date start;
+            final Date parsed;
+            final Date end;
+            try {
+                start = sdf.parse(sdf.format(new Date()));
+                parsed = sdf.parse(dumbPromptHandler.getPrompt());
+                end = sdf.parse(sdf.format(new Date()));
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+            assertThat(parsed).isAfterOrEqualTo(start).isBeforeOrEqualTo(end);
+        } else {
+            assertThat(dumbPromptHandler.getPrompt()).isEqualTo(spec.expectedPromptValue);
+        }
+    }
+
     static Stream<Arguments> promptSupplier() {
         return Stream.of(
-                of(TestSpec.forPromptPattern(toAnsi("")).expectedPromptValue("")),
+                of(forPromptPattern(toAnsi("")).expectedPromptValue("")),
+                of(forPromptPattern(toAnsi("simple_prompt")).expectedPromptValue("simple_prompt")),
+                of(forPromptPattern(toAnsi("\\")).expectedPromptValue("")),
+                of(forPromptPattern(toAnsi("\\\\")).expectedPromptValue("\\")),
+                of(forPromptPattern(toAnsi("\\\\\\")).expectedPromptValue("\\")),
+                of(forPromptPattern(toAnsi("\\\\\\\\")).expectedPromptValue("\\\\")),
                 of(
-                        TestSpec.forPromptPattern(toAnsi("simple_prompt"))
-                                .expectedPromptValue("simple_prompt")),
-                of(TestSpec.forPromptPattern(toAnsi("\\")).expectedPromptValue("")),
-                of(TestSpec.forPromptPattern(toAnsi("\\\\")).expectedPromptValue("\\")),
-                of(TestSpec.forPromptPattern(toAnsi("\\\\\\")).expectedPromptValue("\\")),
-                of(TestSpec.forPromptPattern(toAnsi("\\\\\\\\")).expectedPromptValue("\\\\")),
-                of(
-                        TestSpec.forPromptPattern(toAnsi(of("", DEFAULT.foreground(RED).bold())))
+                        forPromptPattern(toAnsi(of("", DEFAULT.foreground(RED).bold())))
                                 .expectedPromptValue("")),
-                of(TestSpec.forPromptPattern(toAnsi("\\d")).expectedPromptValue(CURRENT_DATABASE)),
-                of(TestSpec.forPromptPattern(toAnsi("\\c")).expectedPromptValue(CURRENT_CATALOG)),
+                of(forPromptPattern(toAnsi("\\d")).expectedPromptValue(CURRENT_DATABASE)),
+                of(forPromptPattern(toAnsi("\\c")).expectedPromptValue(CURRENT_CATALOG)),
                 of(
-                        TestSpec.forPromptPattern(
+                        forPromptPattern(
                                         toAnsi(
                                                 of("\\", DEFAULT),
                                                 of(
@@ -93,13 +139,13 @@ class PromptHandlerTest {
                                                                 .underline())))),
                 // property value in prompt
                 of(
-                        TestSpec.forPromptPattern(toAnsi("\\:my_prop\\:>"))
+                        forPromptPattern(toAnsi("\\:my_prop\\:>"))
                                 .propertyKey("my_prop")
                                 .propertyValue("my_prop_value")
                                 .expectedPromptValue("my_prop_value>")),
                 // escaping of backslash \
                 of(
-                        TestSpec.forPromptPattern(
+                        forPromptPattern(
                                         toAnsi(
                                                 of(
                                                         "\\\\[b:y,italic\\]\\:test\\:\\[default\\]>",
@@ -108,148 +154,98 @@ class PromptHandlerTest {
                                 .propertyValue("my_prop_value")
                                 .expectedPromptValue("\\[b:y,italic]my_prop_value>")),
                 // not specified \X will be handled as X
-                of(TestSpec.forPromptPattern(toAnsi("\\X>")).expectedPromptValue("X>")),
+                of(forPromptPattern(toAnsi("\\X>")).expectedPromptValue("X>")),
                 // if any of patterns \[...\], \{...\}, \:...\: not closed it will be handled as \X
                 of(
-                        TestSpec.forPromptPattern(toAnsi("\\{ \\:my_another_prop\\:\\[default\\]>"))
+                        forPromptPattern(toAnsi("\\{ \\:my_another_prop\\:\\[default\\]>"))
                                 .propertyKey("my_another_prop")
                                 .propertyValue("my_another_prop_value")
                                 .expectedPromptValue("{ my_another_prop_value>")),
                 of(
-                        TestSpec.forPromptPattern(toAnsi("\\[default]\\:my_another_prop\\:>"))
+                        forPromptPattern(toAnsi("\\[default]\\:my_another_prop\\:>"))
                                 .propertyKey("my_another_prop")
                                 .propertyValue("my_another_prop_value")
-                                .expectedPromptValue("[default]my_another_prop_value>")));
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("promptSupplier")
-    public void promptTest(TestSpec spec) {
-        PromptHandler promptHandler =
-                new PromptHandler(
-                        new Executor() {
-
-                            @Override
-                            public void configureSession(String statement) {}
-
-                            @Override
-                            public ReadableConfig getSessionConfig() throws SqlExecutionException {
-                                Map<String, String> map = new HashMap<>();
-                                map.put(SqlClientOptions.VERBOSE.key(), Boolean.FALSE.toString());
-                                map.put(SqlClientOptions.PROMPT.key(), spec.promptPattern);
-                                map.put("my_prop", "my_prop_value");
-                                map.put("my_another_prop", "my_another_prop_value");
-                                map.put("test", "my_prop_value");
-                                return Configuration.fromMap(map);
-                            }
-
-                            @Override
-                            public StatementResult executeStatement(String statement) {
-                                return null;
-                            }
-
-                            @Override
-                            public List<String> completeStatement(String statement, int position) {
-                                return null;
-                            }
-
-                            @Override
-                            public String getCurrentCatalog() {
-                                return CURRENT_CATALOG;
-                            }
-
-                            @Override
-                            public String getCurrentDatabase() {
-                                return CURRENT_DATABASE;
-                            }
-
-                            @Override
-                            public void close() {}
-                        },
-                        () -> TERMINAL);
-
-        assertThat(promptHandler.getPrompt()).isEqualTo(spec.expectedPromptValue);
-    }
-
-    static Stream<Arguments> invalidPromptSupplier() {
-        return Stream.of(
-                of(
-                        TestSpec.forPromptPattern(toAnsi("\\d"))
-                                .expectedPromptValue(SqlClientOptions.PROMPT.defaultValue())),
-                of(
-                        TestSpec.forPromptPattern(toAnsi("\\c"))
-                                .expectedPromptValue(SqlClientOptions.PROMPT.defaultValue())));
+                                .expectedPromptValue("[default]my_another_prop_value>")),
+                // No need for expected value for date time since each time it could be different
+                of(forPromptPattern(toAnsi("\\D"))),
+                of(forPromptPattern(toAnsi("\\m"))),
+                of(forPromptPattern(toAnsi("\\o"))),
+                of(forPromptPattern(toAnsi("\\O"))),
+                of(forPromptPattern(toAnsi("\\P"))),
+                of(forPromptPattern(toAnsi("\\r"))),
+                of(forPromptPattern(toAnsi("\\R"))),
+                of(forPromptPattern(toAnsi("\\s"))),
+                of(forPromptPattern(toAnsi("\\w"))),
+                of(forPromptPattern(toAnsi("\\W"))),
+                of(forPromptPattern(toAnsi("\\y"))),
+                of(forPromptPattern(toAnsi("\\Y"))));
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidPromptSupplier")
     void promptTestForInvalidInput(TestSpec spec) {
-        try {
-            PromptHandler promptHandler =
-                    new PromptHandler(
-                            new Executor() {
-                                @Override
-                                public void configureSession(String statement) {}
+        PromptHandler promptHandler =
+                getDumbPromptHandler(
+                        Collections.singletonMap(
+                                SqlClientOptions.VERBOSE.key(), Boolean.FALSE.toString()));
+        assertThat(promptHandler.getPrompt())
+                .as(SqlClientOptions.PROMPT.defaultValue())
+                .isEqualTo(SqlClientOptions.PROMPT.defaultValue());
+    }
 
-                                @Override
-                                public StatementResult executeStatement(String statement) {
-                                    return null;
-                                }
+    static Stream<Arguments> invalidPromptSupplier() {
+        return Stream.of(
+                of(
+                        forPromptPattern(toAnsi("\\d"))
+                                .expectedPromptValue(SqlClientOptions.PROMPT.defaultValue())),
+                of(
+                        forPromptPattern(toAnsi("\\c"))
+                                .expectedPromptValue(SqlClientOptions.PROMPT.defaultValue())));
+    }
 
-                                @Override
-                                public String getCurrentCatalog() {
-                                    return CURRENT_CATALOG;
-                                }
+    private static PromptHandler getDumbPromptHandler(Map<String, String> map) {
+        return new PromptHandler(
+                new Executor() {
 
-                                @Override
-                                public String getCurrentDatabase() {
-                                    return CURRENT_DATABASE;
-                                }
+                    @Override
+                    public void configureSession(String statement) {}
 
-                                @Override
-                                public void close() {}
+                    @Override
+                    public ReadableConfig getSessionConfig() throws SqlExecutionException {
+                        return Configuration.fromMap(map);
+                    }
 
-                                @Override
-                                public ReadableConfig getSessionConfig()
-                                        throws SqlExecutionException {
-                                    return new ReadableConfig() {
-                                        @Override
-                                        public <T> T get(ConfigOption<T> option) {
-                                            if (SqlClientOptions.VERBOSE
-                                                    .key()
-                                                    .equals(option.key())) {
-                                                return (T) Boolean.FALSE;
-                                            }
-                                            return null;
-                                        }
+                    @Override
+                    public StatementResult executeStatement(String statement) {
+                        return null;
+                    }
 
-                                        @Override
-                                        public <T> Optional<T> getOptional(ConfigOption<T> option) {
-                                            throw new UnsupportedOperationException(
-                                                    "Not implemented.");
-                                        }
-                                    };
-                                }
+                    @Override
+                    public List<String> completeStatement(String statement, int position) {
+                        return null;
+                    }
 
-                                @Override
-                                public List<String> completeStatement(
-                                        String statement, int position) {
-                                    return null;
-                                }
-                            },
-                            () -> TERMINAL);
-            assertThat(promptHandler.getPrompt())
-                    .as(SqlClientOptions.PROMPT.defaultValue())
-                    .isEqualTo(SqlClientOptions.PROMPT.defaultValue());
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
+                    @Override
+                    public String getCurrentCatalog() {
+                        return CURRENT_CATALOG;
+                    }
+
+                    @Override
+                    public String getCurrentDatabase() {
+                        return CURRENT_DATABASE;
+                    }
+
+                    @Override
+                    public void close() {}
+                },
+                () -> TERMINAL);
     }
 
     // ------------------------------------------------------------------------------------------
 
     static class TestSpec {
         String expectedPromptValue;
+        boolean isDatePattern;
 
         final String promptPattern;
 
@@ -277,6 +273,11 @@ class PromptHandlerTest {
 
         TestSpec propertyValue(String propertyValue) {
             this.auxiliaryPropertyValue = propertyValue;
+            return this;
+        }
+
+        TestSpec setDatePattern(boolean datePattern) {
+            isDatePattern = datePattern;
             return this;
         }
 

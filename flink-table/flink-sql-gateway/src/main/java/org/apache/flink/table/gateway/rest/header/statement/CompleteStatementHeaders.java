@@ -19,7 +19,6 @@
 package org.apache.flink.table.gateway.rest.header.statement;
 
 import org.apache.flink.runtime.rest.HttpMethodWrapper;
-import org.apache.flink.runtime.rest.versioning.RestAPIVersion;
 import org.apache.flink.table.gateway.rest.header.SqlGatewayMessageHeaders;
 import org.apache.flink.table.gateway.rest.message.session.SessionHandleIdPathParameter;
 import org.apache.flink.table.gateway.rest.message.session.SessionMessageParameters;
@@ -28,9 +27,6 @@ import org.apache.flink.table.gateway.rest.message.statement.CompleteStatementRe
 import org.apache.flink.table.gateway.rest.util.SqlGatewayRestAPIVersion;
 
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpResponseStatus;
-
-import java.util.Collection;
-import java.util.Collections;
 
 /** Message headers for completing a statement. */
 public class CompleteStatementHeaders
@@ -80,8 +76,8 @@ public class CompleteStatementHeaders
     }
 
     @Override
-    public Collection<? extends RestAPIVersion<?>> getSupportedAPIVersions() {
-        return Collections.singleton(SqlGatewayRestAPIVersion.V2);
+    public SqlGatewayRestAPIVersion getFirstSupportedAPIVersion() {
+        return SqlGatewayRestAPIVersion.V2;
     }
 
     public static CompleteStatementHeaders getInstance() {

@@ -44,18 +44,18 @@ public class PromptHandler {
     private static final Map<String, SimpleDateFormat> FORMATTER_CACHE = new HashMap<>();
 
     static {
-        FORMATTER_CACHE.put("D", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
-        FORMATTER_CACHE.put("m", new SimpleDateFormat("mm"));
-        FORMATTER_CACHE.put("o", new SimpleDateFormat("MM"));
-        FORMATTER_CACHE.put("O", new SimpleDateFormat("MMM"));
-        FORMATTER_CACHE.put("P", new SimpleDateFormat("aa"));
-        FORMATTER_CACHE.put("r", new SimpleDateFormat("hh:mm"));
-        FORMATTER_CACHE.put("R", new SimpleDateFormat("HH:mm"));
-        FORMATTER_CACHE.put("s", new SimpleDateFormat("ss"));
-        FORMATTER_CACHE.put("w", new SimpleDateFormat("d"));
-        FORMATTER_CACHE.put("W", new SimpleDateFormat("E"));
-        FORMATTER_CACHE.put("y", new SimpleDateFormat("yy"));
-        FORMATTER_CACHE.put("Y", new SimpleDateFormat("yyyy"));
+        FORMATTER_CACHE.put("D", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.ROOT));
+        FORMATTER_CACHE.put("m", new SimpleDateFormat("mm", Locale.ROOT));
+        FORMATTER_CACHE.put("o", new SimpleDateFormat("MM", Locale.ROOT));
+        FORMATTER_CACHE.put("O", new SimpleDateFormat("MMM", Locale.ROOT));
+        FORMATTER_CACHE.put("P", new SimpleDateFormat("aa", Locale.ROOT));
+        FORMATTER_CACHE.put("r", new SimpleDateFormat("hh:mm", Locale.ROOT));
+        FORMATTER_CACHE.put("R", new SimpleDateFormat("HH:mm", Locale.ROOT));
+        FORMATTER_CACHE.put("s", new SimpleDateFormat("ss", Locale.ROOT));
+        FORMATTER_CACHE.put("w", new SimpleDateFormat("d", Locale.ROOT));
+        FORMATTER_CACHE.put("W", new SimpleDateFormat("E", Locale.ROOT));
+        FORMATTER_CACHE.put("y", new SimpleDateFormat("yy", Locale.ROOT));
+        FORMATTER_CACHE.put("Y", new SimpleDateFormat("yyyy", Locale.ROOT));
     }
 
     private static final StyleResolver STYLE_RESOLVER = new StyleResolver(s -> "");
@@ -138,8 +138,8 @@ public class PromptHandler {
                                     pattern.indexOf(ESCAPE_BACKSLASH + "}", i + 1);
                             if (dateTimeMaskCloseIndex > 0) {
                                 String mask = pattern.substring(i + 2, dateTimeMaskCloseIndex);
-                                FORMATTER_CACHE.putIfAbsent(
-                                        mask, new SimpleDateFormat(mask, Locale.ROOT));
+                                FORMATTER_CACHE.computeIfAbsent(
+                                        mask, v -> new SimpleDateFormat(mask, Locale.ROOT));
                                 promptStringBuilder.append(
                                         FORMATTER_CACHE.get(mask).format(new Date()));
                                 i = dateTimeMaskCloseIndex + 1;
