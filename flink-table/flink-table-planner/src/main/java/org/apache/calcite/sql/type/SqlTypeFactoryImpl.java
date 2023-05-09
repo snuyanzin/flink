@@ -32,14 +32,8 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Default implementation {@link SqlTypeFactoryImpl}, the class was copied over because of
- * FLINK-31350.
- *
- * <p>FLINK modifications are at lines
- *
- * <ol>
- *   <li>Should be removed after fix of FLINK-31350: Lines 541 ~ 553.
- * </ol>
+ * SqlTypeFactoryImpl provides a default implementation of {@link RelDataTypeFactory} which supports
+ * SQL types.
  */
 public class SqlTypeFactoryImpl extends RelDataTypeFactoryImpl {
     // ~ Constructors -----------------------------------------------------------
@@ -470,8 +464,10 @@ public class SqlTypeFactoryImpl extends RelDataTypeFactoryImpl {
                 // datetime +/- interval (or integer) = datetime
                 if (types.size() > (i + 1)) {
                     RelDataType type1 = types.get(i + 1);
-                    if (SqlTypeUtil.isInterval(type1) || SqlTypeUtil.isIntType(type1)) {
-                        resultType = type;
+                    final boolean isInterval1 = SqlTypeUtil.isInterval(type1);
+                    final boolean isInt1 = SqlTypeUtil.isIntType(type1);
+                    if (isInterval1 || isInt1) {
+                        resultType = leastRestrictiveIntervalDatetimeType(type, type1);
                         return createTypeWithNullability(
                                 resultType, nullCount > 0 || nullableCount > 0);
                     }
