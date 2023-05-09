@@ -2141,6 +2141,26 @@ public class SqlToRelConverter {
                     default:
                         break;
                 }
+                if (node instanceof SqlBasicCall
+                        && ((SqlCall) node).getOperator() instanceof SqlQuantifyOperator
+                        && ((SqlQuantifyOperator) ((SqlCall) node).getOperator())
+                                        .tryDeriveTypeForCollection(
+                                                bb.getValidator(), bb.scope(), (SqlCall) node)
+                                != null) {
+                    findSubQueries(
+                            bb,
+                            ((SqlCall) node).operand(0),
+                            logic,
+                            registerOnlyScalarSubQueries,
+                            clause);
+                    findSubQueries(
+                            bb,
+                            ((SqlCall) node).operand(1),
+                            logic,
+                            registerOnlyScalarSubQueries,
+                            clause);
+                    break;
+                }
                 bb.registerSubQuery(node, logic, clause);
                 break;
             default:
@@ -5496,7 +5516,11 @@ public class SqlToRelConverter {
                 case CURSOR:
                 case IN:
                 case NOT_IN:
-                    subQuery = requireNonNull(getSubQuery(expr, null));
+                    subQuery = getSubQuery(expr, null);
+                    if (subQuery == null && (kind == SqlKind.SOME || kind == SqlKind.ALL)) {
+                        break;
+                    }
+                    assert subQuery != null;
                     rex = requireNonNull(subQuery.expr);
                     return StandardConvertletTable.castToValidatedType(
                             expr, rex, validator(), rexBuilder, false);
