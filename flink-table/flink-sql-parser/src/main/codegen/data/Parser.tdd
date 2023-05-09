@@ -183,7 +183,6 @@
     "WATERMARK"
     "WATERMARKS"
     "TIMESTAMP_LTZ"
-    "TRY_CAST"
     "ANALYZE"
     "COMPUTE"
     "STATISTICS"
@@ -534,7 +533,6 @@
     "OVERWRITING"
     "PARTITIONED"
     "PARTITIONS"
-    "TRY_CAST"
     "VIRTUAL"
     "ANALYZE"
     "COMPUTE"
@@ -614,7 +612,6 @@
   # Return type of method implementation should be "SqlNode".
   # Example: DateFunctionCall().
   builtinFunctionCallMethods: [
-    "TryCastFunctionCall()"
   ]
 
   # List of methods for parsing extensions to "ALTER <scope>" calls.
