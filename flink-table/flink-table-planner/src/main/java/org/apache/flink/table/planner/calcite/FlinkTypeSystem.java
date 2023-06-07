@@ -22,6 +22,7 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeMerging;
 import org.apache.flink.util.function.QuadFunction;
@@ -86,6 +87,11 @@ public class FlinkTypeSystem extends RelDataTypeSystemImpl {
             case VARBINARY:
             case BINARY:
                 return Integer.MAX_VALUE;
+
+            case TIME:
+                // The maximum precision of TIME is 3 in Calcite,
+                // change it to 9 to support nanoseconds precision
+                return TimeType.MAX_PRECISION;
 
             case TIMESTAMP:
                 // The maximum precision of TIMESTAMP is 3 in Calcite,
