@@ -260,6 +260,9 @@ object BuiltInMethods {
   val TIMESTAMP_FROM_EPOCH_MILLIS =
     Types.lookupMethod(classOf[TimestampData], "fromEpochMillis", classOf[Long])
 
+  val TIMESTAMP_FROM_EPOCH_MILLIS_AND_NANOS =
+    Types.lookupMethod(classOf[TimestampData], "fromEpochMillis", classOf[Long], classOf[Int])
+
   val STRING_TO_DATE_WITH_FORMAT =
     Types.lookupMethod(classOf[DateTimeUtils], "parseDate", classOf[String], classOf[String])
 

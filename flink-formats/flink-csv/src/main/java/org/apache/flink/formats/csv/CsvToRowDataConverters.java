@@ -241,11 +241,11 @@ public class CsvToRowDataConverters implements Serializable {
         // TODO: FLINK-17525 support millisecond and nanosecond
         // get number of milliseconds of the day
         if (precision > 3) {
-            throw new IllegalArgumentException(
-                    "Csv does not support TIME type "
-                            + "with precision: "
-                            + precision
-                            + ", it only supports precision 0 ~ 3.");
+            return jsonNode -> {
+                LocalTime localTime = LocalTime.parse(jsonNode.asText());
+                return localTime.toNanoOfDay();
+                // this is for rounding off values out of precision
+            };
         }
         return jsonNode -> {
             LocalTime localTime = LocalTime.parse(jsonNode.asText());

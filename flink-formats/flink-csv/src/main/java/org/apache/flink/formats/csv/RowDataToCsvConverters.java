@@ -29,6 +29,7 @@ import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
@@ -155,7 +156,9 @@ public class RowDataToCsvConverters implements Serializable {
             case DATE:
                 return (csvMapper, container, row, pos) -> convertDate(row.getInt(pos), container);
             case TIME_WITHOUT_TIME_ZONE:
-                return (csvMapper, container, row, pos) -> convertTime(row.getInt(pos), container);
+                final int timePrecision = ((TimeType) fieldType).getPrecision();
+                return (csvMapper, container, row, pos) ->
+                        convertTime(row, pos, timePrecision, container);
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 final int timestampPrecision = ((TimestampType) fieldType).getPrecision();
                 return (csvMapper, container, row, pos) ->
@@ -300,6 +303,18 @@ public class RowDataToCsvConverters implements Serializable {
 
     private static JsonNode convertTime(int millisecond, ContainerNode<?> container) {
         LocalTime time = LocalTime.ofNanoOfDay(millisecond * 1000_000L);
+        return container.textNode(ISO_LOCAL_TIME.format(time));
+    }
+
+    private static JsonNode convertTime(
+            RowData rowData, int pos, int precision, ContainerNode<?> container) {
+        long nanos;
+        if (precision <= 3) {
+            nanos = rowData.getInt(pos) * 1000_000L;
+        } else {
+            nanos = rowData.getLong(pos);
+        }
+        LocalTime time = LocalTime.ofNanoOfDay(nanos);
         return container.textNode(ISO_LOCAL_TIME.format(time));
     }
 

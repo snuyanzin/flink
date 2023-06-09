@@ -33,6 +33,7 @@ import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.MapType;
 import org.apache.flink.table.types.logical.MultisetType;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.TimeType;
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
@@ -122,7 +123,7 @@ public class RowDataToJsonConverters implements Serializable {
             case DATE:
                 return createDateConverter();
             case TIME_WITHOUT_TIME_ZONE:
-                return createTimeConverter();
+                return createTimeConverter((TimeType) type);
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 return createTimestampConverter();
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
@@ -164,10 +165,18 @@ public class RowDataToJsonConverters implements Serializable {
         };
     }
 
-    private RowDataToJsonConverter createTimeConverter() {
+    private RowDataToJsonConverter createTimeConverter(TimeType type) {
+
+        if (type.getPrecision() > 3) {
+            return (mapper, reuse, value) -> {
+                long nanosecond = (long) value;
+                LocalTime time = LocalTime.ofNanoOfDay(nanosecond);
+                return mapper.getNodeFactory().textNode(SQL_TIME_FORMAT.format(time));
+            };
+        }
         return (mapper, reuse, value) -> {
             int millisecond = (int) value;
-            LocalTime time = LocalTime.ofSecondOfDay(millisecond / 1000L);
+            LocalTime time = LocalTime.ofNanoOfDay(millisecond * 1000_000L);
             return mapper.getNodeFactory().textNode(SQL_TIME_FORMAT.format(time));
         };
     }

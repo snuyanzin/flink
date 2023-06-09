@@ -110,6 +110,9 @@ public class CsvRowDataSerDeSchemaTest {
         testNullableField(ARRAY(STRING()), "a;b;c", new String[] {"a", "b", "c"});
         testNullableField(ARRAY(TINYINT()), "12;4;null", new Byte[] {12, 4, null});
         testNullableField(BYTES(), "awML", new byte[] {107, 3, 11});
+        testNullableField(TIME(6), "12:12:12.232456", LocalTime.parse("12:12:12.232456"));
+        testNullableField(TIME(5), "12:12:12.23245", LocalTime.parse("12:12:12.23245"));
+        testNullableField(TIME(4), "12:12:12.2324", LocalTime.parse("12:12:12.2324"));
         testNullableField(TIME(3), "12:12:12.232", LocalTime.parse("12:12:12.232"));
         testNullableField(TIME(2), "12:12:12.23", LocalTime.parse("12:12:12.23"));
         testNullableField(TIME(1), "12:12:12.2", LocalTime.parse("12:12:12.2"));
@@ -190,17 +193,12 @@ public class CsvRowDataSerDeSchemaTest {
                 TIME(0), "12:12:12", LocalTime.parse("12:12:12"), deserConfig, ";");
         testFieldDeserialization(
                 TIME(0), "12:12:12.45", LocalTime.parse("12:12:12"), deserConfig, ";");
-        int precision = 5;
-        assertThatThrownBy(
-                        () ->
-                                testFieldDeserialization(
-                                        TIME(precision),
-                                        "12:12:12.45",
-                                        LocalTime.parse("12:12:12"),
-                                        deserConfig,
-                                        ";"))
-                .hasMessage(
-                        "Csv does not support TIME type with precision: 5, it only supports precision 0 ~ 3.");
+        testFieldDeserialization(
+                TIME(5), "12:12:12.12345", LocalTime.parse("12:12:12.12345"), deserConfig, ";");
+        testFieldDeserialization(
+                TIME(6), "12:12:12.123456", LocalTime.parse("12:12:12.123456"), deserConfig, ";");
+        testFieldDeserialization(
+                TIME(4), "12:12:12.1234", LocalTime.parse("12:12:12.1234"), deserConfig, ";");
     }
 
     @Test

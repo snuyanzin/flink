@@ -36,6 +36,7 @@ import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.MapType;
 import org.apache.flink.table.types.logical.MultisetType;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
@@ -122,6 +123,9 @@ public class JsonToRowDataConverters implements Serializable {
             case DATE:
                 return this::convertToDate;
             case TIME_WITHOUT_TIME_ZONE:
+                if (((TimeType) type).getPrecision() > 3) {
+                    return this::convertToTimeWithNanos;
+                }
                 return this::convertToTime;
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 return this::convertToTimestamp;
@@ -210,11 +214,16 @@ public class JsonToRowDataConverters implements Serializable {
     }
 
     private int convertToTime(JsonNode jsonNode) {
+        // get number of milliseconds of the day
+        return (int) (convertToTimeWithNanos(jsonNode) / 1000_000);
+    }
+
+    private long convertToTimeWithNanos(JsonNode jsonNode) {
         TemporalAccessor parsedTime = SQL_TIME_FORMAT.parse(jsonNode.asText());
         LocalTime localTime = parsedTime.query(TemporalQueries.localTime());
 
         // get number of milliseconds of the day
-        return localTime.toSecondOfDay() * 1000;
+        return localTime.toNanoOfDay();
     }
 
     private TimestampData convertToTimestamp(JsonNode jsonNode) {

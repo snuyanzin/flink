@@ -52,7 +52,10 @@ class TimeToTimestampCastRule
             LogicalType targetLogicalType) {
 
         if (targetLogicalType.is(LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE)) {
-            return staticCall(BuiltInMethods.TIMESTAMP_FROM_EPOCH_MILLIS(), inputTerm);
+            return staticCall(
+                    BuiltInMethods.TIMESTAMP_FROM_EPOCH_MILLIS_AND_NANOS(),
+                    "(long)" + inputTerm + ".getMillisecond()",
+                    "(int) (" + inputTerm + ".getNanosecond() % 1000_000)");
         } else if (targetLogicalType.is(LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
             return staticCall(
                     BuiltInMethods.TIME_TO_TIMESTAMP_WITH_LOCAL_TIME_ZONE(),

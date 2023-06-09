@@ -370,10 +370,10 @@ public class AvroSchemaConverter {
             case TIME_WITHOUT_TIME_ZONE:
                 precision = ((TimeType) logicalType).getPrecision();
                 if (precision > 3) {
-                    throw new IllegalArgumentException(
-                            "Avro does not support TIME type with precision: "
-                                    + precision
-                                    + ", it only supports precision less than 3.");
+                    Schema time =
+                            LogicalTypes.timeMillis()
+                                    .addToSchema(SchemaBuilder.builder().longType());
+                    return nullable ? nullableSchema(time) : time;
                 }
                 // use int to represents Time, we only support millisecond when deserialization
                 Schema time =

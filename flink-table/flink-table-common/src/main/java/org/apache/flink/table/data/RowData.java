@@ -240,9 +240,16 @@ public interface RowData {
                 break;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
                 fieldGetter = row -> row.getInt(fieldPos);
+                break;
+            case TIME_WITHOUT_TIME_ZONE:
+                final int timePrecision = getPrecision(fieldType);
+                if (timePrecision > 3) {
+                    fieldGetter = row -> row.getLong(fieldPos);
+                } else {
+                    fieldGetter = row -> row.getInt(fieldPos);
+                }
                 break;
             case BIGINT:
             case INTERVAL_DAY_TIME:

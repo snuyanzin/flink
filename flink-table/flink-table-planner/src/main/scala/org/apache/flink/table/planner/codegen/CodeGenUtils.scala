@@ -115,6 +115,7 @@ object CodeGenUtils {
   val TIME_WINDOW_UTIL: String = className[TimeWindowUtil]
 
   val TIMESTAMP_DATA: String = className[TimestampData]
+  val TIME_DATA: String = className[TimeData]
 
   val RUNTIME_CONTEXT: String = className[RuntimeContext]
 
@@ -185,7 +186,7 @@ object CodeGenUtils {
     case BOOLEAN => "boolean"
     case TINYINT => "byte"
     case SMALLINT => "short"
-    case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH => "int"
+    case INTEGER | DATE | INTERVAL_YEAR_MONTH => "int"
     case BIGINT | INTERVAL_DAY_TIME => "long"
     case FLOAT => "float"
     case DOUBLE => "double"
@@ -222,6 +223,8 @@ object CodeGenUtils {
         EncodingUtils.escapeJava(sd.toString) + "\")"
     case td: TimestampData =>
       s"$TIMESTAMP_DATA.fromEpochMillis(${td.getMillisecond}L, ${td.getNanoOfMillisecond})"
+    // case t: TimeData =>
+    // s"$TIME_DATA.fromNanos(${t.getNanosecond}L)"
     case decimalData: DecimalData =>
       s"""$DECIMAL_UTIL.castFrom(
          |"${decimalData.toString}",
@@ -239,10 +242,16 @@ object CodeGenUtils {
     case DECIMAL => className[DecimalData]
     case TINYINT => className[JByte]
     case SMALLINT => className[JShort]
-    case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH => className[JInt]
+    case INTEGER | DATE | INTERVAL_YEAR_MONTH => className[JInt]
     case BIGINT | INTERVAL_DAY_TIME => className[JLong]
     case FLOAT => className[JFloat]
     case DOUBLE => className[JDouble]
+    case TIME_WITHOUT_TIME_ZONE =>
+      t match {
+        case timeType: TimeType if timeType.getPrecision <= 3 =>
+          className[JInt]
+        case _ => className[JLong]
+      }
     case TIMESTAMP_WITHOUT_TIME_ZONE | TIMESTAMP_WITH_LOCAL_TIME_ZONE => className[TimestampData]
     case TIMESTAMP_WITH_TIME_ZONE =>
       throw new UnsupportedOperationException("Unsupported type: " + t)
@@ -278,11 +287,15 @@ object CodeGenUtils {
     // ordered by type root definition
     case CHAR | VARCHAR => s"$BINARY_STRING.EMPTY_UTF8"
     case BOOLEAN => "false"
-    case TINYINT | SMALLINT | INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH => "-1"
+    case TINYINT | SMALLINT | INTEGER | DATE | INTERVAL_YEAR_MONTH => "-1"
     case BIGINT | INTERVAL_DAY_TIME => "-1L"
     case FLOAT => "-1.0f"
     case DOUBLE => "-1.0d"
-
+    case TIME_WITHOUT_TIME_ZONE =>
+      t match {
+        case timeType: TimeType if timeType.getPrecision > 3 => "-1L"
+        case _ => "-1";
+      }
     case DISTINCT_TYPE => primitiveDefaultValue(t.asInstanceOf[DistinctType].getSourceType)
 
     case _ => "null"
@@ -478,8 +491,12 @@ object CodeGenUtils {
         s"$rowTerm.getByte($indexTerm)"
       case SMALLINT =>
         s"$rowTerm.getShort($indexTerm)"
-      case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH =>
+      case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
         s"$rowTerm.getInt($indexTerm)"
+      case TIME_WITHOUT_TIME_ZONE =>
+        if (t.asInstanceOf[TimeType].getPrecision > 3) {
+          s"$rowTerm.getLong($indexTerm)"
+        } else s"$rowTerm.getInt($indexTerm)"
       case BIGINT | INTERVAL_DAY_TIME =>
         s"$rowTerm.getLong($indexTerm)"
       case FLOAT =>
@@ -654,7 +671,14 @@ object CodeGenUtils {
       s"$rowTerm.setByte($indexTerm, $fieldTerm)"
     case SMALLINT =>
       s"$rowTerm.setShort($indexTerm, $fieldTerm)"
-    case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH =>
+    case TIME_WITHOUT_TIME_ZONE =>
+      t match {
+        case timeType: TimeType if timeType.getPrecision <= 3 =>
+          s"$rowTerm.setInt($indexTerm, $fieldTerm)"
+        case _ =>
+          s"$rowTerm.setLong($indexTerm, $fieldTerm)"
+      }
+    case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
       s"$rowTerm.setInt($indexTerm, $fieldTerm)"
     case BIGINT | INTERVAL_DAY_TIME =>
       s"$rowTerm.setLong($indexTerm, $fieldTerm)"
@@ -684,7 +708,7 @@ object CodeGenUtils {
         s"$arrayTerm.setNullByte($index)"
       case SMALLINT =>
         s"$arrayTerm.setNullShort($index)"
-      case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH =>
+      case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
         s"$arrayTerm.setNullInt($index)"
       case FLOAT =>
         s"$arrayTerm.setNullFloat($index)"
@@ -762,7 +786,7 @@ object CodeGenUtils {
       s"$writerTerm.writeByte($indexTerm, $fieldValTerm)"
     case SMALLINT =>
       s"$writerTerm.writeShort($indexTerm, $fieldValTerm)"
-    case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH =>
+    case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
       s"$writerTerm.writeInt($indexTerm, $fieldValTerm)"
     case BIGINT | INTERVAL_DAY_TIME =>
       s"$writerTerm.writeLong($indexTerm, $fieldValTerm)"

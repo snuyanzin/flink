@@ -38,6 +38,7 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.TimeType;
 
 import org.apache.calcite.avatica.util.ByteString;
+import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
@@ -156,11 +157,25 @@ public class ExpressionConverter implements ExpressionVisitor<RexNode> {
                 // precisions
                 TimeType timeType = (TimeType) type;
                 int precision = timeType.getPrecision();
-                relDataType = typeFactory.createSqlType(SqlTypeName.TIME, Math.min(precision, 3));
-                value =
-                        TimeString.fromMillisOfDay(
-                                extractValue(valueLiteral, LocalTime.class)
-                                        .get(ChronoField.MILLI_OF_DAY));
+                if (precision <= 3) {
+                    relDataType =
+                            typeFactory.createSqlType(SqlTypeName.TIME, Math.min(precision, 3));
+                    value =
+                            TimeString.fromMillisOfDay(
+                                    extractValue(valueLiteral, LocalTime.class)
+                                            .get(ChronoField.MILLI_OF_DAY));
+                } else if (precision <= 6) {
+                    relDataType =
+                            typeFactory.createSqlType(SqlTypeName.TIME, Math.min(precision, 6));
+                    value =
+                            new TimeString(
+                                            DateTimeUtils.unixTimeToString(
+                                                    extractValue(valueLiteral, LocalTime.class)
+                                                            .get(ChronoField.MILLI_OF_DAY)))
+                                    .withNanos(
+                                            extractValue(valueLiteral, LocalTime.class)
+                                                    .get(ChronoField.NANO_OF_SECOND));
+                }
                 break;
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 LocalDateTime datetime = extractValue(valueLiteral, LocalDateTime.class);

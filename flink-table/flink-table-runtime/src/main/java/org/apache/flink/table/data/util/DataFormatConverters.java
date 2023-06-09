@@ -62,9 +62,9 @@ import org.apache.flink.table.types.logical.LegacyTypeInformationType;
 import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RawType;
+import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TypeInformationRawType;
-import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.table.utils.DateTimeUtils;
 import org.apache.flink.types.Row;
 
@@ -87,8 +87,6 @@ import java.time.LocalTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static org.apache.flink.table.runtime.types.TypeInfoDataTypeConverter.fromDataTypeToTypeInfo;
 import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.getFieldCount;
@@ -196,6 +194,23 @@ public class DataFormatConverters {
                     throw new RuntimeException(
                             "Not support conversion class for DECIMAL: " + clazz);
                 }
+            case TIME_WITHOUT_TIME_ZONE:
+                int precisionOfTime = ((TimeType) logicalType).getPrecision();
+                if (clazz == Time.class) {
+                    return new TimeConverter();
+                } else if (clazz == LocalTime.class) {
+                    if (precisionOfTime > 3) {
+                        return new LocalTimeWithNanosConverter();
+                    } else {
+                        return new LocalTimeConverter();
+                    }
+                } else if (clazz == TimestampData.class) {
+                    return new TimestampDataConverter(precisionOfTime);
+                } else {
+                    throw new RuntimeException(
+                            "Not support conversion class for TIMESTAMP WITHOUT TIME ZONE: "
+                                    + clazz);
+                }
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 int precisionOfTS = getDateTimePrecision(logicalType);
                 if (clazz == Timestamp.class) {
@@ -281,12 +296,8 @@ public class DataFormatConverters {
                 // legacy
 
                 CompositeType compositeType = (CompositeType) asTypeInfo;
-                DataType[] fieldTypes =
-                        Stream.iterate(0, x -> x + 1)
-                                .limit(compositeType.getArity())
-                                .map((Function<Integer, TypeInformation>) compositeType::getTypeAt)
-                                .map(TypeConversions::fromLegacyInfoToDataType)
-                                .toArray(DataType[]::new);
+
+                DataType[] fieldTypes = dataType.getChildren().toArray(new DataType[0]);
                 if (clazz == RowData.class) {
                     return new RowDataConverter(compositeType.getArity());
                 } else if (clazz == Row.class) {
@@ -774,6 +785,33 @@ public class DataFormatConverters {
         @Override
         LocalTime toExternalImpl(RowData row, int column) {
             return toExternalImpl(row.getInt(column));
+        }
+    }
+
+    /** LocalTimeWithNanosConverter. */
+    public static final class LocalTimeWithNanosConverter
+            extends DataFormatConverter<Long, LocalTime> {
+
+        private static final long serialVersionUID = 1L;
+
+        public static final LocalTimeWithNanosConverter INSTANCE =
+                new LocalTimeWithNanosConverter();
+
+        private LocalTimeWithNanosConverter() {}
+
+        @Override
+        Long toInternalImpl(LocalTime value) {
+            return DateTimeUtils.toNanosInternal(value);
+        }
+
+        @Override
+        LocalTime toExternalImpl(Long value) {
+            return DateTimeUtils.toLocalTime(value);
+        }
+
+        @Override
+        LocalTime toExternalImpl(RowData row, int column) {
+            return toExternalImpl(row.getLong(column));
         }
     }
 

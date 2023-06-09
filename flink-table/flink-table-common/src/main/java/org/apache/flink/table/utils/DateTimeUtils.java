@@ -281,11 +281,28 @@ public class DateTimeUtils {
         return LocalTime.of(h, m, s, ms * 1000_000);
     }
 
+    public static LocalTime toLocalTime(long time) {
+        int h = (int) (time / 3600_000_000_000L);
+        long time2 = time % 3600_000_000_000L;
+        int m = (int) (time2 / 60_000_000_000L);
+        long time3 = time2 % 60_000_000_000L;
+        int s = (int) (time3 / 1000_000_000L);
+        int ms = (int) (time3 % 1000_000_000L);
+        return LocalTime.of(h, m, s, ms);
+    }
+
     public static int toInternal(LocalTime time) {
         return time.getHour() * (int) MILLIS_PER_HOUR
                 + time.getMinute() * (int) MILLIS_PER_MINUTE
                 + time.getSecond() * (int) MILLIS_PER_SECOND
                 + time.getNano() / 1000_000;
+    }
+
+    public static long toNanosInternal(LocalTime time) {
+        return time.getHour() * MILLIS_PER_HOUR * 1000L * 1000L
+                + time.getMinute() * MILLIS_PER_MINUTE * 1000L * 1000L
+                + time.getSecond() * MILLIS_PER_SECOND * 1000L * 1000L
+                + time.getNano();
     }
 
     public static LocalDateTime toLocalDateTime(long timestamp) {

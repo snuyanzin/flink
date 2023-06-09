@@ -152,7 +152,23 @@ public class RexLiteralUtil {
                 break;
             case TIME_WITHOUT_TIME_ZONE:
                 if (value instanceof TimeString) {
-                    return ((TimeString) value).getMillisOfDay();
+                    TimeString value1 = (TimeString) value;
+                    String strValue = value1.toString();
+                    int indexOf = strValue.indexOf('.');
+                    int nano = 0;
+                    if (indexOf != -1 && indexOf < strValue.length() - 4) {
+                        StringBuilder nanoStr =
+                                new StringBuilder(
+                                        value1.toString()
+                                                .substring(value1.toString().indexOf('.') + 4));
+                        while (nanoStr.length() < 6) {
+                            nanoStr.append('0');
+                        }
+                        nano = Integer.parseInt(nanoStr.toString());
+                        return value1.getMillisOfDay() * 1000_000L + nano;
+                    }
+
+                    return value1.getMillisOfDay();
                 }
                 if (value instanceof Number) {
                     return ((Number) value).intValue();
