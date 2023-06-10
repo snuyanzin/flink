@@ -65,6 +65,7 @@ import org.apache.flink.table.types.logical.RawType;
 import org.apache.flink.table.types.logical.TimeType;
 import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TypeInformationRawType;
+import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.table.utils.DateTimeUtils;
 import org.apache.flink.types.Row;
 
@@ -87,6 +88,8 @@ import java.time.LocalTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.apache.flink.table.runtime.types.TypeInfoDataTypeConverter.fromDataTypeToTypeInfo;
 import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.getFieldCount;
@@ -135,11 +138,6 @@ public class DataFormatConverters {
         t2C.put(DataTypes.DATE().bridgedTo(LocalDate.class), LocalDateConverter.INSTANCE);
         t2C.put(DataTypes.DATE().bridgedTo(Integer.class), IntConverter.INSTANCE);
         t2C.put(DataTypes.DATE().bridgedTo(int.class), IntConverter.INSTANCE);
-
-        t2C.put(DataTypes.TIME().bridgedTo(Time.class), TimeConverter.INSTANCE);
-        t2C.put(DataTypes.TIME().bridgedTo(LocalTime.class), LocalTimeConverter.INSTANCE);
-        t2C.put(DataTypes.TIME().bridgedTo(Integer.class), IntConverter.INSTANCE);
-        t2C.put(DataTypes.TIME().bridgedTo(int.class), IntConverter.INSTANCE);
 
         t2C.put(
                 DataTypes.INTERVAL(DataTypes.MONTH()).bridgedTo(Integer.class),
@@ -292,16 +290,22 @@ public class DataFormatConverters {
                             ((InternalTypeInfo<?>) asTypeInfo).toLogicalType();
                     return new RowDataConverter(getFieldCount(realLogicalType));
                 }
+                if (clazz == Row.class) {
+                    return new RowConverter(dataType.getChildren().toArray(new DataType[0]));
+                }
 
                 // legacy
 
                 CompositeType compositeType = (CompositeType) asTypeInfo;
 
-                DataType[] fieldTypes = dataType.getChildren().toArray(new DataType[0]);
+                DataType[] fieldTypes =
+                        Stream.iterate(0, x -> x + 1)
+                                .limit(compositeType.getArity())
+                                .map((Function<Integer, TypeInformation>) compositeType::getTypeAt)
+                                .map(TypeConversions::fromLegacyInfoToDataType)
+                                .toArray(DataType[]::new);
                 if (clazz == RowData.class) {
                     return new RowDataConverter(compositeType.getArity());
-                } else if (clazz == Row.class) {
-                    return new RowConverter(fieldTypes);
                 } else if (Tuple.class.isAssignableFrom(clazz)) {
                     return new TupleConverter((Class<Tuple>) clazz, fieldTypes);
                 } else if (CaseClassConverter.PRODUCT_CLASS != null
