@@ -227,6 +227,9 @@ object BuiltInMethods {
 
   // SQL DATE TIME FUNCTIONS
 
+  val UNIX_TIME_WITH_NANOS_TO_STRING =
+    Types.lookupMethod(classOf[DateTimeUtils], "formatTimestampNanos", classOf[Long], classOf[Int])
+
   val UNIX_TIME_TO_STRING =
     Types.lookupMethod(classOf[DateTimeUtils], "formatTimestampMillis", classOf[Int], classOf[Int])
 
@@ -367,6 +370,12 @@ object BuiltInMethods {
     classOf[TimeZone])
 
   val TIME_TO_TIMESTAMP_WITH_LOCAL_TIME_ZONE = Types.lookupMethod(
+    classOf[DateTimeUtils],
+    "timeToTimestampWithLocalZone",
+    classOf[Int],
+    classOf[TimeZone])
+
+  val TIME_WITH_NANOS_TO_TIMESTAMP_WITH_LOCAL_TIME_ZONE = Types.lookupMethod(
     classOf[DateTimeUtils],
     "timeToTimestampWithLocalZone",
     classOf[Int],

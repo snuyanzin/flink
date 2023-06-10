@@ -788,30 +788,31 @@ public class CastFunctionITCase extends BuiltInFunctionTestBase {
                         .failValidation(DOUBLE(), DEFAULT_POSITIVE_DOUBLE)
                         //
                         .fromCase(DATE(), DEFAULT_DATE, LocalDateTime.of(2021, 9, 24, 0, 0, 0, 0))
-
                         // https://issues.apache.org/jira/browse/FLINK-17224 Fractional seconds are
                         // lost
                         // https://issues.apache.org/jira/browse/FLINK-24423 Continue using EPOCH
                         // date or use 0 for the year?
+                        .fromCase(TIME(), DEFAULT_TIME, LocalDateTime.of(1970, 1, 1, 12, 34, 56, 0))
+                        .fromCase(
+                                TIME(3),
+                                DEFAULT_TIME,
+                                LocalDateTime.of(1970, 1, 1, 12, 34, 56, 123000000))
                         .fromCase(
                                 TIME(5),
                                 DEFAULT_TIME,
-                                fromLocalToUTC(LocalDateTime.of(1970, 1, 1, 12, 34, 56, 0)))
+                                LocalDateTime.of(1970, 1, 1, 12, 34, 56, 123450000))
                         .fromCase(
                                 TIMESTAMP(),
                                 DEFAULT_TIMESTAMP,
-                                fromLocalToUTC(
-                                        LocalDateTime.of(2021, 9, 24, 12, 34, 56, 123456000)))
+                                LocalDateTime.of(2021, 9, 24, 12, 34, 56, 123456000))
                         .fromCase(
                                 TIMESTAMP(8),
                                 DEFAULT_TIMESTAMP,
-                                fromLocalToUTC(
-                                        LocalDateTime.of(2021, 9, 24, 12, 34, 56, 123456700)))
+                                LocalDateTime.of(2021, 9, 24, 12, 34, 56, 123456700))
                         .fromCase(
                                 TIMESTAMP(4),
                                 DEFAULT_TIMESTAMP,
-                                fromLocalToUTC(
-                                        LocalDateTime.of(2021, 9, 24, 12, 34, 56, 123400000)))
+                                LocalDateTime.of(2021, 9, 24, 12, 34, 56, 123400000))
 
                         // https://issues.apache.org/jira/browse/FLINK-20869
                         // TIMESTAMP_WITH_TIME_ZONE
@@ -871,20 +872,22 @@ public class CastFunctionITCase extends BuiltInFunctionTestBase {
                                 DATE(),
                                 DEFAULT_DATE,
                                 fromLocalToUTC(LocalDateTime.of(2021, 9, 24, 0, 0, 0, 0)))
-
                         // https://issues.apache.org/jira/browse/FLINK-17224 Fractional seconds are
                         // lost
                         // https://issues.apache.org/jira/browse/FLINK-24423 Continue using EPOCH
                         // date or use 0 for the year?
-                        .fromCase(TIME(), DEFAULT_TIME, LocalDateTime.of(1970, 1, 1, 12, 34, 56, 0))
+                        .fromCase(
+                                TIME(),
+                                DEFAULT_TIME,
+                                fromLocalToUTC(LocalDateTime.of(1970, 1, 1, 12, 34, 56, 0)))
                         .fromCase(
                                 TIME(3),
                                 DEFAULT_TIME,
-                                LocalDateTime.of(1970, 1, 1, 12, 34, 56, 123))
+                                fromLocalToUTC(LocalDateTime.of(1970, 1, 1, 12, 34, 56, 123000000)))
                         .fromCase(
                                 TIME(6),
                                 DEFAULT_TIME,
-                                LocalDateTime.of(1970, 1, 1, 12, 34, 56, 123456000))
+                                fromLocalToUTC(LocalDateTime.of(1970, 1, 1, 12, 34, 56, 123456000)))
                         .fromCase(
                                 TIMESTAMP(),
                                 DEFAULT_TIMESTAMP,
@@ -900,7 +903,6 @@ public class CastFunctionITCase extends BuiltInFunctionTestBase {
                                 DEFAULT_TIMESTAMP,
                                 fromLocalToUTC(
                                         LocalDateTime.of(2021, 9, 24, 12, 34, 56, 123400000)))
-
                         // https://issues.apache.org/jira/browse/FLINK-20869
                         // TIMESTAMP_WITH_TIME_ZONE
 
@@ -1052,7 +1054,8 @@ public class CastFunctionITCase extends BuiltInFunctionTestBase {
                         // seconds are lost
                         .fromCase(TIME(1), DEFAULT_TIME, "12:34:56.1")
                         .fromCase(TIME(2), DEFAULT_TIME, "12:34:56.12")
-                        .fromCase(TIME(5), DEFAULT_TIME, "12:34:56.123")
+                        .fromCase(TIME(5), DEFAULT_TIME, "12:34:56.123450000")
+                        .fromCase(TIME(6), DEFAULT_TIME, "12:34:56.123456000")
                         .fromCase(TIMESTAMP(), DEFAULT_TIMESTAMP, "2021-09-24 12:34:56.123456")
                         .fromCase(TIMESTAMP(9), DEFAULT_TIMESTAMP, "2021-09-24 12:34:56.123456700")
                         .fromCase(TIMESTAMP(4), DEFAULT_TIMESTAMP, "2021-09-24 12:34:56.1234")

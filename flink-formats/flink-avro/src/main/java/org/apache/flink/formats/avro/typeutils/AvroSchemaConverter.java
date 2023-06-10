@@ -369,9 +369,9 @@ public class AvroSchemaConverter {
                 return nullable ? nullableSchema(date) : date;
             case TIME_WITHOUT_TIME_ZONE:
                 precision = ((TimeType) logicalType).getPrecision();
-                if (precision > 3) {
+                if (precision > 3 && precision < 7) {
                     Schema time =
-                            LogicalTypes.timeMillis()
+                            LogicalTypes.timeMicros()
                                     .addToSchema(SchemaBuilder.builder().longType());
                     return nullable ? nullableSchema(time) : time;
                 }

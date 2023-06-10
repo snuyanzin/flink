@@ -24,6 +24,7 @@ import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 
 import static org.apache.flink.table.planner.codegen.calls.BuiltInMethods.UNIX_TIME_TO_STRING;
+import static org.apache.flink.table.planner.codegen.calls.BuiltInMethods.UNIX_TIME_WITH_NANOS_TO_STRING;
 import static org.apache.flink.table.types.logical.VarCharType.STRING_TYPE;
 
 /**
@@ -48,7 +49,10 @@ class TimeToStringCastRule extends AbstractCharacterFamilyTargetRule<Long> {
             String inputTerm,
             LogicalType inputLogicalType,
             LogicalType targetLogicalType) {
-        return CastRuleUtils.staticCall(
-                UNIX_TIME_TO_STRING(), inputTerm, LogicalTypeChecks.getPrecision(inputLogicalType));
+        int precision = LogicalTypeChecks.getPrecision(inputLogicalType);
+        if (precision > 3) {
+            return CastRuleUtils.staticCall(UNIX_TIME_WITH_NANOS_TO_STRING(), inputTerm, precision);
+        }
+        return CastRuleUtils.staticCall(UNIX_TIME_TO_STRING(), inputTerm, precision);
     }
 }

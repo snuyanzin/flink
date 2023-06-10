@@ -152,11 +152,11 @@ class AvroSchemaConverterTest {
                                         Column.physical("b", DataTypes.TIME(6)))
                                 .toSourceRowDataType()
                                 .getLogicalType();
-
-        assertThatThrownBy(() -> AvroSchemaConverter.convertToSchema(rowType))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage(
-                        "Avro does not support TIME type with precision: 6, it only supports precision less than 3.");
+        AvroSchemaConverter.convertToSchema(rowType);
+        /*assertThatThrownBy(() -> AvroSchemaConverter.convertToSchema(rowType))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+                "Avro does not support TIME type with precision: 6, it only supports precision less than 3.");*/
     }
 
     @Test
@@ -258,6 +258,7 @@ class AvroSchemaConverterTest {
                         DataTypes.FIELD("f_timestamp", DataTypes.TIMESTAMP(3)),
                         DataTypes.FIELD("f_date", DataTypes.DATE()),
                         DataTypes.FIELD("f_time", DataTypes.TIME(3)),
+                        DataTypes.FIELD("f_time6", DataTypes.TIME(6)),
                         DataTypes.FIELD("f_decimal", DataTypes.DECIMAL(10, 0)),
                         DataTypes.FIELD(
                                 "f_row",
@@ -293,6 +294,7 @@ class AvroSchemaConverterTest {
                                 DataTypes.FIELD("f_timestamp", DataTypes.TIMESTAMP(3).notNull()),
                                 DataTypes.FIELD("f_date", DataTypes.DATE().notNull()),
                                 DataTypes.FIELD("f_time", DataTypes.TIME(3).notNull()),
+                                DataTypes.FIELD("f_time6", DataTypes.TIME(6).notNull()),
                                 DataTypes.FIELD("f_decimal", DataTypes.DECIMAL(10, 0).notNull()),
                                 DataTypes.FIELD(
                                         "f_row",

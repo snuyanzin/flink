@@ -190,6 +190,12 @@ object CodeGenUtils {
     case BIGINT | INTERVAL_DAY_TIME => "long"
     case FLOAT => "float"
     case DOUBLE => "double"
+    case TIME_WITHOUT_TIME_ZONE =>
+      t match {
+        case timeType: TimeType if timeType.getPrecision <= 3 =>
+          "int"
+        case _ => "long"
+      }
     case DISTINCT_TYPE => primitiveTypeTermForType(t.asInstanceOf[DistinctType].getSourceType)
     case _ => boxedTypeTermForType(t)
   }
@@ -710,6 +716,12 @@ object CodeGenUtils {
         s"$arrayTerm.setNullShort($index)"
       case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
         s"$arrayTerm.setNullInt($index)"
+      case TIME_WITHOUT_TIME_ZONE =>
+        if (LogicalTypeChecks.getPrecision(t) > 3) {
+          s"$arrayTerm.setNullLong($index)"
+        } else {
+          s"$arrayTerm.setNullInt($index)"
+        }
       case FLOAT =>
         s"$arrayTerm.setNullFloat($index)"
       case DOUBLE =>
@@ -788,6 +800,12 @@ object CodeGenUtils {
       s"$writerTerm.writeShort($indexTerm, $fieldValTerm)"
     case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
       s"$writerTerm.writeInt($indexTerm, $fieldValTerm)"
+    case TIME_WITHOUT_TIME_ZONE =>
+      if (LogicalTypeChecks.getPrecision(t) > 3) {
+        s"$writerTerm.writeLong($indexTerm, $fieldValTerm)"
+      } else {
+        s"$writerTerm.writeInt($indexTerm, $fieldValTerm)"
+      }
     case BIGINT | INTERVAL_DAY_TIME =>
       s"$writerTerm.writeLong($indexTerm, $fieldValTerm)"
     case FLOAT =>

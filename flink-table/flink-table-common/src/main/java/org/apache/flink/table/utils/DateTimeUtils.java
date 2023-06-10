@@ -317,6 +317,18 @@ public class DateTimeUtils {
         return LocalDateTime.of(localDate, localTime);
     }
 
+    public static LocalDateTime toLocalDateTimeFromNanos(long timestampWithNanos) {
+        int date = (int) (timestampWithNanos / MILLIS_PER_DAY / 1000_000L);
+        long time = timestampWithNanos % (MILLIS_PER_DAY * 1000_000L);
+        if (time < 0) {
+            --date;
+            time += MILLIS_PER_DAY * 1000_000L;
+        }
+        LocalDate localDate = toLocalDate(date);
+        LocalTime localTime = toLocalTime(time);
+        return LocalDateTime.of(localDate, localTime);
+    }
+
     public static long toTimestampMillis(LocalDateTime dateTime) {
         return unixTimestamp(
                 dateTime.getYear(),
@@ -779,6 +791,12 @@ public class DateTimeUtils {
 
     public static String formatTimestampString(String dateStr, String toFormat) {
         return formatTimestampString(dateStr, toFormat, UTC_ZONE);
+    }
+
+    public static String formatTimestampNanos(long time, int precision) {
+        final StringBuilder buf = new StringBuilder(8 + (precision > 0 ? precision + 1 : 0));
+        formatTimestampMillis(buf, (int) (time / 1000_000), precision);
+        return buf.append(time % 1000_000).toString();
     }
 
     public static String formatTimestampMillis(int time, int precision) {
@@ -1501,6 +1519,11 @@ public class DateTimeUtils {
 
     public static TimestampData timeToTimestampWithLocalZone(int time, TimeZone tz) {
         return TimestampData.fromInstant(toLocalDateTime(time).atZone(tz.toZoneId()).toInstant());
+    }
+
+    public static TimestampData timeToTimestampWithLocalZone(long time, TimeZone tz) {
+        return TimestampData.fromInstant(
+                toLocalDateTimeFromNanos(time).atZone(tz.toZoneId()).toInstant());
     }
 
     private static boolean isInteger(String s) {

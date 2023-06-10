@@ -22,6 +22,7 @@ import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.planner.codegen.calls.BuiltInMethods;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
+import org.apache.flink.table.types.logical.TimeType;
 
 import static org.apache.flink.table.planner.functions.casting.CastRuleUtils.staticCall;
 
@@ -52,11 +53,20 @@ class TimeToTimestampCastRule
             LogicalType targetLogicalType) {
 
         if (targetLogicalType.is(LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE)) {
-            return staticCall(
-                    BuiltInMethods.TIMESTAMP_FROM_EPOCH_MILLIS_AND_NANOS(),
-                    "(long)" + inputTerm + ".getMillisecond()",
-                    "(int) (" + inputTerm + ".getNanosecond() % 1000_000)");
+            if (((TimeType) inputLogicalType).getPrecision() > 3) {
+                return staticCall(
+                        BuiltInMethods.TIMESTAMP_FROM_EPOCH_MILLIS_AND_NANOS(),
+                        inputTerm + " / 1000_000L",
+                        "(int) (" + inputTerm + " % 1000_000)");
+            }
+            return staticCall(BuiltInMethods.TIMESTAMP_FROM_EPOCH_MILLIS(), inputTerm);
         } else if (targetLogicalType.is(LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
+            if (((TimeType) inputLogicalType).getPrecision() > 3) {
+                return staticCall(
+                        BuiltInMethods.TIME_WITH_NANOS_TO_TIMESTAMP_WITH_LOCAL_TIME_ZONE(),
+                        inputTerm,
+                        context.getSessionTimeZoneTerm());
+            }
             return staticCall(
                     BuiltInMethods.TIME_TO_TIMESTAMP_WITH_LOCAL_TIME_ZONE(),
                     inputTerm,
