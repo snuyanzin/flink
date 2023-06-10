@@ -54,10 +54,7 @@ class TimeToTimestampCastRule
 
         if (targetLogicalType.is(LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE)) {
             if (((TimeType) inputLogicalType).getPrecision() > 3) {
-                return staticCall(
-                        BuiltInMethods.TIMESTAMP_FROM_EPOCH_MILLIS_AND_NANOS(),
-                        inputTerm + " / 1000_000L",
-                        "(int) (" + inputTerm + " % 1000_000)");
+                return staticCall(BuiltInMethods.TIMESTAMP_FROM_EPOCH_NANOS(), inputTerm);
             }
             return staticCall(BuiltInMethods.TIMESTAMP_FROM_EPOCH_MILLIS(), inputTerm);
         } else if (targetLogicalType.is(LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {

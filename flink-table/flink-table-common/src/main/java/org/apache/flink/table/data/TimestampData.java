@@ -157,6 +157,10 @@ public final class TimestampData implements Comparable<TimestampData> {
         return new TimestampData(milliseconds, nanosOfMillisecond);
     }
 
+    public static TimestampData fromEpochNanos(long nanoseconds) {
+        return new TimestampData(nanoseconds / 1000_000, (int) (nanoseconds % 1000_000L));
+    }
+
     /**
      * Creates an instance of {@link TimestampData} from an instance of {@link LocalDateTime}.
      *
