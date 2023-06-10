@@ -113,7 +113,7 @@ public class RowDataToAvroConverters {
             case INTERVAL_DAY_TIME: // long
             case FLOAT: // float
             case DOUBLE: // double
-            case TIME_WITHOUT_TIME_ZONE: // int
+            case TIME_WITHOUT_TIME_ZONE: // int, long
             case DATE: // int
                 converter =
                         new RowDataToAvroConverter() {
