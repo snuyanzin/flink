@@ -36,6 +36,7 @@ import org.apache.flink.table.data.columnar.ColumnarArrayData;
 import org.apache.flink.table.data.writer.BinaryArrayWriter;
 import org.apache.flink.table.data.writer.BinaryWriter;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 import org.apache.flink.util.InstantiationUtil;
 
@@ -148,7 +149,11 @@ public class ArrayDataSerializer extends TypeSerializer<ArrayData> {
                     return new GenericArrayData(from.toShortArray());
                 case INTEGER:
                 case DATE:
+                    return new GenericArrayData(from.toIntArray());
                 case TIME_WITHOUT_TIME_ZONE:
+                    if (LogicalTypeChecks.getPrecision(eleType) > 3) {
+                        return new GenericArrayData(from.toLongArray());
+                    }
                     return new GenericArrayData(from.toIntArray());
                 case BIGINT:
                     return new GenericArrayData(from.toLongArray());

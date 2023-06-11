@@ -23,6 +23,7 @@ import org.apache.flink.table.data.binary.BinaryArrayData;
 import org.apache.flink.table.data.binary.BinarySegmentUtils;
 import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 
 import java.io.Serializable;
 
@@ -127,9 +128,15 @@ public final class BinaryArrayWriter extends AbstractBinaryWriter {
                 break;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
                 setNullInt(pos);
+                break;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(type) > 3) {
+                    setNullLong(pos);
+                } else {
+                    setNullInt(pos);
+                }
                 break;
             case BIGINT:
             case TIMESTAMP_WITHOUT_TIME_ZONE:
@@ -254,8 +261,12 @@ public final class BinaryArrayWriter extends AbstractBinaryWriter {
                 return BinaryArrayWriter::setNullShort;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
+                return BinaryArrayWriter::setNullInt;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(elementType) > 3) {
+                    return BinaryArrayWriter::setNullLong;
+                }
                 return BinaryArrayWriter::setNullInt;
             case FLOAT:
                 return BinaryArrayWriter::setNullFloat;

@@ -38,6 +38,7 @@ import org.apache.flink.table.types.logical.MultisetType;
 import org.apache.flink.table.types.logical.RawType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.TypeInformationRawType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 
 import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.getPrecision;
 import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.getScale;
@@ -81,8 +82,12 @@ public final class InternalSerializers {
                 return ShortSerializer.INSTANCE;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
+                return IntSerializer.INSTANCE;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(type) > 3) {
+                    return LongSerializer.INSTANCE;
+                }
                 return IntSerializer.INSTANCE;
             case BIGINT:
             case INTERVAL_DAY_TIME:

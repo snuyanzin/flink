@@ -137,9 +137,9 @@ public class ExpressionConverterTest {
                                 LocalTime.parse("12:12:12.12345"), DataTypes.TIME(5).notNull()));
         // TODO planner supports up to TIME(3)
         assertThat(((RexLiteral) rex).getValueAs(TimeString.class))
-                .isEqualTo(new TimeString("12:12:12.123"));
+                .isEqualTo(new TimeString("12:12:12.12345"));
         assertThat(rex.getType().getSqlTypeName()).isEqualTo(SqlTypeName.TIME);
-        assertThat(rex.getType().getPrecision()).isEqualTo(3);
+        assertThat(rex.getType().getPrecision()).isEqualTo(5);
     }
 
     @Test

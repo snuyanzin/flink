@@ -36,6 +36,7 @@ import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.TimestampType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 
 import java.io.Serializable;
 
@@ -113,9 +114,15 @@ public interface BinaryWriter {
                 break;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
                 writer.writeInt(pos, (int) o);
+                break;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(type) > 3) {
+                    writer.writeLong(pos, (long) o);
+                } else {
+                    writer.writeInt(pos, (int) o);
+                }
                 break;
             case BIGINT:
             case INTERVAL_DAY_TIME:
@@ -193,8 +200,12 @@ public interface BinaryWriter {
                 return (writer, pos, value) -> writer.writeShort(pos, (short) value);
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
+                return (writer, pos, value) -> writer.writeInt(pos, (int) value);
+            case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(elementType) > 3) {
+                    return (writer, pos, value) -> writer.writeLong(pos, (long) value);
+                }
                 return (writer, pos, value) -> writer.writeInt(pos, (int) value);
             case BIGINT:
             case INTERVAL_DAY_TIME:

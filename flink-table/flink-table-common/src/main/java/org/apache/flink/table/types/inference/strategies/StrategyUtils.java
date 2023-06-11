@@ -170,7 +170,7 @@ final class StrategyUtils {
                 if (actualType.is(TIMESTAMP_WITHOUT_TIME_ZONE)) {
                     return DataTypes.TIME(getPrecision(actualType));
                 }
-                return DataTypes.TIME();
+                return DataTypes.TIME(getPrecision(actualType));
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 return DataTypes.TIMESTAMP();
             case TIMESTAMP_WITH_TIME_ZONE:

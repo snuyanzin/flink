@@ -30,6 +30,7 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 
 import java.lang.reflect.Array;
@@ -102,8 +103,12 @@ public final class BinaryArrayData extends BinarySection implements ArrayData, T
             case INTEGER:
             case FLOAT:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
+                return 4;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(type) > 3) {
+                    return 8;
+                }
                 return 4;
             case DISTINCT_TYPE:
                 return calculateFixLengthPartSize(((DistinctType) type).getSourceType());
