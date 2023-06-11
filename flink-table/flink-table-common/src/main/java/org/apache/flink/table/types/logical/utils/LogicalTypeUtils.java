@@ -77,8 +77,12 @@ public final class LogicalTypeUtils {
                 return Short.class;
             case INTEGER:
             case DATE:
-            case TIME_WITHOUT_TIME_ZONE:
             case INTERVAL_YEAR_MONTH:
+                return Integer.class;
+            case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(type) > 3) {
+                    return Long.class;
+                }
                 return Integer.class;
             case BIGINT:
             case INTERVAL_DAY_TIME:

@@ -323,8 +323,14 @@ object CodeGenUtils {
         s"${className[JByte]}.hashCode($term)"
       case SMALLINT =>
         s"${className[JShort]}.hashCode($term)"
-      case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH =>
+      case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
         s"${className[JInt]}.hashCode($term)"
+      case TIME_WITHOUT_TIME_ZONE =>
+        if (LogicalTypeChecks.getPrecision(t) > 3) {
+          s"${className[JLong]}.hashCode($term)"
+        } else {
+          s"${className[JInt]}.hashCode($term)"
+        }
       case BIGINT | INTERVAL_DAY_TIME => s"${className[JLong]}.hashCode($term)"
       case FLOAT => s"${className[JFloat]}.hashCode($term)"
       case DOUBLE => s"${className[JDouble]}.hashCode($term)"
@@ -641,8 +647,14 @@ object CodeGenUtils {
       s"$binaryRowTerm.setByte($index, $fieldValTerm)"
     case SMALLINT =>
       s"$binaryRowTerm.setShort($index, $fieldValTerm)"
-    case INTEGER | DATE | TIME_WITHOUT_TIME_ZONE | INTERVAL_YEAR_MONTH =>
+    case INTEGER | DATE | INTERVAL_YEAR_MONTH =>
       s"$binaryRowTerm.setInt($index, $fieldValTerm)"
+    case TIME_WITHOUT_TIME_ZONE =>
+      if (LogicalTypeChecks.getPrecision(t) > 3) {
+        s"$binaryRowTerm.setLong($index, $fieldValTerm)"
+      } else {
+        s"$binaryRowTerm.setInt($index, $fieldValTerm)"
+      }
     case BIGINT | INTERVAL_DAY_TIME =>
       s"$binaryRowTerm.setLong($index, $fieldValTerm)"
     case FLOAT =>

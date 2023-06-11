@@ -533,7 +533,7 @@ class CastRulesTest {
                         .fromCase(
                                 TIME(5),
                                 TIME,
-                                timestampDataFromLocalDateTime(1970, 1, 1, 12, 34, 56, 123_000_000))
+                                timestampDataFromLocalDateTime(1970, 1, 1, 12, 34, 56, 123_450_000))
                         .fromCase(
                                 TIMESTAMP_LTZ(8),
                                 TIMESTAMP_LTZ,
@@ -610,7 +610,7 @@ class CastRulesTest {
                         .fromCase(
                                 TIME(5),
                                 TIME,
-                                timestampDataFromInstant(1970, 1, 1, 13, 34, 56, 123_000_000))
+                                timestampDataFromInstant(1970, 1, 1, 13, 34, 56, 123_450_000))
                         .fromCase(
                                 TIMESTAMP(6),
                                 TIMESTAMP,
