@@ -33,6 +33,7 @@ import org.apache.flink.table.runtime.arrow.vectors.ArrowIntColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowRowColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowSmallIntColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowTimeColumnVector;
+import org.apache.flink.table.runtime.arrow.vectors.ArrowTimeWithNanosColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowTimestampColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowTinyIntColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowVarBinaryColumnVector;
@@ -215,7 +216,7 @@ class ArrowUtilsTest {
                         new TimeType(4),
                         new ArrowType.Time(TimeUnit.MICROSECOND, 64),
                         TimeWriter.TimeWriterForRow.class,
-                        ArrowTimeColumnVector.class));
+                        ArrowTimeWithNanosColumnVector.class));
 
         testFields.add(
                 Tuple5.of(
@@ -223,7 +224,7 @@ class ArrowUtilsTest {
                         new TimeType(8),
                         new ArrowType.Time(TimeUnit.NANOSECOND, 64),
                         TimeWriter.TimeWriterForRow.class,
-                        ArrowTimeColumnVector.class));
+                        ArrowTimeWithNanosColumnVector.class));
 
         testFields.add(
                 Tuple5.of(

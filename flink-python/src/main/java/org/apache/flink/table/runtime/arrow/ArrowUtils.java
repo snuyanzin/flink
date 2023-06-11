@@ -47,6 +47,7 @@ import org.apache.flink.table.runtime.arrow.vectors.ArrowNullColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowRowColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowSmallIntColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowTimeColumnVector;
+import org.apache.flink.table.runtime.arrow.vectors.ArrowTimeWithNanosColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowTimestampColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowTinyIntColumnVector;
 import org.apache.flink.table.runtime.arrow.vectors.ArrowVarBinaryColumnVector;
@@ -93,6 +94,7 @@ import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TinyIntType;
 import org.apache.flink.table.types.logical.VarBinaryType;
 import org.apache.flink.table.types.logical.VarCharType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeDefaultVisitor;
 import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.types.Row;
@@ -439,6 +441,9 @@ public final class ArrowUtils {
                 || vector instanceof TimeMilliVector
                 || vector instanceof TimeMicroVector
                 || vector instanceof TimeNanoVector) {
+            if (LogicalTypeChecks.getPrecision(fieldType) > 3) {
+                return new ArrowTimeWithNanosColumnVector(vector);
+            }
             return new ArrowTimeColumnVector(vector);
         } else if (vector instanceof TimeStampVector
                 && ((ArrowType.Timestamp) vector.getField().getType()).getTimezone() == null) {

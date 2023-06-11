@@ -57,6 +57,8 @@ public abstract class TimeWriter<T> extends ArrowFieldWriter<T> {
 
     abstract int readTime(T in, int ordinal);
 
+    abstract long readTimeNanos(T in, int ordinal);
+
     @Override
     public void doWrite(T in, int ordinal) {
         ValueVector valueVector = getValueVector();
@@ -67,9 +69,9 @@ public abstract class TimeWriter<T> extends ArrowFieldWriter<T> {
         } else if (valueVector instanceof TimeMilliVector) {
             ((TimeMilliVector) valueVector).setSafe(getCount(), readTime(in, ordinal));
         } else if (valueVector instanceof TimeMicroVector) {
-            ((TimeMicroVector) valueVector).setSafe(getCount(), readTime(in, ordinal) * 1000L);
+            ((TimeMicroVector) valueVector).setSafe(getCount(), readTimeNanos(in, ordinal) / 1000L);
         } else {
-            ((TimeNanoVector) valueVector).setSafe(getCount(), readTime(in, ordinal) * 1000000L);
+            ((TimeNanoVector) valueVector).setSafe(getCount(), readTimeNanos(in, ordinal));
         }
     }
 
@@ -91,6 +93,11 @@ public abstract class TimeWriter<T> extends ArrowFieldWriter<T> {
         int readTime(RowData in, int ordinal) {
             return in.getInt(ordinal);
         }
+
+        @Override
+        long readTimeNanos(RowData in, int ordinal) {
+            return in.getLong(ordinal);
+        }
     }
 
     /** {@link TimeWriter} for {@link ArrayData} input. */
@@ -108,6 +115,11 @@ public abstract class TimeWriter<T> extends ArrowFieldWriter<T> {
         @Override
         int readTime(ArrayData in, int ordinal) {
             return in.getInt(ordinal);
+        }
+
+        @Override
+        long readTimeNanos(ArrayData in, int ordinal) {
+            return in.getLong(ordinal);
         }
     }
 }
