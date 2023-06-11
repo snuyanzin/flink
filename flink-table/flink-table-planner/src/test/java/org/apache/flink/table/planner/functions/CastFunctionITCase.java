@@ -1054,8 +1054,8 @@ public class CastFunctionITCase extends BuiltInFunctionTestBase {
                         // seconds are lost
                         .fromCase(TIME(1), DEFAULT_TIME, "12:34:56.1")
                         .fromCase(TIME(2), DEFAULT_TIME, "12:34:56.12")
-                        .fromCase(TIME(5), DEFAULT_TIME, "12:34:56.123450000")
-                        .fromCase(TIME(6), DEFAULT_TIME, "12:34:56.123456000")
+                        .fromCase(TIME(5), DEFAULT_TIME, "12:34:56.12345")
+                        .fromCase(TIME(6), DEFAULT_TIME, "12:34:56.123456")
                         .fromCase(TIMESTAMP(), DEFAULT_TIMESTAMP, "2021-09-24 12:34:56.123456")
                         .fromCase(TIMESTAMP(9), DEFAULT_TIMESTAMP, "2021-09-24 12:34:56.123456700")
                         .fromCase(TIMESTAMP(4), DEFAULT_TIMESTAMP, "2021-09-24 12:34:56.1234")
