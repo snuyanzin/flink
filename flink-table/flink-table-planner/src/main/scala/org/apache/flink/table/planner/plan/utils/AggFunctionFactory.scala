@@ -412,7 +412,7 @@ class AggFunctionFactory(
         case DATE =>
           new MaxAggFunction.DateMaxAggFunction
         case TIME_WITHOUT_TIME_ZONE =>
-          new MaxAggFunction.TimeMaxAggFunction
+          new MaxAggFunction.TimeMaxAggFunction(argTypes(0).asInstanceOf[TimeType])
         case TIMESTAMP_WITHOUT_TIME_ZONE =>
           val d = argTypes(0).asInstanceOf[TimestampType]
           new MaxAggFunction.TimestampMaxAggFunction(d)

@@ -1623,6 +1623,35 @@ public class DateTimeUtils {
         }
     }
 
+    public static Number truncate(int time, int precision) {
+        String fraction = Integer.toString(time);
+        if (fraction.length() <= precision) {
+            return precision > 3 ? time * 1000_000L : time;
+        } else {
+            // need to truncate
+            while (precision > 0) {
+                time /= 10;
+                precision--;
+            }
+            return time;
+        }
+    }
+
+    public static Number truncate(long time, int precision) {
+        String fraction = Long.toString(time);
+        boolean isLong = precision > 3;
+        if (fraction.length() <= precision) {
+            return isLong ? time : (int) (time / 1000_000);
+        } else {
+            // need to truncate
+            while (precision > 0) {
+                time /= 10;
+                precision--;
+            }
+            return isLong ? time : (int) (time / 1000_000);
+        }
+    }
+
     private static long zeroLastDigits(long l, int n) {
         long tenToTheN = (long) Math.pow(10, n);
         return (l / tenToTheN) * tenToTheN;

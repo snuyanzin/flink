@@ -603,6 +603,19 @@ public class BinaryStringDataUtil {
         return date;
     }
 
+    public static long toTimeNanos(BinaryStringData input) throws DateTimeException {
+        Integer date = DateTimeUtils.parseTime(input.toString());
+        if (date == null) {
+            throw new DateTimeException("For input string: '" + input + "'.");
+        }
+        int indexOf = input.toString().indexOf(".");
+        long res = date * 1000_000L;
+        if (indexOf != -1 && input.toString().length() - indexOf > 3) {
+            res += Integer.parseInt(input.toString().substring(indexOf + 4));
+        }
+        return res;
+    }
+
     /** Used by {@code CAST(x as TIMESTAMP)}. */
     public static TimestampData toTimestamp(BinaryStringData input, int precision)
             throws DateTimeException {

@@ -469,6 +469,12 @@ object BuiltInMethods {
   val TRUNCATE_SQL_TIMESTAMP =
     Types.lookupMethod(classOf[DateTimeUtils], "truncate", classOf[TimestampData], classOf[Int])
 
+  val TRUNCATE_SQL_TIME =
+    Types.lookupMethod(classOf[DateTimeUtils], "truncate", classOf[Int], classOf[Int])
+
+  val TRUNCATE_SQL_TIME_WITH_NANOS =
+    Types.lookupMethod(classOf[DateTimeUtils], "truncate", classOf[Long], classOf[Int])
+
   val ADD_MONTHS =
     Types.lookupMethod(classOf[DateTimeUtils], "addMonths", classOf[Long], classOf[Int])
 
@@ -554,6 +560,9 @@ object BuiltInMethods {
 
   val STRING_DATA_TO_TIME =
     Types.lookupMethod(classOf[BinaryStringDataUtil], "toTime", classOf[BinaryStringData])
+
+  val STRING_DATA_TO_TIME_NANOS =
+    Types.lookupMethod(classOf[BinaryStringDataUtil], "toTimeNanos", classOf[BinaryStringData])
 
   val STRING_DATA_TO_TIMESTAMP = Types.lookupMethod(
     classOf[BinaryStringDataUtil],

@@ -108,7 +108,7 @@ public class KafkaTableITCase extends KafkaTableTestBase {
                                 + "  price decimal(38, 18),\n"
                                 + "  currency string,\n"
                                 + "  log_date date,\n"
-                                + "  log_time time(3),\n"
+                                + "  log_time time(6),\n"
                                 + "  log_ts timestamp(3),\n"
                                 + "  ts as log_ts + INTERVAL '1' SECOND,\n"
                                 + "  watermark for ts as ts\n"
@@ -131,13 +131,13 @@ public class KafkaTableITCase extends KafkaTableTestBase {
         String initialValues =
                 "INSERT INTO kafka\n"
                         + "SELECT CAST(price AS DECIMAL(10, 2)), currency, "
-                        + " CAST(d AS DATE), CAST(t AS TIME(0)), CAST(ts AS TIMESTAMP(3))\n"
-                        + "FROM (VALUES (2.02,'Euro','2019-12-12', '00:00:01', '2019-12-12 00:00:01.001001'), \n"
-                        + "  (1.11,'US Dollar','2019-12-12', '00:00:02', '2019-12-12 00:00:02.002001'), \n"
-                        + "  (50,'Yen','2019-12-12', '00:00:03', '2019-12-12 00:00:03.004001'), \n"
-                        + "  (3.1,'Euro','2019-12-12', '00:00:04', '2019-12-12 00:00:04.005001'), \n"
-                        + "  (5.33,'US Dollar','2019-12-12', '00:00:05', '2019-12-12 00:00:05.006001'), \n"
-                        + "  (0,'DUMMY','2019-12-12', '00:00:10', '2019-12-12 00:00:10'))\n"
+                        + " CAST(d AS DATE), CAST(t AS TIME(6)), CAST(ts AS TIMESTAMP(3))\n"
+                        + "FROM (VALUES (2.02,'Euro','2019-12-12', '00:00:01.123456', '2019-12-12 00:00:01.001001'), \n"
+                        + "  (1.11,'US Dollar','2019-12-12', '00:00:02.123456', '2019-12-12 00:00:02.002001'), \n"
+                        + "  (50,'Yen','2019-12-12', '00:00:03.123456', '2019-12-12 00:00:03.004001'), \n"
+                        + "  (3.1,'Euro','2019-12-12', '00:00:04.123456', '2019-12-12 00:00:04.005001'), \n"
+                        + "  (5.33,'US Dollar','2019-12-12', '00:00:05.123456', '2019-12-12 00:00:05.006001'), \n"
+                        + "  (0,'DUMMY','2019-12-12', '00:00:10.123456', '2019-12-12 00:00:10'))\n"
                         + "  AS orders (price, currency, d, t, ts)";
         tEnv.executeSql(initialValues).await();
 
@@ -171,8 +171,8 @@ public class KafkaTableITCase extends KafkaTableTestBase {
 
         List<String> expected =
                 Arrays.asList(
-                        "+I(2019-12-12 00:00:05.000,2019-12-12,00:00:03,2019-12-12 00:00:04.004,3,50.00)",
-                        "+I(2019-12-12 00:00:10.000,2019-12-12,00:00:05,2019-12-12 00:00:06.006,2,5.33)");
+                        "+I(2019-12-12 00:00:05.000,2019-12-12,00:00:03.123456,2019-12-12 00:00:04.004,3,50.00)",
+                        "+I(2019-12-12 00:00:10.000,2019-12-12,00:00:05.123456,2019-12-12 00:00:06.006,2,5.33)");
 
         assertThat(TestingSinkFunction.rows).isEqualTo(expected);
 

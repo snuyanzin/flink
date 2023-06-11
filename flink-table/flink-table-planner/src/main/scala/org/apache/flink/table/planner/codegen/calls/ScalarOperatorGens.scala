@@ -572,9 +572,11 @@ object ScalarOperatorGens {
           }
       }
       // both sides are numeric
-      else if (isNumeric(left.resultType) && isNumeric(right.resultType)) {
-        (leftTerm, rightTerm) => s"$leftTerm $operator $rightTerm"
-      }
+      else if (
+        isNumeric(left.resultType) && isNumeric(right.resultType)
+        || isTime(left.resultType) &&
+        isTime(right.resultType)
+      ) { (leftTerm, rightTerm) => s"$leftTerm $operator $rightTerm" }
 
       // both sides are timestamp
       else if (isTimestamp(left.resultType) && isTimestamp(right.resultType)) {
