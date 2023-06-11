@@ -127,9 +127,10 @@ class CastRulesTest {
     private static final double DEFAULT_NEGATIVE_DOUBLE = -123.456789d;
 
     private static final int DATE = DateTimeUtils.toInternal(LocalDate.parse("2021-09-24"));
-    private static final int TIME = DateTimeUtils.toInternal(LocalTime.parse("12:34:56.12345"));
+    private static final long TIME =
+            DateTimeUtils.toNanosInternal(LocalTime.parse("12:34:56.12345"));
     private static final StringData DATE_STRING = fromString("2021-09-24");
-    private static final StringData TIME_STRING = fromString("12:34:56.123");
+    private static final StringData TIME_STRING = fromString("12:34:56.12345");
 
     private static final TimestampData TIMESTAMP =
             TimestampData.fromLocalDateTime(LocalDateTime.parse("2021-09-24T12:34:56.123456"));
@@ -825,7 +826,7 @@ class CastRulesTest {
                                                     fromString("b"),
                                                     fromString("c")
                                                 })),
-                                fromString("(a=10, b=NULL, c=12:34:56.123, d=[a, b, c])"))
+                                fromString("(a=10, b=NULL, c=12:34:56.12345, d=[a, b, c])"))
                         .fromCase(
                                 MY_STRUCTURED_TYPE_WITHOUT_IMPLEMENTATION_CLASS,
                                 GenericRowData.of(
@@ -838,7 +839,7 @@ class CastRulesTest {
                                                     fromString("b"),
                                                     fromString("c")
                                                 })),
-                                fromString("(a=10, b=NULL, c=12:34:56.123, d=[a, b, c])")),
+                                fromString("(a=10, b=NULL, c=12:34:56.12345, d=[a, b, c])")),
                 CastTestSpecBuilder.testCastTo(CHAR(6))
                         .fromCase(STRING(), null, EMPTY_UTF8)
                         .fromCaseLegacy(STRING(), null, EMPTY_UTF8)

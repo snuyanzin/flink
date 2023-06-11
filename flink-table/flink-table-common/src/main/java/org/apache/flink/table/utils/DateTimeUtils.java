@@ -796,7 +796,7 @@ public class DateTimeUtils {
     public static String formatTimestampNanos(long time, int precision) {
         final StringBuilder buf = new StringBuilder(8 + (precision > 0 ? precision + 1 : 0));
         formatTimestampMillis(buf, (int) (time / 1000_000), precision);
-        return buf.append(time % 1000_000).toString();
+        return buf.append(String.valueOf(time % 1000_000), 0, precision - 3).toString();
     }
 
     public static String formatTimestampMillis(int time, int precision) {
