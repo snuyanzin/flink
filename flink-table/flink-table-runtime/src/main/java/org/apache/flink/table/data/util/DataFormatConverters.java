@@ -209,6 +209,10 @@ public class DataFormatConverters {
                             "Not support conversion class for TIMESTAMP WITHOUT TIME ZONE: "
                                     + clazz);
                 }
+            case INTERVAL_DAY_TIME:
+                return LongConverter.INSTANCE;
+            case INTERVAL_YEAR_MONTH:
+                return IntConverter.INSTANCE;
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 int precisionOfTS = getDateTimePrecision(logicalType);
                 if (clazz == Timestamp.class) {
