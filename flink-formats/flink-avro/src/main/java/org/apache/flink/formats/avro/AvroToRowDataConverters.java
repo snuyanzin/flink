@@ -31,6 +31,7 @@ import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 
 import org.apache.avro.generic.GenericFixed;
@@ -118,6 +119,9 @@ public class AvroToRowDataConverters {
             case DATE:
                 return AvroToRowDataConverters::convertToDate;
             case TIME_WITHOUT_TIME_ZONE:
+                if (LogicalTypeChecks.getPrecision(type) > 3) {
+                    return AvroToRowDataConverters::convertToTimeNanos;
+                }
                 return AvroToRowDataConverters::convertToTime;
             case TIMESTAMP_WITHOUT_TIME_ZONE:
                 return AvroToRowDataConverters::convertToTimestamp;
@@ -227,6 +231,24 @@ public class AvroToRowDataConverters {
                         "Unexpected object type for DATE logical type. Received: " + object);
             }
         }
+    }
+
+    private static long convertToTimeNanos(Object object) {
+        final long nanos;
+        if (object instanceof Long) {
+            nanos = (Long) object;
+        } else if (object instanceof LocalTime) {
+            nanos = ((LocalTime) object).get(ChronoField.NANO_OF_DAY);
+        } else {
+            JodaConverter jodaConverter = JodaConverter.getConverter();
+            if (jodaConverter != null) {
+                nanos = jodaConverter.convertTime(object);
+            } else {
+                throw new IllegalArgumentException(
+                        "Unexpected object type for TIME logical type. Received: " + object);
+            }
+        }
+        return nanos;
     }
 
     private static int convertToTime(Object object) {
