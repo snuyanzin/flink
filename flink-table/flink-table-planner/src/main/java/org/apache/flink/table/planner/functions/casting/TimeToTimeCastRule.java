@@ -25,9 +25,7 @@ import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 
 import static org.apache.flink.table.planner.functions.casting.CastRuleUtils.staticCall;
 
-/**
- * TimeToTimeCastRule.
- */
+/** TimeToTimeCastRule. */
 class TimeToTimeCastRule extends AbstractExpressionCodeGeneratorCastRule<Number, Number> {
 
     static final TimeToTimeCastRule INSTANCE = new TimeToTimeCastRule();
