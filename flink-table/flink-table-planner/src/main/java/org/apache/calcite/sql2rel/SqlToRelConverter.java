@@ -3225,12 +3225,12 @@ public class SqlToRelConverter {
                 prevNs = foundNs;
             } else {
                 assert prevNs == foundNs
-                        : "All correlation variables should resolve"
-                                + " to the same namespace."
-                                + " Prev ns="
-                                + prevNs
-                                + ", new ns="
-                                + foundNs;
+                : "All correlation variables should resolve"
+                        + " to the same namespace."
+                        + " Prev ns="
+                        + prevNs
+                        + ", new ns="
+                        + foundNs;
             }
 
             int namespaceOffset = 0;

@@ -19,20 +19,18 @@ package org.apache.flink.table.planner.runtime.stream.sql
 
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.{CloseableIterator, DataStream, StreamExecutionEnvironment}
-import org.apache.flink.table.api.{DataTypes, Table, TableResult}
+import org.apache.flink.table.api.{DataTypes, Schema, Table, TableDescriptor, TableResult}
 import org.apache.flink.table.api.bridge.scala._
 import org.apache.flink.table.catalog.{Column, ResolvedSchema}
 import org.apache.flink.table.planner.runtime.stream.sql.DataStreamScalaITCase.{ComplexCaseClass, ImmutableCaseClass}
 import org.apache.flink.test.util.AbstractTestBase
 import org.apache.flink.types.Row
 import org.apache.flink.util.CollectionUtil
-
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.{Before, Test}
 import org.junit.Assert.{assertEquals, assertThat}
 
 import java.util
-
 import scala.collection.JavaConverters._
 
 /** Tests for connecting to the Scala [[DataStream]] API. */
@@ -92,6 +90,58 @@ class DataStreamScalaITCase extends AbstractTestBase {
 
     // Table to DataStream implicit
     assertEquals(List(Row.of(Int.box(42), "hello")), table.executeAndCollect().toList)
+  }
+
+  @Test
+  def testIllegalArgumentForListAgg13(): Unit = {
+    val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
+    val tableEnv = StreamTableEnvironment.create(env)
+
+    val accountsTd = TableDescriptor
+      .forConnector("datagen")
+      .option("rows-per-second", "10")
+      .option("number-of-rows", "10")
+      .schema(
+        Schema
+          .newBuilder()
+          .column("account_num", DataTypes.VARCHAR(2147483647))
+          .column("acc_name", DataTypes.VARCHAR(2147483647))
+          .column("acc_phone_num", DataTypes.VARCHAR(2147483647))
+          .build())
+      .build()
+
+    val accountsTable = tableEnv.from(accountsTd)
+
+    tableEnv.createTemporaryView("accounts", accountsTable)
+
+    val transactionsTd = TableDescriptor
+      .forConnector("datagen")
+      .option("rows-per-second", "10")
+      .option("number-of-rows", "10")
+      .schema(
+        Schema
+          .newBuilder()
+          .column("account_num", DataTypes.VARCHAR(2147483647))
+          .column("transaction_place", DataTypes.VARCHAR(2147483647))
+          .column("transaction_time", DataTypes.BIGINT())
+          .column("amount", DataTypes.INT())
+          .build())
+      .build()
+
+    val transactionsTable = tableEnv.from(transactionsTd)
+
+    tableEnv.createTemporaryView("transaction_data", transactionsTable)
+
+    val newTable = tableEnv.sqlQuery(
+      "select   acc.account_num, " +
+        "(select count(*) from transaction_data " +
+        "where transaction_place = trans.transaction_place " +
+        ")  " +
+        "from  accounts acc,transaction_data trans")
+
+    tableEnv.toChangelogStream(newTable).print()
+
+    env.execute()
   }
 
   // --------------------------------------------------------------------------------------------
