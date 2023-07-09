@@ -193,16 +193,7 @@ class LookupJoinTest(legacyTableSource: Boolean) extends TableTestBase {
 
   @Test
   def testLogicalPlanWithImplicitTypeCast(): Unit = {
-    val programs = FlinkBatchProgram.buildProgram(testUtil.tableEnv.getConfig)
-    programs.remove(FlinkBatchProgram.PHYSICAL)
-    testUtil.replaceBatchProgram(programs)
-
-    thrown.expect(classOf[TableException])
-    thrown.expectMessage(
-      "implicit type conversion between VARCHAR(2147483647) and INTEGER " +
-        "is not supported on join's condition now")
-
-    testUtil.verifyRelPlan(
+    testUtil.verifyExecPlan(
       "SELECT * FROM MyTable AS T JOIN LookupTable "
         + "FOR SYSTEM_TIME AS OF T.proctime AS D ON T.b = D.id")
   }

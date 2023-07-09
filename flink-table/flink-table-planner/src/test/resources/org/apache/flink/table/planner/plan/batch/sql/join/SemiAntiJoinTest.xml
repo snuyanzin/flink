@@ -1942,9 +1942,9 @@ HashJoin(joinType=[LeftSemiJoin], where=[(a = d)], select=[a, b, c], build=[righ
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2], d=[$3], e=[$4], f=[$5])
 +- LogicalFilter(condition=[AND(=($0, $3), NOT(EXISTS({
-LogicalFilter(condition=[AND(=($cor0.b, $1), >(CAST($2):BIGINT, 50))])
+LogicalFilter(condition=[AND(=($cor0.b, $1), >(CAST($2):INTEGER, 50))])
   LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
-})), >=(CAST($2):BIGINT, 1), NOT(EXISTS({
+})), >=(CAST($2):INTEGER, 1), NOT(EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), <($1, 100))])
   LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
 })))], variablesSet=[[$cor0]])
@@ -1961,12 +1961,12 @@ HashJoin(joinType=[LeftAntiJoin], where=[(a = i)], select=[a, b, c, d, e, f], bu
 :     :- Exchange(distribution=[hash[b]])
 :     :  +- HashJoin(joinType=[InnerJoin], where=[(a = d)], select=[a, b, c, d, e, f], build=[left])
 :     :     :- Exchange(distribution=[hash[a]])
-:     :     :  +- Calc(select=[a, b, c], where=[(CAST(c AS BIGINT) >= 1)])
+:     :     :  +- Calc(select=[a, b, c], where=[(CAST(c AS INTEGER) >= 1)])
 :     :     :     +- LegacyTableSourceScan(table=[[default_catalog, default_database, l, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
 :     :     +- Exchange(distribution=[hash[d]])
 :     :        +- LegacyTableSourceScan(table=[[default_catalog, default_database, r, source: [TestTableSource(d, e, f)]]], fields=[d, e, f])
 :     +- Exchange(distribution=[hash[j]])
-:        +- Calc(select=[j], where=[(CAST(k AS BIGINT) > 50)])
+:        +- Calc(select=[j], where=[(CAST(k AS INTEGER) > 50)])
 :           +- LegacyTableSourceScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]], fields=[i, j, k])(reuse_id=[1])
 +- Exchange(distribution=[hash[i]])
    +- Calc(select=[i], where=[(j < 100)])

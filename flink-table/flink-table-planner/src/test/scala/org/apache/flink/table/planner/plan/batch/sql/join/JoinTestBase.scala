@@ -60,7 +60,7 @@ abstract class JoinTestBase extends TableTestBase {
     util.verifyExecPlan("SELECT d, e, f FROM MyTable1 LEFT JOIN MyTable2 ON a = d where d = null")
   }
 
-  @Test(expected = classOf[TableException])
+  @Test
   def testJoinNonMatchingKeyTypes(): Unit = {
     // INTEGER and VARCHAR(65536) does not have common type now
     util.verifyExecPlan("SELECT c, g FROM MyTable1, MyTable2 WHERE a = g")

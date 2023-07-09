@@ -251,14 +251,14 @@ WHERE rk < a and b > 5
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], rk=[$2])
-+- LogicalFilter(condition=[AND(<($2, $0), >(CAST($1):BIGINT, 5))])
++- LogicalFilter(condition=[AND(<($2, $0), >(CAST($1):INTEGER, 5))])
    +- LogicalProject(a=[$0], b=[$1], rk=[RANK() OVER (PARTITION BY $1 ORDER BY $2 NULLS FIRST)])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]])
 ]]>
     </Resource>
     <Resource name="optimized rel plan">
       <![CDATA[
-FlinkLogicalCalc(select=[a, b, w0$o0], where=[>(CAST(b AS BIGINT), 5)])
+FlinkLogicalCalc(select=[a, b, w0$o0], where=[>(CAST(b AS INTEGER), 5)])
 +- FlinkLogicalRank(rankType=[RANK], rankRange=[rankEnd=a], partitionBy=[b], orderBy=[c ASC], select=[a, b, c, w0$o0])
    +- FlinkLogicalLegacyTableSourceScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
 ]]>
@@ -275,15 +275,15 @@ WHERE rk = b
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], rk=[$2])
-+- LogicalFilter(condition=[=($2, $1)])
++- LogicalFilter(condition=[=($2, CAST($1):BIGINT)])
    +- LogicalProject(a=[$0], b=[$1], rk=[RANK() OVER (PARTITION BY $0 ORDER BY $2 NULLS FIRST)])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]])
 ]]>
     </Resource>
     <Resource name="optimized rel plan">
       <![CDATA[
-FlinkLogicalCalc(select=[a, b, w0$o0])
-+- FlinkLogicalRank(rankType=[RANK], rankRange=[rankEnd=b], partitionBy=[a], orderBy=[c ASC], select=[a, b, c, w0$o0])
+FlinkLogicalCalc(select=[a, b, w0$o0], where=[=(w0$o0, CAST(b AS BIGINT))])
++- FlinkLogicalOverAggregate(window#0=[window(partition {0} order by [2 ASC-nulls-first] aggs [RANK()])])
    +- FlinkLogicalLegacyTableSourceScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
 ]]>
     </Resource>

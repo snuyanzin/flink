@@ -62,14 +62,14 @@ FlinkLogicalCalc(select=[a, c], where=[>(random_udf(b), 10)])
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a1=[$0], b2=[$1])
-+- LogicalFilter(condition=[>(CAST($2):BIGINT, 10)])
++- LogicalFilter(condition=[>(CAST($2):INTEGER, 10)])
    +- LogicalProject(a1=[random_udf($0)], b2=[random_udf($1)], c=[$2])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]])
 ]]>
     </Resource>
     <Resource name="optimized rel plan">
       <![CDATA[
-FlinkLogicalCalc(select=[random_udf(a) AS a1, random_udf(b) AS b2], where=[>(CAST(c AS BIGINT), 10)])
+FlinkLogicalCalc(select=[random_udf(a) AS a1, random_udf(b) AS b2], where=[>(CAST(c AS INTEGER), 10)])
 +- FlinkLogicalLegacyTableSourceScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
 ]]>
     </Resource>
@@ -138,14 +138,14 @@ FlinkLogicalCalc(select=[a], where=[>(random_udf(a), 10)])
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], c=[$2])
-+- LogicalFilter(condition=[>(CAST($2):BIGINT, 10)])
++- LogicalFilter(condition=[>(CAST($2):INTEGER, 10)])
    +- LogicalProject(a=[$0], a1=[random_udf($0)], c=[$2])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]])
 ]]>
     </Resource>
     <Resource name="optimized rel plan">
       <![CDATA[
-FlinkLogicalCalc(select=[a, c], where=[>(CAST(c AS BIGINT), 10)])
+FlinkLogicalCalc(select=[a, c], where=[>(CAST(c AS INTEGER), 10)])
 +- FlinkLogicalLegacyTableSourceScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
 ]]>
     </Resource>

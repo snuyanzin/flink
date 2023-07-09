@@ -31,13 +31,14 @@ import com.google.common.collect.ImmutableList
 import org.apache.calcite.config.NullCollation
 import org.apache.calcite.plan._
 import org.apache.calcite.prepare.CalciteCatalogReader
-import org.apache.calcite.rel.`type`.RelDataType
+import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
 import org.apache.calcite.rel.{RelFieldCollation, RelRoot}
 import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rex.{RexInputRef, RexNode}
 import org.apache.calcite.sql.{SqlCall, SqlHint, SqlKind, SqlNode, SqlNodeList, SqlOperatorTable, SqlSelect, SqlTableRef}
 import org.apache.calcite.sql.advise.SqlAdvisorValidator
 import org.apache.calcite.sql.util.SqlShuttle
+import org.apache.calcite.sql.validate.`implicit`.{TypeCoercion, TypeCoercionFactory, TypeCoercions}
 import org.apache.calcite.sql.validate.SqlValidator
 import org.apache.calcite.sql2rel.{SqlRexConvertletTable, SqlToRelConverter}
 import org.apache.calcite.tools.{FrameworkConfig, RelConversionException}
@@ -104,7 +105,10 @@ class FlinkPlannerImpl(
       SqlValidator.Config.DEFAULT
         .withIdentifierExpansion(true)
         .withDefaultNullCollation(FlinkPlannerImpl.defaultNullCollation)
-        .withTypeCoercionEnabled(false)
+        .withTypeCoercionEnabled(true)
+        .withTypeCoercionFactory(
+          (typeFactory: RelDataTypeFactory, validator: SqlValidator) =>
+            TypeCoercions.createTypeCoercion(typeFactory, validator))
     ) // Disable implicit type coercion for now.
     validator
   }

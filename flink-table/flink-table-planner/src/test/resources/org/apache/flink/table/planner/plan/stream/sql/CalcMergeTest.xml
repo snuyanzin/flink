@@ -62,14 +62,14 @@ Calc(select=[a, c], where=[(random_udf(b) > 10)])
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a1=[$0], b2=[$1])
-+- LogicalFilter(condition=[>(CAST($2):BIGINT, 10)])
++- LogicalFilter(condition=[>(CAST($2):INTEGER, 10)])
    +- LogicalProject(a1=[random_udf($0)], b2=[random_udf($1)], c=[$2])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
 ]]>
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[random_udf(a) AS a1, random_udf(b) AS b2], where=[(CAST(c AS BIGINT) > 10)])
+Calc(select=[random_udf(a) AS a1, random_udf(b) AS b2], where=[(CAST(c AS INTEGER) > 10)])
 +- TableSourceScan(table=[[default_catalog, default_database, MyTable, filter=[]]], fields=[a, b, c])
 ]]>
     </Resource>
@@ -179,14 +179,14 @@ Calc(select=[a, b], where=[(a = b)])
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], c=[$2])
-+- LogicalFilter(condition=[>(CAST($2):BIGINT, 10)])
++- LogicalFilter(condition=[>(CAST($2):INTEGER, 10)])
    +- LogicalProject(a=[$0], a1=[random_udf($0)], c=[$2])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
 ]]>
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[a, c], where=[(CAST(c AS BIGINT) > 10)])
+Calc(select=[a, c], where=[(CAST(c AS INTEGER) > 10)])
 +- TableSourceScan(table=[[default_catalog, default_database, MyTable, filter=[], project=[a, c], metadata=[]]], fields=[a, c])
 ]]>
     </Resource>

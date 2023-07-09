@@ -75,7 +75,7 @@ class ImplicitConversionEqualsFunctionITCase extends BuiltInFunctionTestBase {
         final List<TestSetSpec> specs = new ArrayList<>();
         specs.addAll(implicitConversionBetweenNumeric());
         specs.addAll(implicitConversionBetweenTimeAndString());
-        specs.addAll(unsupportedImplicitConversionBetweenNumericAndString());
+        specs.addAll(implicitConversionBetweenNumericAndString());
         return specs.stream();
     }
 
@@ -136,18 +136,17 @@ class ImplicitConversionEqualsFunctionITCase extends BuiltInFunctionTestBase {
                         .build());
     }
 
-    // unsupported temporarily
-    private static List<TestSetSpec> unsupportedImplicitConversionBetweenNumericAndString() {
+    private static List<TestSetSpec> implicitConversionBetweenNumericAndString() {
         return Collections.singletonList(
                 TypeConversionTestBuilder.left(STRING(), STRING_DATA_EQUALS_NUMERIC)
                         .right(STRING(), STRING_DATA_EQUALS_NUMERIC)
-                        .fail(TINYINT(), TINY_INT_DATA)
-                        .fail(SMALLINT(), SMALL_INT_DATA)
-                        .fail(INT(), INT_DATA)
-                        .fail(BIGINT(), BIG_INT_DATA)
-                        .fail(FLOAT(), FLOAT_DATA)
-                        .fail(DOUBLE(), DOUBLE_DATA)
-                        .fail(DECIMAL(1, 0), DECIMAL_DATA)
+                        .right(TINYINT(), TINY_INT_DATA)
+                        .right(SMALLINT(), SMALL_INT_DATA)
+                        .right(INT(), INT_DATA)
+                        .right(BIGINT(), BIG_INT_DATA)
+                        .right(FLOAT(), FLOAT_DATA)
+                        .right(DOUBLE(), DOUBLE_DATA)
+                        .right(DECIMAL(1, 0), DECIMAL_DATA)
                         .build());
     }
 

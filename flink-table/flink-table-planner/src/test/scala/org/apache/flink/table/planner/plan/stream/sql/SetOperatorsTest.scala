@@ -43,7 +43,7 @@ class SetOperatorsTest extends TableTestBase {
     util.verifyExecPlan("SELECT * FROM T1 UNION ALL SELECT * FROM T3")
   }
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testUnionDifferentFieldTypes(): Unit = {
     // must fail. Union inputs have different field types.
     util.verifyExecPlan("SELECT a, b, c FROM T1 UNION ALL SELECT d, c, e FROM T3")
@@ -54,7 +54,7 @@ class SetOperatorsTest extends TableTestBase {
     util.verifyExecPlan("SELECT c FROM T1 INTERSECT ALL SELECT f FROM T2")
   }
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testIntersectDifferentFieldTypes(): Unit = {
     // must fail. Intersect inputs have different field types.
     util.verifyExecPlan("SELECT a, b, c FROM T1 INTERSECT SELECT d, c, e FROM T3")
@@ -65,7 +65,7 @@ class SetOperatorsTest extends TableTestBase {
     util.verifyExecPlan("SELECT c FROM T1 EXCEPT ALL SELECT f FROM T2")
   }
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testMinusDifferentFieldTypes(): Unit = {
     // must fail. Minus inputs have different field types.
     util.verifyExecPlan("SELECT a, b, c FROM T1 EXCEPT SELECT d, c, e FROM T3")

@@ -270,15 +270,15 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
     private static List<TestSetSpec> isJsonSpec() {
         return Arrays.asList(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.IS_JSON)
-                        .onFieldsWithData(1)
-                        .andDataTypes(INT())
+                        .onFieldsWithData(Row.of(1))
+                        .andDataTypes(ROW(INT()))
                         .testSqlValidationError(
                                 "f0 IS JSON",
-                                "Cannot apply 'IS JSON VALUE' to arguments of type '<INTEGER> IS JSON VALUE'. "
+                                "Cannot apply 'IS JSON VALUE' to arguments of type '<RECORDTYPE:PEEK_NO_EXPAND(INTEGER F0)> IS JSON VALUE'. "
                                         + "Supported form(s): '<CHARACTER> IS JSON VALUE'")
                         .testTableApiValidationError(
                                 $("f0").isJson(),
-                                String.format("Invalid function call:%nIS_JSON(INT)")),
+                                String.format("Invalid function call:%nIS_JSON(ROW<`f0` INT>)")),
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.IS_JSON)
                         .onFieldsWithData((String) null)
                         .andDataTypes(STRING())

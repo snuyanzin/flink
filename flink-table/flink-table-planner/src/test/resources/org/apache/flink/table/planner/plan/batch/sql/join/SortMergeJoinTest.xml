@@ -186,6 +186,32 @@ SortMergeJoin(joinType=[InnerJoin], where=[((a = d) AND (b < h))], select=[d, e,
 ]]>
     </Resource>
   </TestCase>
+	<TestCase name="testJoinNonMatchingKeyTypes">
+		<Resource name="sql">
+			<![CDATA[SELECT c, g FROM MyTable1, MyTable2 WHERE a = g]]>
+		</Resource>
+		<Resource name="ast">
+			<![CDATA[
+LogicalProject(c=[$2], g=[$6])
++- LogicalFilter(condition=[=($0, CAST($6):INTEGER)])
+   +- LogicalJoin(condition=[true], joinType=[inner])
+      :- LogicalTableScan(table=[[default_catalog, default_database, MyTable1, source: [TestTableSource(a, b, c)]]])
+      +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(d, e, f, g, h)]]])
+]]>
+		</Resource>
+		<Resource name="optimized exec plan">
+			<![CDATA[
+Calc(select=[c, g])
++- SortMergeJoin(joinType=[InnerJoin], where=[(a = g0)], select=[a, c, g, g0])
+   :- Exchange(distribution=[hash[a]])
+   :  +- Calc(select=[a, c])
+   :     +- LegacyTableSourceScan(table=[[default_catalog, default_database, MyTable1, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
+   +- Exchange(distribution=[hash[g0]])
+      +- Calc(select=[g, CAST(g AS INTEGER) AS g0])
+         +- LegacyTableSourceScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(d, e, f, g, h)]]], fields=[d, e, f, g, h])
+]]>
+		</Resource>
+	</TestCase>
   <TestCase name="testInnerJoinWithEquiPred">
     <Resource name="sql">
       <![CDATA[SELECT c, g FROM MyTable1, MyTable2 WHERE a = d]]>

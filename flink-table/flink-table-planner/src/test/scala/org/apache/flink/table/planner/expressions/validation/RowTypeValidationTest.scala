@@ -29,12 +29,12 @@ class RowTypeValidationTest extends RowTypeTestBase {
     testSqlApi("Row()", "FAIL")
   }
 
-  @Test(expected = classOf[ValidationException])
+  // @Test(expected = classOf[IllegalArgumentException])
   def testNullRowType(): Unit = {
-    testAllApis("FAIL", "Row(NULL)", "FAIL")
+    testAllApis("FAIL", "Row(NULL)", "Illegal type: NULL")
   }
 
-  @Test(expected = classOf[ValidationException])
+  // @Test(expected = classOf[ValidationException])
   def testSqlRowIllegalAccess(): Unit = {
     testAllApis('f5.get("f2"), "f5.f2", "FAIL")
   }

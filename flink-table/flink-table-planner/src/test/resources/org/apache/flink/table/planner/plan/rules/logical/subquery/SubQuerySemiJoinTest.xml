@@ -3997,9 +3997,9 @@ LogicalProject(b=[$1])
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2], d=[$3], e=[$4], f=[$5])
 +- LogicalFilter(condition=[AND(=($0, $3), EXISTS({
-LogicalFilter(condition=[AND(=($cor0.b, $1), >(CAST($2):BIGINT, 50))])
+LogicalFilter(condition=[AND(=($cor0.b, $1), >(CAST($2):INTEGER, 50))])
   LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
-}), >=(CAST($2):BIGINT, 1), EXISTS({
+}), >=(CAST($2):INTEGER, 1), EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), <($1, 100))])
   LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
 }))], variablesSet=[[$cor0]])
@@ -4011,14 +4011,14 @@ LogicalFilter(condition=[AND(=($cor0.a, $0), <($1, 100))])
     <Resource name="optimized rel plan">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2], d=[$3], e=[$4], f=[$5])
-+- LogicalFilter(condition=[AND(=($0, $3), >=(CAST($2):BIGINT, 1))])
++- LogicalFilter(condition=[AND(=($0, $3), >=(CAST($2):INTEGER, 1))])
    +- LogicalJoin(condition=[=($0, $6)], joinType=[semi])
       :- LogicalJoin(condition=[=($1, $6)], joinType=[semi])
       :  :- LogicalJoin(condition=[true], joinType=[inner])
       :  :  :- LogicalTableScan(table=[[default_catalog, default_database, l, source: [TestTableSource(a, b, c)]]])
       :  :  +- LogicalTableScan(table=[[default_catalog, default_database, r, source: [TestTableSource(d, e, f)]]])
       :  +- LogicalProject(j=[$1])
-      :     +- LogicalFilter(condition=[>(CAST($2):BIGINT, 50)])
+      :     +- LogicalFilter(condition=[>(CAST($2):INTEGER, 50)])
       :        +- LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
       +- LogicalProject(i=[$0])
          +- LogicalFilter(condition=[<($1, 100)])
@@ -4034,9 +4034,9 @@ LogicalProject(a=[$0], b=[$1], c=[$2], d=[$3], e=[$4], f=[$5])
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2], d=[$3], e=[$4], f=[$5])
 +- LogicalFilter(condition=[AND(=($0, $3), EXISTS({
-LogicalFilter(condition=[AND(=($cor0.b, $1), >(CAST($2):BIGINT, 50))])
+LogicalFilter(condition=[AND(=($cor0.b, $1), >(CAST($2):INTEGER, 50))])
   LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
-}), >=(CAST($2):BIGINT, 1), EXISTS({
+}), >=(CAST($2):INTEGER, 1), EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), <($1, 100))])
   LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
 }))], variablesSet=[[$cor0]])
@@ -4048,14 +4048,14 @@ LogicalFilter(condition=[AND(=($cor0.a, $0), <($1, 100))])
     <Resource name="optimized rel plan">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2], d=[$3], e=[$4], f=[$5])
-+- LogicalFilter(condition=[AND(=($0, $3), >=(CAST($2):BIGINT, 1))])
++- LogicalFilter(condition=[AND(=($0, $3), >=(CAST($2):INTEGER, 1))])
    +- LogicalJoin(condition=[=($0, $6)], joinType=[semi])
       :- LogicalJoin(condition=[=($1, $6)], joinType=[semi])
       :  :- LogicalJoin(condition=[true], joinType=[inner])
       :  :  :- LogicalTableScan(table=[[default_catalog, default_database, l, source: [TestTableSource(a, b, c)]]])
       :  :  +- LogicalTableScan(table=[[default_catalog, default_database, r, source: [TestTableSource(d, e, f)]]])
       :  +- LogicalProject(j=[$1])
-      :     +- LogicalFilter(condition=[>(CAST($2):BIGINT, 50)])
+      :     +- LogicalFilter(condition=[>(CAST($2):INTEGER, 50)])
       :        +- LogicalTableScan(table=[[default_catalog, default_database, t, source: [TestTableSource(i, j, k)]]])
       +- LogicalProject(i=[$0])
          +- LogicalFilter(condition=[<($1, 100)])

@@ -23,7 +23,7 @@ limitations under the License.
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =($2, 3), true, EXISTS({
++- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =(CAST($2):INTEGER, 3), true, EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), =(2, 2), >($SCALAR_QUERY({
 LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
   LogicalProject($f0=[0])
@@ -38,7 +38,7 @@ LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
     <Resource name="optimized rel plan">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), AND(=($2, 3), EXISTS({
++- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), AND(=(CAST($2):INTEGER, 3), EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), >($SCALAR_QUERY({
 LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
   LogicalProject($f0=[0])
@@ -58,7 +58,7 @@ LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =($2, 3), true, EXISTS({
++- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =(CAST($2):INTEGER, 3), true, EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), >($SCALAR_QUERY({
 LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
   LogicalProject($f0=[0])
@@ -73,7 +73,7 @@ LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
     <Resource name="optimized rel plan">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), AND(=($2, 3), EXISTS({
++- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), AND(=(CAST($2):INTEGER, 3), EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), >($SCALAR_QUERY({
 LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
   LogicalProject($f0=[0])
@@ -93,7 +93,7 @@ LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =($2, 3), true, EXISTS({
++- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =(CAST($2):INTEGER, 3), true, EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), =(2, 2), >($SCALAR_QUERY({
 LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
   LogicalProject($f0=[0])
@@ -108,7 +108,7 @@ LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
     <Resource name="optimized rel plan">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), AND(=($2, 3), EXISTS({
++- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), AND(=(CAST($2):INTEGER, 3), EXISTS({
 LogicalFilter(condition=[AND(=($cor0.a, $0), >($SCALAR_QUERY({
 LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
   LogicalProject($f0=[0])
@@ -128,14 +128,14 @@ LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
     <Resource name="ast">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =($2, 3), true))])
++- LogicalFilter(condition=[OR(AND(=($0, 1), =($1, 2)), AND(NOT(<>($0, 1)), =(CAST($2):INTEGER, 3), true))])
    +- LogicalTableScan(table=[[default_catalog, default_database, x, source: [TestTableSource(a, b, c)]]])
 ]]>
     </Resource>
     <Resource name="optimized rel plan">
       <![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2])
-+- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), =($2, 3)))])
++- LogicalFilter(condition=[AND(=($0, 1), OR(=($1, 2), =(CAST($2):INTEGER, 3)))])
    +- LogicalTableScan(table=[[default_catalog, default_database, x, source: [TestTableSource(a, b, c)]]])
 ]]>
     </Resource>
