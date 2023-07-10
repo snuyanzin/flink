@@ -96,6 +96,33 @@ class WindowRankTest extends TableTestBase {
   }
 
   @Test
+  def testOnSessionWindowAggregate(): Unit = {
+    val sql =
+      """
+        |SELECT window_start, window_end, a, cnt, sum_d, max_d, wAvg, uv
+        |FROM (
+        |SELECT *,
+        |   ROW_NUMBER() OVER(PARTITION BY window_start, window_end ORDER BY cnt DESC) as rownum
+        |FROM (
+        |  SELECT
+        |    a,
+        |    window_start,
+        |    window_end,
+        |    count(*) as cnt,
+        |    sum(d) as sum_d,
+        |    max(d) filter (where b > 1000) as max_d,
+        |    weightedAvg(b, e) AS wAvg,
+        |    count(distinct c) AS uv
+        |  FROM TABLE(SESSION(TABLE MyTable, DESCRIPTOR(rowtime), INTERVAL '15' MINUTE))
+        |  GROUP BY a, window_start, window_end
+        |  )
+        |)
+        |WHERE rownum <= 3
+      """.stripMargin
+    util.verifyRelPlan(sql)
+  }
+
+  @Test
   def testSimplifyHopWindowTVFBeforeWindowRankWithCalc(): Unit = {
     val sql =
       """

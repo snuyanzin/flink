@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.plan.rules.physical.stream
 
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.planner.plan.`trait`.{FlinkRelDistribution, RelWindowProperties}
-import org.apache.flink.table.planner.plan.logical.{WindowAttachedWindowingStrategy, WindowingStrategy}
+import org.apache.flink.table.planner.plan.logical.{SessionWindowSpec, WindowAttachedWindowingStrategy, WindowingStrategy}
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalAggregate
@@ -28,7 +28,6 @@ import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalW
 import org.apache.flink.table.planner.plan.utils.PythonUtil.isPythonAggregate
 import org.apache.flink.table.planner.plan.utils.WindowUtil
 import org.apache.flink.table.runtime.groupwindow._
-
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelTraitSet}
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.convert.ConverterRule

@@ -319,6 +319,53 @@ class GroupWindowITCase(mode: StateBackendMode, useTimestampLtz: Boolean)
   }
 
   @Test
+  def testEventTimeSessionWindow2(): Unit = {
+    // To verify the "merge" functionality, we create this test with the following characteristics:
+    // 1. set the Parallelism to 1, and have the test data out of order
+    // 2. create a waterMark with 10ms offset to delay the window emission by 10ms
+    val sessionData = List(
+      (1L, 1, "Hello", "a"),
+      (2L, 2, "Hello", "b"),
+      (8L, 8, "Hello", "a"),
+      (9L, 9, "Hello World", "b"),
+      (4L, 4, "Hello", "c"),
+      (16L, 16, "Hello", "d"))
+
+    val stream = failingDataSource(sessionData)
+      .assignTimestampsAndWatermarks(
+        new TimestampAndWatermarkWithOffset[(Long, Int, String, String)](10L))
+    val table = stream.toTable(tEnv, 'rowtime.rowtime, 'int, 'string, 'name)
+    tEnv.createTemporaryView("T", table)
+
+    val sql =
+      """
+        |SELECT
+        |  `string`,
+        |  window_start,
+        |  window_time,
+        |  COUNT(1),
+        |  SUM(1),
+        |  COUNT(`int`),
+        |  SUM(`int`),
+        |  COUNT(DISTINCT name)
+        |FROM TABLE(
+        |  SESSION(TABLE T, DESCRIPTOR(rowtime), INTERVAL '0.005' SECOND))
+        |GROUP BY `string`, window_start, window_end, window_time
+      """.stripMargin
+
+    val sink = new TestingAppendSink
+    tEnv.sqlQuery(sql).toAppendStream[Row].addSink(sink)
+    env.execute()
+
+    val expected = Seq(
+      "Hello World,1970-01-01T00:00:00.009,1970-01-01T00:00:00.013,1,1,1,9,1",
+      "Hello,1970-01-01T00:00:00.016,1970-01-01T00:00:00.020,1,1,1,16,1",
+      "Hello,1970-01-01T00:00:00.001,1970-01-01T00:00:00.012,4,4,4,15,3"
+    )
+    assertEquals(expected.sorted, sink.getAppendResults.sorted)
+  }
+
+  @Test
   def testEventTimeTumblingWindowWithAllowLateness(): Unit = {
     if (useTimestampLtz) {
       return

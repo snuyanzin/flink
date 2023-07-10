@@ -17,14 +17,17 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
+import org.apache.flink.table.expressions.ApiExpressionUtils.intervalOfMillis
+import org.apache.flink.table.expressions.FieldReferenceExpression
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
-import org.apache.flink.table.planner.plan.logical.WindowingStrategy
+import org.apache.flink.table.planner.plan.logical.{SessionGroupWindow, SessionWindowSpec, TimeAttributeWindowingStrategy, WindowingStrategy}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
-import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecWindowAggregate
+import org.apache.flink.table.planner.plan.nodes.exec.stream.{StreamExecGroupWindowAggregate, StreamExecWindowAggregate}
 import org.apache.flink.table.planner.plan.utils._
 import org.apache.flink.table.planner.plan.utils.WindowUtil.checkEmitConfiguration
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
-import org.apache.flink.table.runtime.groupwindow.NamedWindowProperty
+import org.apache.flink.table.runtime.groupwindow.{NamedWindowProperty, WindowReference}
+import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromLogicalTypeToDataType
 
 import org.apache.calcite.plan.{RelOptCluster, RelTraitSet}
 import org.apache.calcite.rel.`type`.RelDataType
@@ -110,14 +113,56 @@ class StreamPhysicalWindowAggregate(
 
   override def translateToExecNode(): ExecNode[_] = {
     checkEmitConfiguration(unwrapTableConfig(this))
-    new StreamExecWindowAggregate(
-      unwrapTableConfig(this),
-      grouping,
-      aggCalls.toArray,
-      windowing,
-      namedWindowProperties.toArray,
-      InputProperty.DEFAULT,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
-      getRelDetailedDescription)
+    windowing.getWindow match {
+      case windowSpec: SessionWindowSpec =>
+        windowing match {
+          case timeWindowStrategy: TimeAttributeWindowingStrategy =>
+            val timeAttributeFieldName =
+              getInput.getRowType.getFieldNames.get(timeWindowStrategy.getTimeAttributeIndex)
+            val timeAttributeType = windowing.getTimeAttributeType
+            val logicalWindow = SessionGroupWindow(
+              new WindowReference("w$", timeAttributeType),
+              new FieldReferenceExpression(
+                timeAttributeFieldName,
+                fromLogicalTypeToDataType(timeAttributeType),
+                0,
+                timeWindowStrategy.getTimeAttributeIndex),
+              intervalOfMillis(windowSpec.getGap.toMillis)
+            )
+            new StreamExecGroupWindowAggregate(
+              unwrapTableConfig(this),
+              grouping,
+              aggCalls.toArray,
+              logicalWindow,
+              namedWindowProperties.toArray,
+              false,
+              InputProperty.DEFAULT,
+              FlinkTypeFactory.toLogicalRowType(getRowType),
+              getRelDetailedDescription
+            )
+          case _ =>
+            new StreamExecWindowAggregate(
+              unwrapTableConfig(this),
+              grouping,
+              aggCalls.toArray,
+              windowing,
+              namedWindowProperties.toArray,
+              InputProperty.DEFAULT,
+              FlinkTypeFactory.toLogicalRowType(getRowType),
+              getRelDetailedDescription
+            )
+        }
+      case _ =>
+        new StreamExecWindowAggregate(
+          unwrapTableConfig(this),
+          grouping,
+          aggCalls.toArray,
+          windowing,
+          namedWindowProperties.toArray,
+          InputProperty.DEFAULT,
+          FlinkTypeFactory.toLogicalRowType(getRowType),
+          getRelDetailedDescription
+        )
+    }
   }
 }

@@ -36,7 +36,7 @@ import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.core.{Aggregate, AggregateCall, Calc}
 import org.apache.calcite.rex._
 import org.apache.calcite.sql.`type`.SqlTypeFamily
-import org.apache.calcite.sql.SqlKind
+import org.apache.calcite.sql.{SqlKind, SqlSessionTableFunction}
 import org.apache.calcite.util.ImmutableBitSet
 
 import java.time.Duration
@@ -78,7 +78,9 @@ object WindowUtil {
 
   /** Returns true if the [[RexNode]] is a window table-valued function call. */
   def isWindowTableFunctionCall(node: RexNode): Boolean = node match {
-    case call: RexCall => call.getOperator.isInstanceOf[SqlWindowTableFunction]
+    case call: RexCall =>
+      call.getOperator.isInstanceOf[SqlWindowTableFunction] || call.getOperator
+        .isInstanceOf[org.apache.calcite.sql.SqlWindowTableFunction]
     case _ => false
   }
 
@@ -191,7 +193,9 @@ object WindowUtil {
           "function, can't convert it into WindowingStrategy")
     }
 
-    val timeIndex = getTimeAttributeIndex(windowCall.operands(1))
+    val timeIndex = getTimeAttributeIndex(
+      windowCall.operands(if (windowCall.getOperator.isInstanceOf[SqlSessionTableFunction]) { 0 }
+      else { 1 }))
     val fieldType = inputRowType.getFieldList.get(timeIndex).getType
     val timeAttributeType = FlinkTypeFactory.toLogicalType(fieldType)
     if (!canBeTimeAttributeType(timeAttributeType)) {
@@ -230,6 +234,10 @@ object WindowUtil {
         val step = getOperandAsLong(windowCall.operands(2))
         val maxSize = getOperandAsLong(windowCall.operands(3))
         new CumulativeWindowSpec(Duration.ofMillis(maxSize), Duration.ofMillis(step), offset)
+
+      case FlinkSqlOperatorTable.SESSION =>
+        val gap = getOperandAsLong(windowCall.operands(2))
+        new SessionWindowSpec(Duration.ofMillis(gap))
     }
 
     new TimeAttributeWindowingStrategy(windowSpec, timeAttributeType, timeIndex)
