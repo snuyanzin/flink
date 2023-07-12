@@ -87,23 +87,9 @@ public class ProjectWindowTableFunctionTransposeRule extends RelOptRule {
         LogicalProject project = call.rel(0);
         LogicalTableFunctionScan scan = call.rel(1);
         RelNode scanInput = scan.getInput(0);
-        RelNode currentRel;
-        final RelOptCluster cluster = project.getCluster();
-        final RexBuilder rexBuilder = cluster.getRexBuilder();
         TimeAttributeWindowingStrategy windowingStrategy =
-                scanInput instanceof HepRelVertex
-                                && (currentRel = ((HepRelVertex) scanInput).getCurrentRel())
-                                        instanceof LogicalProject
-                        ? WindowUtil.convertToWindowingStrategy(
-                                (RexCall) scan.getCall(),
-                                scanInput.getRowType(),
-                                ((LogicalProject) ((HepRelVertex) scanInput).getCurrentRel())
-                                        .getProjects())
-                        /*    :scanInput instanceof RelSubset?
-                        WindowUtil.convertToWindowingStrategy(
-                                (RexCall) scan.getCall(), scanInput.getRowType(), scanInput.set)*/
-                        : WindowUtil.convertToWindowingStrategy(
-                                (RexCall) scan.getCall(), scanInput.getRowType(), null);
+                WindowUtil.convertToWindowingStrategy(
+                                (RexCall) scan.getCall(), scanInput.getRowType());
         // 1. get fields to push down
         ImmutableBitSet projectFields = RelOptUtil.InputFinder.bits(project.getProjects(), null);
         int scanInputFieldCount = scanInput.getRowType().getFieldCount();
@@ -113,7 +99,7 @@ public class ProjectWindowTableFunctionTransposeRule extends RelOptRule {
                         .set(windowingStrategy.getTimeAttributeIndex());
         if (toPushFields.cardinality() == scanInputFieldCount
                 && windowingStrategy.getTimeAttributeIndex()
-                        == getTimeAttributeIndex((RexCall) scan.getCall())) {
+                        == getTimeAttributeIndex(scan.getCall())) {
             return;
         }
 
