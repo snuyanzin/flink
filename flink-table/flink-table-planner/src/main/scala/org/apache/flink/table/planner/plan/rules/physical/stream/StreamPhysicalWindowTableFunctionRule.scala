@@ -48,13 +48,13 @@ class StreamPhysicalWindowTableFunctionRule(config: Config) extends ConverterRul
     val windowTableFunction = scan.getCall.asInstanceOf[RexCall]
     val inputRowType = newInput.getRowType
     // Time field of window table function in streaming mode should be with time attribute
-    validateTimeFieldWithTimeAttribute(windowTableFunction, inputRowType)
+    validateTimeFieldWithTimeAttribute(windowTableFunction, inputRowType, null)
     new StreamPhysicalWindowTableFunction(
       scan.getCluster,
       traitSet,
       newInput,
       scan.getRowType,
-      convertToWindowingStrategy(windowTableFunction, inputRowType)
+      convertToWindowingStrategy(windowTableFunction, inputRowType, null)
     )
   }
 }

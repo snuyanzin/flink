@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.utils
 
 import org.apache.flink.table.api.{DataTypes, TableConfig, TableException, ValidationException}
-import org.apache.flink.table.planner.JBigDecimal
+import org.apache.flink.table.planner.{JBigDecimal, JList}
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.functions.sql.{FlinkSqlOperatorTable, SqlWindowTableFunction}
 import org.apache.flink.table.planner.plan.`trait`.RelWindowProperties
@@ -188,7 +188,8 @@ object WindowUtil {
    */
   def convertToWindowingStrategy(
       windowCall: RexCall,
-      inputRowType: RelDataType): TimeAttributeWindowingStrategy = {
+      inputRowType: RelDataType,
+      projects: JList[RexNode]): TimeAttributeWindowingStrategy = {
     if (!isWindowTableFunctionCall(windowCall)) {
       throw new IllegalArgumentException(
         s"RexCall $windowCall is not a window table-valued " +
@@ -198,6 +199,7 @@ object WindowUtil {
     val timeIndex = getTimeAttributeIndex(windowCall.operands(0))
     val fieldType = inputRowType.getFieldList.get(timeIndex).getType
     val timeAttributeType = FlinkTypeFactory.toLogicalType(fieldType)
+
     if (!canBeTimeAttributeType(timeAttributeType)) {
       throw new ValidationException(
         "The supported time indicator type are TIMESTAMP" +
@@ -221,6 +223,15 @@ object WindowUtil {
         } else {
           null
         }
+        val interval = getOperandAsLong(windowCall.operands(1))
+        new TumblingWindowSpec(Duration.ofMillis(interval), offset)
+
+      case FlinkSqlOperatorTable.HOP =>
+        val offset = if (windowCall.operands.size() == 5) {
+          Duration.ofMillis(getOperandAsLong(windowCall.operands(4)))
+        } else {
+          null
+        }
         val slide = getOperandAsLong(windowCall.operands(1))
         val size = getOperandAsLong(windowCall.operands(2))
         new HoppingWindowSpec(Duration.ofMillis(size), Duration.ofMillis(slide), offset)
@@ -236,7 +247,7 @@ object WindowUtil {
         new CumulativeWindowSpec(Duration.ofMillis(maxSize), Duration.ofMillis(step), offset)
 
       case FlinkSqlOperatorTable.SESSION =>
-        val gap = getOperandAsLong(windowCall.operands(2))
+        val gap = getOperandAsLong(windowCall.operands(windowCall.operands.size() - 1))
         new SessionWindowSpec(Duration.ofMillis(gap))
     }
 

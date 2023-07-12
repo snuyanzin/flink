@@ -196,7 +196,10 @@ class FlinkRelMdWindowProperties private extends MetadataHandler[FlinkMetadata.W
     if (isWindowTableFunctionCall(rel.getCall)) {
       val fieldCount = rel.getRowType.getFieldCount
       val windowingStrategy =
-        convertToWindowingStrategy(rel.getCall.asInstanceOf[RexCall], rel.getInput(0).getRowType)
+        convertToWindowingStrategy(
+          rel.getCall.asInstanceOf[RexCall],
+          rel.getInput(0).getRowType,
+          null)
 
       RelWindowProperties.create(
         ImmutableBitSet.of(fieldCount - 3),

@@ -28,10 +28,12 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.hep.HepRelVertex;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -70,14 +72,38 @@ public class ProjectWindowTableFunctionTransposeRule extends RelOptRule {
         return WindowUtil.isWindowTableFunctionCall(scan.getCall());
     }
 
+    private int getTimeAttributeIndex(RexNode operand) {
+        if (operand instanceof RexCall) {
+            RexNode op = ((RexCall) operand).getOperands().get(0);
+            if (op instanceof RexInputRef) {
+                return ((RexInputRef) op).getIndex();
+            }
+        }
+        return -1;
+    }
+
     @Override
     public void onMatch(RelOptRuleCall call) {
         LogicalProject project = call.rel(0);
         LogicalTableFunctionScan scan = call.rel(1);
         RelNode scanInput = scan.getInput(0);
+        RelNode currentRel;
+        final RelOptCluster cluster = project.getCluster();
+        final RexBuilder rexBuilder = cluster.getRexBuilder();
         TimeAttributeWindowingStrategy windowingStrategy =
-                WindowUtil.convertToWindowingStrategy(
-                        (RexCall) scan.getCall(), scanInput.getRowType());
+                scanInput instanceof HepRelVertex
+                                && (currentRel = ((HepRelVertex) scanInput).getCurrentRel())
+                                        instanceof LogicalProject
+                        ? WindowUtil.convertToWindowingStrategy(
+                                (RexCall) scan.getCall(),
+                                scanInput.getRowType(),
+                                ((LogicalProject) ((HepRelVertex) scanInput).getCurrentRel())
+                                        .getProjects())
+                        /*    :scanInput instanceof RelSubset?
+                        WindowUtil.convertToWindowingStrategy(
+                                (RexCall) scan.getCall(), scanInput.getRowType(), scanInput.set)*/
+                        : WindowUtil.convertToWindowingStrategy(
+                                (RexCall) scan.getCall(), scanInput.getRowType(), null);
         // 1. get fields to push down
         ImmutableBitSet projectFields = RelOptUtil.InputFinder.bits(project.getProjects(), null);
         int scanInputFieldCount = scanInput.getRowType().getFieldCount();
@@ -85,7 +111,9 @@ public class ProjectWindowTableFunctionTransposeRule extends RelOptRule {
                 ImmutableBitSet.range(0, scanInputFieldCount)
                         .intersect(projectFields)
                         .set(windowingStrategy.getTimeAttributeIndex());
-        if (toPushFields.cardinality() == scanInputFieldCount) {
+        if (toPushFields.cardinality() == scanInputFieldCount
+                && windowingStrategy.getTimeAttributeIndex()
+                        == getTimeAttributeIndex((RexCall) scan.getCall())) {
             return;
         }
 
