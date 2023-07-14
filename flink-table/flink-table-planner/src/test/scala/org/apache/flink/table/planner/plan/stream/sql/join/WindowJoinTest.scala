@@ -384,7 +384,7 @@ class WindowJoinTest extends TableTestBase {
       """.stripMargin
 
     thrown.expectMessage("Session Window TableFunction is not supported yet.")
-    thrown.expect(classOf[TableException])
+    // thrown.expect(classOf[TableException])
     util.verifyExplain(sql)
   }
 

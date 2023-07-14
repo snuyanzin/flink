@@ -28,12 +28,10 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptUtil;
-import org.apache.calcite.plan.hep.HepRelVertex;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -89,7 +87,7 @@ public class ProjectWindowTableFunctionTransposeRule extends RelOptRule {
         RelNode scanInput = scan.getInput(0);
         TimeAttributeWindowingStrategy windowingStrategy =
                 WindowUtil.convertToWindowingStrategy(
-                                (RexCall) scan.getCall(), scanInput.getRowType());
+                        (RexCall) scan.getCall(), scanInput.getRowType());
         // 1. get fields to push down
         ImmutableBitSet projectFields = RelOptUtil.InputFinder.bits(project.getProjects(), null);
         int scanInputFieldCount = scanInput.getRowType().getFieldCount();
