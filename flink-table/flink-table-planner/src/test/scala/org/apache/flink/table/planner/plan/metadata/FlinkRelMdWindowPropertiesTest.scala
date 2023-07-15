@@ -42,7 +42,7 @@ class FlinkRelMdWindowPropertiesTest extends FlinkRelMdHandlerTestBase {
         ))
   }
 
-  // @Test
+  @Test
   def testGetWindowPropertiesOnTableFunctionScan(): Unit = {
     Array(windowTableFunctionScan, lateralTableFunctionScan).zipWithIndex.foreach {
       case (scan, idx) =>
@@ -134,7 +134,7 @@ class FlinkRelMdWindowPropertiesTest extends FlinkRelMdHandlerTestBase {
     }
   }
 
-  // @Test
+  @Test
   def testGetWindowPropertiesOnLogicalAggregate(): Unit = {
     Array(logicalGroupWindowAggOnTumbleWindowTVF, logicalGroupAggOnTumbleWindowTVF).zipWithIndex
       .foreach {
