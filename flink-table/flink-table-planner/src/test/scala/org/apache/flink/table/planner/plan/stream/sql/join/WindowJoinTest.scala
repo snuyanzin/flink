@@ -383,9 +383,7 @@ class WindowJoinTest extends TableTestBase {
         |ON L.window_start = R.window_start AND L.window_end = R.window_end AND L.a = R.a
       """.stripMargin
 
-    thrown.expectMessage("Session Window TableFunction is not supported yet.")
-    // thrown.expect(classOf[TableException])
-    util.verifyExplain(sql)
+    util.verifyRelPlan(sql)
   }
 
   @Test

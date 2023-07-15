@@ -22,11 +22,13 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.planner.plan.logical.CumulativeWindowSpec;
 import org.apache.flink.table.planner.plan.logical.HoppingWindowSpec;
+import org.apache.flink.table.planner.plan.logical.SessionWindowSpec;
 import org.apache.flink.table.planner.plan.logical.TimeAttributeWindowingStrategy;
 import org.apache.flink.table.planner.plan.logical.TumblingWindowSpec;
 import org.apache.flink.table.planner.plan.logical.WindowSpec;
 import org.apache.flink.table.runtime.operators.window.TimeWindow;
 import org.apache.flink.table.runtime.operators.window.assigners.CumulativeWindowAssigner;
+import org.apache.flink.table.runtime.operators.window.assigners.SessionWindowAssigner;
 import org.apache.flink.table.runtime.operators.window.assigners.SlidingWindowAssigner;
 import org.apache.flink.table.runtime.operators.window.assigners.TumblingWindowAssigner;
 import org.apache.flink.table.runtime.operators.window.assigners.WindowAssigner;
@@ -80,6 +82,11 @@ public final class WindowTableFunctionUtil {
                 windowAssigner = windowAssigner.withOffset(cumulativeWindowSpec.getOffset());
             }
             return windowAssigner;
+        } else if (windowSpec instanceof SessionWindowSpec) {
+            SessionWindowSpec sessionWindowSpec = (SessionWindowSpec) windowSpec;
+            SessionWindowAssigner sessionWindowAssigner =
+                    SessionWindowAssigner.withGap(sessionWindowSpec.getGap());
+            return sessionWindowAssigner;
         } else {
             throw new TableException(
                     String.format(

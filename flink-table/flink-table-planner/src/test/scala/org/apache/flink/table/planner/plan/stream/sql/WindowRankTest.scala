@@ -90,9 +90,7 @@ class WindowRankTest extends TableTestBase {
         |WHERE rownum <= 3
       """.stripMargin
 
-    thrown.expectMessage("Session Window TableFunction is not supported yet.")
-    thrown.expect(classOf[TableException])
-    util.verifyExplain(sql)
+    util.verifyRelPlan(sql)
   }
 
   @Test
