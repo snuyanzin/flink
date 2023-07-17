@@ -1266,7 +1266,7 @@ class TemporalTypesTest extends ExpressionTestBase {
   def testInvalidToTimestampLtz(): Unit = {
 
     // test exceeds valid min/max epoch mills
-   /* testAllApis(
+    /* testAllApis(
       toTimestampLtz(-62167219200001L, 3),
       s"TO_TIMESTAMP_LTZ(-62167219200001, 3)",
       "NULL")
@@ -1304,7 +1304,7 @@ class TemporalTypesTest extends ExpressionTestBase {
       "TO_TIMESTAMP_LTZ('test_string_type', 0)",
       "NULL"
     )
- /*   testExpectedTableApiException(
+    /*   testExpectedTableApiException(
       toTimestampLtz("test_string_type", 0),
       "Unsupported argument type. " +
         "Expected type of family 'NUMERIC' but actual type was 'CHAR(16) NOT NULL'"
