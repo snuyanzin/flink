@@ -378,11 +378,20 @@ public class MapFunctionITCase extends BuiltInFunctionTestBase {
                         .onFieldsWithData(
                                 new Integer[] {1, 2},
                                 new String[] {"one", "two"},
-                                new Integer[][] {new Integer[] {1, 2}, new Integer[] {3, 4}})
+                                new Integer[][] {new Integer[] {1, 2}, new Integer[] {3, 4}},
+                                new Integer[] {1, 1, 1, 2, 2, 2},
+                                new Integer[] {1, 2, 3, 4, 5, 6})
                         .andDataTypes(
                                 DataTypes.ARRAY(DataTypes.INT()),
                                 DataTypes.ARRAY(DataTypes.STRING()),
-                                DataTypes.ARRAY(DataTypes.ARRAY(DataTypes.INT())))
+                                DataTypes.ARRAY(DataTypes.ARRAY(DataTypes.INT())),
+                                DataTypes.ARRAY(DataTypes.INT()),
+                                DataTypes.ARRAY(DataTypes.INT()))
+                        .testResult(
+                                mapFromArrays($("f3"), $("f4")),
+                                "MAP_FROM_ARRAYS(f3, f4)",
+                                CollectionUtil.map(entry(1, 3), entry(2, 6)),
+                                DataTypes.MAP(DataTypes.INT(), DataTypes.INT()))
                         .testResult(
                                 mapFromArrays($("f0"), $("f1")),
                                 "MAP_FROM_ARRAYS(f0, f1)",
