@@ -3251,7 +3251,6 @@ class FlinkRelMdHandlerTestBase {
         ImmutableList.of(calcOnStudentScan),
         relBuilder.call(
           FlinkSqlOperatorTable.TUMBLE,
-          relBuilder.field(2),
           relBuilder.call(FlinkSqlOperatorTable.DESCRIPTOR, relBuilder.field(2)),
           rexBuilder.makeIntervalLiteral(
             bd(600000L),

@@ -172,9 +172,9 @@ public class ProjectWindowTableFunctionTransposeRule extends RelOptRule {
         // ref to a table instead of a normal input ref, if process it as a regular input ref, an
         // exception would be thrown out. It's safe to use first operand of function because
         // framework never use it (or avoid to use it).
-        newOperands.add(operandsItr.next());
         while (operandsItr.hasNext()) {
-            newOperands.add(adjustInputRef(operandsItr.next(), mapping));
+            RexNode next = operandsItr.next();
+            newOperands.add(adjustInputRef(next, mapping));
         }
         return relBuilder.call(windowCall.getOperator(), newOperands);
     }
