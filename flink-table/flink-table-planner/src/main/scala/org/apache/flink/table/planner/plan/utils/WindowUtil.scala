@@ -17,14 +17,6 @@
  */
 package org.apache.flink.table.planner.plan.utils
 
-import org.apache.calcite.plan.volcano.RelSubset
-import org.apache.calcite.rel.`type`.RelDataType
-import org.apache.calcite.rel.core.{Aggregate, AggregateCall, Calc}
-import org.apache.calcite.rel.{RelNode, SingleRel}
-import org.apache.calcite.rex._
-import org.apache.calcite.sql.SqlKind
-import org.apache.calcite.sql.`type`.SqlTypeFamily
-import org.apache.calcite.util.{ImmutableBitSet, Util}
 import org.apache.flink.table.api.{DataTypes, TableConfig, TableException, ValidationException}
 import org.apache.flink.table.planner.JBigDecimal
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
@@ -41,8 +33,18 @@ import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromDat
 import org.apache.flink.table.types.logical.TimestampType
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks.canBeTimeAttributeType
 
+import org.apache.calcite.plan.volcano.RelSubset
+import org.apache.calcite.rel.`type`.RelDataType
+import org.apache.calcite.rel.{RelNode, SingleRel}
+import org.apache.calcite.rel.core.{Aggregate, AggregateCall, Calc}
+import org.apache.calcite.rex._
+import org.apache.calcite.sql.`type`.SqlTypeFamily
+import org.apache.calcite.sql.SqlKind
+import org.apache.calcite.util.{ImmutableBitSet, Util}
+
 import java.time.Duration
 import java.util.Collections
+
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 import scala.collection.mutable
