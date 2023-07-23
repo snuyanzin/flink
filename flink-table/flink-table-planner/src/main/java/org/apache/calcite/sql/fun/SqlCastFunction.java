@@ -49,7 +49,7 @@ import java.text.Collator;
 import java.util.Objects;
 
 import static org.apache.calcite.util.Static.RESOURCE;
-import static org.apache.flink.shaded.guava30.com.google.common.base.Preconditions.checkArgument;
+import static org.apache.flink.shaded.guava31.com.google.common.base.Preconditions.checkArgument;
 
 /**
  * SqlCastFunction. Note that the std functions are really singleton objects, because they always
