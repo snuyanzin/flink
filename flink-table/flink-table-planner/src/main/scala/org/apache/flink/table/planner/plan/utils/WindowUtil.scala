@@ -222,15 +222,6 @@ object WindowUtil {
         } else {
           null
         }
-        val interval = getOperandAsLong(windowCall.operands(1))
-        new TumblingWindowSpec(Duration.ofMillis(interval), offset)
-
-      case FlinkSqlOperatorTable.HOP =>
-        val offset = if (windowCall.operands.size() == 4) {
-          Duration.ofMillis(getOperandAsLong(windowCall.operands(3)))
-        } else {
-          null
-        }
         val slide = getOperandAsLong(windowCall.operands(1))
         val size = getOperandAsLong(windowCall.operands(2))
         new HoppingWindowSpec(Duration.ofMillis(size), Duration.ofMillis(slide), offset)
