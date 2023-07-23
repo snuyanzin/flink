@@ -46,8 +46,15 @@ import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.SqlMonotonicity;
 
 import java.text.Collator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
+import static org.apache.calcite.sql.type.SqlTypeUtil.isArray;
+import static org.apache.calcite.sql.type.SqlTypeUtil.isCollection;
+import static org.apache.calcite.sql.type.SqlTypeUtil.isMap;
+import static org.apache.calcite.sql.type.SqlTypeUtil.isRow;
 import static org.apache.calcite.util.Static.RESOURCE;
 import static org.apache.flink.shaded.guava31.com.google.common.base.Preconditions.checkArgument;
 
@@ -136,8 +143,51 @@ public class SqlCastFunction extends SqlFunction {
             RelDataType expressionType,
             RelDataType targetType,
             boolean safe) {
-        return typeFactory.createTypeWithNullability(
-                targetType, expressionType.isNullable() || safe);
+        return createTypeWithNullabilityFromExpr(typeFactory, expressionType, targetType, safe);
+    }
+
+    private static RelDataType createTypeWithNullabilityFromExpr(
+            RelDataTypeFactory typeFactory,
+            RelDataType expressionType,
+            RelDataType targetType,
+            boolean safe) {
+        boolean isNullable = expressionType.isNullable() || safe;
+
+        if (isCollection(expressionType)) {
+            RelDataType expressionElementType = expressionType.getComponentType();
+            RelDataType targetElementType = targetType.getComponentType();
+            requireNonNull(expressionElementType, () -> "componentType of " + expressionType);
+            requireNonNull(targetElementType, () -> "componentType of " + targetType);
+            RelDataType newElementType =
+                    createTypeWithNullabilityFromExpr(
+                            typeFactory, expressionElementType, targetElementType, safe);
+            return isArray(targetType)
+                    ? SqlTypeUtil.createArrayType(typeFactory, newElementType, isNullable)
+                    : SqlTypeUtil.createMultisetType(typeFactory, newElementType, isNullable);
+        }
+
+        if (isMap(expressionType)) {
+            RelDataType expressionKeyType =
+                    requireNonNull(
+                            expressionType.getKeyType(), () -> "keyType of " + expressionType);
+            RelDataType expressionValueType =
+                    requireNonNull(
+                            expressionType.getValueType(), () -> "valueType of " + expressionType);
+            RelDataType targetKeyType =
+                    requireNonNull(targetType.getKeyType(), () -> "keyType of " + targetType);
+            RelDataType targetValueType =
+                    requireNonNull(targetType.getValueType(), () -> "valueType of " + targetType);
+
+            RelDataType keyType =
+                    createTypeWithNullabilityFromExpr(
+                            typeFactory, expressionKeyType, targetKeyType, safe);
+            RelDataType valueType =
+                    createTypeWithNullabilityFromExpr(
+                            typeFactory, expressionValueType, targetValueType, safe);
+            SqlTypeUtil.createMapType(typeFactory, keyType, valueType, isNullable);
+        }
+
+        return typeFactory.createTypeWithNullability(targetType, isNullable);
     }
 
     @Override

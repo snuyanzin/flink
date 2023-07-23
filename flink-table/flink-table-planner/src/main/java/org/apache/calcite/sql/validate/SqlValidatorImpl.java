@@ -163,11 +163,8 @@ import static org.apache.calcite.util.Static.RESOURCE;
  * Default implementation of {@link SqlValidator}, the class was copied over because of
  * CALCITE-4554.
  *
- * <p>Lines 5079 ~ 5092, Flink enables TIMESTAMP and TIMESTAMP_LTZ for system time period
+ * <p>Lines 5225 ~ 5231, Flink enables TIMESTAMP and TIMESTAMP_LTZ for system time period
  * specification type at {@link org.apache.calcite.sql.validate.SqlValidatorImpl#validateSnapshot}.
- *
- * <p>Lines 5436 ~ 5442, Flink enables TIMESTAMP and TIMESTAMP_LTZ for first orderBy column in
- * matchRecognize at {@link SqlValidatorImpl#validateMatchRecognize}.
  */
 public class SqlValidatorImpl implements SqlValidatorWithHints {
     // ~ Static fields/initializers ---------------------------------------------
@@ -5216,14 +5213,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             SqlSnapshot snapshot = (SqlSnapshot) node;
             SqlNode period = snapshot.getPeriod();
             RelDataType dataType = deriveType(requireNonNull(scope, "scope"), period);
-            // ----- FLINK MODIFICATION BEGIN -----
-            if (!(dataType.getSqlTypeName() == SqlTypeName.TIMESTAMP
-                    || dataType.getSqlTypeName() == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
+            if (!SqlTypeUtil.isTimestamp(dataType)) {
                 throw newValidationError(
                         period,
                         Static.RESOURCE.illegalExpressionForTemporal(
                                 dataType.getSqlTypeName().getName()));
             }
+            // ----- FLINK MODIFICATION BEGIN -----
             if (ns instanceof IdentifierNamespace && ns.resolve() instanceof WithItemNamespace) {
                 // If the snapshot is used over a CTE, then we don't have a concrete underlying
                 // table to operate on. This will be rechecked later in the planner rules.
@@ -5572,13 +5568,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         (SqlIdentifier) requireNonNull(firstOrderByColumn, "firstOrderByColumn");
             }
             RelDataType firstOrderByColumnType = deriveType(scope, identifier);
-            // ----- FLINK MODIFICATION BEGIN -----
-            if (!(firstOrderByColumnType.getSqlTypeName() == SqlTypeName.TIMESTAMP
-                    || firstOrderByColumnType.getSqlTypeName()
-                            == SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)) {
+            if (!SqlTypeUtil.isTimestamp(firstOrderByColumnType)) {
                 throw newValidationError(interval, RESOURCE.firstColumnOfOrderByMustBeTimestamp());
             }
-            // ----- FLINK MODIFICATION END -----
 
             SqlNode expand = expand(interval, scope);
             RelDataType type = deriveType(scope, expand);
