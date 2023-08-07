@@ -40,7 +40,9 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.utils.DataTypeFactoryMock;
 
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlBasicCall;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlLiteral;
@@ -51,6 +53,9 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,6 +63,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -73,6 +79,42 @@ public class MergeTableLikeUtilTest {
     private final DataTypeFactory dataTypeFactory = new DataTypeFactoryMock();
     private final MergeTableLikeUtil util =
             new MergeTableLikeUtil(sqlValidator, SqlNode::toString, dataTypeFactory);
+
+    @ParameterizedTest
+    @MethodSource("derivedColumnsProvider")
+    public void mergePhysicalColumns1(String name, DataType dataType) {
+        Schema sourceSchema = Schema.newBuilder().build();
+
+        List<SqlNode> derivedColumns = Arrays.asList(regularColumn(name, dataType));
+
+        Schema mergedSchema =
+                util.mergeTables(
+                        getDefaultMergingStrategies(),
+                        sourceSchema,
+                        derivedColumns,
+                        Collections.emptyList(),
+                        null);
+
+        Schema expectedSchema = Schema.newBuilder().column(name, dataType).build();
+
+        assertThat(mergedSchema).isEqualTo(expectedSchema);
+    }
+
+    static Stream<Arguments> derivedColumnsProvider() {
+        return Stream.of(
+                Arguments.of(
+                        "row", DataTypes.ROW(DataTypes.FIELD("date", DataTypes.DATE().notNull()))),
+                Arguments.of(
+                        "row",
+                        DataTypes.ROW(
+                                DataTypes.FIELD(
+                                        "row",
+                                        DataTypes.ROW(
+                                                DataTypes.FIELD("int", DataTypes.INT()),
+                                                DataTypes.FIELD(
+                                                        "string", DataTypes.STRING().notNull()))),
+                                DataTypes.FIELD("date", DataTypes.DATE().notNull()))));
+    }
 
     @Test
     public void mergePhysicalColumns() {
@@ -978,14 +1020,10 @@ public class MergeTableLikeUtilTest {
 
     private SqlNode regularColumn(String name, DataType type) {
         LogicalType logicalType = type.getLogicalType();
-        return new SqlRegularColumn(
-                SqlParserPos.ZERO,
-                identifier(name),
-                null,
-                SqlTypeUtil.convertTypeToSpec(
-                                typeFactory.createFieldTypeFromLogicalType(logicalType))
-                        .withNullable(logicalType.isNullable()),
-                null);
+        RelDataType qwe = typeFactory.createFieldTypeFromLogicalType(logicalType);
+        SqlDataTypeSpec type1 =
+                SqlTypeUtil.convertTypeToSpec(qwe).withNullable(logicalType.isNullable());
+        return new SqlRegularColumn(SqlParserPos.ZERO, identifier(name), null, type1, null);
     }
 
     private SqlNode computedColumn(String name, SqlNode expression) {

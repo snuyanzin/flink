@@ -17,11 +17,14 @@
 
 package org.apache.flink.table.planner.functions.sql;
 
-import org.apache.flink.shaded.guava31.com.google.common.collect.ImmutableList;
-
 import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.TableCharacteristic;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * SqlSessionTableFunction implements an operator for session.
@@ -43,7 +46,7 @@ public class SqlSessionTableFunction extends SqlWindowTableFunction {
     /** Operand type checker for SESSION. */
     private static class OperandMetadataImpl extends AbstractOperandMetadata {
         OperandMetadataImpl() {
-            super(ImmutableList.of(PARAM_DATA, PARAM_TIMECOL, PARAM_SESSION_GAP), 3);
+            super(Arrays.asList(PARAM_DATA, PARAM_TIMECOL, PARAM_SESSION_GAP), 3);
         }
 
         @Override
@@ -63,5 +66,23 @@ public class SqlSessionTableFunction extends SqlWindowTableFunction {
         public String getAllowedSignatures(SqlOperator op, String opName) {
             return opName + "(TABLE table_name, DESCRIPTOR(timecol), datetime interval)";
         }
+    }
+
+    private final Map<Integer, TableCharacteristic> tableParams;
+
+    {
+        Map<Integer, TableCharacteristic> map = new HashMap<>();
+        map.put(
+                0,
+                TableCharacteristic.builder(TableCharacteristic.Semantics.SET)
+                        .passColumnsThrough()
+                        .pruneIfEmpty()
+                        .build());
+        tableParams = map;
+    }
+
+    @Override
+    public TableCharacteristic tableCharacteristic(int ordinal) {
+        return tableParams.get(ordinal);
     }
 }

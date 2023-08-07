@@ -295,7 +295,9 @@ object FlinkStreamRuleSets {
     ReplaceIntersectWithSemiJoinRule.INSTANCE,
     RewriteIntersectAllRule.INSTANCE,
     ReplaceMinusWithAntiJoinRule.INSTANCE,
-    RewriteMinusAllRule.INSTANCE
+    RewriteMinusAllRule.INSTANCE,
+    CoreRules.EXCHANGE_REMOVE_CONSTANT_KEYS,
+    CoreRules.SORT_EXCHANGE_REMOVE_CONSTANT_KEYS
   )
 
   /** RuleSet to translate calcite nodes to flink nodes */
@@ -303,6 +305,7 @@ object FlinkStreamRuleSets {
     // translate to flink logical rel nodes
     FlinkLogicalAggregate.STREAM_CONVERTER,
     FlinkLogicalTableAggregate.CONVERTER,
+    FlinkLogicalSortExchange.CONVERTER,
     FlinkLogicalOverAggregate.CONVERTER,
     FlinkLogicalCalc.CONVERTER,
     FlinkLogicalCorrelate.CONVERTER,

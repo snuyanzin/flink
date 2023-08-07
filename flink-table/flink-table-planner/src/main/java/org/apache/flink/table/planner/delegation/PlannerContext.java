@@ -303,7 +303,7 @@ public class PlannerContext {
                                             .withHintStrategyTable(
                                                     FlinkHintStrategies.createHintStrategyTable())
                                             .withInSubQueryThreshold(Integer.MAX_VALUE)
-                                            .withExpand(false)
+                                            .withExpand(true)
                                             .withRelBuilderFactory(
                                                     FlinkRelFactories.FLINK_REL_BUILDER());
 

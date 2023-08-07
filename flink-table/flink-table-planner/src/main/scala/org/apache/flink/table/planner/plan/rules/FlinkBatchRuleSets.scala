@@ -302,7 +302,9 @@ object FlinkBatchRuleSets {
     ReplaceIntersectWithSemiJoinRule.INSTANCE,
     RewriteIntersectAllRule.INSTANCE,
     ReplaceMinusWithAntiJoinRule.INSTANCE,
-    RewriteMinusAllRule.INSTANCE
+    RewriteMinusAllRule.INSTANCE,
+    CoreRules.EXCHANGE_REMOVE_CONSTANT_KEYS,
+    CoreRules.SORT_EXCHANGE_REMOVE_CONSTANT_KEYS
   )
 
   /** RuleSet to translate calcite nodes to flink nodes */
