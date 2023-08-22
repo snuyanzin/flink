@@ -476,7 +476,7 @@ class WindowAggregateTest(aggPhaseEnforcer: AggregatePhaseStrategy) extends Tabl
         |   weightedAvg(b, e) AS wAvg,
         |   count(distinct c) AS uv
         |FROM TABLE(
-        |  SESSION(TABLE MyTable, DESCRIPTOR(rowtime), INTERVAL '5' MINUTE))
+        |  SESSION(select * from  MyTable partition by d order by a, DESCRIPTOR(rowtime), INTERVAL '5' MINUTE))
         |GROUP BY a, window_start, window_end
        """.stripMargin
     util.verifyRelPlan(sql)

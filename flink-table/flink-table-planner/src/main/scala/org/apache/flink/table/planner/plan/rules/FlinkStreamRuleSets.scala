@@ -303,6 +303,7 @@ object FlinkStreamRuleSets {
     // translate to flink logical rel nodes
     FlinkLogicalAggregate.STREAM_CONVERTER,
     FlinkLogicalTableAggregate.CONVERTER,
+    FlinkLogicalSortExchange.CONVERTER,
     FlinkLogicalOverAggregate.CONVERTER,
     FlinkLogicalCalc.CONVERTER,
     FlinkLogicalCorrelate.CONVERTER,

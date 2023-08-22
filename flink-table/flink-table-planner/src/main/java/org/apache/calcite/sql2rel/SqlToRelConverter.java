@@ -1428,7 +1428,7 @@ public class SqlToRelConverter {
                 return;
             case SET_SEMANTICS_TABLE:
                 if (!config.isExpand()) {
-                    return;
+                    //        return;
                 }
                 substituteSubQueryOfSetSemanticsInputTable(bb, subQuery);
                 return;
