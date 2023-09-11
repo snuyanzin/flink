@@ -26,6 +26,7 @@ import org.apache.flink.table.runtime.types.PlannerTypeUtils.isPrimitive
 import org.apache.flink.table.types.logical.{LogicalType, LogicalTypeRoot}
 import org.apache.flink.table.types.logical.LogicalTypeRoot._
 
+import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.SqlOperator
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 
@@ -70,7 +71,7 @@ class FunctionGenerator private (tableConfig: ReadableConfig) {
 
   addSqlFunctionMethod(ABS, Seq(DOUBLE), BuiltInMethods.ABS)
 
-  addSqlFunctionMethod(ABS, Seq(DECIMAL), BuiltInMethods.ABS_DEC)
+  addSqlFunctionMethod(ABS, Seq(DECIMAL), BuiltInMethods.ABS_DEC, argsNullable = true)
 
   addSqlFunction(FLOOR, Seq(DOUBLE), new FloorCeilCallGen(BuiltInMethods.FLOOR))
 
@@ -586,6 +587,7 @@ class FunctionGenerator private (tableConfig: ReadableConfig) {
                 && entry._1._2.length == typeRoots.length
                 && entry._1._2.zip(typeRoots).forall {
                   case (DECIMAL, DECIMAL) => true
+                  case (DECIMAL, NULL) => true
                   case (x, y) if isPrimitive(x) && isPrimitive(y) =>
                     shouldAutoCastTo(y, x) || x == y
                   case (x, y) => x == y

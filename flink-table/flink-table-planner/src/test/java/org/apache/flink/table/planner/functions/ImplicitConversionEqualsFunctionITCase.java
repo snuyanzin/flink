@@ -147,7 +147,7 @@ class ImplicitConversionEqualsFunctionITCase extends BuiltInFunctionTestBase {
                         .fail(BIGINT(), BIG_INT_DATA)
                         .fail(FLOAT(), FLOAT_DATA)
                         .fail(DOUBLE(), DOUBLE_DATA)
-                        .fail(DECIMAL(1, 0), DECIMAL_DATA)
+                        .right(DECIMAL(1, 0), DECIMAL_DATA)
                         .build());
     }
 

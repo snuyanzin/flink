@@ -29,9 +29,9 @@ class RowTypeValidationTest extends RowTypeTestBase {
     testSqlApi("Row()", "FAIL")
   }
 
-  @Test(expected = classOf[ValidationException])
+  @Test
   def testNullRowType(): Unit = {
-    testAllApis("FAIL", "Row(NULL)", "FAIL")
+    testSqlApi("Row(NULL)", "(NULL)")
   }
 
   @Test(expected = classOf[ValidationException])

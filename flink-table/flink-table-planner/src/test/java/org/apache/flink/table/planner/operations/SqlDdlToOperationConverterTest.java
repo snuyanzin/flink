@@ -1310,9 +1310,7 @@ public class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversion
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Invalid expression for computed column 'n'.");
         // invalid expression
-        assertThatThrownBy(() -> parse("alter table tb1 add (m as 'hello' || b)"))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("Invalid expression for computed column 'm'.");
+        parse("alter table tb1 add (m as 'hello' || b)");
 
         // add an inner field to a nested row
         assertThatThrownBy(() -> parse("alter table tb1 add (e.f3 string)"))
@@ -1738,9 +1736,7 @@ public class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversion
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Invalid expression for computed column 'f'.");
 
-        assertThatThrownBy(() -> parse("alter table tb1 modify a string"))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("Invalid expression for computed column 'd'.");
+        parse("alter table tb1 modify a string");
 
         assertThatThrownBy(() -> parse("alter table tb1 modify b as a + 2"))
                 .isInstanceOf(ValidationException.class)

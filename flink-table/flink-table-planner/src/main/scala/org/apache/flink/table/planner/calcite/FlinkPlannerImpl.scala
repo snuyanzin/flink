@@ -35,9 +35,11 @@ import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelFieldCollation, RelRoot}
 import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rex.{RexInputRef, RexNode}
+import org.apache.calcite.sql.`type`.{FlinkTypeCoercionRules, SqlTypeMappingRules}
 import org.apache.calcite.sql.{SqlBasicCall, SqlCall, SqlHint, SqlKind, SqlNode, SqlNodeList, SqlOperatorTable, SqlProcedureCallOperator, SqlSelect, SqlTableRef}
 import org.apache.calcite.sql.advise.SqlAdvisorValidator
 import org.apache.calcite.sql.util.SqlShuttle
+import org.apache.calcite.sql.validate.`implicit`.{FlinkTypeCoercionFactory, FlinkTypeCoercionImpl}
 import org.apache.calcite.sql.validate.SqlValidator
 import org.apache.calcite.sql2rel.{SqlRexConvertletTable, SqlToRelConverter}
 import org.apache.calcite.tools.{FrameworkConfig, RelConversionException}
@@ -104,7 +106,9 @@ class FlinkPlannerImpl(
       SqlValidator.Config.DEFAULT
         .withIdentifierExpansion(true)
         .withDefaultNullCollation(FlinkPlannerImpl.defaultNullCollation)
-        .withTypeCoercionEnabled(false),
+        .withTypeCoercionEnabled(true)
+        .withTypeCoercionFactory(new FlinkTypeCoercionFactory())
+        .withTypeCoercionRules(FlinkTypeCoercionRules.instance()),
       createToRelContext(),
       cluster,
       config

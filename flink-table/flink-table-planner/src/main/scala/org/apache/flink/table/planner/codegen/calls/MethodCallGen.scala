@@ -19,8 +19,8 @@ package org.apache.flink.table.planner.codegen.calls
 
 import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.{qualifyMethod, BINARY_STRING}
-import org.apache.flink.table.planner.codegen.GenerateUtils.{generateCallIfArgsNotNull, generateCallIfArgsNullable}
-import org.apache.flink.table.types.logical.LogicalType
+import org.apache.flink.table.planner.codegen.GenerateUtils.{generateCallIfArgsNotNull, generateCallIfArgsNullable, generateNullLiteral}
+import org.apache.flink.table.types.logical.{LogicalType, LogicalTypeRoot}
 
 import java.lang.reflect.Method
 import java.util.TimeZone
@@ -38,25 +38,36 @@ class MethodCallGen(method: Method, argsNullable: Boolean = false, wrapTryCatch:
         returnType,
         operands,
         !method.getReturnType.isPrimitive,
-        wrapTryCatch)(originalTerms => convertResult(ctx, originalTerms))
+        wrapTryCatch)(originalTerms => convertResult(ctx, operands, originalTerms))
     } else {
       generateCallIfArgsNotNull(
         ctx,
         returnType,
         operands,
         !method.getReturnType.isPrimitive,
-        wrapTryCatch)(originalTerms => convertResult(ctx, originalTerms))
+        wrapTryCatch)(originalTerms => convertResult(ctx, operands, originalTerms))
     }
   }
 
-  private def convertResult(ctx: CodeGeneratorContext, originalTerms: Seq[String]): String = {
-    val terms = originalTerms.zip(method.getParameterTypes).map {
-      case (term, clazz) =>
+  private def convertResult(
+      ctx: CodeGeneratorContext,
+      operands: Seq[GeneratedExpression],
+      originalTerms: Seq[String]): String = {
+    val zipped = originalTerms.zip(method.getParameterTypes).zip(operands)
+    val res = for {
+      ((x, y), z) <- zipped
+    } yield (x, y, z)
+    val terms = res.map {
+      case (term, clazz, operand) =>
         // convert the StringData parameter to String if the method parameter accept String
         if (clazz == classOf[String]) {
           s"$term.toString()"
         } else {
-          term
+          if (operand.resultType.getTypeRoot == LogicalTypeRoot.NULL) {
+            s"(${clazz.getCanonicalName})$term"
+          } else {
+            term
+          }
         }
     }
 

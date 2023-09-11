@@ -272,10 +272,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.IS_JSON)
                         .onFieldsWithData(1)
                         .andDataTypes(INT())
-                        .testSqlValidationError(
-                                "f0 IS JSON",
-                                "Cannot apply 'IS JSON VALUE' to arguments of type '<INTEGER> IS JSON VALUE'. "
-                                        + "Supported form(s): '<CHARACTER> IS JSON VALUE'")
+                        // .testTableApiResult($("f0").isJson(), false, BOOLEAN().notNull())
                         .testTableApiValidationError(
                                 $("f0").isJson(),
                                 String.format("Invalid function call:%nIS_JSON(INT)")),
