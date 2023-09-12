@@ -1191,6 +1191,8 @@ class CollectionFunctionsITCase extends BuiltInFunctionTestBase {
                         .testSqlValidationError(
                                 "ARRAY_SLICE()",
                                 " No match found for function signature ARRAY_SLICE()")
-                        .testSqlValidationError("ARRAY_SLICE(null)", "Illegal use of 'NULL'"));
+                        .testSqlValidationError(
+                                "ARRAY_SLICE(null)",
+                                "SQL validation failed. From line 1, column 8 to line 1, column 24: No match found for function signature ARRAY_SLICE(<NULL>)"));
     }
 }
