@@ -26,11 +26,13 @@ import org.apache.flink.table.planner.runtime.stream.sql.DataStreamScalaITCase.{
 import org.apache.flink.test.util.AbstractTestBase
 import org.apache.flink.types.Row
 import org.apache.flink.util.CollectionUtil
+
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.{Before, Test}
 import org.junit.Assert.{assertEquals, assertThat}
 
 import java.util
+
 import scala.collection.JavaConverters._
 
 /** Tests for connecting to the Scala [[DataStream]] API. */
@@ -133,11 +135,7 @@ class DataStreamScalaITCase extends AbstractTestBase {
     tableEnv.createTemporaryView("transaction_data", transactionsTable)
 
     val newTable = tableEnv.sqlQuery(
-      "select   acc.account_num, " +
-        "(select count(*) from transaction_data " +
-        "where transaction_place = trans.transaction_place " +
-        ")  " +
-        "from  accounts acc,transaction_data trans")
+      "select   acc.account_num,  (select count(*) from transaction_data where transaction_place = trans.transaction_place and account_num = acc.account_num)  from  accounts acc,transaction_data trans")
 
     tableEnv.toChangelogStream(newTable).print()
 
