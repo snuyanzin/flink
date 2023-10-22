@@ -34,6 +34,8 @@ under the License.
 	<packaging>jar</packaging>
 
 	<properties>
+		<workingDirectory>web-dashboard</workingDirectory>
+		<nodejs.install.directory>${workingDirectory}</nodejs.install.directory>
 		<test.parameterProgram.name>parameter-program</test.parameterProgram.name>
 		<test.ParameterProgramNoManifest.name>parameter-program-without-manifest</test.ParameterProgramNoManifest.name>
 		<test.ParameterProgramWithEagerSink.name>parameter-program-with-eager-sink</test.ParameterProgramWithEagerSink.name>
@@ -139,7 +141,7 @@ under the License.
 		<resources>
 			<resource>
 				<!-- Only include the web folder from the web-dashboard directory -->
-				<directory>web-dashboard</directory>
+				<directory>${workingDirectory}</directory>
 				<includes>
 					<include>web/**</include>
 				</includes>
@@ -260,6 +262,7 @@ under the License.
 						<configuration>
 							<nodeVersion>v16.13.2</nodeVersion>
 							<npmVersion>8.1.2</npmVersion>
+							<installDirectory>${nodejs.install.directory}</installDirectory>
 						</configuration>
 					</execution>
 					<execution>
@@ -285,7 +288,7 @@ under the License.
 					</execution>
 				</executions>
 				<configuration>
-					<workingDirectory>web-dashboard</workingDirectory>
+					<workingDirectory>${workingDirectory}</workingDirectory>
 				</configuration>
 			</plugin>
 
