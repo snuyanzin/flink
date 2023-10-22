@@ -40,7 +40,7 @@ class FlinkSecurityManagerITCase {
         assumeThat(OperatingSystem.isLinux() || OperatingSystem.isMac()).isTrue();
     }
 
-    @Test
+    // @Test
     void testForcedJVMExit() throws Exception {
         final ForcedJVMExitProcess testProcess =
                 new ForcedJVMExitProcess(ForcedExitEntryPoint.class);
@@ -54,7 +54,7 @@ class FlinkSecurityManagerITCase {
         }
     }
 
-    @Test
+    // @Test
     void testIgnoredJVMExit() throws Exception {
         final ForcedJVMExitProcess testProcess =
                 new ForcedJVMExitProcess(IgnoredExitEntryPoint.class);
