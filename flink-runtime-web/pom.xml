@@ -275,6 +275,7 @@ under the License.
 							<environmentVariables>
 								<HUSKY_SKIP_INSTALL>true</HUSKY_SKIP_INSTALL>
 							</environmentVariables>
+							<installDirectory>${nodejs.install.directory}</installDirectory>
 						</configuration>
 					</execution>
 					<execution>
