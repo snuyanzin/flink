@@ -123,7 +123,7 @@ under the License.
 		<flink.reuseForks>true</flink.reuseForks>
 		<flink.surefire.baseArgLine>-XX:+UseG1GC -Xms256m -XX:+IgnoreUnrecognizedVMOptions ${surefire.module.config}</flink.surefire.baseArgLine>
 		<flink.shaded.version>17.0</flink.shaded.version>
-		<flink.shaded.jackson.version>2.14.2</flink.shaded.jackson.version>
+		<flink.shaded.jackson.version>2.15.3</flink.shaded.jackson.version>
 		<flink.markBundledAsOptional>true</flink.markBundledAsOptional>
 		<target.java.version>1.8</target.java.version>
 		<slf4j.version>1.7.36</slf4j.version>
