@@ -41,7 +41,7 @@ under the License.
 		hanging of surefire for jdk8 and jdk11
 		-->
 		<surefire.module.config.jdk21></surefire.module.config.jdk21>
-		<surefire.module.config> ${surefire.module.config.jdk21} <!--
+		<surefire.module.config> -Djava.security.SecurityManager=allow <!--
 			FromElementsFunctionTest
 			-->--add-opens=java.base/java.lang=ALL-UNNAMED <!--
 			chill ArraysAsListSerializer
