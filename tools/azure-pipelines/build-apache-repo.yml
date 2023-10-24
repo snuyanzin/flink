@@ -127,7 +127,7 @@ stages:
           environment: PROFILE="-Dflink.hadoop.version=3.2.3 -Phadoop3-tests,hive3"
           run_end_to_end: true
           container: flink-build-container
-          jdk: 21
+          jdk: 8
       - template: jobs-template.yml
         parameters:
           stage_name: cron_jdk11
