@@ -96,6 +96,7 @@ jobs:
         wget -q https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21%2B35/OpenJDK21U-jdk_x64_linux_hotspot_21_35.tar.gz
         tar -C /usr/lib/jvm -xzf OpenJDK21U-jdk_x64_linux_hotspot_21_35.tar.gz
         echo "JAVA_HOME_21_X64=/usr/lib/jvm/jdk-21+35" >> /etc/environment
+        export JAVA_HOME_21_X64=/usr/lib/jvm/jdk-21+35
         set
       displayName: "install JDK 21"
     - script: |
