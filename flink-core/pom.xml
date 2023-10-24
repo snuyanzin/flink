@@ -34,8 +34,8 @@ under the License.
 	<packaging>jar</packaging>
 
 	<properties>
-
-		<surefire.module.config> ${surefire.module.config.jdk21} <!--
+		<surefire.module.config> -Djava.security.SecurityManager=allow <!-- -->
+			-Djava.security.manager=allow <!--
 			required by JmxServer
 			-->--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED <!--
 			PluginConfigTest (CommonTestUtils#setEnv)
@@ -49,7 +49,6 @@ under the License.
 			InitOutputPathTest
 			-->--add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED <!--
 			-->--add-opens=java.base/java.lang.reflect=ALL-UNNAMED <!-- -->
-			-Djava.security.SecurityManager=allow
 		</surefire.module.config>
 	</properties>
 

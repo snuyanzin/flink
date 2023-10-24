@@ -40,7 +40,8 @@ under the License.
 		specifying -Djava.security.manager=allow within ${surefire.module.config} leads to
 		hanging of surefire for jdk8 and jdk11
 		-->
-		<surefire.module.config> -Djava.security.SecurityManager=allow <!--
+		<surefire.module.config> -Djava.security.SecurityManager=allow <!-- -->
+			-Djava.security.manager=allow <!--
 			JobManagerProcessUtilsTest
 			-->--add-opens=java.base/java.util=ALL-UNNAMED <!--
 			ConnectionUtilsTest
