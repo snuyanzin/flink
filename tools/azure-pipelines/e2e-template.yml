@@ -92,6 +92,13 @@ jobs:
       condition: and(not(canceled()), eq(variables.DOCKER_IMAGES_CACHE_HIT, 'true'))
       continueOnError: true
     - script: |
+        echo "install jdk21"
+        wget -q https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21%2B35/OpenJDK21U-jdk_x64_linux_hotspot_21_35.tar.gz
+        tar -C /usr/lib/jvm -xzf OpenJDK21U-jdk_x64_linux_hotspot_21_35.tar.gz
+        echo "JAVA_HOME_21_X64=/usr/lib/jvm/jdk-21+35" >> /etc/environment
+        set
+      displayName: "install JDK 21"
+    - script: |
         echo "##vso[task.setvariable variable=JAVA_HOME]$JAVA_HOME_${{parameters.jdk}}_X64"
         echo "##vso[task.setvariable variable=PATH]$JAVA_HOME_${{parameters.jdk}}_X64/bin:$PATH"
       displayName: "Set JDK"
