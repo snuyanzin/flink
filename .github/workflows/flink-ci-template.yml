@@ -69,7 +69,10 @@ jobs:
         node-version: '16'
         distribution: 'temurin' # See 'Supported distributions' for available options
         java-version: ${{inputs.jdk-version}}
+        maven-version: 3.8.6
+        cache: maven
         persist-credentials: false
+        path: ${{ env.CHECKOUT_MOUNT_DIR }}
     - name: "Codestyle"
       run: |
         ${{ inputs.environment }} ./tools/ci/validate.sh "checkstyle:check spotless:check -T2" || exit $?
@@ -101,15 +104,10 @@ jobs:
           node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
+          maven-version: 3.8.6
+          cache: maven
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
-
-      - name: "Setup Maven package cache"
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.MAVEN_REPO_FOLDER }}
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
 
       - name: "Copy"
         working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
@@ -152,15 +150,10 @@ jobs:
           node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
+          maven-version: 3.8.6
+          cache: maven
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
-
-      - name: "Setup Maven package cache"
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.MAVEN_REPO_FOLDER }}
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
 
       - name: "Copy"
         working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
@@ -220,15 +213,10 @@ jobs:
           node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
+          maven-version: 3.8.6
+          cache: maven
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
-
-      - name: "Setup Maven package cache"
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.MAVEN_REPO_FOLDER }}
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
 
       - name: "Copy"
         working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
@@ -357,15 +345,10 @@ jobs:
           node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
+          maven-version: 3.8.6
+          cache: maven
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
-
-      - name: "Setup Maven package cache"
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.MAVEN_REPO_FOLDER }}
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
 
       - name: "Copy"
         working-directory: ${{ env.CHECKOUT_MOUNT_DIR }}
