@@ -97,6 +97,7 @@ jobs:
       - name: "Flink Checkout"
         uses: actions/checkout@v4
         with:
+          node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
           persist-credentials: false
