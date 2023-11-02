@@ -62,14 +62,12 @@ jobs:
       options: --init
 
     steps:
-    - name: "Set JDK version"
-      run: |
-        echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
-        echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
 
     - name: "Flink Checkout"
       uses: actions/checkout@v3
       with:
+        distribution: 'temurin' # See 'Supported distributions' for available options
+        java-version: ${{inputs.jdk-version}}
         persist-credentials: false
     - name: "Codestyle"
       run: |
@@ -96,14 +94,11 @@ jobs:
           stringified_workflow_name=$(echo "${{ github.workflow }}" | tr -C '[:alnum:]._' '-' |  tr '[:upper:]' '[:lower:]' | sed -e 's/--*/-/g' -e 's/^-*//g' -e 's/-*$//g')
           echo "stringified-workflow-name=${stringified_workflow_name}" >> $GITHUB_OUTPUT
 
-      - name: "Set JDK version"
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
-          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
-
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: ${{inputs.jdk-version}}
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
 
@@ -148,14 +143,12 @@ jobs:
       options: --init
 
     steps:
-      - name: "Set JDK version"
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
-          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
 
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: ${{inputs.jdk-version}}
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
 
@@ -217,14 +210,12 @@ jobs:
             stringified-module-name: misc
 
     steps:
-      - name: "Set JDK version"
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
-          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
 
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: ${{inputs.jdk-version}}
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
 
@@ -352,10 +343,6 @@ jobs:
         group: [1, 2]
 
     steps:
-      - name: "Set JDK version"
-        run: |
-          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
-          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
 
       - name: "Install missing packages"
         run: sudo apt-get install -y net-tools docker-compose
@@ -363,6 +350,8 @@ jobs:
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: ${{inputs.jdk-version}}
           persist-credentials: false
           path: ${{ env.CHECKOUT_MOUNT_DIR }}
 
