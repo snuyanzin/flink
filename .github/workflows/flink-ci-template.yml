@@ -66,6 +66,7 @@ jobs:
     - name: "Flink Checkout"
       uses: actions/checkout@v3
       with:
+        node-version: '16'
         distribution: 'temurin' # See 'Supported distributions' for available options
         java-version: ${{inputs.jdk-version}}
         persist-credentials: false
@@ -148,6 +149,7 @@ jobs:
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
+          node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
           persist-credentials: false
@@ -215,6 +217,7 @@ jobs:
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
+          node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
           persist-credentials: false
@@ -351,6 +354,7 @@ jobs:
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
+          node-version: '16'
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
           persist-credentials: false
