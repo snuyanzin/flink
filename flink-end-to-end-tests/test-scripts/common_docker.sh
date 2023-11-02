@@ -20,8 +20,6 @@ set -o pipefail
 
 source "$(dirname "$0")"/common.sh
 
-sudo apt update && sudo apt install docker-compose
-
 docker --version
 docker-compose --version
 
