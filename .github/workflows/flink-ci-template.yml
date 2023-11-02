@@ -72,7 +72,6 @@ jobs:
         maven-version: 3.8.6
         cache: maven
         persist-credentials: false
-        path: ${{ env.CHECKOUT_MOUNT_DIR }}
     - name: "Codestyle"
       run: |
         ${{ inputs.environment }} ./tools/ci/validate.sh "checkstyle:check spotless:check -T2" || exit $?
