@@ -95,7 +95,7 @@ jobs:
           echo "stringified-workflow-name=${stringified_workflow_name}" >> $GITHUB_OUTPUT
 
       - name: "Flink Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: ${{inputs.jdk-version}}
