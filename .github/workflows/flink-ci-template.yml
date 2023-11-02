@@ -357,6 +357,9 @@ jobs:
           echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
           echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
 
+      - name: "Install missing packages"
+        run: sudo apt-get install -y net-tools docker-compose
+
       - name: "Flink Checkout"
         uses: actions/checkout@v3
         with:
