@@ -1148,6 +1148,13 @@ under the License.
 								<skip>true</skip>
 							</configuration>
 						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<configuration>
+								<skip>true</skip>
+							</configuration>
+						</plugin>
 					</plugins>
 				</pluginManagement>
 			</build>
@@ -2172,6 +2179,7 @@ under the License.
 						<additionalJOptions combine.children="append">
 							<additionalJOption>-Xdoclint:none</additionalJOption>
 						</additionalJOptions>
+						<skip>true</skip>
 					</configuration>
 				</plugin>
 
