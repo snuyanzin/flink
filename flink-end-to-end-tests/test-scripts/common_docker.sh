@@ -38,14 +38,15 @@ function build_image() {
     local default_file_server_address="localhost"
     [[ "${OS_TYPE}" != "linux" ]] && default_file_server_address="host.docker.internal"
     local file_server_address=${2:-${default_file_server_address}}
+    local file_server_port=${3:-"9999"}
 
     echo "Starting fileserver for Flink distribution"
     pushd ${FLINK_DIR}/..
     tar -czf "${TEST_DATA_DIR}/flink.tgz" flink-*
     popd
     pushd ${TEST_DATA_DIR}
-    start_file_server
-    local server_pid=$!
+    local server_pid
+    server_pid=$(start_file_server "${file_server_port}") || exit $?
 
     echo "Preparing Dockeriles"
     retry_times_with_exponential_backoff 5 git clone https://github.com/apache/flink-docker.git --branch dev-master --single-branch
@@ -59,28 +60,30 @@ function build_image() {
     fi
 
     cd flink-docker
-    ./add-custom.sh -u ${file_server_address}:9999/flink.tgz -n ${image_name} -j ${java_version}
+    ./add-custom.sh -u ${file_server_address}:${file_server_port}/flink.tgz -n ${image_name} -j ${java_version}
 
     echo "Building images"
     run_with_timeout 600 docker build --no-cache --network="host" -t ${image_name} dev/${image_name}-ubuntu
     local build_image_result=$?
     popd
+
+    # stop file server
+    kill "${server_pid}"
+
     return $build_image_result
 }
 
 function start_file_server() {
-    command -v python3 >/dev/null 2>&1
-    if [[ $? -eq 0 ]]; then
-      python3 ${TEST_INFRA_DIR}/python3_fileserver.py &
-      return
-    fi
+    local file_server_port="$1"
 
-    command -v python >/dev/null 2>&1
-    if [[ $? -eq 0 ]]; then
-      python ${TEST_INFRA_DIR}/python2_fileserver.py &
-      return
+    if which python3 > /dev/null; then
+        # sub-shell is required to not let the background command block (due to open output streams)
+        (python3 -m http.server "${file_server_port}" > /dev/null) & echo $!
+    elif which python > /dev/null; then
+        # sub-shell is required to not let the background command block (due to open output streams)
+        (python -m SimpleHTTPServer "${file_server_port}" > /dev/null) & echo $!
+    else
+        echo "Could not find python(2) installation for starting fileserver."
+        exit 1
     fi
-
-    echo "Could not find python(3) installation for starting fileserver."
-    exit 1
 }
