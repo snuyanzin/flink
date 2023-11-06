@@ -24,7 +24,7 @@ start_kubernetes
 # Set the ITCASE_KUBECONFIG environment since it is required to run the ITCases
 export ITCASE_KUBECONFIG=~/.kube/config
 
-if [ -z "$DEBUG_FILES_OUTPUT_DIR"] ; then
+if [ -z "$DEBUG_FILES_OUTPUT_DIR" ] ; then
     export DEBUG_FILES_OUTPUT_DIR="${TEST_DATA_DIR}/log"
 fi
 LOG4J_PROPERTIES=${END_TO_END_DIR}/../tools/ci/log4j.properties
