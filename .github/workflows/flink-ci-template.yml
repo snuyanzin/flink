@@ -62,23 +62,23 @@ jobs:
       options: --init
 
     steps:
-    - name: "Set JDK version"
-      run: |
-        echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
-        echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
+      - name: "Set JDK version"
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_${{inputs.jdk-version}}_X64" >> ${GITHUB_ENV}
+          echo "PATH=$JAVA_HOME_${{inputs.jdk-version}}_X64/bin:$PATH" >> ${GITHUB_ENV}
 
-    - name: "Flink Checkout"
-      uses: actions/checkout@v3
-      with:
-        persist-credentials: false
-    - name: "Codestyle"
-      run: |
-        ${{ inputs.environment }} ./tools/ci/validate.sh "checkstyle:check spotless:check -T2" || exit $?
+      - name: "Flink Checkout"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - name: "Codestyle"
+        run: |
+          ${{ inputs.environment }} ./tools/ci/validate.sh "checkstyle:check spotless:check -T2" || exit $?
 
-    - name: "License Headers"
-      if: (success() || failure())
-      run: |
-        ${{ inputs.environment }} ./tools/ci/validate.sh "org.apache.rat:apache-rat-plugin:check -N" || exit $?
+      - name: "License Headers"
+        if: (success() || failure())
+        run: |
+          ${{ inputs.environment }} ./tools/ci/validate.sh "org.apache.rat:apache-rat-plugin:check -N" || exit $?
 
   compile:
     name: "Compile"
