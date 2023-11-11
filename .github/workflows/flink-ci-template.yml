@@ -129,7 +129,7 @@ jobs:
           ./tools/azure-pipelines/create_build_artifact.sh -f ${{ env.FLINK_ARTIFACT_DIR }}/${{ env.FLINK_ARTIFACT_FILENAME }}
 
       - name: "Upload artifacts to make them available in downstream jobs"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build-artifacts-${{ steps.workflow-prep-step.outputs.stringified-workflow-name }}-${{ github.run_number }}
           path: ${{ env.FLINK_ARTIFACT_DIR }}${{ env.FLINK_ARTIFACT_FILENAME }}
@@ -168,7 +168,7 @@ jobs:
           target-directory: ${{ env.CHECKOUT_DIR }}
 
       - name: "Download build artifacts from compile job"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
           path: ${{ env.FLINK_ARTIFACT_DIR }}
@@ -238,7 +238,7 @@ jobs:
         run: sudo sysctl -w kernel.core_pattern=core.%p
 
       - name: "Download build artifacts from compile job"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
           path: ${{ env.FLINK_ARTIFACT_DIR }}
@@ -363,7 +363,7 @@ jobs:
           restore-keys: ${{ runner.os }}-maven-
 
       - name: "Download build artifacts from compile job"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
           path: ${{ env.FLINK_ARTIFACT_DIR }}

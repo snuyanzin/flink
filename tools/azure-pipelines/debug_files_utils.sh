@@ -25,7 +25,7 @@ function prepare_debug_files {
 	echo "##vso[task.setvariable variable=DEBUG_FILES_OUTPUT_DIR]$DEBUG_FILES_OUTPUT_DIR"
 	echo "##vso[task.setvariable variable=DEBUG_FILES_NAME]$DEBUG_FILES_NAME"
 	# make environment variables available in Github Actions workflow configuration
-  echo "::set-output name=debug-files-output-dir::${DEBUG_FILES_OUTPUT_DIR}"
-  echo "::set-output name=debug-files-name::${DEBUG_FILES_NAME}"
+	echo "debug-files-output-dir=${DEBUG_FILES_OUTPUT_DIR}" >> $GITHUB_OUTPUT
+	echo "debug-files-name=${DEBUG_FILES_NAME}" >> $GITHUB_OUTPUT
 	mkdir -p $DEBUG_FILES_OUTPUT_DIR || { echo "FAILURE: cannot create debug files directory '${DEBUG_FILES_OUTPUT_DIR}'." ; exit 1; }
 }
