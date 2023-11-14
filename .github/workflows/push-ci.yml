@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: "Hadoop 2.10.2/Java 11/Scala 2.12"
+name: "Flink CI on push"
 
 on:
   push:
@@ -25,10 +25,11 @@ permissions: read-all
 
 jobs:
   ci:
+    name: "Flink CI (Java 8/Scala 2.12/Hadoop 2.10.2)"
     uses: ./.github/workflows/flink-ci-template.yml
     with:
-      environment: 'PROFILE="-Dflink.hadoop.version=2.10.2 -Dinclude_hadoop_aws -Dscala-2.12 -Djdk11 -Pjava11-target"'
-      jdk-version: 11
+      environment: 'PROFILE="-Dflink.hadoop.version=2.10.2 -Dinclude_hadoop_aws -Dscala-2.12"'
+      jdk-version: 8
     secrets:
       s3_bucket: ${{ secrets.IT_CASE_S3_BUCKET }}
       s3_access_key: ${{ secrets.IT_CASE_S3_ACCESS_KEY }}
