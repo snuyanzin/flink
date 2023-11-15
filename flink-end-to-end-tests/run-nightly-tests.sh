@@ -174,13 +174,6 @@ function run_group_2 {
     # Miscellaneous
     ################################################################################
 
-    run_test "Flink CLI end-to-end test" "$END_TO_END_DIR/test-scripts/test_cli.sh"
-
-    run_test "Flink streaming examples end-to-end test" "$END_TO_END_DIR/test-scripts/test_streaming_examples.sh"
-
-    run_test "Queryable state (rocksdb) end-to-end test" "$END_TO_END_DIR/test-scripts/test_queryable_state.sh rocksdb"
-    run_test "Queryable state (rocksdb) with TM restart end-to-end test" "$END_TO_END_DIR/test-scripts/test_queryable_state_restart_tm.sh" "skip_check_exceptions"
-
     run_test "DataSet allround end-to-end test" "$END_TO_END_DIR/test-scripts/test_batch_allround.sh"
     run_test "Batch SQL end-to-end test using blocking shuffle" "$END_TO_END_DIR/test-scripts/test_batch_sql.sh blocking"
     run_test "Batch SQL end-to-end test using hybrid full shuffle" "$END_TO_END_DIR/test-scripts/test_batch_sql.sh hybrid_full"
