@@ -29,7 +29,7 @@ echo "Run DataSet-Allround-Test Program"
 set_config_key "taskmanager.memory.network.min" "111149056"
 set_config_key "taskmanager.memory.network.max" "111149056"
 
-set_conf_ssl "server"
+set_conf_ssl "server" "OPENSSL"
 start_cluster
 start_taskmanagers 3
 
