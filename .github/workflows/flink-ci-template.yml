@@ -236,6 +236,15 @@ jobs:
             -t 310 \
             flink-end-to-end-tests/run-nightly-tests.sh ${{ matrix.group }}
 
+      - name: "Print ${{ steps.test-run.outputs.debug-files-output-dir }}"
+        run: |
+          echo "environment variable: $DEBUG_FILES_OUTPUT_DIR"
+          echo "Content"
+          find $DEBUG_FILES_OUTPUT_DIR
+          echo "github actions context: ${{ steps.test-run.outputs.debug-files-output-dir }}"
+          echo "Content"
+          find ${{ steps.test-run.outputs.debug-files-output-dir }}
+
       - name: "Upload Logs"
         uses: actions/upload-artifact@v3
         if: ${{ failure() && steps.test-run.outputs.debug-files-output-dir }} != ''
