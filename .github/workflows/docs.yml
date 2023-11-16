@@ -22,7 +22,7 @@ on:
 jobs:
   build-documentation:
     if: github.repository == 'apache/flink'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       max-parallel: 1
       matrix:
