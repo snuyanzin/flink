@@ -170,7 +170,12 @@ jobs:
         run: sudo apt-get install -y net-tools docker-compose
 
       - name: "Legacy openssl"
-        run: sudo sed -i '/^default = default_sect/a legacy = legacy_sect' /etc/ssl/openssl.cnf
+        run: |
+          sudo sed -i '/^default = default_sect/a legacy = legacy_sect' /etc/ssl/openssl.cnf
+          sudo sed -i '/^\default = default_sect/a legacy = legacy_sect' /etc/ssl/openssl.cnf
+          sudo sed -i '/^\[default_sect\]/a activate = 1' /etc/ssl/openssl.cnf
+          sudo echo "[legacy_sect]" >> /etc/ssl/openssl.cnf
+          sudo echo "activate = 1" >> /etc/ssl/openssl.cnf
 
       - name: "Setup Maven package cache"
         uses: actions/cache@v3
