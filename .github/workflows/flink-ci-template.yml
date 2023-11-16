@@ -54,7 +54,7 @@ env:
 jobs:
   compile:
     name: "Compile"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: chesnay/flink-ci:java_8_11_17_maven_386_v2
       options: --init
@@ -111,7 +111,7 @@ jobs:
   e2e-prereq-check:
     name: "Check: Code modified"
     needs: compile
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: chesnay/flink-ci:java_8_11_17_maven_386_v2
       options: --init
@@ -139,7 +139,7 @@ jobs:
   e2e:
     name: "E2E (group ${{ matrix.group }})"
     needs: [compile, e2e-prereq-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: ${{ needs.e2e-prereq-check.outputs.skip-e2e != 'true' }}
     # timeout-minutes: 310
     env:
