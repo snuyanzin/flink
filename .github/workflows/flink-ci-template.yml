@@ -169,6 +169,9 @@ jobs:
       - name: "Install missing packages"
         run: sudo apt-get install -y net-tools docker-compose
 
+      - name: "Legacy openssl"
+        run: sudo sed -i '/^default = default_sect/a legacy = legacy_sect' /etc/ssl/openssl.cnf
+
       - name: "Setup Maven package cache"
         uses: actions/cache@v3
         with:
