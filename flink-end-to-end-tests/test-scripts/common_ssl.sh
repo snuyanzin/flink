@@ -124,6 +124,7 @@ function set_conf_ssl {
     local auth="${1:-server}" # only 'server' or 'mutual'
     local provider="${2:-JDK}" # 'JDK' or 'OPENSSL'
     local provider_lib="${3:-dynamic}" # for OPENSSL: 'dynamic' or 'static'
+    echo "OUTPUT: ${auth} ${provider} ${provider_lib}"
     _set_conf_ssl_helper "internal" "${provider}" "${provider_lib}"
     set_conf_rest_ssl ${auth} "${provider}" "${provider_lib}"
 }
