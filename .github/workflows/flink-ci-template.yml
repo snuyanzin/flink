@@ -178,6 +178,9 @@ jobs:
       - name: "cat openssl"
         run: cat ${{ env.OPENSSL_CONF }}
 
+      - name: "cat openssl"
+        run: openssl list -providers | grep legacy
+
       - name: "Setup Maven package cache"
         uses: actions/cache@v3
         with:
