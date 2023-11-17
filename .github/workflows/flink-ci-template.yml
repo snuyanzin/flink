@@ -172,6 +172,9 @@ jobs:
       - name: "Legacy openssl"
         run: echo "OPENSSL_CONF=$(pwd)/tools/openssl.conf" >> $GITHUB_ENV
 
+      - name: "Legacy openssl"
+        run: env
+
       - name: "Setup Maven package cache"
         uses: actions/cache@v3
         with:
