@@ -96,9 +96,9 @@ class RichFunc1 extends ScalarFunction {
     }
   }
 
-/*  @FunctionHint(
+  @FunctionHint(
     input = Array(new DataTypeHint("INT")),
-    output = new DataTypeHint(value = "INT", bridgedTo = classOf[JInt]))*/
+    output = new DataTypeHint(value = "INT", bridgedTo = classOf[JInt]))
   def eval(index: Int): Int = {
     index + added
   }
