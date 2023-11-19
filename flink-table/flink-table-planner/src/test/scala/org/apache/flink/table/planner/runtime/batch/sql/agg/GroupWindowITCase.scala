@@ -47,9 +47,9 @@ class GroupWindowITCase extends BatchTestBase {
       "a, b, c, ts",
       nullablesOfData3WithTimestamp)
     // for udagg
-    registerFunction("countFun", new CountAggFunction())
-    registerFunction("sumFun", new IntSumAggFunction())
-    registerFunction("avgFun", new IntAvgAggFunction())
+    tEnv.createTemporarySystemFunction("countFun", new CountAggFunction())
+    tEnv.createTemporarySystemFunction("sumFun", new IntSumAggFunction())
+    tEnv.createTemporarySystemFunction("avgFun", new IntAvgAggFunction())
     // time unit
     registerCollection("Table6", data6, type6, "a, b, c, d, e, f", nullablesOfData6)
   }

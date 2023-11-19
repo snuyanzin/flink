@@ -1232,7 +1232,7 @@ class JoinITCase extends BatchTestBase {
 
   @TestTemplate
   def testJoinWithUDFFilter(): Unit = {
-    registerFunction("funcWithOpen", new FuncWithOpen)
+    tEnv.createTemporarySystemFunction("funcWithOpen", new FuncWithOpen)
     checkResult(
       "SELECT c, g FROM SmallTable3 join Table5 on funcWithOpen(a + d) where b = e",
       Seq(row("Hi", "Hallo"), row("Hello", "Hallo Welt"), row("Hello world", "Hallo Welt"))

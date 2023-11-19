@@ -34,9 +34,9 @@ class SortDistinctAggregateITCase extends DistinctAggregateITCaseBase {
       ExecutionConfigOptions.TABLE_EXEC_DISABLED_OPERATORS,
       OperatorType.HashAgg.toString)
 
-    registerFunction("countFun", new CountAggFunction())
-    registerFunction("intSumFun", new IntSumAggFunction())
-    registerFunction("weightedAvg", new WeightedAvgWithMergeAndReset())
+    tEnv.createTemporarySystemFunction("countFun", new CountAggFunction())
+    tEnv.createTemporarySystemFunction("intSumFun", new IntSumAggFunction())
+    tEnv.createTemporarySystemFunction("weightedAvg", new WeightedAvgWithMergeAndReset())
   }
 
   @Test
