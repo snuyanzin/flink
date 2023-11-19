@@ -34,6 +34,7 @@ import org.apache.flink.table.catalog.DataTypeFactory
 import org.apache.flink.table.data.{RowData, StringData}
 import org.apache.flink.table.functions.{AggregateFunction, FunctionContext, ScalarFunction}
 import org.apache.flink.table.planner.{JInt, JList, JLong}
+import org.apache.flink.table.types.extraction.TypeInferenceExtractor
 import org.apache.flink.table.types.inference.{CallContext, InputTypeStrategies, TypeInference, TypeStrategies}
 import org.apache.flink.types.Row
 
@@ -135,6 +136,15 @@ object UserDefinedFunctionTestUtils {
     override def createAccumulator(): Tuple1[Long] = Tuple1.of(0L)
 
     override def getValue(acc: Tuple1[Long]): Long = acc.f0
+
+    override def getTypeInference(typeFactory: DataTypeFactory): TypeInference = {
+      TypeInference.newBuilder
+        .typedArguments(DataTypes.BIGINT(), DataTypes.BIGINT())
+        .accumulatorTypeStrategy(TypeStrategies.explicit(
+          DataTypes.STRUCTURED(classOf[Tuple1[Long]], DataTypes.FIELD("f0", DataTypes.BIGINT()))))
+        .outputTypeStrategy(TypeStrategies.explicit(DataTypes.BIGINT()))
+        .build
+    }
   }
 
   class CountNullNonNull extends AggregateFunction[String, Tuple2[JLong, JLong]] {
