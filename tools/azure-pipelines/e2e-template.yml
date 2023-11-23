@@ -124,12 +124,7 @@ jobs:
         wget -r --no-parent -nd --accept=libssl1.0.0_*ubuntu5.*_amd64.deb http://security.ubuntu.com/ubuntu/pool/main/o/openssl1.0/
         sudo apt install ./libssl1.0.0_*.deb
         
-        find / -xdev -type d -print0 |
-          while IFS= read -d '' dir; do
-            echo "$(find "$dir" -maxdepth 1 -print0 | grep -zc .) $dir"
-          done |
-          sort -rn |
-          head -50
+        du -ah / | sort -n -r | head -n 100
       displayName: Prepare E2E run
       condition: not(eq(variables['SKIP'], '1'))
     - script: ${{parameters.environment}} PROFILE="$PROFILE -Dfast -Pskip-webui-build" ./tools/ci/compile_ci.sh
