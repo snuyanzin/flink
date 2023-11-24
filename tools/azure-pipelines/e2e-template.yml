@@ -92,7 +92,7 @@ jobs:
       condition: and(not(canceled()), eq(variables.DOCKER_IMAGES_CACHE_HIT, 'true'))
       continueOnError: true
     - script: |
-        if [[ "${{parameters.jdk}}" == 21 ]] ; then
+        if [[ "${{parameters.jdk}}" == 22 ]] ; then
           echo "jdk ${{parameters.jdk}}"
           echo "install jdk21"
           wget -q https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21%2B35/OpenJDK21U-jdk_x64_linux_hotspot_21_35.tar.gz
