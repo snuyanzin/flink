@@ -22,7 +22,6 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.io.CsvInputFormat;
 import org.apache.flink.api.java.io.RowCsvInputFormat;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.core.fs.FileInputSplit;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -445,11 +444,6 @@ public class CsvTableSource
                 assert targetIdx != -1;
                 targetKeys.add(targetIdx);
             }
-        }
-
-        @Override
-        public TypeInformation<Row> getResultType() {
-            return new RowTypeInfo(config.getSelectedFieldTypes(), config.getSelectedFieldNames());
         }
 
         @Override
