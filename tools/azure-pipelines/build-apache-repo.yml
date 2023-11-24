@@ -60,7 +60,7 @@ stages:
   # CI / PR triggered stage:
   - stage: ci
     displayName: "CI build (custom builders)"
-    condition: not(eq(variables['Build.Reason'], in('Schedule', 'Manual')))
+   # condition: not(eq(variables['Build.Reason'], in('Schedule', 'Manual')))
     jobs:
       - template: jobs-template.yml
         parameters:
@@ -98,7 +98,7 @@ stages:
   - stage: cron_build
     displayName: "Cron build"
     dependsOn: [] # depending on an empty array makes the stages run in parallel
-    condition: or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['MODE'], 'nightly'))
+  #  condition: or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['MODE'], 'nightly'))
     jobs:
       - template: build-nightly-dist.yml
         parameters:
