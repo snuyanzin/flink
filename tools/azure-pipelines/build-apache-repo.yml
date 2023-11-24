@@ -27,6 +27,7 @@ schedules:
   branches:
     include:
     - master
+    - jdk21_1
   always: true # run even if there were no changes to the mentioned branches
 
 trigger:
