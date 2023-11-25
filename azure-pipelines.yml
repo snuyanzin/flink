@@ -96,5 +96,5 @@ stages:
       - template: tools/azure-pipelines/build-python-wheels.yml
         parameters:
           stage_name: cron_python_wheels
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk11 -Djdk17 -Djdk21"
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2"
           container: flink-build-container
