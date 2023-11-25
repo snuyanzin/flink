@@ -149,7 +149,7 @@ stages:
           environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk11 -Djdk17 -Pjava17-target"
           run_end_to_end: true
           container: flink-build-container
-          jdk: 21
+          jdk: 17
       - template: jobs-template.yml
         parameters:
           stage_name: cron_adaptive_scheduler
