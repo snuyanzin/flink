@@ -96,11 +96,6 @@ stages:
           - script: ./tools/ci/docs.sh
             condition: not(eq(variables['SKIP'], '1'))
   # Special stage for nightly builds:
-  - stage: ci
-    displayName: "Cron build"
-    dependsOn: [] # depending on an empty array makes the stages run in parallel
-  #  condition: or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['MODE'], 'nightly'))
-    jobs:
       - template: build-nightly-dist.yml
         parameters:
           stage_name: cron_snapshot_deployment
