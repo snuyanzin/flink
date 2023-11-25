@@ -96,7 +96,7 @@ stages:
           - script: ./tools/ci/docs.sh
             condition: not(eq(variables['SKIP'], '1'))
   # Special stage for nightly builds:
-  - stage: cron_build
+  - stage: ci
     displayName: "Cron build"
     dependsOn: [] # depending on an empty array makes the stages run in parallel
   #  condition: or(eq(variables['Build.Reason'], 'Schedule'), eq(variables['MODE'], 'nightly'))
