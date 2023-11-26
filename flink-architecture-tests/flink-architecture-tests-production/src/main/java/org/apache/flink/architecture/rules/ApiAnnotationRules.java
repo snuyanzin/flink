@@ -18,6 +18,8 @@
 
 package org.apache.flink.architecture.rules;
 
+import com.tngtech.archunit.junit.ArchTag;
+
 import org.apache.flink.annotation.Experimental;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.Public;
@@ -46,6 +48,7 @@ import static org.apache.flink.architecture.common.SourcePredicates.areJavaClass
 public class ApiAnnotationRules {
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule ANNOTATED_APIS =
             freeze(
                     javaClassesThat()
@@ -66,6 +69,7 @@ public class ApiAnnotationRules {
                                     "Classes in API packages should have at least one API visibility annotation."));
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule PUBLIC_API_METHODS_USE_ONLY_PUBLIC_API_TYPES =
             freeze(
                     methods()
@@ -96,6 +100,7 @@ public class ApiAnnotationRules {
                                     "Return and argument types of methods annotated with @Public must be annotated with @Public."));
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule PUBLIC_EVOLVING_API_METHODS_USE_ONLY_PUBLIC_EVOLVING_API_TYPES =
             freeze(
                     methods()
@@ -128,6 +133,7 @@ public class ApiAnnotationRules {
                                     "Return and argument types of methods annotated with @PublicEvolving must be annotated with @Public(Evolving)."));
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule NO_CALLS_TO_VISIBLE_FOR_TESTING_METHODS =
             freeze(
                     noJavaClassesThat()

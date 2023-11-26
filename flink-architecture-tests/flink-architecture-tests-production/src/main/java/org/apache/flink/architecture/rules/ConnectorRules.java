@@ -60,6 +60,7 @@ public class ConnectorRules {
     @ArchTest
     @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava11")
     @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava17")
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule CONNECTOR_CLASSES_ONLY_DEPEND_ON_PUBLIC_API =
             freeze(
                     javaClassesThat(resideInAnyPackage(CONNECTOR_PACKAGES))

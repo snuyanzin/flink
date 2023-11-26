@@ -18,6 +18,8 @@
 
 package org.apache.flink.architecture.rules;
 
+import com.tngtech.archunit.junit.ArchTag;
+
 import org.apache.flink.annotation.Experimental;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.Public;
@@ -55,6 +57,7 @@ public class TableApiRules {
             "org.apache.flink.configuration.ConfigOption";
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule CONFIG_OPTIONS_IN_OPTIONS_CLASSES =
             fields().that(arePublicStaticOfType(CONFIG_OPTIONS_FQ_NAME))
                     .and()
@@ -67,6 +70,7 @@ public class TableApiRules {
                     .beDeclaredIn(FactoryUtil.class);
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule TABLE_FACTORIES_CONTAIN_NO_CONFIG_OPTIONS =
             noFields()
                     .that(arePublicStaticOfType(CONFIG_OPTIONS_FQ_NAME))
@@ -78,6 +82,7 @@ public class TableApiRules {
                     .implement(DynamicTableFactory.class);
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule CONNECTOR_OPTIONS_PACKAGE =
             freeze(
                     javaClassesThat()
@@ -96,6 +101,7 @@ public class TableApiRules {
                                     "Options for connectors and formats should reside in a consistent package and be public API."));
 
     @ArchTest
+    @ArchTag(value = "org.apache.flink.testutils.junit.FailsOnJava21")
     public static final ArchRule ALL_CLASSES_IN_TABLE_API_SHOULD_HAVE_VISIBILITY_ANNOTATIONS =
             javaClassesThat(resideInPublicTableApiModules())
                     .and()
