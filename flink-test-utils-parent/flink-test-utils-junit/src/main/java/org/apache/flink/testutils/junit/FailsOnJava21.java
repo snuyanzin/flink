@@ -18,5 +18,4 @@
 package org.apache.flink.testutils.junit;
 
 /** Marker interface for tests that fail on Java 21. */
-public class FailsOnJava21 {
-}
+public class FailsOnJava21 {}
