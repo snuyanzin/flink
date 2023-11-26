@@ -103,7 +103,7 @@ jobs:
       displayName: "install JDK 21"
       condition: eq(${{parameters.jdk}}, '21')
     - script: |        
-        echo env
+        echo $(env)
       displayName: "Set JDK"
     - script: |
         echo "Setting up Maven"
