@@ -92,6 +92,7 @@ jobs:
       condition: and(not(canceled()), eq(variables.DOCKER_IMAGES_CACHE_HIT, 'true'))
       continueOnError: true
     - script: |
+        echo ${{parameters.jdk}}
         echo "##vso[task.setvariable variable=JAVA_HOME]$JAVA_HOME_${{parameters.jdk}}_X64"
         echo "##vso[task.setvariable variable=PATH]$JAVA_HOME_${{parameters.jdk}}_X64/bin:$PATH"
       displayName: "Set JDK"
