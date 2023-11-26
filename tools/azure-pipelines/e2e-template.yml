@@ -102,9 +102,8 @@ jobs:
         echo "##vso[task.setvariable variable=PATH]$JAVA_HOME_21_X64/bin:$PATH"
       displayName: "install JDK 21"
       condition: eq(${{parameters.jdk}}, '21')
-    - script: |
-        echo "##vso[task.setvariable variable=JAVA_HOME]$JAVA_HOME_21_X64"
-        echo "##vso[task.setvariable variable=PATH]$JAVA_HOME_21_X64/bin:$PATH"
+    - script: |        
+        echo env
       displayName: "Set JDK"
     - script: |
         echo "Setting up Maven"
