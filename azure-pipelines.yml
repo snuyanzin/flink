@@ -76,10 +76,10 @@ stages:
             vmImage: 'ubuntu-20.04'
           e2e_pool_definition:
             vmImage: 'ubuntu-20.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2"
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk11 -Djdk17 -Djdk21 -Pjava21-target"
           run_end_to_end: false
           container: flink-build-container
-          jdk: 8
+          jdk: 21
       - job: docs_404_check # run on a MSFT provided machine
         pool:
           vmImage: 'ubuntu-20.04'
