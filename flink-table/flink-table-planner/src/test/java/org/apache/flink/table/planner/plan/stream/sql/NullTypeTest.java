@@ -40,19 +40,13 @@ class NullTypeTest extends TableTestBase {
                         () ->
                                 util.verifyExecPlan(
                                         "SELECT * FROM (VALUES (1, NULL), (2, NULL)) AS T(a, b)"))
-                .hasMessageContaining("Illegal use of 'NULL'")
+                .hasMessageContaining("Values passed to VALUES operator must have compatible types")
                 .isInstanceOf(ValidationException.class);
     }
 
     @Test
     void testValuesWithoutTypeCoercion() {
-        // should work if we enable type coercion, works already in Table API
-        assertThatThrownBy(
-                        () ->
-                                util.verifyExecPlan(
-                                        "SELECT * FROM (VALUES (1, NULL), (2, 1)) AS T(a, b)"))
-                .hasMessageContaining("Illegal use of 'NULL'")
-                .isInstanceOf(ValidationException.class);
+        util.verifyExecPlan("SELECT * FROM (VALUES (1, NULL), (2, 1)) AS T(a, b)");
     }
 
     @Test

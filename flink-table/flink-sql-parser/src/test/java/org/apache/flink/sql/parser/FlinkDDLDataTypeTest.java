@@ -636,7 +636,7 @@ class FlinkDDLDataTypeTest {
             m.put("quotedCasing", Casing.UNCHANGED);
             m.put("unquotedCasing", Casing.UNCHANGED);
             m.put("caseSensitive", true);
-            m.put("enableTypeCoercion", false);
+            m.put("enableTypeCoercion", true);
             m.put("conformance", SqlConformanceEnum.DEFAULT);
             m.put("operatorTable", SqlStdOperatorTable.instance());
             m.put("parserFactory", FlinkSqlParserImpl.FACTORY);

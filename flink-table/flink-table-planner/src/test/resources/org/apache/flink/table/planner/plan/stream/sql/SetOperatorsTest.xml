@@ -43,6 +43,83 @@ GroupAggregate(groupBy=[c], select=[c])
 ]]>
     </Resource>
   </TestCase>
+	<TestCase name="testUnionDifferentFieldTypes">
+		<Resource name="sql">
+			<![CDATA[SELECT a, b, c FROM T1 UNION ALL SELECT d, c, e FROM T3]]>
+		</Resource>
+		<Resource name="ast">
+			<![CDATA[
+LogicalUnion(all=[true])
+:- LogicalProject(a=[$0], EXPR$1=[CAST($1):VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], c=[$2])
+:  +- LogicalTableScan(table=[[default_catalog, default_database, T1, source: [TestTableSource(a, b, c)]]])
++- LogicalProject(d=[$2], c=[$3], EXPR$2=[CAST($4):VARCHAR(2147483647) CHARACTER SET "UTF-16LE"])
+   +- LogicalTableScan(table=[[default_catalog, default_database, T3, source: [TestTableSource(a, b, d, c, e)]]])
+]]>
+		</Resource>
+		<Resource name="optimized exec plan">
+			<![CDATA[
+Union(all=[true], union=[a, EXPR$1, c])
+:- Calc(select=[a, CAST(b AS VARCHAR(2147483647)) AS EXPR$1, c])
+:  +- LegacyTableSourceScan(table=[[default_catalog, default_database, T1, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
++- Calc(select=[d, c, CAST(e AS VARCHAR(2147483647)) AS EXPR$2])
+   +- LegacyTableSourceScan(table=[[default_catalog, default_database, T3, source: [TestTableSource(a, b, d, c, e)]]], fields=[a, b, d, c, e])
+]]>
+		</Resource>
+	</TestCase>
+	<TestCase name="testMinusDifferentFieldTypes">
+		<Resource name="sql">
+			<![CDATA[SELECT a, b, c FROM T1 EXCEPT SELECT d, c, e FROM T3]]>
+		</Resource>
+		<Resource name="ast">
+			<![CDATA[
+LogicalMinus(all=[false])
+:- LogicalProject(a=[$0], EXPR$1=[CAST($1):VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], c=[$2])
+:  +- LogicalTableScan(table=[[default_catalog, default_database, T1, source: [TestTableSource(a, b, c)]]])
++- LogicalProject(d=[$2], c=[$3], EXPR$2=[CAST($4):VARCHAR(2147483647) CHARACTER SET "UTF-16LE"])
+   +- LogicalTableScan(table=[[default_catalog, default_database, T3, source: [TestTableSource(a, b, d, c, e)]]])
+]]>
+		</Resource>
+		<Resource name="optimized exec plan">
+			<![CDATA[
+GroupAggregate(groupBy=[a, EXPR$1, c], select=[a, EXPR$1, c])
++- Exchange(distribution=[hash[a, EXPR$1, c]])
+   +- Join(joinType=[LeftAntiJoin], where=[(((a = d) OR (a IS NULL AND d IS NULL)) AND ((EXPR$1 = c0) OR (EXPR$1 IS NULL AND c0 IS NULL)) AND ((c = EXPR$2) OR (c IS NULL AND EXPR$2 IS NULL)))], select=[a, EXPR$1, c], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+      :- Exchange(distribution=[hash[a, EXPR$1, c]])
+      :  +- Calc(select=[a, CAST(b AS VARCHAR(2147483647)) AS EXPR$1, c])
+      :     +- LegacyTableSourceScan(table=[[default_catalog, default_database, T1, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
+      +- Exchange(distribution=[hash[d, c, EXPR$2]])
+         +- Calc(select=[d, c, CAST(e AS VARCHAR(2147483647)) AS EXPR$2])
+            +- LegacyTableSourceScan(table=[[default_catalog, default_database, T3, source: [TestTableSource(a, b, d, c, e)]]], fields=[a, b, d, c, e])
+]]>
+		</Resource>
+	</TestCase>
+	<TestCase name="testIntersectDifferentFieldTypes">
+		<Resource name="sql">
+			<![CDATA[SELECT a, b, c FROM T1 INTERSECT SELECT d, c, e FROM T3]]>
+		</Resource>
+		<Resource name="ast">
+			<![CDATA[
+LogicalIntersect(all=[false])
+:- LogicalProject(a=[$0], EXPR$1=[CAST($1):VARCHAR(2147483647) CHARACTER SET "UTF-16LE"], c=[$2])
+:  +- LogicalTableScan(table=[[default_catalog, default_database, T1, source: [TestTableSource(a, b, c)]]])
++- LogicalProject(d=[$2], c=[$3], EXPR$2=[CAST($4):VARCHAR(2147483647) CHARACTER SET "UTF-16LE"])
+   +- LogicalTableScan(table=[[default_catalog, default_database, T3, source: [TestTableSource(a, b, d, c, e)]]])
+]]>
+		</Resource>
+		<Resource name="optimized exec plan">
+			<![CDATA[
+GroupAggregate(groupBy=[a, EXPR$1, c], select=[a, EXPR$1, c])
++- Exchange(distribution=[hash[a, EXPR$1, c]])
+   +- Join(joinType=[LeftSemiJoin], where=[(((a = d) OR (a IS NULL AND d IS NULL)) AND ((EXPR$1 = c0) OR (EXPR$1 IS NULL AND c0 IS NULL)) AND ((c = EXPR$2) OR (c IS NULL AND EXPR$2 IS NULL)))], select=[a, EXPR$1, c], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+      :- Exchange(distribution=[hash[a, EXPR$1, c]])
+      :  +- Calc(select=[a, CAST(b AS VARCHAR(2147483647)) AS EXPR$1, c])
+      :     +- LegacyTableSourceScan(table=[[default_catalog, default_database, T1, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
+      +- Exchange(distribution=[hash[d, c, EXPR$2]])
+         +- Calc(select=[d, c, CAST(e AS VARCHAR(2147483647)) AS EXPR$2])
+            +- LegacyTableSourceScan(table=[[default_catalog, default_database, T3, source: [TestTableSource(a, b, d, c, e)]]], fields=[a, b, d, c, e])
+]]>
+		</Resource>
+	</TestCase>
   <TestCase name="testIntersectAll">
     <Resource name="sql">
       <![CDATA[SELECT c FROM T1 INTERSECT ALL SELECT f FROM T2]]>
