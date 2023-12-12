@@ -34,9 +34,6 @@ class StreamingTestBase extends StreamAbstractTestBase {
   var tEnv: StreamTableEnvironment = _
   var enableObjectReuse = true
 
-  @TempDir
-  var tempFolder: Path = _
-
   @throws(classOf[Exception])
   @BeforeEach
   def before(): Unit = {

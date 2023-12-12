@@ -27,9 +27,11 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
@@ -42,10 +44,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** Test of the filesystem source in streaming mode. */
 class FileSystemTableSourceStreamingITCase extends StreamingTestBase {
 
+    @TempDir private Path tempFolder;
+
     @Test
     void testMonitorContinuously() throws Exception {
         // Create temp dir
-        File testPath = TempDirUtils.newFolder(tempFolder());
+        File testPath = TempDirUtils.newFolder(tempFolder);
 
         // Write first csv file out
         Files.write(
@@ -93,8 +97,8 @@ class FileSystemTableSourceStreamingITCase extends StreamingTestBase {
     @Test
     void testSourceWithRegexPattern() throws Exception {
         // Create temp dir
-        File testPath0 = TempDirUtils.newFolder(tempFolder(), "dir0");
-        File testPath1 = TempDirUtils.newFolder(tempFolder(), "dir1");
+        File testPath0 = TempDirUtils.newFolder(tempFolder, "dir0");
+        File testPath1 = TempDirUtils.newFolder(tempFolder, "dir1");
 
         // Write first csv file out
         Files.write(
@@ -120,7 +124,7 @@ class FileSystemTableSourceStreamingITCase extends StreamingTestBase {
                                 .format("testcsv")
                                 .option(
                                         FileSystemConnectorOptions.PATH,
-                                        tempFolder().toFile().getPath())
+                                        tempFolder.toFile().getPath())
                                 .option(
                                         FileSystemConnectorOptions.SOURCE_PATH_REGEX_PATTERN,
                                         "/.*/input_[0-9]+.csv")

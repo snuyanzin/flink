@@ -33,9 +33,11 @@ import org.apache.flink.util.CollectionUtil
 
 import org.assertj.core.api.Assertions.{assertThat, assertThatThrownBy}
 import org.junit.jupiter.api.{BeforeEach, Test, Timeout}
+import org.junit.jupiter.api.io.TempDir
 
 import java.io.File
 import java.net.URI
+import java.nio.file.Path
 import java.time.{LocalDate, LocalDateTime, LocalTime}
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
@@ -47,6 +49,8 @@ import scala.collection.JavaConversions._
 abstract class FsStreamingSinkITCaseBase extends StreamingTestBase {
 
   protected var resultPath: String = _
+  @TempDir
+  var tempFolder: Path = _
 
   // iso date
   def getData: Seq[Row] = Seq(

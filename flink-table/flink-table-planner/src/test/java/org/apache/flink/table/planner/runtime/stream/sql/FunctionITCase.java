@@ -62,6 +62,7 @@ import org.apache.flink.util.UserClassLoaderJarTestUtils;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.lang.invoke.MethodHandle;
 import java.math.BigDecimal;
@@ -99,6 +100,7 @@ public class FunctionITCase extends StreamingTestBase {
     private static final Random random = new Random();
     private String udfClassName;
     private String jarPath;
+    @TempDir private java.nio.file.Path tempFolder;
 
     @BeforeEach
     @Override
@@ -108,7 +110,7 @@ public class FunctionITCase extends StreamingTestBase {
         jarPath =
                 UserClassLoaderJarTestUtils.createJarFile(
                                 TempDirUtils.newFolder(
-                                        tempFolder(),
+                                        tempFolder,
                                         String.format("test-jar-%s", UUID.randomUUID())),
                                 "test-classloader-udf.jar",
                                 udfClassName,

@@ -36,10 +36,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -64,9 +66,11 @@ public abstract class CompactionITCaseBase extends StreamingTestBase {
 
     private List<Row> expectedRows;
 
+    @TempDir private Path tempFolder;
+
     @BeforeEach
     protected void init() throws IOException {
-        resultPath = TempDirUtils.newFolder(tempFolder()).toURI().toString();
+        resultPath = TempDirUtils.newFolder(tempFolder).toURI().toString();
 
         env().setParallelism(3);
         env().enableCheckpointing(100);

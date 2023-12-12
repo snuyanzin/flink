@@ -40,8 +40,10 @@ import org.apache.flink.testutils.junit.utils.TempDirUtils
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.{AfterEach, BeforeEach}
+import org.junit.jupiter.api.io.TempDir
 
 import java.io.File
+import java.nio.file.Path
 import java.util
 
 import scala.collection.JavaConversions._
@@ -58,6 +60,8 @@ class StreamingWithStateTestBase(state: StateBackendMode) extends StreamingTestB
   private val classLoader = Thread.currentThread.getContextClassLoader
 
   var baseCheckpointPath: File = _
+  @TempDir
+  var tempFolder: Path = _
 
   @BeforeEach
   override def before(): Unit = {

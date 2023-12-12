@@ -36,6 +36,9 @@ import org.apache.flink.table.planner.runtime.utils.StreamingWithStateTestBase.{
 import org.apache.flink.testutils.junit.extensions.parameterized.Parameters
 import org.apache.flink.testutils.junit.utils.TempDirUtils
 
+import org.junit.jupiter.api.io.TempDir
+
+import java.nio.file.Path
 import java.util
 
 import scala.collection.JavaConversions._
@@ -43,6 +46,8 @@ import scala.collection.JavaConversions._
 class HarnessTestBase(mode: StateBackendMode) extends StreamingTestBase {
 
   private val classLoader = Thread.currentThread.getContextClassLoader
+  @TempDir
+  var tempFolder: Path = _
 
   protected def getStateBackend: StateBackend = {
     mode match {
