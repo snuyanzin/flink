@@ -40,8 +40,10 @@ import org.apache.flink.testutils.junit.utils.TempDirUtils
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.{AfterEach, BeforeEach}
+import org.junit.jupiter.api.io.{CleanupMode, TempDir}
 
 import java.io.File
+import java.nio.file.{Files, Path}
 import java.util
 
 import scala.collection.JavaConversions._
@@ -57,13 +59,12 @@ class StreamingWithStateTestBase(state: StateBackendMode) extends StreamingTestB
 
   private val classLoader = Thread.currentThread.getContextClassLoader
 
-  var baseCheckpointPath: File = _
-
   @BeforeEach
   override def before(): Unit = {
     super.before()
     // set state backend
-    baseCheckpointPath = tempFolder.toFile
+    val baseCheckpointPath = Files.createTempDirectory(getClass.getCanonicalName)
+    Files.deleteIfExists(baseCheckpointPath);
     state match {
       case HEAP_BACKEND =>
         val conf = new Configuration()
