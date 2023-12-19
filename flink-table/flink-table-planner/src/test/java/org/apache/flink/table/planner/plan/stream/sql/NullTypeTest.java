@@ -63,8 +63,7 @@ class NullTypeTest extends TableTestBase {
     @Test
     void testBuiltInFunction() {
         assertThatThrownBy(() -> util.verifyExecPlan("SELECT ABS(NULL)"))
-                .hasMessageContaining("Illegal use of 'NULL'")
-                .isInstanceOf(ValidationException.class);
+                .hasMessageContaining("Unsupported call: ABS(NULL)");
     }
 
     @Test

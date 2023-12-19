@@ -502,7 +502,9 @@ object CodeGenUtils {
         rowFieldReadAccess(indexTerm, rowTerm, t.asInstanceOf[DistinctType].getSourceType)
       case RAW =>
         s"(($BINARY_RAW_VALUE) $rowTerm.getRawValue($indexTerm))"
-      case NULL | SYMBOL | UNRESOLVED =>
+      case NULL =>
+        s"$rowTerm.isNullAt($indexTerm)"
+      case SYMBOL | UNRESOLVED =>
         throw new IllegalArgumentException("Illegal type: " + t)
     }
 
@@ -795,7 +797,9 @@ object CodeGenUtils {
     case RAW =>
       val ser = addSerializer(t)
       s"$writerTerm.writeRawValue($indexTerm, $fieldValTerm, $ser)"
-    case NULL | SYMBOL | UNRESOLVED =>
+    case NULL =>
+      s"$writerTerm.setNullAt($indexTerm)"
+    case SYMBOL | UNRESOLVED =>
       throw new IllegalArgumentException("Illegal type: " + t);
   }
 

@@ -33,8 +33,7 @@ class RowTypeValidationTest extends RowTypeTestBase {
 
   @Test
   def testNullRowType(): Unit = {
-    assertThatExceptionOfType(classOf[ValidationException])
-      .isThrownBy(() => testAllApis("FAIL", "Row(NULL)", "FAIL"))
+    testAllApis("(NULL)", "Row(NULL)", "(NULL)")
   }
 
   @Test

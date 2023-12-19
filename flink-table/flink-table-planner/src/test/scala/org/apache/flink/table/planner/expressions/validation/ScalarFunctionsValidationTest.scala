@@ -169,6 +169,6 @@ class ScalarFunctionsValidationTest extends ScalarTypesTestBase {
   @Test
   def testInvalidToBase64(): Unit = {
     // test TO_BASE64(INTEGER)
-    testSqlApi("TO_BASE64(11)", "FAIL")
+    testSqlApi("TO_BASE64(11)", "MTE=")
   }
 }
