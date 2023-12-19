@@ -1368,6 +1368,8 @@ class CollectionFunctionsITCase extends BuiltInFunctionTestBase {
                                         + "Supported signatures are:\n"
                                         + "ARRAY_SLICE(<ARRAY>, <INTEGER>, <INTEGER>)\n"
                                         + "ARRAY_SLICE(<ARRAY>, <INTEGER>)")
-                        .testSqlValidationError("ARRAY_SLICE(null)", "Illegal use of 'NULL'"));
+                        .testSqlValidationError(
+                                "ARRAY_SLICE(null)",
+                                "No match found for function signature ARRAY_SLICE(<NULL>)"));
     }
 }

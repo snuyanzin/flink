@@ -64,6 +64,7 @@ public class FlinkSqlTypeMappingRules extends SqlTypeMappingRules {
         rule.add(SqlTypeName.CHAR);
         rule.add(SqlTypeName.VARCHAR);
         rule.add(SqlTypeName.BOOLEAN);
+        builder.add(SqlTypeName.BOOLEAN, rule);
         rule.add(SqlTypeName.TIMESTAMP);
         rule.add(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE);
 
@@ -77,6 +78,76 @@ public class FlinkSqlTypeMappingRules extends SqlTypeMappingRules {
         builder.add(SqlTypeName.DOUBLE, rule);
         builder.add(SqlTypeName.CHAR, rule);
         builder.add(SqlTypeName.VARCHAR, rule);
+
+        // VARCHAR is castable from BOOLEAN, DATE, TIME, TIMESTAMP, numeric types, binary and
+        // intervals
+        builder.add(
+                SqlTypeName.VARCHAR,
+                builder.copyValues(SqlTypeName.VARCHAR)
+                        .add(SqlTypeName.CHAR)
+                        .add(SqlTypeName.BOOLEAN)
+                        .add(SqlTypeName.DATE)
+                        .add(SqlTypeName.TIME)
+                        .add(SqlTypeName.TIMESTAMP)
+                        .add(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)
+                        .addAll(SqlTypeName.BINARY_TYPES)
+                        .addAll(SqlTypeName.NUMERIC_TYPES)
+                        .addAll(SqlTypeName.INTERVAL_TYPES)
+                        .build());
+
+        // CHAR is castable from BOOLEAN, DATE, TIME, TIMESTAMP, numeric types, binary and
+        // intervals
+        builder.add(
+                SqlTypeName.CHAR,
+                builder.copyValues(SqlTypeName.CHAR)
+                        .add(SqlTypeName.VARCHAR)
+                        .add(SqlTypeName.BOOLEAN)
+                        .add(SqlTypeName.DATE)
+                        .add(SqlTypeName.TIME)
+                        .add(SqlTypeName.TIMESTAMP)
+                        .add(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE)
+                        .addAll(SqlTypeName.BINARY_TYPES)
+                        .addAll(SqlTypeName.NUMERIC_TYPES)
+                        .addAll(SqlTypeName.INTERVAL_TYPES)
+                        .build());
+
+        // BINARY is castable from VARBINARY, CHARACTERS.
+        builder.add(
+                SqlTypeName.BINARY,
+                builder.copyValues(SqlTypeName.BINARY)
+                        .add(SqlTypeName.VARBINARY)
+                        .addAll(SqlTypeName.CHAR_TYPES)
+                        .build());
+
+        // VARBINARY is castable from BINARY, CHARACTERS.
+        builder.add(
+                SqlTypeName.VARBINARY,
+                builder.copyValues(SqlTypeName.VARBINARY)
+                        .add(SqlTypeName.BINARY)
+                        .addAll(SqlTypeName.CHAR_TYPES)
+                        .build());
+
+        // Exact numeric types are castable from intervals
+        for (SqlTypeName exactType : SqlTypeName.EXACT_TYPES) {
+            builder.add(
+                    exactType,
+                    builder.copyValues(exactType).addAll(SqlTypeName.INTERVAL_TYPES).build());
+        }
+
+        // Intervals are castable from exact numeric
+        for (SqlTypeName typeName : SqlTypeName.INTERVAL_TYPES) {
+            builder.add(
+                    typeName,
+                    builder.copyValues(typeName)
+                            .add(SqlTypeName.TINYINT)
+                            .add(SqlTypeName.SMALLINT)
+                            .add(SqlTypeName.INTEGER)
+                            .add(SqlTypeName.BIGINT)
+                            .add(SqlTypeName.DECIMAL)
+                            .add(SqlTypeName.CHAR)
+                            .add(SqlTypeName.VARCHAR)
+                            .build());
+        }
 
         // TIMESTAMP WITH LOCAL TIME ZONE is castable from...
         builder.add(

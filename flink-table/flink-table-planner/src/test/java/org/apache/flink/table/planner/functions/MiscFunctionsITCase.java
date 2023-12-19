@@ -98,9 +98,7 @@ class MiscFunctionsITCase extends BuiltInFunctionTestBase {
                         .testTableApiResult(
                                 callSql("UPPER(f2)").plus(callSql("LOWER(f2)")).substring(2, 20),
                                 "ELLO WORLDhello worl",
-                                DataTypes.STRING().notNull())
-                        .testTableApiValidationError(
-                                callSql("UPPER(f1)"), "Invalid SQL expression: UPPER(f1)"));
+                                DataTypes.STRING().notNull()));
     }
 
     // --------------------------------------------------------------------------------------------
