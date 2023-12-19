@@ -105,8 +105,7 @@ class FlinkPlannerImpl(
         .withIdentifierExpansion(true)
         .withDefaultNullCollation(FlinkPlannerImpl.defaultNullCollation)
         .withTypeCoercionEnabled(true)
-        .withTypeCoercionFactory(new FlinkTypeCoercionFactory())
-        .withTypeCoercionRules(FlinkSqlTypeMappingRules.getSqlTypeCoercionRule),
+        .withTypeCoercionFactory(new FlinkTypeCoercionFactory()),
       createToRelContext(),
       cluster,
       config
