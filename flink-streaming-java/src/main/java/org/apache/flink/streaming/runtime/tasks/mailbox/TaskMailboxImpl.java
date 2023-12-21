@@ -259,6 +259,15 @@ public class TaskMailboxImpl implements TaskMailbox {
 
     private void checkIsMailboxThread() {
         if (!isMailboxThread()) {
+            Thread.dumpStack();
+            System.out.println("vs");
+            StackTraceElement[] stackTrace = taskMailboxThread.getStackTrace();
+            StringBuilder sb = new StringBuilder();
+            for (StackTraceElement ste : stackTrace) {
+                sb.append(ste).append("\n");
+            }
+            System.out.println(sb);
+            ;
             throw new IllegalStateException(
                     "Illegal thread detected. This method must be called from inside the mailbox thread!");
         }
