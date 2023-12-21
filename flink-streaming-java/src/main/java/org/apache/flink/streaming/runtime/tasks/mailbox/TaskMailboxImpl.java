@@ -267,7 +267,6 @@ public class TaskMailboxImpl implements TaskMailbox {
                 sb.append(ste).append("\n");
             }
             System.out.println(sb);
-            ;
             throw new IllegalStateException(
                     "Illegal thread detected. This method must be called from inside the mailbox thread!");
         }
