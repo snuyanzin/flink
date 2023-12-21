@@ -48,7 +48,7 @@ jobs:
           fi
       - name: Build documentation
         run: |
-          docker run --rm --volume "$PWD:/root/flink" snuyanzin/flink-ci:focal-test bash -c "cd /root/flink && ./.github/workflows/docs.sh"
+          docker run --rm --volume "$PWD:/root/flink" snuyanzin/flink-ci:jammy-test bash -c "cd /root/flink && ./.github/workflows/docs.sh"
       - name: Upload documentation
         uses: burnett01/rsync-deployments@5.2
         with:
