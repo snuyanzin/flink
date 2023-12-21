@@ -70,6 +70,10 @@ public class SSLUtilsTest {
 
     static {
         if (System.getProperty("flink.tests.with-openssl") != null) {
+            Throwable throwable = OpenSsl.unavailabilityCause();
+            if (throwable != null) {
+                throwable.printStackTrace();
+            }
             assertThat(OpenSsl.isAvailable()).isTrue();
             AVAILABLE_SSL_PROVIDERS = Arrays.asList("JDK", "OPENSSL");
         } else {
