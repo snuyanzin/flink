@@ -53,10 +53,6 @@ public class FlinkCalcMergeRule extends RelRule<FlinkCalcMergeRule.FlinkCalcMerg
     protected FlinkCalcMergeRule(FlinkCalcMergeRuleConfig config) {
         super(config);
     }
-    /*(
-    operand(calcClass, operand(calcClass, any)),
-    RelFactories.LOGICAL_BUILDER,
-    "FlinkCalcMergeRule") {*/
 
     public boolean matches(RelOptRuleCall call) {
         Calc topCalc = call.rel(0);
