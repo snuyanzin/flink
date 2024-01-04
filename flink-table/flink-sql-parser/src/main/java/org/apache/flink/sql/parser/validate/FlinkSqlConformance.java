@@ -139,7 +139,7 @@ public enum FlinkSqlConformance implements SqlConformance {
 
     @Override
     public boolean allowGeometry() {
-        return false;
+        return true;
     }
 
     @Override
