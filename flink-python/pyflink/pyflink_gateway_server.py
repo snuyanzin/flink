@@ -277,6 +277,7 @@ def launch_gateway_server_process(env, args):
             *jvm_args,
             "-XX:+IgnoreUnrecognizedVMOptions",
             "--add-opens=jdk.proxy2/jdk.proxy2=ALL-UNNAMED",
+            "--add-opens=java.base/java.util=ALL-UNNAMED",
             *jvm_opts,
             *log_settings,
             "-cp",
