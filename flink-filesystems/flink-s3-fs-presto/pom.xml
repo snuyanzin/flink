@@ -363,7 +363,6 @@ under the License.
 				<groupId>org.apache.hadoop</groupId>
 				<artifactId>hadoop-common</artifactId>
 				<version>${fs.hadoopshaded.version}</version>
-				<optional>${flink.markBundledAsOptional}</optional>
 				<exclusions>
 					<exclusion>
 						<groupId>jdk.tools</groupId>
@@ -391,7 +390,6 @@ under the License.
 				<groupId>org.apache.hadoop</groupId>
 				<artifactId>hadoop-hdfs</artifactId>
 				<version>${fs.hadoopshaded.version}</version>
-				<optional>${flink.markBundledAsOptional}</optional>
 				<exclusions>
 					<exclusion>
 						<groupId>jdk.tools</groupId>
@@ -421,7 +419,6 @@ under the License.
 				<groupId>commons-beanutils</groupId>
 				<artifactId>commons-beanutils</artifactId>
 				<version>1.9.4</version>
-				<optional>${flink.markBundledAsOptional}</optional>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
