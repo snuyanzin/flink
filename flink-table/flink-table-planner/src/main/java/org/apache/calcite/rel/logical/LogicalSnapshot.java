@@ -24,6 +24,7 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelCollationTraitDef;
 import org.apache.calcite.rel.RelDistributionTraitDef;
+import org.apache.calcite.rel.RelInput;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Snapshot;
 import org.apache.calcite.rel.hint.RelHint;
@@ -46,6 +47,11 @@ import java.util.List;
 public class LogicalSnapshot extends Snapshot {
 
     // ~ Constructors -----------------------------------------------------------
+    /** Creates a LogicalSnapshot by parsing serialized output. */
+    public LogicalSnapshot(RelInput input) {
+        super(input);
+    }
+
     /**
      * Creates a LogicalSnapshot.
      *
