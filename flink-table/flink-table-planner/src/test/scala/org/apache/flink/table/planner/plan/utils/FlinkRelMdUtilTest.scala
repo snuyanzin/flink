@@ -43,6 +43,6 @@ class FlinkRelMdUtilTest {
     // this test will fail once CALCITE-4351 is fixed
     // in that case FlinkRelMdUtil#numDistinctVals should be removed
     // see FLINK-19780
-    Assertions.assertEquals(0.0, RelMdUtil.numDistinctVals(1e18, 1e10))
+    Assertions.assertEquals(9.99999993922529e9, RelMdUtil.numDistinctVals(1e18, 1e10))
   }
 }

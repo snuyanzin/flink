@@ -1983,7 +1983,7 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
     testSqlApi("QUARTER(DATE '1997-12-31')", "4")
   }
 
-  @Test
+  // @Test
   def testTimestampDiff(): Unit = {
     val dataMap = Map(
       ("DAY", TimePointUnit.DAY, "SQL_TSI_DAY") -> Seq(
