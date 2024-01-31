@@ -64,8 +64,8 @@ under the License.
 				<!--
 				"mvn dependency:tree" as of Calcite 1.32.0:
 
-				[INFO] +- org.apache.calcite:calcite-core:jar:1.32.0:compile
-				[INFO] |  +- org.apache.calcite.avatica:avatica-core:jar:1.22.0:compile
+				[INFO] +- org.apache.calcite:calcite-core:jar:1.33.0:compile
+				[INFO] |  +- org.apache.calcite.avatica:avatica-core:jar:1.23.0:compile
 				[INFO] |  +- org.apiguardian:apiguardian-api:jar:1.1.2:compile
 				[INFO] |  \- org.checkerframework:checker-qual:jar:3.12.0:compile
 
@@ -78,6 +78,10 @@ under the License.
 				<exclusion>
 					<groupId>org.apache.calcite.avatica</groupId>
 					<artifactId>avatica-server</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-math3</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>commons-io</groupId>
