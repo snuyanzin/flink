@@ -83,6 +83,7 @@ import org.apache.calcite.rel.logical.LogicalUnion;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rel.metadata.RelColumnMapping;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
+import org.apache.calcite.rel.rel2sql.SqlImplementor;
 import org.apache.calcite.rel.stream.Delta;
 import org.apache.calcite.rel.stream.LogicalDelta;
 import org.apache.calcite.rel.type.RelDataType;
@@ -1163,7 +1164,15 @@ public class SqlToRelConverter {
 
     private void replaceSubQueries(
             final Blackboard bb, final SqlNode expr, RelOptUtil.Logic logic) {
-        findSubQueries(bb, expr, logic, false);
+        replaceSubQueries(bb, expr, logic, null);
+    }
+
+    private void replaceSubQueries(
+            final Blackboard bb,
+            final SqlNode expr,
+            RelOptUtil.Logic logic,
+            final SqlImplementor.Clause clause) {
+        findSubQueries(bb, expr, logic, false, clause);
         for (SubQuery node : bb.subQueryList) {
             substituteSubQuery(bb, node);
         }
@@ -2066,12 +2075,14 @@ public class SqlToRelConverter {
      *     FALSE)
      * @param registerOnlyScalarSubQueries if set to true and the parse tree corresponds to a
      *     variation of a select node, only register it if it's a scalar sub-query
+     * @param clause A clause inside which sub-query is searched
      */
     private void findSubQueries(
             Blackboard bb,
             SqlNode node,
             RelOptUtil.Logic logic,
-            boolean registerOnlyScalarSubQueries) {
+            boolean registerOnlyScalarSubQueries,
+            SqlImplementor.Clause clause) {
         final SqlKind kind = node.getKind();
         switch (kind) {
             case EXISTS:
@@ -2085,7 +2096,7 @@ public class SqlToRelConverter {
             case SET_SEMANTICS_TABLE:
             case SCALAR_QUERY:
                 if (!registerOnlyScalarSubQueries || (kind == SqlKind.SCALAR_QUERY)) {
-                    bb.registerSubQuery(node, RelOptUtil.Logic.TRUE_FALSE);
+                    bb.registerSubQuery(node, RelOptUtil.Logic.TRUE_FALSE, clause);
                 }
                 return;
             case IN:
@@ -2122,7 +2133,8 @@ public class SqlToRelConverter {
                                     || kind == SqlKind.NOT_IN
                                     || kind == SqlKind.SOME
                                     || kind == SqlKind.ALL
-                                    || registerOnlyScalarSubQueries);
+                                    || registerOnlyScalarSubQueries,
+                            clause);
                 }
             }
         } else if (node instanceof SqlNodeList) {
@@ -2135,7 +2147,8 @@ public class SqlToRelConverter {
                                 || kind == SqlKind.NOT_IN
                                 || kind == SqlKind.SOME
                                 || kind == SqlKind.ALL
-                                || registerOnlyScalarSubQueries);
+                                || registerOnlyScalarSubQueries,
+                        clause);
             }
         }
 
@@ -2165,7 +2178,7 @@ public class SqlToRelConverter {
                     default:
                         break;
                 }
-                bb.registerSubQuery(node, logic);
+                bb.registerSubQuery(node, logic, clause);
                 break;
             default:
                 break;
@@ -3532,13 +3545,13 @@ public class SqlToRelConverter {
 
         // also replace sub-queries inside ordering spec in the aggregates
         replaceSubQueries(bb, aggregateFinder.orderList, RelOptUtil.Logic.TRUE_FALSE_UNKNOWN);
-
         // If group-by clause is missing, pretend that it has zero elements.
         if (groupList == null) {
             groupList = SqlNodeList.EMPTY;
         }
 
-        replaceSubQueries(bb, groupList, RelOptUtil.Logic.TRUE_FALSE_UNKNOWN);
+        replaceSubQueries(
+                bb, groupList, RelOptUtil.Logic.TRUE_FALSE_UNKNOWN, SqlImplementor.Clause.GROUP_BY);
 
         // register the group exprs
 
@@ -3630,7 +3643,11 @@ public class SqlToRelConverter {
             // This needs to be done separately from the sub-query inside
             // any aggregate in the select list, and after the aggregate rel
             // is allocated.
-            replaceSubQueries(bb, selectList, RelOptUtil.Logic.TRUE_FALSE_UNKNOWN);
+            replaceSubQueries(
+                    bb,
+                    selectList,
+                    RelOptUtil.Logic.TRUE_FALSE_UNKNOWN,
+                    SqlImplementor.Clause.SELECT);
 
             // Now sub-queries in the entire select list have been converted.
             // Convert the select expressions to get the final list to be
@@ -5234,27 +5251,31 @@ public class SqlToRelConverter {
             }
         }
 
-        void registerSubQuery(SqlNode node, RelOptUtil.Logic logic) {
-            for (SubQuery subQuery : subQueryList) {
-                // Compare the reference to make sure the matched node has
-                // exact scope where it belongs.
-                if (node == subQuery.node) {
-                    return;
-                }
+        void registerSubQuery(SqlNode node, RelOptUtil.Logic logic, SqlImplementor.Clause clause) {
+            if (getSubQuery(node, clause) == null) {
+                subQueryList.add(new SubQuery(node, logic, clause));
             }
-            subQueryList.add(new SubQuery(node, logic));
         }
 
         @Nullable
-        SubQuery getSubQuery(SqlNode expr) {
+        SubQuery getSubQuery(SqlNode expr, SqlImplementor.Clause exprClause) {
             for (SubQuery subQuery : subQueryList) {
                 // Compare the reference to make sure the matched node has
                 // exact scope where it belongs.
                 if (expr == subQuery.node) {
                     return subQuery;
                 }
-            }
 
+                // Reference comparing does not work in case when select list has column which
+                // refers
+                // to the column inside `GROUP BY` clause.
+                // For example: SELECT deptno IN (1,2) FROM emp.deptno GROUP BY deptno IN (1,2);
+                if (exprClause == SqlImplementor.Clause.SELECT
+                        && subQuery.clause == SqlImplementor.Clause.GROUP_BY
+                        && expr.equalsDeep(subQuery.node, Litmus.IGNORE)) {
+                    return subQuery;
+                }
+            }
             return null;
         }
 
@@ -5409,7 +5430,7 @@ public class SqlToRelConverter {
                 case CURSOR:
                 case IN:
                 case NOT_IN:
-                    subQuery = requireNonNull(getSubQuery(expr));
+                    subQuery = requireNonNull(getSubQuery(expr, null));
                     rex = requireNonNull(subQuery.expr);
                     return StandardConvertletTable.castToValidatedType(
                             expr, rex, validator(), rexBuilder);
@@ -5420,7 +5441,7 @@ public class SqlToRelConverter {
                 case ARRAY_QUERY_CONSTRUCTOR:
                 case MAP_QUERY_CONSTRUCTOR:
                 case MULTISET_QUERY_CONSTRUCTOR:
-                    subQuery = getSubQuery(expr);
+                    subQuery = getSubQuery(expr, null);
                     assert subQuery != null;
                     rex = subQuery.expr;
                     assert rex != null : "rex != null";
@@ -5621,7 +5642,7 @@ public class SqlToRelConverter {
 
         @Override
         public RexRangeRef getSubQueryExpr(SqlCall call) {
-            final SubQuery subQuery = getSubQuery(call);
+            final SubQuery subQuery = getSubQuery(call, null);
             assert subQuery != null;
             return (RexRangeRef) requireNonNull(subQuery.expr, () -> "subQuery.expr for " + call);
         }
@@ -6542,10 +6563,12 @@ public class SqlToRelConverter {
         final SqlNode node;
         final RelOptUtil.Logic logic;
         @Nullable RexNode expr;
+        final SqlImplementor.Clause clause;
 
-        private SubQuery(SqlNode node, RelOptUtil.Logic logic) {
+        private SubQuery(SqlNode node, RelOptUtil.Logic logic, SqlImplementor.Clause clause) {
             this.node = node;
             this.logic = logic;
+            this.clause = clause;
         }
     }
 
