@@ -69,7 +69,14 @@ import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
 
-/** Utility methods concerning row-expressions. */
+/**
+ * Default implementation of {@link org.apache.calcite.rex.RexUtil}, the class was copied over
+ * because of current Calcite way of inferring constants from IS NOT DISTINCT FROM clashes with
+ * filter push down.
+ *
+ * <p>Lines 397 ~ 399, Use Calcite 1.32.0 behavior for {@link RexUtil#gatherConstraints(Class,
+ * RexNode, Map, Set, RexBuilder)}.
+ */
 public class RexUtil {
 
     /** Executor for a bit of constant reduction. The user can pass in another executor. */

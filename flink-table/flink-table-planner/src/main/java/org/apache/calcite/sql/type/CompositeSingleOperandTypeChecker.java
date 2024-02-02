@@ -23,8 +23,10 @@ import org.apache.calcite.util.Util;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
- * Allows multiple {@link org.apache.calcite.sql.type.SqlSingleOperandTypeChecker} rules to be
- * combined into one rule.
+ * Default implementation of {@link org.apache.calcite.sql.type.CompositeOperandTypeChecker}, the
+ * class was copied over because of current Calcite issue CALCITE-5380.
+ *
+ * <p>Lines 73 ~ 79, 101 ~ 107
  */
 public class CompositeSingleOperandTypeChecker extends CompositeOperandTypeChecker
         implements SqlSingleOperandTypeChecker {
@@ -68,10 +70,12 @@ public class CompositeSingleOperandTypeChecker extends CompositeOperandTypeCheck
 
         for (SqlSingleOperandTypeChecker rule : rules) {
             if (!rule.checkSingleOperandType(
+                    // FLINK MODIFICATION BEGIN
                     callBinding,
                     node,
                     rule.getClass() == FamilyOperandTypeChecker.class ? 0 : iFormalOperand,
                     throwOnAndFailure)) {
+                // FLINK MODIFICATION END
                 typeErrorCount++;
             }
         }
@@ -94,11 +98,13 @@ public class CompositeSingleOperandTypeChecker extends CompositeOperandTypeCheck
             // describing in more detail what the problem was, hence doing the
             // loop again.
             for (SqlSingleOperandTypeChecker rule : rules) {
+                // FLINK MODIFICATION BEGIN
                 rule.checkSingleOperandType(
                         callBinding,
                         node,
                         rule.getClass() == FamilyOperandTypeChecker.class ? 0 : iFormalOperand,
                         true);
+                // FLINK MODIFICATION END
             }
 
             // If no exception thrown, just throw a generic validation signature
