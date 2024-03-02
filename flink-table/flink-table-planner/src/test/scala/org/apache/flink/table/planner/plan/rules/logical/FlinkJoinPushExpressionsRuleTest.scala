@@ -40,7 +40,7 @@ class FlinkJoinPushExpressionsRuleTest extends TableTestBase {
         .setHepRulesExecutionType(HEP_RULES_EXECUTION_TYPE.RULE_SEQUENCE)
         .setHepMatchOrder(HepMatchOrder.BOTTOM_UP)
         .add(RuleSets.ofList(
-          SimplifyFilterConditionRule.EXTENDED,
+          SimplifyFilterConditionRule.SimplifyFilterConditionRuleHolder.EXTENDED,
           FlinkRewriteSubQueryRule.FILTER,
           FlinkSubQueryRemoveRule.FILTER,
           JoinConditionTypeCoerceRule.INSTANCE,

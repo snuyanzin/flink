@@ -32,7 +32,7 @@ import scala.collection.JavaConverters._
 object FlinkBatchRuleSets {
 
   val SEMI_JOIN_RULES: RuleSet = RuleSets.ofList(
-    SimplifyFilterConditionRule.EXTENDED,
+    SimplifyFilterConditionRule.SimplifyFilterConditionRuleHolder.EXTENDED,
     FlinkRewriteSubQueryRule.FILTER,
     FlinkSubQueryRemoveRule.FILTER,
     JoinConditionTypeCoerceRule.INSTANCE,
@@ -84,7 +84,7 @@ object FlinkBatchRuleSets {
 
   /** RuleSet to simplify predicate expressions in filters and joins */
   private val PREDICATE_SIMPLIFY_EXPRESSION_RULES: RuleSet = RuleSets.ofList(
-    SimplifyFilterConditionRule.INSTANCE,
+    SimplifyFilterConditionRule.SimplifyFilterConditionRuleHolder.INSTANCE,
     SimplifyJoinConditionRule.INSTANCE,
     JoinConditionTypeCoerceRule.INSTANCE,
     CoreRules.JOIN_PUSH_EXPRESSIONS
