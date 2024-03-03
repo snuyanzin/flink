@@ -30,19 +30,12 @@ import org.immutables.value.Value;
 import java.util.Collections;
 
 /**
- * Planner rule that matches a global [[BatchPhysicalRank]] on a local [[BatchPhysicalRank]], and
- * merge them into a global [[BatchPhysicalRank]].
+ * Planner rule that matches a global {@link BatchPhysicalRank} on a local {@link
+ * BatchPhysicalRank}, and merge them into a global {@link BatchPhysicalRank}.
  */
 @Value.Enclosing
 public class RemoveRedundantLocalRankRule
         extends RelRule<RemoveRedundantLocalRankRule.RemoveRedundantLocalRankRuleConfig> {
-    //        /*(
-    //    operand(
-    //      classOf[BatchPhysicalRank],
-    //      operand(
-    //        classOf[BatchPhysicalRank],
-    //        operand(classOf[RelNode], FlinkConventions.BATCH_PHYSICAL, any))),
-    //    "RemoveRedundantLocalRankRule") {*/
 
     public RemoveRedundantLocalRankRule(RemoveRedundantLocalRankRuleConfig config) {
         super(config);
@@ -106,9 +99,3 @@ public class RemoveRedundantLocalRankRule
                 RemoveRedundantLocalRankRuleConfig.DEFAULT.toRule();
     }
 }
-
-/*
-object RemoveRedundantLocalRankRule {
-  val INSTANCE: RelOptRule = new RemoveRedundantLocalRankRule
-}
-*/
