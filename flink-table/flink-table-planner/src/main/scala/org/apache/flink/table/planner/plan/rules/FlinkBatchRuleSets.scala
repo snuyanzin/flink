@@ -392,7 +392,7 @@ object FlinkBatchRuleSets {
     BatchPhysicalSortLimitRule.INSTANCE,
     // rank
     BatchPhysicalRankRule.INSTANCE,
-    RemoveRedundantLocalRankRule.INSTANCE,
+    RemoveRedundantLocalRankRule.RemoveRedundantLocalRankRuleHolder.INSTANCE,
     // expand
     BatchPhysicalExpandRule.INSTANCE,
     // group agg
