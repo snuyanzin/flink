@@ -473,7 +473,7 @@ object FlinkStreamRuleSets {
     // CEP
     StreamPhysicalMatchRule.INSTANCE,
     // correlate
-    StreamPhysicalConstantTableFunctionScanRule.INSTANCE,
+    StreamPhysicalConstantTableFunctionScanRule.StreamPhysicalConstantTableFunctionScanRuleHolder.INSTANCE,
     StreamPhysicalCorrelateRule.INSTANCE,
     StreamPhysicalPythonCorrelateRule.INSTANCE,
     // sink
