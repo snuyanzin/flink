@@ -419,7 +419,7 @@ object FlinkBatchRuleSets {
     // CEP
     BatchPhysicalMatchRule.INSTANCE,
     // correlate
-    BatchPhysicalConstantTableFunctionScanRule.INSTANCE,
+    BatchPhysicalConstantTableFunctionScanRule.BatchPhysicalConstantTableFunctionScanRuleHolder.INSTANCE,
     BatchPhysicalCorrelateRule.INSTANCE,
     BatchPhysicalPythonCorrelateRule.INSTANCE,
     // sink
