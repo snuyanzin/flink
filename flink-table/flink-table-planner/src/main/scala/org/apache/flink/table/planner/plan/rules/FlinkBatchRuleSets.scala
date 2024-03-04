@@ -80,7 +80,8 @@ object FlinkBatchRuleSets {
   private val LIMIT_RULES: RuleSet = RuleSets.ofList(
     // push down localLimit
     PushLimitIntoTableSourceScanRule.INSTANCE,
-    PushLimitIntoLegacyTableSourceScanRule.INSTANCE)
+    PushLimitIntoLegacyTableSourceScanRule.PushLimitIntoLegacyTableSourceScanRuleHolder.INSTANCE
+  )
 
   /** RuleSet to simplify predicate expressions in filters and joins */
   private val PREDICATE_SIMPLIFY_EXPRESSION_RULES: RuleSet = RuleSets.ofList(

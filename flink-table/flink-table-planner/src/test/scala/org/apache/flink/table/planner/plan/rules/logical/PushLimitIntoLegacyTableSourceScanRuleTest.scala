@@ -42,7 +42,7 @@ class PushLimitIntoLegacyTableSourceScanRuleTest extends TableTestBase {
         .setHepRulesExecutionType(HEP_RULES_EXECUTION_TYPE.RULE_COLLECTION)
         .setHepMatchOrder(HepMatchOrder.BOTTOM_UP)
         .add(RuleSets.ofList(
-          PushLimitIntoLegacyTableSourceScanRule.INSTANCE,
+          PushLimitIntoLegacyTableSourceScanRule.PushLimitIntoLegacyTableSourceScanRuleHolder.INSTANCE,
           CoreRules.SORT_PROJECT_TRANSPOSE,
           // converts calcite rel(RelNode) to flink rel(FlinkRelNode)
           FlinkLogicalSort.BATCH_CONVERTER,
