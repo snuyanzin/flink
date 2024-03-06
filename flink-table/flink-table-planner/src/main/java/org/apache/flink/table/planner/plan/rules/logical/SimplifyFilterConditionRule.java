@@ -38,25 +38,25 @@ import java.util.Optional;
 /**
  * Planner rule that apply various simplifying transformations on filter condition.
  *
- * <p>if `simplifySubQuery` is true, this rule will also simplify the filter condition in
- * [[RexSubQuery]].
+ * <p>If `simplifySubQuery` is true, this rule will also simplify the filter condition in {@link
+ * RexSubQuery}.
  */
 @Value.Enclosing
 public class SimplifyFilterConditionRule
         extends RelRule<SimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig> {
-    /**
-     * Creates a RelRule.
-     *
-     * @param config
-     */
+
+    public static final SimplifyFilterConditionRule INSTANCE =
+            SimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig.DEFAULT.toRule();
+    public static final SimplifyFilterConditionRule EXTENDED =
+            SimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig.DEFAULT
+                    .withDescription("SimplifyFilterConditionRule:simplifySubQuery")
+                    .as(SimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig.class)
+                    .withIsSimplifySubQuery(true)
+                    .toRule();
+
     protected SimplifyFilterConditionRule(SimplifyFilterConditionRuleConfig config) {
         super(config);
     }
-    /*
-        (
-    simplifySubQuery: Boolean, description: String)
-      extends RelOptRule(operand(classOf[Filter], any()), description) {
-    */
 
     public void onMatch(RelOptRuleCall call) {
         Filter filter = call.rel(0);
@@ -70,9 +70,9 @@ public class SimplifyFilterConditionRule
 
     public Optional<Filter> simplify(Filter filter, boolean[] changed) {
         RexNode condition =
-                // config.isSimplifySubQuery
-                simplifyFilterConditionInSubQuery(filter.getCondition(), changed);
-        // : filter.getCondition();
+                config.isSimplifySubQuery()
+                        ? simplifyFilterConditionInSubQuery(filter.getCondition(), changed)
+                        : filter.getCondition();
 
         RexBuilder rexBuilder = filter.getCluster().getRexBuilder();
         RexNode simplifiedCondition =
@@ -119,9 +119,9 @@ public class SimplifyFilterConditionRule
     public interface SimplifyFilterConditionRuleConfig extends RelRule.Config {
         SimplifyFilterConditionRuleConfig DEFAULT =
                 ImmutableSimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig.builder()
+                        .description("SimplifyFilterConditionRule")
                         .build()
-                        .withOperandSupplier(b0 -> b0.operand(Filter.class).anyInputs())
-                        .withDescription("SimplifyFilterConditionRule");
+                        .withOperandSupplier(b0 -> b0.operand(Filter.class).anyInputs());
 
         @Value.Default
         default boolean isSimplifySubQuery() {
@@ -135,17 +135,5 @@ public class SimplifyFilterConditionRule
         default SimplifyFilterConditionRule toRule() {
             return new SimplifyFilterConditionRule(this);
         }
-    }
-
-    /** Holder for SimplifyFilterConditionRule. */
-    public static class SimplifyFilterConditionRuleHolder {
-        public static final SimplifyFilterConditionRule INSTANCE =
-                SimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig.DEFAULT.toRule();
-        public static final SimplifyFilterConditionRule EXTENDED =
-                SimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig.DEFAULT
-                        .withDescription("SimplifyFilterConditionRule:simplifySubQuery")
-                        .as(SimplifyFilterConditionRule.SimplifyFilterConditionRuleConfig.class)
-                        .withIsSimplifySubQuery(true)
-                        .toRule();
     }
 }

@@ -39,8 +39,7 @@ class SimplifyFilterConditionRuleTest extends TableTestBase {
       FlinkHepRuleSetProgramBuilder.newBuilder
         .setHepRulesExecutionType(HEP_RULES_EXECUTION_TYPE.RULE_SEQUENCE)
         .setHepMatchOrder(HepMatchOrder.BOTTOM_UP)
-        .add(
-          RuleSets.ofList(SimplifyFilterConditionRule.SimplifyFilterConditionRuleHolder.EXTENDED))
+        .add(RuleSets.ofList(SimplifyFilterConditionRule.EXTENDED))
         .build()
     )
     util.replaceBatchProgram(programs)

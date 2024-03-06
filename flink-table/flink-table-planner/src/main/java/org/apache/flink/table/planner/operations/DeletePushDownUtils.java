@@ -146,7 +146,7 @@ public class DeletePushDownUtils {
         // we try to reduce and simplify the filter
         ReduceExpressionsRuleProxy reduceExpressionsRuleProxy = ReduceExpressionsRuleProxy.INSTANCE;
         SimplifyFilterConditionRule simplifyFilterConditionRule =
-                SimplifyFilterConditionRule.SimplifyFilterConditionRuleHolder.INSTANCE;
+                SimplifyFilterConditionRule.INSTANCE;
         // max iteration num for reducing and simplifying filter,
         // we use 5 as the max iteration num which is same with the iteration num in Flink's plan
         // optimizing.
