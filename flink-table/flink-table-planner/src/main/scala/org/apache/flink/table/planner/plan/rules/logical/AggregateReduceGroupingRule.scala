@@ -61,7 +61,7 @@ class AggregateReduceGroupingRule(relBuilderFactory: RelBuilderFactory)
     }
 
     // new agg: new grouping + aggCalls for dropped grouping + original aggCalls
-    val indexOldToNewMap = new mutable.HashMap[Int, Int]()
+    val indexOldToNewMap = new java.util.HashMap[Int, Int]()
     val newGroupingList = newGrouping.toList
     var idxOfNewGrouping = 0
     var idxOfAggCallsForDroppedGrouping = newGroupingList.size()
