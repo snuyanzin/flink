@@ -15,21 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
-import org.apache.flink.table.types.logical.LogicalTypeRoot
+package org.apache.flink.table.planner.plan.rules.logical;
 
-import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
-import org.apache.calcite.plan.RelOptRule.{any, operand}
+import org.apache.calcite.plan.RelOptRuleCall;
+import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelRule
 import org.apache.calcite.rel.core.Filter
-import org.apache.calcite.rex.{RexCall, RexLiteral, RexNode}
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlBinaryOperator
-import org.apache.calcite.sql.fun.SqlStdOperatorTable.{AND, EQUALS, IN, NOT, NOT_EQUALS, NOT_IN, OR}
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.tools.RelBuilder
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.types.logical.LogicalTypeRoot;
 
-import scala.collection.JavaConversions._
-import scala.collection.mutable
+import java.util.List;
+import java.util.Optional;
+
 
 /**
  * Rule for converting a cascade of predicates to [[IN]] or [[NOT_IN]].
@@ -39,21 +42,21 @@ import scala.collection.mutable
  *      4) AND y = 5. 2. convert predicate: (x <> 1 AND x <> 2 AND x <> 3 AND x <> 4) AND y = 5 to
  *      predicate: x NOT IN (1, 2, 3, 4) AND y = 5.
  */
-class ConvertToNotInOrInRule
-  extends RelOptRule(operand(classOf[Filter], any), "ConvertToNotInOrInRule") {
+public class ConvertToNotInOrInRule
+  extends RelRule { /*(operand(classOf[Filter], any), "ConvertToNotInOrInRule") { */
 
   // these threshold values are set by OptimizableHashSet benchmark test on different type.
   // threshold for non-float and non-double type
-  private val THRESHOLD: Int = 4
+  private static final int THRESHOLD = 4;
   // threshold for float and double type
-  private val FRACTIONAL_THRESHOLD: Int = 20
+  private static final int FRACTIONAL_THRESHOLD = 20;
 
-  override def onMatch(call: RelOptRuleCall): Unit = {
-    val filter: Filter = call.rel(0)
-    val condition = filter.getCondition
+  public void onMatch(RelOptRuleCall call) {
+      Filter filter = call.rel(0);
+    RexNode condition = filter.getCondition();
 
     // convert equal expression connected by OR to IN
-    val inExpr = convertToNotInOrIn(call.builder(), condition, IN)
+    val inExpr = convertToNotInOrIn(call.builder(), condition, IN);
     // convert not-equal expression connected by AND to NOT_IN
     val notInExpr = convertToNotInOrIn(call.builder(), inExpr.getOrElse(condition), NOT_IN)
 
@@ -73,11 +76,16 @@ class ConvertToNotInOrInRule
   }
 
   /** Returns a condition decomposed by [[AND]] or [[OR]]. */
-  private def decomposedBy(rex: RexNode, operator: SqlBinaryOperator): Seq[RexNode] = {
-    operator match {
-      case AND => RelOptUtil.conjunctions(rex)
-      case OR => RelOptUtil.disjunctions(rex)
-    }
+  private List<RexNode> decomposedBy(RexNode rex, SqlBinaryOperator operator) {
+      final SqlKind kind = operator.getKind();
+      switch (kind) {
+            case AND:
+                return RelOptUtil.conjunctions(rex);
+            case OR:
+                return RelOptUtil.disjunctions(rex);
+            default:
+                throw new AssertionError("Unsupported operator " + kind);
+      }
   }
 
   /**
@@ -90,10 +98,10 @@ class ConvertToNotInOrInRule
    * @return
    *   The converted predicates.
    */
-  private def convertToNotInOrIn(
-      builder: RelBuilder,
-      rex: RexNode,
-      toOperator: SqlBinaryOperator): Option[RexNode] = {
+  private Optional<RexNode> convertToNotInOrIn(
+          RelBuilder builder,
+          RexNode rex,
+          SqlBinaryOperator toOperator) {
 
     // For example, when convert to [[IN]], fromOperator is [[EQUALS]].
     // We convert a cascade of [[EQUALS]] to [[IN]].
@@ -178,11 +186,15 @@ class ConvertToNotInOrInRule
     }
   }
 
-  private def needConvert(rexNodes: List[RexCall]): Boolean = {
-    val inputRef = rexNodes.head.getOperands.head
-    FlinkTypeFactory.toLogicalType(inputRef.getType).getTypeRoot match {
-      case LogicalTypeRoot.FLOAT | LogicalTypeRoot.DOUBLE => rexNodes.size >= FRACTIONAL_THRESHOLD
-      case _ => rexNodes.size >= THRESHOLD
+  private boolean needConvert(List<RexCall> rexNodes) {
+    RexNode inputRef = rexNodes.get(0).getOperands().get(0);
+    LogicalTypeRoot logicalTypeRoot = FlinkTypeFactory.toLogicalType(inputRef.getType()).getTypeRoot();
+    switch (logicalTypeRoot) {
+      case FLOAT:
+      case DOUBLE:
+        return rexNodes.size() >= FRACTIONAL_THRESHOLD;
+      default:
+        return rexNodes.size() >= THRESHOLD;
     }
   }
 }
