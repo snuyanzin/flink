@@ -20,6 +20,7 @@ package org.apache.flink.table.planner.plan.rules.logical;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
+import org.apache.flink.table.planner.calcite.FlinkRelFactories;
 import org.apache.flink.table.runtime.operators.rank.ConstantRankRange;
 import org.apache.flink.table.runtime.operators.rank.RankType;
 
@@ -210,6 +211,7 @@ public class CorrelateSortToRankRule
         CorrelateSortToRankRule.CorrelateSortToRankRuleConfig DEFAULT =
                 ImmutableCorrelateSortToRankRule.CorrelateSortToRankRuleConfig.builder()
                         .build()
+                        .withRelBuilderFactory(FlinkRelFactories.FLINK_REL_BUILDER())
                         .withOperandSupplier(
                                 b0 ->
                                         b0.operand(Correlate.class)
