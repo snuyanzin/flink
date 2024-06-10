@@ -47,7 +47,8 @@ public final class TimeType extends LogicalType {
 
     public static final int MIN_PRECISION = 0;
 
-    public static final int MAX_PRECISION = 9;
+    // Currently max supported precision is 3
+    public static final int MAX_PRECISION = 3;
 
     public static final int DEFAULT_PRECISION = 0;
 

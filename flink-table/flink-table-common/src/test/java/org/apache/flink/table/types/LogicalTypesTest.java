@@ -280,11 +280,11 @@ public class LogicalTypesTest {
 
     @Test
     void testTimeType() {
-        assertThat(new TimeType(9))
+        assertThat(new TimeType(3))
                 .satisfies(
                         baseAssertions(
-                                "TIME(9)",
-                                "TIME(9)",
+                                "TIME(3)",
+                                "TIME(3)",
                                 new Class[] {
                                     java.sql.Time.class, java.time.LocalTime.class, long.class
                                 },
