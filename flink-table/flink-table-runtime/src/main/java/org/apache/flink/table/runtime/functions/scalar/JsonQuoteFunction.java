@@ -33,51 +33,6 @@ public class JsonQuoteFunction extends BuiltInScalarFunction {
         super(BuiltInFunctionDefinitions.JSON_QUOTE, context);
     }
 
-    private static String quote(String input) {
-        StringBuilder outputStr = new StringBuilder();
-
-        for (int i = 0; i < input.length(); i++) {
-            char ch = input.charAt(i);
-            switch (ch) {
-                case '"':
-                    outputStr.append("\\\"");
-                    break;
-                case '\\':
-                    outputStr.append("\\\\");
-                    break;
-                case '/':
-                    outputStr.append("\\/");
-                    break;
-                case '\b':
-                    outputStr.append("\\b");
-                    break;
-                case '\f':
-                    outputStr.append("\\f");
-                    break;
-                case '\n':
-                    outputStr.append("\\n");
-                    break;
-                case '\r':
-                    outputStr.append("\\r");
-                    break;
-                case '\t':
-                    outputStr.append("\\t");
-                    break;
-                default:
-                    outputStr.append(unicodeLiteralOrStr(ch));
-            }
-        }
-        return outputStr.toString();
-    }
-
-    public static String unicodeLiteralOrStr(char ch) {
-        if (ch > 127) {
-            return String.format("\\u%04x", ch);
-        } else {
-            return String.valueOf(ch);
-        }
-    }
-
     public @Nullable Object eval(Object input) {
         if (input == null) {
             return null;
@@ -86,5 +41,50 @@ public class JsonQuoteFunction extends BuiltInScalarFunction {
         String stringWithoutQuotes = quote(bs.toString());
         String outputVal = String.format("\"%s\"", stringWithoutQuotes);
         return new BinaryStringData(outputVal);
+    }
+
+    private static String quote(String input) {
+        StringBuilder outputStr = new StringBuilder();
+
+        for (int i = 0; i < input.length(); i++) {
+            int codePoint = input.codePointAt(i);
+            if (codePoint < 128) {
+                appendASCII(outputStr, (char) codePoint);
+            } else {
+                outputStr.append(String.format("\\u%04x", codePoint));
+            }
+        }
+        return outputStr.toString();
+    }
+
+    private static void appendASCII(StringBuilder outputStr, char ch) {
+        switch (ch) {
+            case '"':
+                outputStr.append("\\\"");
+                break;
+            case '\\':
+                outputStr.append("\\\\");
+                break;
+            case '/':
+                outputStr.append("\\/");
+                break;
+            case '\b':
+                outputStr.append("\\b");
+                break;
+            case '\f':
+                outputStr.append("\\f");
+                break;
+            case '\n':
+                outputStr.append("\\n");
+                break;
+            case '\r':
+                outputStr.append("\\r");
+                break;
+            case '\t':
+                outputStr.append("\\t");
+                break;
+            default:
+                outputStr.append(ch);
+        }
     }
 }

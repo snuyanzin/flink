@@ -23,7 +23,6 @@ import org.apache.flink.table.data.binary.BinaryStringData;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.SpecializedFunction.SpecializedContext;
 import org.apache.flink.table.runtime.functions.SqlJsonUtils;
-import org.apache.flink.util.FlinkRuntimeException;
 
 import javax.annotation.Nullable;
 
@@ -35,28 +34,56 @@ public class JsonUnquoteFunction extends BuiltInScalarFunction {
         super(BuiltInFunctionDefinitions.JSON_UNQUOTE, context);
     }
 
+    public @Nullable Object eval(Object input) {
+        if (input == null) {
+            return null;
+        }
+        BinaryStringData bs = (BinaryStringData) input;
+        String inputStr = bs.toString();
+        try {
+            if (isValidJsonVal(inputStr)) {
+                return new BinaryStringData(unescapeValidJson(inputStr));
+            }
+        } catch (IllegalArgumentException e) {
+            // ignore exceptions on malformed input only
+        }
+        // return input as-is, either JSON is invalid or we encountered an exception while unquoting
+        return new BinaryStringData(inputStr);
+    }
+
     private static boolean isValidJsonVal(String jsonInString) {
+        // See also BuiltInMethods.scala, IS_JSON_VALUE
         return SqlJsonUtils.isJsonValue(jsonInString);
     }
 
-    private String unquote(String inputStr) {
+    private static String fromUnicodeLiteral(String input, int curPos) {
 
+        StringBuilder number = new StringBuilder();
+        // isValidJsonVal will already check for unicode literal validity
+        for (char ch : input.substring(curPos, curPos + 4).toCharArray()) {
+            number.append(Character.toLowerCase(ch));
+        }
+        int code = Integer.parseInt(number.toString(), 16);
+        return String.valueOf((char) code);
+    }
+
+    private String unescapeStr(String inputStr) {
         StringBuilder result = new StringBuilder();
-        int i = 1;
-        while (i < inputStr.length() - 1) {
+        int i = 0;
+        while (i < inputStr.length()) {
             if (inputStr.charAt(i) == '\\' && i + 1 < inputStr.length()) {
                 i++; // move to the next char
-                char charAfterBackSlash = inputStr.charAt(i++);
+                char ch = inputStr.charAt(i++);
 
-                switch (charAfterBackSlash) {
+                switch (ch) {
                     case '"':
-                        result.append(charAfterBackSlash);
+                        result.append(ch);
                         break;
                     case '\\':
-                        result.append(charAfterBackSlash);
+                        result.append(ch);
                         break;
                     case '/':
-                        result.append(charAfterBackSlash);
+                        result.append(ch);
                         break;
                     case 'b':
                         result.append('\b');
@@ -78,8 +105,7 @@ public class JsonUnquoteFunction extends BuiltInScalarFunction {
                         i = i + 4;
                         break;
                     default:
-                        throw new RuntimeException(
-                                "Illegal escape sequence: \\" + charAfterBackSlash);
+                        throw new IllegalArgumentException("Illegal escape sequence: \\" + ch);
                 }
             } else {
                 result.append(inputStr.charAt(i));
@@ -89,38 +115,14 @@ public class JsonUnquoteFunction extends BuiltInScalarFunction {
         return result.toString();
     }
 
-    private static String fromUnicodeLiteral(String input, int curPos) {
-
-        StringBuilder number = new StringBuilder();
-        if (curPos + 4 > input.length()) {
-            throw new RuntimeException("Not enough unicode digits!");
-        }
-        for (char ch : input.substring(curPos, curPos + 4).toCharArray()) {
-            if (!Character.isLetterOrDigit(ch)) {
-                throw new RuntimeException("Bad character in unicode escape.");
-            }
-            number.append(Character.toLowerCase(ch));
-        }
-        int code = Integer.parseInt(number.toString(), 16);
-        return String.valueOf((char) code);
-    }
-
-    public @Nullable Object eval(Object input) {
-
-        try {
-            if (input == null) {
-                return null;
-            }
-            BinaryStringData bs = (BinaryStringData) input;
-            String inputStr = bs.toString();
-            if (isValidJsonVal(inputStr)) {
-                return new BinaryStringData(unquote(inputStr));
-            } else {
-                // return input as is since JSON is invalid
-                return new BinaryStringData(inputStr);
-            }
-        } catch (Throwable t) {
-            throw new FlinkRuntimeException(t);
+    private String unescapeValidJson(String inputStr) {
+        // check for a quoted json string val and unescape
+        if (inputStr.charAt(0) == '"' && inputStr.charAt(inputStr.length() - 1) == '"') {
+            // remove quotes, string len is atleast 2 here
+            return unescapeStr(inputStr.substring(1, inputStr.length() - 1));
+        } else {
+            // string representing Json - array, object or unquoted scalar val, return as-is
+            return inputStr;
         }
     }
 }

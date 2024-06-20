@@ -1159,7 +1159,7 @@ public abstract class BaseExpressions<InType, OutType> {
         return toApiSpecificExpression(unresolvedCall(JSON_QUOTE, objectToExpression(toExpr())));
     }
 
-    /** Returns utf8mb4 string by unquoting JSON value. */
+    /** Returns a string by unquoting JSON value. */
     public OutType jsonUnquote() {
         return toApiSpecificExpression(unresolvedCall(JSON_UNQUOTE, objectToExpression(toExpr())));
     }
