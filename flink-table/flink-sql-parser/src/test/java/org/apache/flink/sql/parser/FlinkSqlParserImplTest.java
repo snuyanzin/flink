@@ -2962,7 +2962,7 @@ class FlinkSqlParserImplTest extends SqlParserTest {
 
     @Test
     void testDescribeJob() {
-        sql("DESCRIBE JOB 'myjob'").ok("DESCRIBE JOB 'myjob'");
+        sql("DESCRIBE JOB 'myjob'").same();
         sql("DESC JOB 'myjob'").ok("DESCRIBE JOB 'myjob'");
     }
 
