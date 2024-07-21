@@ -691,4 +691,5 @@
   includeCompoundIdentifier: true
   includeBraces: true
   includeAdditionalDeclarations: false
+  includeParsingStringLiteralAsArrayLiteral: false
 }
