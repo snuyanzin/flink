@@ -84,7 +84,6 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Util;
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.math.BigDecimal;
@@ -524,10 +523,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         return cx.convertExpression(convertedCall);
     }
 
-    protected RexNode convertCast(
-            @UnknownInitialization StandardConvertletTable this,
-            SqlRexContext cx,
-            final SqlCall call) {
+    protected RexNode convertCast(SqlRexContext cx, final SqlCall call) {
         RelDataTypeFactory typeFactory = cx.getTypeFactory();
         assert call.getKind() == SqlKind.CAST;
         final SqlNode left = call.operand(0);
@@ -669,10 +665,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     }
 
     public RexNode convertDatetimeMinus(
-            @UnknownInitialization StandardConvertletTable this,
-            SqlRexContext cx,
-            SqlDatetimeSubtractionOperator op,
-            SqlCall call) {
+            SqlRexContext cx, SqlDatetimeSubtractionOperator op, SqlCall call) {
         // Rewrite datetime minus
         final RexBuilder rexBuilder = cx.getRexBuilder();
         final List<RexNode> exprs =
@@ -826,8 +819,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         return rexBuilder.makeNewInvocation(type, defaultCasts);
     }
 
-    private RexNode convertItem(
-            @UnknownInitialization StandardConvertletTable this, SqlRexContext cx, SqlCall call) {
+    private RexNode convertItem(SqlRexContext cx, SqlCall call) {
         final RexBuilder rexBuilder = cx.getRexBuilder();
         final SqlOperator op = call.getOperator();
         SqlOperandTypeChecker operandTypeChecker = op.getOperandTypeChecker();
@@ -871,8 +863,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
      * @param call Call
      * @return Rex call
      */
-    public RexNode convertCall(
-            @UnknownInitialization StandardConvertletTable this, SqlRexContext cx, SqlCall call) {
+    public RexNode convertCall(SqlRexContext cx, SqlCall call) {
         final SqlOperator op = call.getOperator();
         final RexBuilder rexBuilder = cx.getRexBuilder();
         SqlOperandTypeChecker operandTypeChecker = op.getOperandTypeChecker();
@@ -1007,8 +998,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         }
     }
 
-    private RexNode convertPlus(
-            @UnknownInitialization StandardConvertletTable this, SqlRexContext cx, SqlCall call) {
+    private RexNode convertPlus(SqlRexContext cx, SqlCall call) {
         final RexNode rex = convertCall(cx, call);
         switch (rex.getType().getSqlTypeName()) {
             case DATE:
@@ -1047,11 +1037,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         }
     }
 
-    private RexNode convertIsDistinctFrom(
-            @UnknownInitialization StandardConvertletTable this,
-            SqlRexContext cx,
-            SqlCall call,
-            boolean neg) {
+    private RexNode convertIsDistinctFrom(SqlRexContext cx, SqlCall call, boolean neg) {
         RexNode op0 = cx.convertExpression(call.operand(0));
         RexNode op1 = cx.convertExpression(call.operand(1));
         return RelOptUtil.isDistinctFrom(cx.getRexBuilder(), op0, op1, neg);
@@ -1238,11 +1224,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
      * Casts a RexNode value to the validated type of a SqlCall. If the value was already of the
      * validated type, then the value is returned without an additional cast.
      */
-    public RexNode castToValidatedType(
-            @UnknownInitialization StandardConvertletTable this,
-            SqlRexContext cx,
-            SqlCall call,
-            RexNode value) {
+    public RexNode castToValidatedType(SqlRexContext cx, SqlCall call, RexNode value) {
         return castToValidatedType(call, value, cx.getValidator(), cx.getRexBuilder());
     }
 
