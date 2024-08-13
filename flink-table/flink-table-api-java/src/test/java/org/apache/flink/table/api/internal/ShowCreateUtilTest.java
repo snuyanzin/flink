@@ -18,8 +18,10 @@
 
 package org.apache.flink.table.api.internal;
 
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.catalog.CatalogDescriptor;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.CatalogView;
 import org.apache.flink.table.catalog.Column;
@@ -60,10 +62,10 @@ public class ShowCreateUtilTest {
     @ParameterizedTest(name = "{index}: {1}")
     @MethodSource("argsForShowCreateTable")
     void showCreateTable(ResolvedCatalogTable resolvedCatalogTable, String expected) {
-        final String createViewString =
+        final String createTableString =
                 ShowCreateUtil.buildShowCreateTableRow(
                         resolvedCatalogTable, TABLE_IDENTIFIER, false);
-        assertThat(createViewString).isEqualTo(expected);
+        assertThat(createTableString).isEqualTo(expected);
     }
 
     @ParameterizedTest(name = "{index}: {1}")
@@ -74,6 +76,36 @@ public class ShowCreateUtilTest {
         assertThat(createViewString).isEqualTo(expected);
     }
 
+    @ParameterizedTest(name = "{index}: {1}")
+    @MethodSource("argsForShowCreateCatalog")
+    void showCreateCatalog(CatalogDescriptor catalogDescriptor, String expected) {
+        final String createCatalogString =
+                ShowCreateUtil.buildShowCreateCatalogRow(catalogDescriptor);
+        assertThat(createCatalogString).isEqualTo(expected);
+    }
+
+    private static Collection<Arguments> argsForShowCreateCatalog() {
+        Collection<Arguments> argList = new ArrayList<>();
+        final Configuration configuration =
+                Configuration.fromMap(Collections.singletonMap("k", "v"));
+        argList.add(
+                Arguments.of(
+                        CatalogDescriptor.of("catalogName", configuration),
+                        "CREATE CATALOG `catalogName`\n" + "WITH (\n" + "  'k' = 'v'\n" + ")\n"));
+
+        argList.add(
+                Arguments.of(
+                        CatalogDescriptor.of("catalogName", configuration)
+                                .setComment("Catalog comment"),
+                        "CREATE CATALOG `catalogName`\n"
+                                + "COMMENT 'Catalog comment'\n"
+                                + "WITH (\n"
+                                + "  'k' = 'v'\n"
+                                + ")\n"));
+
+        return argList;
+    }
+
     private static Collection<Arguments> argsForShowCreateView() {
         Collection<Arguments> argList = new ArrayList<>();
         argList.add(
@@ -81,7 +113,8 @@ public class ShowCreateUtilTest {
                         createResolvedView(ONE_COLUMN_SCHEMA, "SELECT 1", "SELECT 1", null),
                         "CREATE VIEW `catalogName`.`dbName`.`viewName` (\n"
                                 + "  `id`\n"
-                                + ") AS SELECT 1\n"));
+                                + ")\n"
+                                + "AS SELECT 1\n"));
 
         argList.add(
                 Arguments.of(
@@ -93,7 +126,8 @@ public class ShowCreateUtilTest {
                         "CREATE VIEW `catalogName`.`dbName`.`viewName` (\n"
                                 + "  `id`,\n"
                                 + "  `name`\n"
-                                + ") COMMENT 'View comment'\n"
+                                + ")\n"
+                                + "COMMENT 'View comment'\n"
                                 + "AS SELECT id, name FROM `catalogName`.`dbName`.`tbl_a`\n"));
         return argList;
     }
@@ -113,7 +147,8 @@ public class ShowCreateUtilTest {
                                 null),
                         "CREATE TABLE `catalogName`.`dbName`.`tableName` (\n"
                                 + "  `id` INT\n"
-                                + ") DISTRIBUTED BY HASH(`key1`, `key2`) INTO 2 BUCKETS\n"));
+                                + ")\n"
+                                + "DISTRIBUTED BY HASH(`key1`, `key2`) INTO 2 BUCKETS\n"));
 
         argList.add(
                 Arguments.of(
@@ -126,7 +161,8 @@ public class ShowCreateUtilTest {
                                 "Table comment"),
                         "CREATE TABLE `catalogName`.`dbName`.`tableName` (\n"
                                 + "  `id` INT\n"
-                                + ") COMMENT 'Table comment'\n"
+                                + ")\n"
+                                + "COMMENT 'Table comment'\n"
                                 + "DISTRIBUTED BY RANGE(`1`, `10`) INTO 2 BUCKETS\n"));
 
         Map<String, String> options = Collections.singletonMap("option_key", "option_value");
@@ -142,7 +178,8 @@ public class ShowCreateUtilTest {
                         "CREATE TABLE `catalogName`.`dbName`.`tableName` (\n"
                                 + "  `id` INT,\n"
                                 + "  `name` VARCHAR(2147483647)\n"
-                                + ") COMMENT 'Another table comment'\n"
+                                + ")\n"
+                                + "COMMENT 'Another table comment'\n"
                                 + "WITH (\n"
                                 + "  'option_key' = 'option_value'\n"
                                 + ")\n"));
@@ -157,7 +194,8 @@ public class ShowCreateUtilTest {
                                 "comment"),
                         "CREATE TABLE `catalogName`.`dbName`.`tableName` (\n"
                                 + "  `id` INT\n"
-                                + ") COMMENT 'comment'\n"
+                                + ")\n"
+                                + "COMMENT 'comment'\n"
                                 + "PARTITIONED BY (`key1`, `key2`)\n"));
 
         argList.add(
@@ -174,7 +212,8 @@ public class ShowCreateUtilTest {
                         "CREATE TABLE `catalogName`.`dbName`.`tableName` (\n"
                                 + "  `id` INT,\n"
                                 + "  `name` VARCHAR(2147483647)\n"
-                                + ") COMMENT 'table comment'\n"
+                                + ")\n"
+                                + "COMMENT 'table comment'\n"
                                 + "DISTRIBUTED BY (`1`, `2`, `3`) INTO 3 BUCKETS\n"
                                 + "PARTITIONED BY (`key1`, `key2`)\n"
                                 + "WITH (\n"
