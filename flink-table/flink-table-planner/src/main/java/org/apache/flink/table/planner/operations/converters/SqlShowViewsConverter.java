@@ -18,50 +18,33 @@
 
 package org.apache.flink.table.planner.operations.converters;
 
-import org.apache.flink.sql.parser.dql.SqlShowFunctions;
+import org.apache.flink.sql.parser.dql.SqlShowViews;
 import org.apache.flink.table.operations.Operation;
-import org.apache.flink.table.operations.ShowFunctionsOperation;
-import org.apache.flink.table.operations.ShowFunctionsOperation.FunctionScope;
+import org.apache.flink.table.operations.ShowViewsOperation;
 import org.apache.flink.table.operations.utils.ShowLikeOperator;
 
-/** A converter for {@link SqlShowFunctions}. */
-public class SqlShowFunctionsConverter extends AbstractSqlShowConverter<SqlShowFunctions> {
-
+public class SqlShowViewsConverter extends AbstractSqlShowConverter<SqlShowViews> {
     @Override
     public Operation getOperationWithoutPrep(
             String qualifiedCatalogName,
             String qualifiedDatabaseName,
-            SqlShowFunctions sqlShowFunctions,
+            SqlShowViews sqlShowCall,
             ShowLikeOperator likeOp) {
-        final FunctionScope functionScope = getFunctionScope(sqlShowFunctions);
-        return new ShowFunctionsOperation(
-                functionScope, qualifiedCatalogName, qualifiedDatabaseName, likeOp);
+        return new ShowViewsOperation(qualifiedCatalogName, qualifiedDatabaseName, likeOp);
     }
 
     @Override
     public Operation getOperation(
-            SqlShowFunctions sqlShowFunctions,
+            SqlShowViews sqlShowCall,
             String catalogName,
             String databaseName,
             String prep,
             ShowLikeOperator likeOp) {
-        final FunctionScope functionScope = getFunctionScope(sqlShowFunctions);
-        return new ShowFunctionsOperation(functionScope, prep, catalogName, databaseName, likeOp);
+        return new ShowViewsOperation(catalogName, databaseName, prep, likeOp);
     }
 
     @Override
-    public Operation convertSqlNode(SqlShowFunctions sqlShowFunctions, ConvertContext context) {
-        return convertShowOperation(sqlShowFunctions, context);
-    }
-
-    private static FunctionScope getFunctionScope(SqlShowFunctions sqlShowFunctions) {
-        return sqlShowFunctions.requireUser() ? FunctionScope.USER : FunctionScope.ALL;
-    }
-
-    @Override
-    protected boolean skipQualifyingDefaultCatalogAndDatabase() {
-        // It should be supported to list functions with unset catalog
-        // for more info FLINhK-33093
-        return true;
+    public Operation convertSqlNode(SqlShowViews sqlShowViews, ConvertContext context) {
+        return convertShowOperation(sqlShowViews, context);
     }
 }
