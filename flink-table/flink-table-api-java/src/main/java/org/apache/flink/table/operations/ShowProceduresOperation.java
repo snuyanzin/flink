@@ -83,6 +83,10 @@ public class ShowProceduresOperation extends AbstractShowOperation {
         }
     }
 
+    public String getDatabaseName() {
+        return databaseName;
+    }
+
     @Override
     protected String getOperationName() {
         return "SHOW PROCEDURES";

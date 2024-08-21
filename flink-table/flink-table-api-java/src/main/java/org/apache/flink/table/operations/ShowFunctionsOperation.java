@@ -107,6 +107,14 @@ public class ShowFunctionsOperation extends AbstractShowOperation {
         }
     }
 
+    public String getDatabaseName() {
+        return databaseName;
+    }
+
+    public FunctionScope getFunctionScope() {
+        return functionScope;
+    }
+
     @Override
     protected String getOperationName() {
         return functionScope == FunctionScope.ALL ? "SHOW FUNCTIONS" : "SHOW USER FUNCTIONS";

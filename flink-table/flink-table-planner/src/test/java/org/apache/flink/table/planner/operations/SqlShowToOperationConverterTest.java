@@ -1,28 +1,43 @@
 package org.apache.flink.table.planner.operations;
 
-import org.apache.flink.table.operations.Operation;
-import org.apache.flink.table.operations.ShowTablesOperation;
-import org.apache.flink.table.operations.ddl.AlterCatalogOptionsOperation;
+import org.apache.flink.table.catalog.exceptions.DatabaseNotExistException;
+import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
+import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 
-import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class SqlShowToOperationConverterTest extends SqlNodeToOperationConversionTestBase {
 
-    @Test
-    void testConvert() {
-        // test alter catalog options
-        final String sql1 = "SHOW TABLES";
+    @BeforeEach
+    public void before() throws TableAlreadyExistException, DatabaseNotExistException {
+        // Do nothing
+        // No need to create schema, tables and etc. since the test executes for unset catalog and
+        // database
+    }
 
-        Operation operation = parse(sql1);
-        assertThat(operation)
-                .isInstanceOf(ShowTablesOperation.class);
-        assertThat(operation.asSummaryString()).isEqualTo("SHOW TABLES");
+    @AfterEach
+    public void after() throws TableNotExistException {
+        // Do nothing
+    }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"SHOW TABLES", "SHOW VIEWS", "SHOW FUNCTIONS", "SHOW PROCEDURES"})
+    void testParseShowFunctionForUnsetCatalog(String sql) {
+        catalogManager.setCurrentCatalog(null);
+        // No exception should be thrown during parsing.
+        // Validation exception should be thrown while execution.
+        parse(sql);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"SHOW TABLES", "SHOW VIEWS", "SHOW FUNCTIONS", "SHOW PROCEDURES"})
+    void testParseShowFunctionForUnsetDatabase(String sql) {
+        catalogManager.setCurrentDatabase(null);
+        // No exception should be thrown during parsing.
+        // Validation exception should be thrown while execution.
+        parse(sql);
     }
 }

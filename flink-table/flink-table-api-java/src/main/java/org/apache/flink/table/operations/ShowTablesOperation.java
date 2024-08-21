@@ -81,6 +81,10 @@ public class ShowTablesOperation extends AbstractShowOperation {
         }
     }
 
+    public String getDatabaseName() {
+        return databaseName;
+    }
+
     @Override
     protected String getOperationName() {
         return "SHOW TABLES";

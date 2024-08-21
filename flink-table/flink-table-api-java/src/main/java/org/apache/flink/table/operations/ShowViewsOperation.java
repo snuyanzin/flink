@@ -85,6 +85,10 @@ public class ShowViewsOperation extends AbstractShowOperation {
         }
     }
 
+    public String getDatabaseName() {
+        return databaseName;
+    }
+
     @Override
     protected String getColumnName() {
         return "view name";
