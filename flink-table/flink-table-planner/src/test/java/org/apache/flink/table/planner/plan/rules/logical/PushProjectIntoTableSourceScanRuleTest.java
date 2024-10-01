@@ -175,6 +175,7 @@ class PushProjectIntoTableSourceScanRuleTest extends TableTestBase {
                         + "    `data_map` MAP<STRING, ROW<`value` BIGINT>>>,\n"
                         + "  `outer_array` ARRAY<INT>,\n"
                         + "  `outer_map` MAP<STRING, STRING>,\n"
+                        + "   `chart` row<`result` array<row<`meta` row<`symbol` string not null> not null> not null> not null>,\n"
                         + "   WATERMARK FOR `Timestamp` AS `Timestamp`\n"
                         + ") WITH (\n"
                         + " 'connector' = 'values',\n"
@@ -295,6 +296,11 @@ class PushProjectIntoTableSourceScanRuleTest extends TableTestBase {
                         + "`Result`.`Mid`.data_arr[2].`value`, "
                         + "`Result`.`Mid`.data_arr "
                         + "FROM NestedItemTable");
+    }
+
+    @Test
+    void testNestedProjectFieldAccessWithNestedArrayAndRows() {
+        util.verifyRelPlan("SELECT `chart`.`result`[1].`meta`.`symbol` FROM ItemTable");
     }
 
     @Test
