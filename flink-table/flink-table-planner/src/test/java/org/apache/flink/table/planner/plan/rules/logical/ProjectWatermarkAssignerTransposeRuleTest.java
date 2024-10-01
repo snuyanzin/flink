@@ -105,9 +105,15 @@ class ProjectWatermarkAssignerTransposeRuleTest extends TableTestBase {
         util.tableEnv().executeSql(ddl4);
     }
 
+
     @Test
     void simpleTranspose() {
         util.verifyRelPlan("SELECT a, c FROM SimpleTable");
+    }
+
+    @Test
+    void simpleTranspose2() {
+        util.verifyRelPlan("SELECT /*+ STATE_TTL('st'='1d', 'vt' = '3d') */ st.* FROM SimpleTable st LEFT JOIN(SELECT DISTINCT b FROM VirtualTable) vt ON st.b = vt.b WHERE vt.b IS NOT NULL");
     }
 
     @Test

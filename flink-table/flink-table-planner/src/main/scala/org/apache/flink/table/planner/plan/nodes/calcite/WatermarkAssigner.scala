@@ -17,16 +17,16 @@
  */
 package org.apache.flink.table.planner.plan.nodes.calcite
 
+import com.google.common.collect.ImmutableList
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
-
 import org.apache.calcite.plan.{RelOptCluster, RelTraitSet}
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFieldImpl}
+import org.apache.calcite.rel.hint.{Hintable, RelHint}
 import org.apache.calcite.rel.{RelNode, RelWriter, SingleRel}
 import org.apache.calcite.rex.RexNode
 import org.apache.calcite.sql.`type`.SqlTypeName
 
 import java.util
-
 import scala.collection.JavaConversions._
 
 /** Relational operator that generates [[org.apache.flink.streaming.api.watermark.Watermark]]. */
@@ -36,7 +36,7 @@ abstract class WatermarkAssigner(
     inputRel: RelNode,
     val rowtimeFieldIndex: Int,
     val watermarkExpr: RexNode)
-  extends SingleRel(cluster, traits, inputRel) {
+  extends SingleRel(cluster, traits, inputRel) with Hintable {
 
   override def deriveRowType(): RelDataType = {
     val inputRowType = inputRel.getRowType
@@ -74,4 +74,12 @@ abstract class WatermarkAssigner(
   /** Copies a new WatermarkAssigner. */
   def copy(traitSet: RelTraitSet, input: RelNode, rowtime: Int, watermark: RexNode): RelNode
 
+  override def getHints: ImmutableList[RelHint] = {
+    inputRel match {
+      case hintable: Hintable =>
+        hintable.getHints
+      case _ =>
+        ImmutableList.of()
+    }
+  }
 }

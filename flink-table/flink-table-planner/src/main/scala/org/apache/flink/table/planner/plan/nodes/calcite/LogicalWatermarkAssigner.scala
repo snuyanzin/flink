@@ -17,8 +17,10 @@
  */
 package org.apache.flink.table.planner.plan.nodes.calcite
 
+import com.google.common.collect.ImmutableList
 import org.apache.calcite.plan._
 import org.apache.calcite.rel.RelNode
+import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rex.RexNode
 
 /**
