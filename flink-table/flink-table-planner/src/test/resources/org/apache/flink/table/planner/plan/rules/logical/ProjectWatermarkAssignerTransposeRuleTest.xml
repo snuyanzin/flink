@@ -185,13 +185,13 @@ LogicalProject(a=[$0])
   </TestCase>
 	<TestCase name="simpleTranspose2">
 		<Resource name="sql">
-			<![CDATA[SELECT /*+ STATE_TTL('SimpleTable'='1d', 'vt' = '3d') */ st.* FROM SimpleTable st LEFT JOIN(SELECT DISTINCT b FROM VirtualTable) vt ON st.b = vt.b WHERE vt.b IS NOT NULL]]>
+			<![CDATA[SELECT /*+ STATE_TTL('st'='1d', 'vt' = '3d') */ st.* FROM SimpleTable st LEFT JOIN(SELECT DISTINCT b FROM VirtualTable) vt ON st.b = vt.b WHERE vt.b IS NOT NULL]]>
 		</Resource>
 		<Resource name="ast">
 			<![CDATA[
 LogicalProject(a=[$0], b=[$1], c=[$2], d=[$3])
 +- LogicalFilter(condition=[IS NOT NULL($4)])
-   +- LogicalJoin(condition=[=($1, $4)], joinType=[left], stateTtlHints=[[[STATE_TTL inheritPath:[0, 0] options:{SimpleTable=1d, vt=3d}]]])
+   +- LogicalJoin(condition=[=($1, $4)], joinType=[left], stateTtlHints=[[[STATE_TTL inheritPath:[0, 0] options:{st=1d, vt=3d}]]])
       :- LogicalWatermarkAssigner(rowtime=[c], watermark=[$2])
       :  +- LogicalTableScan(table=[[default_catalog, default_database, SimpleTable]])
       +- LogicalAggregate(group=[{0}])
