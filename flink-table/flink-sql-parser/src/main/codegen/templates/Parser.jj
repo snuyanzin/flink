@@ -5094,7 +5094,7 @@ SqlIntervalQualifier TimeUnitOrName() : {
     // Reserved keywords, such as SECOND, cannot be identifiers, and are
     // therefore not ambiguous.
     LOOKAHEAD(2)
-       intervalQualifier = TimeUnit() {
+    intervalQualifier = TimeUnit() {
         return intervalQualifier;
     }
 |   unitName = SimpleIdentifier() {
