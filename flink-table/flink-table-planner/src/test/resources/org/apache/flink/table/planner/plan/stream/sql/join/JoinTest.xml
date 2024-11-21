@@ -427,18 +427,20 @@ LogicalProject(a1=[$0], a2=[$1], b1=[$2], b2=[$3])
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[a1, a2, CAST(2 AS INTEGER) AS b1, b2])
-+- Join(joinType=[InnerJoin], where=[((a1 = b1) AND (a2 = b2))], select=[a1, a2, b1, b2], leftInputSpec=[JoinKeyContainsUniqueKey], rightInputSpec=[JoinKeyContainsUniqueKey])
-   :- Exchange(distribution=[hash[a1, a2]])
-   :  +- GroupAggregate(groupBy=[a1], select=[a1, COUNT(a2) AS a2])
-   :     +- Exchange(distribution=[hash[a1]])
-   :        +- Calc(select=[CAST(2 AS INTEGER) AS a1, a2], where=[(a1 = 2)])
-   :           +- LegacyTableSourceScan(table=[[default_catalog, default_database, A, source: [TestTableSource(a1, a2, a3)]]], fields=[a1, a2, a3])
-   +- Exchange(distribution=[hash[b1, b2]])
-      +- GroupAggregate(groupBy=[b1], select=[b1, COUNT(b2) AS b2])
-         +- Exchange(distribution=[hash[b1]])
-            +- Calc(select=[CAST(2 AS INTEGER) AS b1, b2], where=[(b1 = 2)])
-               +- LegacyTableSourceScan(table=[[default_catalog, default_database, B, source: [TestTableSource(b1, b2, b3)]]], fields=[b1, b2, b3])
+Calc(select=[CAST(2 AS INTEGER) AS a1, a2, CAST(2 AS INTEGER) AS b1, b2])
++- Join(joinType=[InnerJoin], where=[(a2 = b2)], select=[a2, b2], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[a2]])
+   :  +- Calc(select=[a2])
+   :     +- GroupAggregate(groupBy=[a1], select=[a1, COUNT(a2) AS a2])
+   :        +- Exchange(distribution=[hash[a1]])
+   :           +- Calc(select=[CAST(2 AS INTEGER) AS a1, a2], where=[(a1 = 2)])
+   :              +- LegacyTableSourceScan(table=[[default_catalog, default_database, A, source: [TestTableSource(a1, a2, a3)]]], fields=[a1, a2, a3])
+   +- Exchange(distribution=[hash[b2]])
+      +- Calc(select=[b2])
+         +- GroupAggregate(groupBy=[b1], select=[b1, COUNT(b2) AS b2])
+            +- Exchange(distribution=[hash[b1]])
+               +- Calc(select=[CAST(2 AS INTEGER) AS b1, b2], where=[(b1 = 2)])
+                  +- LegacyTableSourceScan(table=[[default_catalog, default_database, B, source: [TestTableSource(b1, b2, b3)]]], fields=[b1, b2, b3])
 ]]>
     </Resource>
   </TestCase>
@@ -467,15 +469,15 @@ LogicalProject(a1=[$0], a2=[$1], b1=[$2], b2=[$3])
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[a1, 1 AS a2, CAST(2 AS INTEGER) AS b1, 1 AS b2])
-+- Join(joinType=[InnerJoin], where=[(a1 = b1)], select=[a1, b1], leftInputSpec=[JoinKeyContainsUniqueKey], rightInputSpec=[JoinKeyContainsUniqueKey])
-   :- Exchange(distribution=[hash[a1]])
+Calc(select=[CAST(2 AS INTEGER) AS a1, 1 AS a2, CAST(2 AS INTEGER) AS b1, 1 AS b2])
++- Join(joinType=[InnerJoin], where=[true], select=[a1, b1], leftInputSpec=[HasUniqueKey], rightInputSpec=[HasUniqueKey])
+   :- Exchange(distribution=[single])
    :  +- Calc(select=[a1], where=[(a2 = 1)])
    :     +- GroupAggregate(groupBy=[a1], select=[a1, COUNT(a2) AS a2])
    :        +- Exchange(distribution=[hash[a1]])
    :           +- Calc(select=[CAST(2 AS INTEGER) AS a1, a2], where=[(a1 = 2)])
    :              +- LegacyTableSourceScan(table=[[default_catalog, default_database, A, source: [TestTableSource(a1, a2, a3)]]], fields=[a1, a2, a3])
-   +- Exchange(distribution=[hash[b1]])
+   +- Exchange(distribution=[single])
       +- Calc(select=[b1], where=[(b2 = 1)])
          +- GroupAggregate(groupBy=[b1], select=[b1, COUNT(b2) AS b2])
             +- Exchange(distribution=[hash[b1]])
@@ -950,18 +952,20 @@ LogicalProject(a1=[$0], a2=[$1], b1=[$2], b2=[$3])
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[CAST(2 AS INTEGER) AS a1, a2, b1, CAST(b2 AS BIGINT) AS b2])
-+- Join(joinType=[InnerJoin], where=[((a1 = b1) AND (b2 = a2))], select=[a1, a2, b1, b2], leftInputSpec=[JoinKeyContainsUniqueKey], rightInputSpec=[JoinKeyContainsUniqueKey])
-   :- Exchange(distribution=[hash[a1, a2]])
-   :  +- GroupAggregate(groupBy=[a1], select=[a1, COUNT(a2) AS a2])
-   :     +- Exchange(distribution=[hash[a1]])
-   :        +- Calc(select=[CAST(2 AS INTEGER) AS a1, a2], where=[(a1 = 2)])
-   :           +- LegacyTableSourceScan(table=[[default_catalog, default_database, A, source: [TestTableSource(a1, a2, a3)]]], fields=[a1, a2, a3])
-   +- Exchange(distribution=[hash[b1, b2]])
-      +- GroupAggregate(groupBy=[b1], select=[b1, COUNT(b2) AS b2])
-         +- Exchange(distribution=[hash[b1]])
-            +- Calc(select=[CAST(2 AS INTEGER) AS b1, b2], where=[(b1 = 2)])
-               +- LegacyTableSourceScan(table=[[default_catalog, default_database, B, source: [TestTableSource(b1, b2, b3)]]], fields=[b1, b2, b3])
+Calc(select=[CAST(2 AS INTEGER) AS a1, a2, CAST(2 AS INTEGER) AS b1, CAST(b2 AS BIGINT) AS b2])
++- Join(joinType=[InnerJoin], where=[(b2 = a2)], select=[a2, b2], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[a2]])
+   :  +- Calc(select=[a2])
+   :     +- GroupAggregate(groupBy=[a1], select=[a1, COUNT(a2) AS a2])
+   :        +- Exchange(distribution=[hash[a1]])
+   :           +- Calc(select=[CAST(2 AS INTEGER) AS a1, a2], where=[(a1 = 2)])
+   :              +- LegacyTableSourceScan(table=[[default_catalog, default_database, A, source: [TestTableSource(a1, a2, a3)]]], fields=[a1, a2, a3])
+   +- Exchange(distribution=[hash[b2]])
+      +- Calc(select=[b2])
+         +- GroupAggregate(groupBy=[b1], select=[b1, COUNT(b2) AS b2])
+            +- Exchange(distribution=[hash[b1]])
+               +- Calc(select=[CAST(2 AS INTEGER) AS b1, b2], where=[(b1 = 2)])
+                  +- LegacyTableSourceScan(table=[[default_catalog, default_database, B, source: [TestTableSource(b1, b2, b3)]]], fields=[b1, b2, b3])
 ]]>
     </Resource>
   </TestCase>
@@ -1357,18 +1361,20 @@ LogicalProject(a1=[$0], a2=[$1], b1=[$2], b2=[$3])
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[a1, CAST(a2 AS BIGINT) AS a2, CAST(2 AS INTEGER) AS b1, b2])
-+- Join(joinType=[InnerJoin], where=[((a1 = b1) AND (a2 = b2))], select=[a1, a2, b1, b2], leftInputSpec=[JoinKeyContainsUniqueKey], rightInputSpec=[JoinKeyContainsUniqueKey])
-   :- Exchange(distribution=[hash[a1, a2]])
-   :  +- GroupAggregate(groupBy=[a1], select=[a1, COUNT(a2) AS a2])
-   :     +- Exchange(distribution=[hash[a1]])
-   :        +- Calc(select=[CAST(2 AS INTEGER) AS a1, a2], where=[(a1 = 2)])
-   :           +- LegacyTableSourceScan(table=[[default_catalog, default_database, A, source: [TestTableSource(a1, a2, a3)]]], fields=[a1, a2, a3])
-   +- Exchange(distribution=[hash[b1, b2]])
-      +- GroupAggregate(groupBy=[b1], select=[b1, COUNT(b2) AS b2])
-         +- Exchange(distribution=[hash[b1]])
-            +- Calc(select=[CAST(2 AS INTEGER) AS b1, b2], where=[(b1 = 2)])
-               +- LegacyTableSourceScan(table=[[default_catalog, default_database, B, source: [TestTableSource(b1, b2, b3)]]], fields=[b1, b2, b3])
+Calc(select=[CAST(2 AS INTEGER) AS a1, CAST(a2 AS BIGINT) AS a2, CAST(2 AS INTEGER) AS b1, b2])
++- Join(joinType=[InnerJoin], where=[(a2 = b2)], select=[a2, b2], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[a2]])
+   :  +- Calc(select=[a2])
+   :     +- GroupAggregate(groupBy=[a1], select=[a1, COUNT(a2) AS a2])
+   :        +- Exchange(distribution=[hash[a1]])
+   :           +- Calc(select=[CAST(2 AS INTEGER) AS a1, a2], where=[(a1 = 2)])
+   :              +- LegacyTableSourceScan(table=[[default_catalog, default_database, A, source: [TestTableSource(a1, a2, a3)]]], fields=[a1, a2, a3])
+   +- Exchange(distribution=[hash[b2]])
+      +- Calc(select=[b2])
+         +- GroupAggregate(groupBy=[b1], select=[b1, COUNT(b2) AS b2])
+            +- Exchange(distribution=[hash[b1]])
+               +- Calc(select=[CAST(2 AS INTEGER) AS b1, b2], where=[(b1 = 2)])
+                  +- LegacyTableSourceScan(table=[[default_catalog, default_database, B, source: [TestTableSource(b1, b2, b3)]]], fields=[b1, b2, b3])
 ]]>
     </Resource>
   </TestCase>
@@ -1643,12 +1649,13 @@ LogicalProject(key=[$0], v=[$1], key0=[$2], v0=[$3])
     </Resource>
     <Resource name="optimized rel plan">
       <![CDATA[
-Join(joinType=[LeftOuterJoin], where=[=(key, key0)], select=[key, v, key0, v0], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey], changelogMode=[I,UA,D])
-:- Exchange(distribution=[hash[key]], changelogMode=[I])
-:  +- Calc(select=[CAST(0 AS BIGINT) AS key, v], where=[=(key, 0)], changelogMode=[I])
-:     +- LegacyTableSourceScan(table=[[default_catalog, default_database, src, source: [TestTableSource(key, v)]]], fields=[key, v], changelogMode=[I])
-+- Exchange(distribution=[hash[key]], changelogMode=[I])
-   +- Values(tuples=[[]], changelogMode=[I])
+Calc(select=[CAST(0 AS BIGINT) AS key, v, key AS key0, v0], changelogMode=[I,UA,D])
++- Join(joinType=[LeftOuterJoin], where=[true], select=[v, key, v0], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey], changelogMode=[I,UA,D])
+   :- Exchange(distribution=[single], changelogMode=[I])
+   :  +- Calc(select=[v], where=[=(key, 0)], changelogMode=[I])
+   :     +- LegacyTableSourceScan(table=[[default_catalog, default_database, src, source: [TestTableSource(key, v)]]], fields=[key, v], changelogMode=[I])
+   +- Exchange(distribution=[single], changelogMode=[I])
+      +- Values(tuples=[[]], changelogMode=[I])
 ]]>
     </Resource>
   </TestCase>

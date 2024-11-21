@@ -23,7 +23,7 @@ import org.apache.flink.table.planner.hint.{FlinkHints, JoinStrategy}
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.batch.BatchPhysicalLocalHashAggregate
 import org.apache.flink.table.planner.plan.rules.physical.batch.BatchPhysicalJoinRuleBase.SEMI_JOIN_BUILD_DISTINCT_NDV_RATIO
-import org.apache.flink.table.planner.plan.utils.{JoinUtil, OperatorType}
+import org.apache.flink.table.planner.plan.utils.{FlinkRelOptUtil, JoinUtil, OperatorType}
 import org.apache.flink.table.planner.utils.TableConfigUtils.isOperatorDisabled
 
 import org.apache.calcite.plan.RelOptRule

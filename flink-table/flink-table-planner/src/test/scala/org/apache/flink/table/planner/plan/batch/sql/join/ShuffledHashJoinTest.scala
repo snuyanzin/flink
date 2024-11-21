@@ -103,4 +103,18 @@ class ShuffledHashJoinTest extends JoinTestBase {
       .hasMessageContaining("Cannot generate a valid execution plan for the given query")
       .isInstanceOf[TableException]
   }
+
+  @Test
+  override def testSelfJoinWithPullingUpConstant(): Unit = {
+    assertThatThrownBy(() => super.testCrossJoin())
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
+      .isInstanceOf[TableException]
+  }
+
+  @Test
+  override def testInnerJoinWithJoinConditionPushDownWithPullingUpConstant(): Unit = {
+    assertThatThrownBy(() => super.testCrossJoin())
+      .hasMessageContaining("Cannot generate a valid execution plan for the given query")
+      .isInstanceOf[TableException]
+  }
 }

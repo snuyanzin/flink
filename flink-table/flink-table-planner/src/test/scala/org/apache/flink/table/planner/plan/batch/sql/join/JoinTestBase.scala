@@ -226,13 +226,26 @@ abstract class JoinTestBase extends TableTestBase {
   }
 
   @Test
-  def testSelfJoin(): Unit = {
+  def testSelfJoinWithPullingUpConstant(): Unit = {
     util.addTableSource[(Long, String)]("src", 'k, 'v)
     val sql =
       s"""SELECT * FROM
          |  (SELECT * FROM src WHERE k = 0) src1
          |LEFT OUTER JOIN
          |  (SELECT * from src WHERE k = 0) src2
+         |ON (src1.k = src2.k AND src2.k > 10)
+         """.stripMargin
+    util.verifyExecPlan(sql)
+  }
+
+  @Test
+  def testSelfJoin(): Unit = {
+    util.addTableSource[(Long, String)]("src", 'k, 'v)
+    val sql =
+      s"""SELECT * FROM
+         |  (SELECT * FROM src WHERE k in (0, 1)) src1
+         |LEFT OUTER JOIN
+         |  (SELECT * from src WHERE k in (0, 1)) src2
          |ON (src1.k = src2.k AND src2.k > 10)
          """.stripMargin
     util.verifyExecPlan(sql)
@@ -251,6 +264,17 @@ abstract class JoinTestBase extends TableTestBase {
 
   @Test
   def testInnerJoinWithJoinConditionPushDown(): Unit = {
+    util.verifyExecPlan("""
+                          |SELECT * FROM
+                          |   (select a, count(b) as b from MyTable1 group by a)
+                          |   join
+                          |   (select d, count(e) as e from MyTable2 group by d)
+                          |   on a = d and b = e and d in (1, 2) and b = 1
+                          |""".stripMargin)
+  }
+
+  @Test
+  def testInnerJoinWithJoinConditionPushDownWithPullingUpConstant(): Unit = {
     util.verifyExecPlan("""
                           |SELECT * FROM
                           |   (select a, count(b) as b from MyTable1 group by a)
