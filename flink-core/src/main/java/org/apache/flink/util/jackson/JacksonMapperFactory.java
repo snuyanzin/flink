@@ -23,7 +23,6 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonFactory;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /** Factory for Jackson mappers. */
@@ -50,7 +49,6 @@ public final class JacksonMapperFactory {
 
     private static void registerModules(ObjectMapper mapper) {
         mapper.registerModule(new JavaTimeModule())
-                .registerModule(new Jdk8Module().configureAbsentsAsNulls(true))
                 .disable(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS)
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }

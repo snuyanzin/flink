@@ -377,6 +377,13 @@ under the License.
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jdk8</artifactId>
+			<version>2.15.3</version>
+			<optional>${flink.markBundledAsOptional}</optional>
+		</dependency>
+
 	</dependencies>
 
 	<dependencyManagement>
@@ -651,6 +658,7 @@ under the License.
 									<include>net.sf.py4j:*</include>
 									<include>org.apache.beam:*</include>
 									<include>com.fasterxml.jackson.core:*</include>
+									<include>com.fasterxml.jackson.datatype:*</include>
 									<include>joda-time:*</include>
 									<include>com.google.protobuf:*</include>
 									<include>org.apache.arrow:*</include>
