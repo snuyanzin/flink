@@ -1790,8 +1790,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     /**
      * Returns null if there is no common type. E.g. if the rows have a different number of columns.
      */
-    @Nullable
-    RelDataType getTableConstructorRowType(SqlCall values, SqlValidatorScope scope) {
+    @Nullable RelDataType getTableConstructorRowType(SqlCall values, SqlValidatorScope scope) {
         final List<SqlNode> rows = values.getOperandList();
         assert rows.size() >= 1;
         final List<RelDataType> rowTypes = new ArrayList<>();
@@ -5453,8 +5452,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         originalExprs.putIfAbsent(expr, original);
     }
 
-    @Nullable
-    SqlValidatorNamespace lookupFieldNamespace(RelDataType rowType, String name) {
+    @Nullable SqlValidatorNamespace lookupFieldNamespace(RelDataType rowType, String name) {
         final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
         final RelDataTypeField field = nameMatcher.field(rowType, name);
         if (field == null) {

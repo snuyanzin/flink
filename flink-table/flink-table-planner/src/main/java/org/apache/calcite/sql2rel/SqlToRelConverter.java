@@ -5325,8 +5325,7 @@ public class SqlToRelConverter {
             return rexBuilder.makeRangeReference(pair.left.getRowType(), pair.right, false);
         }
 
-        @Nullable
-        RelDataTypeField getRootField(RexInputRef inputRef) {
+        @Nullable RelDataTypeField getRootField(RexInputRef inputRef) {
             List<RelNode> inputs = this.inputs;
             if (inputs == null) {
                 return null;
@@ -5369,8 +5368,7 @@ public class SqlToRelConverter {
             }
         }
 
-        @Nullable
-        SubQuery getSubQuery(SqlNode expr, SqlImplementor.Clause exprClause) {
+        @Nullable SubQuery getSubQuery(SqlNode expr, SqlImplementor.Clause exprClause) {
             for (SubQuery subQuery : subQueryList) {
                 // Compare the reference to make sure the matched node has
                 // exact scope where it belongs.
@@ -6633,8 +6631,7 @@ public class SqlToRelConverter {
          * @param aggFunction An aggregate function
          * @return Its histogram function, or null
          */
-        @Nullable
-        SqlFunction getHistogramOp(SqlAggFunction aggFunction) {
+        @Nullable SqlFunction getHistogramOp(SqlAggFunction aggFunction) {
             if (aggFunction == SqlStdOperatorTable.MIN) {
                 return SqlStdOperatorTable.HISTOGRAM_MIN;
             } else if (aggFunction == SqlStdOperatorTable.MAX) {
@@ -6779,6 +6776,7 @@ public class SqlToRelConverter {
     private static class CorrelationUse {
         private final CorrelationId id;
         private final ImmutableBitSet requiredColumns;
+
         /** The relational expression that uses the variable. */
         private final RelNode r;
 
