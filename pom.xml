@@ -586,13 +586,13 @@ under the License.
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy</artifactId>
-				<version>1.14.19</version>
+				<version>1.15.10</version>
 			</dependency>
 
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy-agent</artifactId>
-				<version>1.14.19</version>
+				<version>1.15.10</version>
 			</dependency>
 
 			<!-- For dependency convergence -->
@@ -1234,6 +1234,68 @@ under the License.
 						<configuration>
 							<source>22</source>
 							<target>22</target>
+							<compilerArgs combine.children="append">
+								<arg>--add-exports=java.base/sun.net.util=ALL-UNNAMED</arg>
+								<arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
+								<arg>--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED</arg>
+								<arg>--add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED</arg>
+							</compilerArgs>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<profile>
+			<id>java23</id>
+			<activation>
+				<jdk>[23,)</jdk>
+			</activation>
+
+			<properties>
+				<!-- Bump Scala because before 2.12.20 doesn't compile on Java 23. -->
+				<scala.version>2.12.20</scala.version>
+			</properties>
+
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>com.diffplug.spotless</groupId>
+							<artifactId>spotless-maven-plugin</artifactId>
+							<configuration>
+								<!-- Current google format does not run on Java 23.
+									 Don't upgrade it in this profile because it formats code differently.
+									 Re-evaluate once support for Java 8 is dropped. -->
+								<skip>true</skip>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-surefire-plugin</artifactId>
+							<configuration>
+								<excludedGroups>
+									${surefire.excludedGroups.github-actions},
+									${surefire.excludedGroups.adaptive-scheduler},
+									${surefire.excludedGroups.jdk},
+								</excludedGroups>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+
+		<profile>
+			<id>java23-target</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<version>3.13.0</version>
+						<configuration>
+							<release>11</release>
 							<compilerArgs combine.children="append">
 								<arg>--add-exports=java.base/sun.net.util=ALL-UNNAMED</arg>
 								<arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
@@ -2330,7 +2392,7 @@ under the License.
 				<plugin>
 					<groupId>net.alchim31.maven</groupId>
 					<artifactId>scala-maven-plugin</artifactId>
-					<version>3.2.2</version>
+					<version>4.2.4</version>
 					<configuration>
 						<args>
 							<arg>-nobootcp</arg>
