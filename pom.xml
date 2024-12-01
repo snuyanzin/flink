@@ -2207,7 +2207,7 @@ under the License.
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.0</version>
+					<version>3.13.0</version>
 					<configuration>
 						<source>${target.java.version}</source>
 						<target>${target.java.version}</target>
@@ -2220,6 +2220,7 @@ under the License.
 							<arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
 							<arg>--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED</arg>
 							<arg>--add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED</arg>
+							<arg>-proc:full</arg>
 						</compilerArgs>
 					</configuration>
 				</plugin>
@@ -2399,6 +2400,9 @@ under the License.
 						</args>
 						<jvmArgs>
 							<arg>-Xss2m</arg>
+						</jvmArgs>
+						<jvmArgs>
+							<arg>-proc:full</arg>
 						</jvmArgs>
 					</configuration>
 				</plugin>
