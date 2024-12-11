@@ -203,7 +203,8 @@ public class ComponentClassLoader extends URLClassLoader {
 
     @Override
     public Enumeration<URL> getResources(final String name) throws IOException {
-        if (isComponentFirstResource(name)) {
+        if ("META-INF/services/org.codehaus.commons.compiler.ICompilerFactory".equals(name)
+                || isComponentFirstResource(name)) {
             return loadResourceFromComponentFirst(name);
         }
         if (isOwnerFirstResource(name)) {
