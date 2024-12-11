@@ -76,7 +76,8 @@ public class PlannerModule {
                                     // also, we should make it loaded by owner classloader,
                                     // otherwise, it'll throw class not found exception
                                     // when initialize HiveParser which requires hadoop
-                                    "org.apache.hadoop"))
+                                    "org.apache.hadoop",
+                                    "META-INF.services.org.codehaus.commons.compiler"))
                     .toArray(String[]::new);
 
     private static final String[] COMPONENT_CLASSPATH = new String[] {"org.apache.flink"};
