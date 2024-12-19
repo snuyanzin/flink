@@ -36,7 +36,7 @@ class DataTypeExtractorScalaTest {
   def testScalaExtraction(testSpec: DataTypeExtractorTest.TestSpec): Unit = {
     if (testSpec.hasErrorMessage) {
       assertThatThrownBy(() => runExtraction(testSpec))
-        .hasCause(new ValidationException(testSpec.expectedErrorMessage))
+        .hasRootCauseMessage(testSpec.expectedErrorMessage)
         .isInstanceOf[ValidationException]
     } else {
       runExtraction(testSpec)
