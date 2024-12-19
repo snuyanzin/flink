@@ -254,7 +254,7 @@ class CodeSplitTest {
             consumer.accept(noSplitTableConfig);
             fail("Expecting compiler exception");
         } catch (Exception e) {
-            assertThat(e).hasMessageContaining("grows beyond 64 KB");
+            assertThat(e).hasRootCauseMessage("Code grows beyond 64 KB");
         } finally {
             // set stdout back
             System.setOut(originalStdOut);
