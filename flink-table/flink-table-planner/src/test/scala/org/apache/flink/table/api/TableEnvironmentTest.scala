@@ -1803,7 +1803,7 @@ class TableEnvironmentTest {
 
     assert(tableEnv.listTables().sameElements(Array[String]("T1", "T2", "T3")))
 
-    tableEnv.dropTable("default_catalog.default_database.T2")
+    tableEnv.dropView("default_catalog.default_database.T2")
     assert(tableEnv.listTables().sameElements(Array[String]("T1", "T3")))
 
     dropView("default_catalog.default_database.T3", isSql)
