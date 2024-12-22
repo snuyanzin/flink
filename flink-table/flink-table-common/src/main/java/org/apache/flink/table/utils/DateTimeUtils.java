@@ -32,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -44,10 +42,13 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -105,15 +106,18 @@ public class DateTimeUtils {
      */
     public static final long MILLIS_PER_DAY = 86400000L; // = 24 * 60 * 60 * 1000
 
-    /** The SimpleDateFormat string for ISO dates, "yyyy-MM-dd". */
+    /** The DateTimeFormatter string for ISO dates, "yyyy-MM-dd". */
     private static final String DATE_FORMAT_STRING = "yyyy-MM-dd";
 
-    /** The SimpleDateFormat string for ISO times, "HH:mm:ss". */
+    /** The DateTimeFormatter string for ISO times, "HH:mm:ss". */
     private static final String TIME_FORMAT_STRING = "HH:mm:ss";
 
-    /** The SimpleDateFormat string for ISO timestamps, "yyyy-MM-dd HH:mm:ss". */
-    private static final String TIMESTAMP_FORMAT_STRING =
+    /** The DateTimeFormatter string for ISO timestamps, "yyyy-MM-dd HH:mm:ss". */
+    private static final String TIMESTAMP_FORMAT_UNIX_STRING =
             DATE_FORMAT_STRING + " " + TIME_FORMAT_STRING;
+
+    /** The DateTimeFormatter string for ISO timestamps with millis, "yyyy-MM-dd HH:mm:ss[.SSS]". */
+    private static final String TIMESTAMP_FORMAT_STRING = TIMESTAMP_FORMAT_UNIX_STRING + "[.SSS]";
 
     /** The UTC time zone. */
     public static final TimeZone UTC_ZONE = TimeZone.getTimeZone("UTC");
@@ -142,16 +146,16 @@ public class DateTimeUtils {
                     .optionalEnd()
                     .toFormatter();
 
-    /**
-     * A ThreadLocal cache map for SimpleDateFormat, because SimpleDateFormat is not thread-safe.
-     * (string_format) => formatter
-     */
-    private static final ThreadLocalCache<String, SimpleDateFormat> FORMATTER_CACHE =
-            ThreadLocalCache.of(SimpleDateFormat::new);
-
     /** A ThreadLocal cache map for DateTimeFormatter. (string_format) => formatter */
     private static final ThreadLocalCache<String, DateTimeFormatter> DATETIME_FORMATTER_CACHE =
-            ThreadLocalCache.of(DateTimeFormatter::ofPattern);
+            ThreadLocalCache.of(
+                    pattern ->
+                            new DateTimeFormatterBuilder()
+                                    .appendPattern(pattern)
+                                    .optionalStart()
+                                    .parseDefaulting(ChronoField.NANO_OF_SECOND, 0)
+                                    .optionalEnd()
+                                    .toFormatter());
 
     /** A ThreadLocal cache map for TimeZone. (string_zone_id) => TimeZone */
     private static final ThreadLocalCache<String, TimeZone> TIMEZONE_CACHE =
@@ -486,11 +490,10 @@ public class DateTimeUtils {
      * @param format date time string format
      * @param tz the time zone
      */
-    private static long parseTimestampMillis(String dateStr, String format, TimeZone tz)
-            throws ParseException {
-        SimpleDateFormat formatter = FORMATTER_CACHE.get(format);
-        formatter.setTimeZone(tz);
-        return formatter.parse(dateStr).getTime();
+    private static long parseTimestampMillis(
+            String dateStr, DateTimeFormatter formatter, TimeZone tz) {
+        Instant instant = Instant.from(formatter.withZone(tz.toZoneId()).parse(dateStr));
+        return Instant.EPOCH.until(instant, ChronoUnit.MILLIS);
     }
 
     /**
@@ -500,16 +503,16 @@ public class DateTimeUtils {
      * @param dateStr the date time string
      * @param tzStr the time zone id string
      */
-    private static long parseTimestampTz(String dateStr, String tzStr) throws ParseException {
+    private static long parseTimestampTz(String dateStr, String tzStr) {
         TimeZone tz = TIMEZONE_CACHE.get(tzStr);
-        return parseTimestampMillis(dateStr, DateTimeUtils.TIMESTAMP_FORMAT_STRING, tz);
+        return parseTimestampMillis(dateStr, DEFAULT_TIMESTAMP_FORMATTER, tz);
     }
 
     /** Returns the epoch days since 1970-01-01. */
     public static int parseDate(String dateStr, String fromFormat) {
         // It is OK to use UTC, we just want get the epoch days
         // TODO  use offset, better performance
-        long ts = internalParseTimestampMillis(dateStr, fromFormat, TimeZone.getTimeZone("UTC"));
+        long ts = internalParseDateMillis(dateStr, fromFormat, TimeZone.getTimeZone("UTC"));
         ZoneId zoneId = ZoneId.of("UTC");
         Instant instant = Instant.ofEpochMilli(ts);
         ZonedDateTime zdt = ZonedDateTime.ofInstant(instant, zoneId);
@@ -727,10 +730,9 @@ public class DateTimeUtils {
     }
 
     public static String formatTimestampMillis(long ts, String format, TimeZone tz) {
-        SimpleDateFormat formatter = FORMATTER_CACHE.get(format);
-        formatter.setTimeZone(tz);
+        DateTimeFormatter formatter = DATETIME_FORMATTER_CACHE.get(format).withZone(tz.toZoneId());
         Date dateTime = new Date(ts);
-        return formatter.format(dateTime);
+        return formatter.format(dateTime.toInstant());
     }
 
     public static String formatTimestampString(
@@ -740,19 +742,19 @@ public class DateTimeUtils {
 
     public static String formatTimestampStringWithOffset(
             String dateStr, String fromFormat, String toFormat, TimeZone tz, long offsetMills) {
-        SimpleDateFormat fromFormatter = FORMATTER_CACHE.get(fromFormat);
-        fromFormatter.setTimeZone(tz);
-        SimpleDateFormat toFormatter = FORMATTER_CACHE.get(toFormat);
-        toFormatter.setTimeZone(tz);
+        DateTimeFormatter fromFormatter =
+                DATETIME_FORMATTER_CACHE.get(fromFormat).withZone(tz.toZoneId());
+        DateTimeFormatter toFormatter =
+                DATETIME_FORMATTER_CACHE.get(toFormat).withZone(tz.toZoneId());
         try {
-            Date date = fromFormatter.parse(dateStr);
+            Date date = Date.from(Instant.from(fromFormatter.parse(dateStr)));
 
             if (offsetMills != 0) {
                 date = new Date(date.getTime() + offsetMills);
             }
 
-            return toFormatter.format(date);
-        } catch (ParseException e) {
+            return toFormatter.format(date.toInstant());
+        } catch (DateTimeException e) {
             LOG.error(
                     "Exception when formatting: '"
                             + dateStr
@@ -957,13 +959,38 @@ public class DateTimeUtils {
         return buf.toString();
     }
 
-    private static long internalParseTimestampMillis(String dateStr, String format, TimeZone tz) {
-        SimpleDateFormat formatter = FORMATTER_CACHE.get(format);
-        formatter.setTimeZone(tz);
+    private static long internalParseDateMillis(String dateStr, String format, TimeZone tz) {
+        DateTimeFormatter formatter =
+                new DateTimeFormatterBuilder()
+                        .appendPattern(format)
+                        .parseDefaulting(ChronoField.NANO_OF_DAY, 0)
+                        .toFormatter()
+                        .withZone(tz.toZoneId());
         try {
-            Date date = formatter.parse(dateStr);
-            return date.getTime();
-        } catch (ParseException e) {
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateStr, formatter);
+            return zonedDateTime.toInstant().toEpochMilli();
+
+        } catch (DateTimeException e) {
+            LOG.error(
+                    String.format(
+                            "Exception when parsing datetime string '%s' in format '%s'",
+                            dateStr, format),
+                    e);
+            return Long.MIN_VALUE;
+        }
+    }
+
+    private static long internalParseTimestampMillis(String dateStr, String format, TimeZone tz) {
+        DateTimeFormatter formatter =
+                DATETIME_FORMATTER_CACHE
+                        .get(format)
+                        .withZone(tz.toZoneId())
+                        .withLocale(Locale.ROOT);
+        try {
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateStr, formatter);
+            return zonedDateTime.toInstant().toEpochMilli();
+
+        } catch (DateTimeException e) {
             LOG.error(
                     String.format(
                             "Exception when parsing datetime string '%s' in format '%s'",
@@ -1370,15 +1397,22 @@ public class DateTimeUtils {
      */
     public static String convertTz(String dateStr, String tzFrom, String tzTo) {
         try {
-            return formatTimestampTz(parseTimestampTz(dateStr, tzFrom), tzTo);
-        } catch (ParseException e) {
+            return formatTimestampTz(
+                    parseTimestampTz(dateStr, tzFrom),
+                    tzTo,
+                    DateTimeUtils.TIMESTAMP_FORMAT_UNIX_STRING);
+        } catch (DateTimeParseException e) {
             return null;
         }
     }
 
-    private static String formatTimestampTz(long ts, String tzStr) {
+    private static String formatTimestampTz(long ts, String tzStr, String format) {
         TimeZone tz = TIMEZONE_CACHE.get(tzStr);
-        return formatTimestampMillis(ts, DateTimeUtils.TIMESTAMP_FORMAT_STRING, tz);
+        return formatTimestampMillis(ts, format, tz);
+    }
+
+    private static String formatTimestampTz(long ts, String tzStr) {
+        return formatTimestampTz(ts, tzStr, DateTimeUtils.TIMESTAMP_FORMAT_STRING);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -1422,7 +1456,7 @@ public class DateTimeUtils {
      * "yyyy-MM-dd HH:mm:ss" format.
      */
     public static String formatUnixTimestamp(long unixtime, TimeZone tz) {
-        return formatUnixTimestamp(unixtime, TIMESTAMP_FORMAT_STRING, tz);
+        return formatUnixTimestamp(unixtime, TIMESTAMP_FORMAT_UNIX_STRING, tz);
     }
 
     /**
@@ -1430,11 +1464,10 @@ public class DateTimeUtils {
      * given format.
      */
     public static String formatUnixTimestamp(long unixtime, String format, TimeZone tz) {
-        SimpleDateFormat formatter = FORMATTER_CACHE.get(format);
-        formatter.setTimeZone(tz);
+        DateTimeFormatter formatter = DATETIME_FORMATTER_CACHE.get(format).withZone(tz.toZoneId());
         Date date = new Date(unixtime * 1000);
         try {
-            return formatter.format(date);
+            return formatter.format(date.toInstant());
         } catch (Exception e) {
             LOG.error("Exception when formatting.", e);
             return null;

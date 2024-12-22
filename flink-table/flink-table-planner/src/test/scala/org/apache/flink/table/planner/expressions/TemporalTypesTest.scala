@@ -30,8 +30,8 @@ import org.junit.jupiter.api.Test
 
 import java.lang.{Double => JDouble, Float => JFloat, Integer => JInt, Long => JLong}
 import java.sql.Timestamp
-import java.text.SimpleDateFormat
 import java.time.{Instant, ZoneId, ZoneOffset}
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class TemporalTypesTest extends ExpressionTestBase {
@@ -899,28 +899,42 @@ class TemporalTypesTest extends ExpressionTestBase {
 
   @Test
   def testFromUnixTime(): Unit = {
-    val sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-    val fmt2 = "yyyy-MM-dd HH:mm:ss.SSS"
-    val sdf2 = new SimpleDateFormat(fmt2, Locale.US)
-    val fmt3 = "yy-MM-dd HH-mm-ss"
-    val sdf3 = new SimpleDateFormat(fmt3, Locale.US)
+    val sdf1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.US)
 
-    testAllApis(fromUnixtime('f21), "from_unixtime(f21)", sdf1.format(new Timestamp(44000)))
+    val fmt2 = "yyyy-MM-dd HH:mm:ss.SSS"
+    val sdf2 = DateTimeFormatter.ofPattern(fmt2, Locale.US)
+    val fmt3 = "yy-MM-dd HH-mm-ss"
+    val sdf3 = DateTimeFormatter.ofPattern(fmt3, Locale.US)
+    testAllApis(
+      fromUnixtime('f21),
+      "from_unixtime(f21)",
+      sdf1.format(Instant.ofEpochMilli(44000).atZone(ZoneId.systemDefault())))
+
     testAllApis(
       fromUnixtime('f21, fmt2),
       s"from_unixtime(f21, '$fmt2')",
-      sdf2.format(new Timestamp(44000)))
+      sdf2.format(Instant.ofEpochMilli(44000).atZone(ZoneId.systemDefault())))
     testAllApis(
       fromUnixtime('f21, fmt3),
       s"from_unixtime(f21, '$fmt3')",
-      sdf3.format(new Timestamp(44000)))
+      sdf3.format(Instant.ofEpochMilli(44000).atZone(ZoneId.systemDefault())))
 
-    testSqlApi("from_unixtime(f22)", sdf1.format(new Timestamp(3000)))
-    testSqlApi(s"from_unixtime(f22, '$fmt2')", sdf2.format(new Timestamp(3000)))
-    testSqlApi(s"from_unixtime(f22, '$fmt3')", sdf3.format(new Timestamp(3000)))
+    testSqlApi(
+      "from_unixtime(f22)",
+      sdf1.format(Instant.ofEpochMilli(3000).atZone(ZoneId.systemDefault())))
+    testSqlApi(
+      s"from_unixtime(f22, '$fmt2')",
+      sdf2.format(Instant.ofEpochMilli(3000).atZone(ZoneId.systemDefault())))
+    testSqlApi(
+      s"from_unixtime(f22, '$fmt3')",
+      sdf3.format(Instant.ofEpochMilli(3000).atZone(ZoneId.systemDefault())))
 
-    testSqlApi(s"from_unixtime(f26, '$fmt2')", sdf2.format(new Timestamp(124000)))
-    testSqlApi(s"from_unixtime(f26, '$fmt3')", sdf3.format(new Timestamp(124000)))
+    testSqlApi(
+      s"from_unixtime(f26, '$fmt2')",
+      sdf2.format(Instant.ofEpochMilli(124000).atZone(ZoneId.systemDefault())))
+    testSqlApi(
+      s"from_unixtime(f26, '$fmt3')",
+      sdf3.format(Instant.ofEpochMilli(124000).atZone(ZoneId.systemDefault())))
 
     // test with null input
     testSqlApi("from_unixtime(cast(null as int))", "NULL")
