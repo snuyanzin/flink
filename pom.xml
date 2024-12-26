@@ -135,9 +135,9 @@ under the License.
 		<scala.macros.version>2.1.1</scala.macros.version>
 		<!-- Default scala versions, must be overwritten by build profiles, so we set something
 		invalid here -->
-		<scala.version>2.12.20</scala.version>
-		<scala.binary.version>2.12</scala.binary.version>
-		<chill.version>0.7.6</chill.version>
+		<scala.version>2.13.15</scala.version>
+		<scala.binary.version>2.13</scala.binary.version>
+		<chill.version>0.9.5</chill.version>
 		<!-- keep FlinkTestcontainersConfigurator.configureZookeeperContainer in sync -->
 		<zookeeper.version>3.7.2</zookeeper.version>
 		<!-- Project `flink-benchmarks` uses zk testing server in `curator-test` for performance
@@ -942,10 +942,10 @@ under the License.
 			</properties>
 		</profile>
 		<profile>
-			<id>scala-2.12</id>
+			<id>scala-2.13</id>
 			<properties>
-				<scala.version>2.12.20</scala.version>
-				<scala.binary.version>2.12</scala.binary.version>
+				<scala.version>2.13.15</scala.version>
+				<scala.binary.version>2.15</scala.binary.version>
 			</properties>
 			<activation>
 				<activeByDefault>true</activeByDefault>
