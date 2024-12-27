@@ -19,7 +19,7 @@ package org.apache.flink.table.api.codegen
 
 import org.apache.flink.annotation.Internal
 
-import scala.reflect.macros.blackbox.Context
+import scala.reflect.macros.whitebox.Context
 
 @Internal
 private[flink] class MacroContextHolder[C <: Context](val c: C)

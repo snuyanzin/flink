@@ -20,7 +20,7 @@ package org.apache.flink.table.api.codegen
 import org.apache.flink.annotation.Internal
 
 import scala.language.postfixOps
-import scala.reflect.macros.blackbox.Context
+import scala.reflect.macros.whitebox.Context
 
 // These are only used internally while analyzing Scala types in TypeAnalyzer and TypeInformationGen
 

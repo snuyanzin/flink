@@ -30,7 +30,7 @@ import java.lang.reflect.{Field, Modifier}
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.language.postfixOps
-import scala.reflect.macros.blackbox.Context
+import scala.reflect.macros.whitebox.Context
 
 @Internal
 private[flink] trait TypeInformationGen[C <: Context] {
