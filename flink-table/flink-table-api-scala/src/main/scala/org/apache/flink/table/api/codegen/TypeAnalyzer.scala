@@ -22,7 +22,7 @@ import org.apache.flink.types.{BooleanValue, ByteValue, CharValue, DoubleValue, 
 
 import scala.collection._
 import scala.collection.generic.CanBuildFrom
-import scala.reflect.macros.Context
+import scala.reflect.macros.whitebox.Context
 import scala.util.DynamicVariable
 
 @Internal
