@@ -65,6 +65,8 @@ public interface CompiledPlan extends Explainable<CompiledPlan>, Executable {
     /** Convert the plan to a JSON string representation. */
     String asJsonString();
 
+    byte[] asSmileBytes();
+
     /**
      * @see #writeToFile(File)
      */
