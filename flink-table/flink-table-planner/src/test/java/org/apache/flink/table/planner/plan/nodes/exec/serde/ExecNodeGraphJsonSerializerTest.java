@@ -43,7 +43,7 @@ class ExecNodeGraphJsonSerializerTest {
     @Test
     void testSerializingUnsupportedNode() {
         final ObjectWriter objectWriter =
-                JsonSerdeUtil.createObjectWriter(JsonSerdeTestUtil.configuredSerdeContext());
+                JsonSmileSerdeUtil.createObjectWriter(JsonSerdeTestUtil.configuredSerdeContext());
         assertThatThrownBy(
                         () ->
                                 objectWriter.writeValueAsString(

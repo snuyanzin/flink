@@ -42,13 +42,18 @@ import java.util.stream.Collectors;
 public class ExecNodeGraphInternalPlan implements InternalPlan {
 
     private final Supplier<String> serializedPlanSupplier;
+    private final Supplier<byte[]> smileSerializedPlanSupplier;
     private final ExecNodeGraph execNodeGraph;
 
     private String serializedPlan;
+    private byte[] smileSerializedPlan;
 
     public ExecNodeGraphInternalPlan(
-            Supplier<String> serializedPlanSupplier, ExecNodeGraph execNodeGraph) {
+            Supplier<String> serializedPlanSupplier,
+            Supplier<byte[]> smileSerializedPlanSupplier,
+            ExecNodeGraph execNodeGraph) {
         this.serializedPlanSupplier = serializedPlanSupplier;
+        this.smileSerializedPlanSupplier = smileSerializedPlanSupplier;
         this.execNodeGraph = execNodeGraph;
     }
 
@@ -62,6 +67,14 @@ public class ExecNodeGraphInternalPlan implements InternalPlan {
             serializedPlan = serializedPlanSupplier.get();
         }
         return serializedPlan;
+    }
+
+    @Override
+    public byte[] asSmileBytes() {
+        if (smileSerializedPlan == null) {
+            smileSerializedPlan = smileSerializedPlanSupplier.get();
+        }
+        return smileSerializedPlan;
     }
 
     @Override

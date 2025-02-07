@@ -61,6 +61,8 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.deser.std
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.jsontype.NamedType;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.type.RelDataType;
@@ -71,9 +73,9 @@ import org.apache.calcite.rex.RexWindowBound;
 import java.io.IOException;
 import java.util.Optional;
 
-/** A utility class that provide abilities for JSON serialization and deserialization. */
+/** A utility class that provide abilities for JSON and Smile serialization and deserialization. */
 @Internal
-public class JsonSerdeUtil {
+public class JsonSmileSerdeUtil {
 
     /**
      * Object mapper shared instance to serialize and deserialize the plan. Note that creating and
@@ -83,39 +85,59 @@ public class JsonSerdeUtil {
      * write json persisted plans, use {@link #createObjectWriter(SerdeContext)} and {@link
      * #createObjectReader(SerdeContext)}.
      */
-    private static final ObjectMapper OBJECT_MAPPER_INSTANCE;
+    private static final ObjectMapper JSON_OBJECT_MAPPER_INSTANCE;
+
+    private static final ObjectMapper SMILE_OBJECT_MAPPER_INSTANCE =
+            JacksonMapperFactory.createObjectMapper(new SmileFactory())
+                    .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+                    .registerModule(createFlinkTableJacksonModule());
 
     static {
-        OBJECT_MAPPER_INSTANCE = JacksonMapperFactory.createObjectMapper();
+        JSON_OBJECT_MAPPER_INSTANCE = JacksonMapperFactory.createObjectMapper();
 
-        OBJECT_MAPPER_INSTANCE.setTypeFactory(
+        JSON_OBJECT_MAPPER_INSTANCE.setTypeFactory(
                 // Make sure to register the classloader of the planner
-                OBJECT_MAPPER_INSTANCE
+                JSON_OBJECT_MAPPER_INSTANCE
                         .getTypeFactory()
-                        .withClassLoader(JsonSerdeUtil.class.getClassLoader()));
-        OBJECT_MAPPER_INSTANCE.configure(MapperFeature.USE_GETTERS_AS_SETTERS, false);
-        OBJECT_MAPPER_INSTANCE.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-        OBJECT_MAPPER_INSTANCE.registerModule(createFlinkTableJacksonModule());
+                        .withClassLoader(JsonSmileSerdeUtil.class.getClassLoader()));
+        JSON_OBJECT_MAPPER_INSTANCE.configure(MapperFeature.USE_GETTERS_AS_SETTERS, false);
+        JSON_OBJECT_MAPPER_INSTANCE.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        JSON_OBJECT_MAPPER_INSTANCE.registerModule(createFlinkTableJacksonModule());
     }
 
     public static ObjectReader createObjectReader(SerdeContext serdeContext) {
-        return OBJECT_MAPPER_INSTANCE
+        return JSON_OBJECT_MAPPER_INSTANCE
                 .reader()
                 .withAttribute(SerdeContext.SERDE_CONTEXT_KEY, serdeContext)
                 .with(defaultInjectedValues());
     }
 
     public static ObjectWriter createObjectWriter(SerdeContext serdeContext) {
-        return OBJECT_MAPPER_INSTANCE
+        return JSON_OBJECT_MAPPER_INSTANCE
                 .writer()
                 .withAttribute(SerdeContext.SERDE_CONTEXT_KEY, serdeContext);
+    }
+
+    public static ObjectWriter createSmileObjectWriter(SerdeContext serdeContext) {
+        return SMILE_OBJECT_MAPPER_INSTANCE
+                .writer()
+                .withAttribute(SerdeContext.SERDE_CONTEXT_KEY, serdeContext)
+                .with(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
+    }
+
+    public static ObjectReader createSmileObjectReader(SerdeContext serdeContext) {
+        return SMILE_OBJECT_MAPPER_INSTANCE
+                .reader()
+                .withAttribute(SerdeContext.SERDE_CONTEXT_KEY, serdeContext)
+                .with(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES)
+                .with(defaultInjectedValues());
     }
 
     private static InjectableValues defaultInjectedValues() {
         return new InjectableValues.Std().addValue("isDeserialize", true);
     }
 
-    private static Module createFlinkTableJacksonModule() {
+    static Module createFlinkTableJacksonModule() {
         final SimpleModule module = new SimpleModule("Flink table module");
         ExecNodeMetadataUtil.execNodes()
                 .forEach(c -> module.registerSubtypes(new NamedType(c, c.getName())));
@@ -244,5 +266,5 @@ public class JsonSerdeUtil {
         }
     }
 
-    private JsonSerdeUtil() {}
+    private JsonSmileSerdeUtil() {}
 }

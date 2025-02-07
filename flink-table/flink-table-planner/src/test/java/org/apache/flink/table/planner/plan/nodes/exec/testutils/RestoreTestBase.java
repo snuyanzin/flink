@@ -363,7 +363,15 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
         program.getSetupFunctionTestSteps().forEach(s -> s.apply(tEnv));
         program.getSetupTemporalFunctionTestSteps().forEach(s -> s.apply(tEnv));
 
-        final CompiledPlan compiledPlan = tEnv.loadPlan(PlanReference.fromFile(planPath));
+        final CompiledPlan compiledPlanTmp = tEnv.loadPlan(PlanReference.fromFile(planPath));
+        final int json = compiledPlanTmp.asJsonString().getBytes().length;
+        final int smile = compiledPlanTmp.asSmileBytes().length;
+        System.out.println(
+                String.format(
+                        "[%d%% from initial]: %d => %d for %s",
+                        smile * 100 / json, json, smile, planPath));
+        final CompiledPlan compiledPlan =
+                tEnv.loadPlan(PlanReference.fromSmileBytes(compiledPlanTmp.asSmileBytes()));
 
         if (afterRestoreSource == AfterRestoreSource.INFINITE) {
             final TableResult tableResult = compiledPlan.execute();

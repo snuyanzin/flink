@@ -39,6 +39,8 @@ public interface InternalPlan {
      */
     String asJsonString();
 
+    byte[] asSmileBytes();
+
     /**
      * Note that {@code ignoreIfExists} has precedence over {@code failIfExists}.
      *
