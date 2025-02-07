@@ -46,7 +46,7 @@ import org.apache.flink.table.planner.plan.ExecNodeGraphInternalPlan
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalLegacySink
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNodeGraph, ExecNodeGraphGenerator}
 import org.apache.flink.table.planner.plan.nodes.exec.processor.{ExecNodeGraphProcessor, ProcessorContext}
-import org.apache.flink.table.planner.plan.nodes.exec.serde.{JsonSerdeUtil, SerdeContext, SmileSerdeUtil}
+import org.apache.flink.table.planner.plan.nodes.exec.serde.{JsonSmileSerdeUtil, SerdeContext}
 import org.apache.flink.table.planner.plan.nodes.physical.FlinkPhysicalRel
 import org.apache.flink.table.planner.plan.optimize.Optimizer
 import org.apache.flink.table.planner.sinks.DataStreamTableSink
@@ -189,15 +189,15 @@ abstract class PlannerBase(
 
   override def loadPlan(planReference: PlanReference): InternalPlan = {
     val ctx = createSerdeContext
-    val objectReader: ObjectReader = JsonSerdeUtil.createObjectReader(ctx)
+    val objectReader: ObjectReader = JsonSmileSerdeUtil.createObjectReader(ctx)
     val execNodeGraph = planReference match {
       case filePlanReference: FilePlanReference =>
         objectReader.readValue(filePlanReference.getFile, classOf[ExecNodeGraph])
       case contentPlanReference: ContentPlanReference =>
         objectReader.readValue(contentPlanReference.getContent, classOf[ExecNodeGraph])
       case byteContentPlanReference: ByteContentPlanReference =>
-        SmileSerdeUtil
-          .createObjectReader(ctx)
+        JsonSmileSerdeUtil
+          .createSmileObjectReader(ctx)
           .readValue(byteContentPlanReference.getContent, classOf[ExecNodeGraph])
       case resourcePlanReference: ResourcePlanReference =>
         val url = resourcePlanReference.getClassLoader
@@ -235,11 +235,11 @@ abstract class PlannerBase(
       execNodeGraph: ExecNodeGraph) = {
     new ExecNodeGraphInternalPlan(
       () =>
-        JsonSerdeUtil
+        JsonSmileSerdeUtil
           .createObjectWriter(ctx)
           .withDefaultPrettyPrinter()
           .writeValueAsString(execNodeGraph),
-      () => SmileSerdeUtil.createObjectWriter(ctx).writeValueAsBytes(execNodeGraph),
+      () => JsonSmileSerdeUtil.createSmileObjectWriter(ctx).writeValueAsBytes(execNodeGraph),
       execNodeGraph)
   }
 
