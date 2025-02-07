@@ -24,7 +24,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectRea
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.graph.StreamGraph
 import org.apache.flink.table.api._
-import org.apache.flink.table.api.PlanReference.{ContentPlanReference, FilePlanReference, ResourcePlanReference}
+import org.apache.flink.table.api.PlanReference.{ByteContentPlanReference, ContentPlanReference, FilePlanReference, ResourcePlanReference}
 import org.apache.flink.table.api.config.ExecutionConfigOptions
 import org.apache.flink.table.catalog._
 import org.apache.flink.table.connector.sink.DynamicTableSink
@@ -46,7 +46,7 @@ import org.apache.flink.table.planner.plan.ExecNodeGraphInternalPlan
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalLegacySink
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNodeGraph, ExecNodeGraphGenerator}
 import org.apache.flink.table.planner.plan.nodes.exec.processor.{ExecNodeGraphProcessor, ProcessorContext}
-import org.apache.flink.table.planner.plan.nodes.exec.serde.{JsonSerdeUtil, SerdeContext}
+import org.apache.flink.table.planner.plan.nodes.exec.serde.{JsonSerdeUtil, SerdeContext, SmileSerdeUtil}
 import org.apache.flink.table.planner.plan.nodes.physical.FlinkPhysicalRel
 import org.apache.flink.table.planner.plan.optimize.Optimizer
 import org.apache.flink.table.planner.sinks.DataStreamTableSink
@@ -195,6 +195,10 @@ abstract class PlannerBase(
         objectReader.readValue(filePlanReference.getFile, classOf[ExecNodeGraph])
       case contentPlanReference: ContentPlanReference =>
         objectReader.readValue(contentPlanReference.getContent, classOf[ExecNodeGraph])
+      case byteContentPlanReference: ByteContentPlanReference =>
+        SmileSerdeUtil
+          .createObjectReader(ctx)
+          .readValue(byteContentPlanReference.getContent, classOf[ExecNodeGraph])
       case resourcePlanReference: ResourcePlanReference =>
         val url = resourcePlanReference.getClassLoader
           .getResource(resourcePlanReference.getResourcePath)
@@ -235,6 +239,7 @@ abstract class PlannerBase(
           .createObjectWriter(ctx)
           .withDefaultPrettyPrinter()
           .writeValueAsString(execNodeGraph),
+      () => SmileSerdeUtil.createObjectWriter(ctx).writeValueAsBytes(execNodeGraph),
       execNodeGraph)
   }
 

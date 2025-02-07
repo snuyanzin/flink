@@ -115,7 +115,7 @@ public class JsonSerdeUtil {
         return new InjectableValues.Std().addValue("isDeserialize", true);
     }
 
-    private static Module createFlinkTableJacksonModule() {
+    static Module createFlinkTableJacksonModule() {
         final SimpleModule module = new SimpleModule("Flink table module");
         ExecNodeMetadataUtil.execNodes()
                 .forEach(c -> module.registerSubtypes(new NamedType(c, c.getName())));
