@@ -1200,6 +1200,41 @@ under the License.
 		</profile>
 
 		<profile>
+			<id>java23</id>
+			<activation>
+				<jdk>[23,)</jdk>
+			</activation>
+
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>com.diffplug.spotless</groupId>
+							<artifactId>spotless-maven-plugin</artifactId>
+							<configuration>
+								<!-- Current google format does not run on Java 23.
+									 Don't upgrade it in this profile because it formats code differently.
+									 Re-evaluate once support for Java 8 is dropped. -->
+								<skip>true</skip>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-surefire-plugin</artifactId>
+							<configuration>
+								<excludedGroups>
+									${surefire.excludedGroups.github-actions},
+									${surefire.excludedGroups.adaptive-scheduler},
+									${surefire.excludedGroups.jdk},
+								</excludedGroups>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+
+		<profile>
 			<id>fast</id>
 			<activation>
 				<property>
@@ -2098,7 +2133,7 @@ under the License.
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.0</version>
+					<version>3.13.0</version>
 					<configuration>
 						<!-- Make sure that we only use Java 11 compatible APIs -->
 						<source>${source.java.version}</source>
@@ -2111,6 +2146,7 @@ under the License.
 							<arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
 							<arg>--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED</arg>
 							<arg>--add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED</arg>
+							<arg>-proc:full</arg>
 						</compilerArgs>
 					</configuration>
 				</plugin>
@@ -2288,7 +2324,7 @@ under the License.
 				<plugin>
 					<groupId>net.alchim31.maven</groupId>
 					<artifactId>scala-maven-plugin</artifactId>
-					<version>3.2.2</version>
+					<version>4.2.4</version>
 					<configuration>
 						<args>
 							<arg>-nobootcp</arg>
