@@ -307,8 +307,14 @@ class FlinkPlannerImpl(
     }
     // only validate source here.
     // ignore row type which will be verified in table environment.
-    val validatedSource = validate(insert.getSource)
-    insert.setOperand(2, validatedSource)
+    if (insert.getStaticPartitions.isEmpty) {
+      insert.accept(new PreValidateReWriter(validator, typeFactory))
+      val validatedSource = validator.validate(insert)
+      insert.setOperand(2, validatedSource.asInstanceOf[RichSqlInsert].getSource)
+    } else {
+      val validatedSource = validate(insert.getSource)
+      insert.setOperand(2, validatedSource)
+    }
     insert
   }
 
