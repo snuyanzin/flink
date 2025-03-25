@@ -18,9 +18,10 @@
 package org.apache.flink.table.planner.calcite
 
 import org.apache.flink.sql.parser.`type`.SqlMapTypeNameSpec
+import org.apache.flink.sql.parser.dml.RichSqlInsert
 import org.apache.flink.table.api.ValidationException
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator.ExplicitTableSqlSelect
-import org.apache.flink.table.planner.calcite.SqlRewriterUtils.{rewriteSqlCall, rewriteSqlSelect, rewriteSqlValues, rewriteSqlWith}
+import org.apache.flink.table.planner.calcite.SqlRewriterUtils.{newValidationError, reorderAndValidateForSelect, rewriteSqlCall, rewriteSqlSelect, rewriteSqlValues, rewriteSqlWith}
 import org.apache.flink.util.Preconditions.checkArgument
 
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
@@ -54,6 +55,14 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
     rewriteSqlValues(svalues, targetRowType, assignedFields, targetPosition)
   }
 
+  def rewriteInsert(
+      insert: RichSqlInsert,
+      targetRowType: RelDataType,
+      assignedFields: util.LinkedHashMap[Integer, SqlNode],
+      targetPosition: util.List[Int]): SqlCall = {
+    rewriteSqlInsert(validator, insert, targetRowType, assignedFields, targetPosition)
+  }
+
   def rewriteWith(
       sqlWith: SqlWith,
       targetRowType: RelDataType,
@@ -78,6 +87,66 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
       assignedFields,
       targetPosition,
       unsupportedErrorMessage)
+  }
+
+  def rewriteSqlInsert(
+      validator: FlinkCalciteSqlValidator,
+      insert: RichSqlInsert,
+      targetRowType: RelDataType,
+      assignedFields: util.LinkedHashMap[Integer, SqlNode],
+      targetPosition: util.List[Int]): SqlCall = {
+    // Expands the select list first in case there is a star(*).
+    // Validates the select first to register the where scope.
+    if (insert.getStaticPartitions.isEmpty) {
+      validator.validate(insert)
+      reorderAndValidateForCall(
+        validator,
+        insert.getSource,
+        targetRowType,
+        assignedFields,
+        targetPosition)
+    } else {
+      validator.validate(insert.getSource)
+      reorderAndValidateForCall(
+        validator,
+        insert.getSource,
+        targetRowType,
+        assignedFields,
+        targetPosition)
+    }
+    insert
+  }
+
+  private def reorderAndValidateForCall(
+      validator: FlinkCalciteSqlValidator,
+      call: SqlNode,
+      targetRowType: RelDataType,
+      assignedFields: util.LinkedHashMap[Integer, SqlNode],
+      targetPosition: util.List[Int]): Unit = {
+    call match {
+      case sqlSelect: SqlSelect =>
+        reorderAndValidateForSelect(
+          validator,
+          sqlSelect,
+          targetRowType,
+          assignedFields,
+          targetPosition)
+      case _ =>
+        call match {
+          case call1: SqlBasicCall =>
+            for (node <- call1.getOperandList) {
+              reorderAndValidateForCall(
+                validator,
+                node,
+                targetRowType,
+                assignedFields,
+                targetPosition)
+            }
+          case _ =>
+            throw newValidationError(call, RESOURCE.columnCountMismatch())
+        }
+    }
+
   }
 
   // This code snippet is copied from the SqlValidatorImpl.
@@ -146,6 +215,9 @@ object SqlRewriterUtils {
           throw newValidationError(call, RESOURCE.columnCountMismatch())
         }
         rewriterUtils.rewriteSelect(sqlSelect, targetRowType, assignedFields, targetPosition)
+      case SqlKind.INSERT =>
+        val sqlInsert = call.asInstanceOf[RichSqlInsert]
+        rewriterUtils.rewriteInsert(sqlInsert, targetRowType, assignedFields, targetPosition)
       case SqlKind.VALUES =>
         call.getOperandList.toSeq.foreach {
           case sqlCall: SqlCall => {

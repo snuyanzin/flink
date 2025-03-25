@@ -23,6 +23,7 @@ import org.apache.flink.table.api.config.TableConfigOptions;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.catalog.CatalogBaseTable.TableKind;
 import org.apache.flink.table.catalog.CatalogTable;
+import org.apache.flink.table.catalog.Column;
 import org.apache.flink.table.catalog.ContextResolvedTable;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.connector.source.DynamicTableSource;
@@ -44,7 +45,9 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.schema.ColumnStrategy;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -185,5 +188,28 @@ public final class CatalogSourceTable extends FlinkPreparingTableBase {
 
     public CatalogTable getCatalogTable() {
         return schemaTable.getContextResolvedTable().getResolvedTable();
+    }
+
+    @Override
+    public List<ColumnStrategy> getColumnStrategies() {
+
+        List<Column> columns =
+                schemaTable
+                        .getContextResolvedTable()
+                        .getResolvedTable()
+                        .getResolvedSchema()
+                        .getColumns();
+        List<ColumnStrategy> strategies = new ArrayList<>();
+        for (Column column : columns) {
+            if (!column.isPersisted()) {
+                strategies.add(ColumnStrategy.VIRTUAL);
+            } else {
+                strategies.add(
+                        column.getDataType().getLogicalType().isNullable()
+                                ? ColumnStrategy.NULLABLE
+                                : ColumnStrategy.NOT_NULLABLE);
+            }
+        }
+        return strategies;
     }
 }

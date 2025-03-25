@@ -65,11 +65,20 @@ class PreValidateReWriter(
   }
 
   private def rewriteInsert(r: RichSqlInsert): Unit = {
-    if (r.getStaticPartitions.nonEmpty || r.getTargetColumnList != null) {
+    if (r.getStaticPartitions.nonEmpty) {
       r.getSource match {
         case call: SqlCall =>
           val newSource =
             appendPartitionAndNullsProjects(r, validator, typeFactory, call, r.getStaticPartitions)
+          r.setOperand(2, newSource)
+        case source => throw new ValidationException(notSupported(source))
+      }
+    }
+    if (r.getTargetColumnList != null) {
+      r.getSource match {
+        case call: SqlCall =>
+          val newSource =
+            appendPartitionAndNullsProjects(r, validator, typeFactory, r, r.getStaticPartitions)
           r.setOperand(2, newSource)
         case source => throw new ValidationException(notSupported(source))
       }

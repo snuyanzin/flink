@@ -21,7 +21,7 @@ import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.legacy.table.sources.StreamTableSource
 import org.apache.flink.table.api.{Schema, TableException, ValidationException}
 import org.apache.flink.table.api.config.TableConfigOptions
-import org.apache.flink.table.catalog.{CatalogTable, ResolvedCatalogTable}
+import org.apache.flink.table.catalog.{CatalogTable, Column, ResolvedCatalogBaseTable, ResolvedCatalogTable}
 import org.apache.flink.table.factories.TableFactoryUtil
 import org.apache.flink.table.legacy.api.TableColumn.ComputedColumn
 import org.apache.flink.table.legacy.sources.TableSource
@@ -38,8 +38,9 @@ import org.apache.calcite.plan.{RelOptSchema, RelOptTable}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.logical.LogicalTableScan
+import org.apache.calcite.schema.ColumnStrategy
 
-import java.util.{List => JList}
+import java.util
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -59,7 +60,7 @@ import scala.collection.JavaConverters._
  */
 class LegacyCatalogSourceTable[T](
     relOptSchema: RelOptSchema,
-    names: JList[String],
+    names: util.List[String],
     rowType: RelDataType,
     val schemaTable: CatalogSchemaTable,
     val catalogTable: CatalogTable)
@@ -72,6 +73,23 @@ class LegacyCatalogSourceTable[T](
       case _ =>
         None
     }.toMap
+  }
+
+  override def getColumnStrategies: util.List[ColumnStrategy] = {
+    val columns: util.List[Column] = schemaTable.getContextResolvedTable.getResolvedTable
+      .asInstanceOf[ResolvedCatalogBaseTable[_]]
+      .getResolvedSchema
+      .getColumns
+    val strategies: util.List[ColumnStrategy] = new util.ArrayList[ColumnStrategy]
+    import scala.collection.JavaConversions._
+    for (column <- columns) {
+      if (!column.isPersisted) strategies.add(ColumnStrategy.VIRTUAL)
+      else
+        strategies.add(
+          if (column.getDataType.getLogicalType.isNullable) ColumnStrategy.NULLABLE
+          else ColumnStrategy.NOT_NULLABLE)
+    }
+    strategies
   }
 
   override def toRel(context: RelOptTable.ToRelContext): RelNode = {
