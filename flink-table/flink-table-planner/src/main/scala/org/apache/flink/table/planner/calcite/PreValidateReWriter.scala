@@ -26,9 +26,8 @@ import org.apache.flink.table.planner.calcite.PreValidateReWriter.{appendPartiti
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
 import org.apache.flink.table.planner.plan.schema.{CatalogSourceTable, FlinkPreparingTableBase, LegacyCatalogSourceTable}
 import org.apache.flink.util.Preconditions.checkArgument
-
 import org.apache.calcite.plan.RelOptTable
-import org.apache.calcite.prepare.CalciteCatalogReader
+import org.apache.calcite.prepare.{CalciteCatalogReader, Prepare}
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory, RelDataTypeField}
 import org.apache.calcite.runtime.{CalciteContextException, Resources}
 import org.apache.calcite.sql.`type`.SqlTypeUtil
@@ -40,9 +39,10 @@ import org.apache.calcite.sql.validate.{SqlValidatorException, SqlValidatorTable
 import org.apache.calcite.util.Static.RESOURCE
 
 import java.util
-import java.util.Collections
-
+import java.util.stream.Collectors
+import java.util.{ArrayList, Collections, List, Map}
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 /**
  * Implements [[org.apache.calcite.sql.util.SqlVisitor]] interface to do some rewrite work before
@@ -79,7 +79,8 @@ class PreValidateReWriter(
         case call: SqlCall =>
           val newSource =
             appendPartitionAndNullsProjects(r, validator, typeFactory, r, r.getStaticPartitions)
-          r.setOperand(2, newSource)
+          r.setOperand(2, newSource.asInstanceOf[RichSqlInsert].getSource)
+          r.setOperand(3, newSource.asInstanceOf[RichSqlInsert].getTargetColumnList)
         case source => throw new ValidationException(notSupported(source))
       }
     }
@@ -141,7 +142,8 @@ object PreValidateReWriter {
     }
 
     val rewriterUtils = new SqlRewriterUtils(validator)
-    val targetRowType = createTargetRowType(typeFactory, table)
+    val targetRowType: RelDataType = asd(sqlInsert, typeFactory, table)
+
     // validate partition fields first.
     val assignedFields = new util.LinkedHashMap[Integer, SqlNode]
     val relOptTable = table match {
@@ -172,7 +174,7 @@ object PreValidateReWriter {
     // validate partial insert columns.
 
     // the columnList may reorder fields (compare with fields of sink)
-    val targetPosition = new util.ArrayList[Int]()
+    var targetPosition = util.List.of().asInstanceOf[util.List[Int]]
 
     if (sqlInsert.getTargetColumnList != null) {
       val targetFields = new util.HashSet[Integer]
@@ -203,30 +205,13 @@ object PreValidateReWriter {
                 calciteCatalogReader,
                 relOptTable))
 
-      for (targetField <- targetRowType.getFieldList) {
-        if (!partitionColumns.contains(targetField)) {
-          if (!targetColumns.contains(targetField)) {
-            // padding null
-            val id = new SqlIdentifier(targetField.getName, SqlParserPos.ZERO)
-            if (!targetField.getType.isNullable) {
-              throw newValidationError(id, RESOURCE.columnNotNullable(targetField.getName))
-            }
-            validateField(idx => !assignedFields.contains(idx), id, targetField)
-            assignedFields.put(
-              targetField.getIndex,
-              rewriterUtils.maybeCast(
-                SqlLiteral.createNull(SqlParserPos.ZERO),
-                typeFactory.createUnknownType(),
-                targetField.getType,
-                typeFactory)
-            )
-          } else {
-            // handle reorder
-            targetPosition.add(targetColumns.indexOf(targetField))
-          }
-
-        }
-      }
+      targetPosition = ext(
+        typeFactory,
+        rewriterUtils,
+        targetRowType,
+        assignedFields,
+        targetColumns,
+        partitionColumns)
     }
 
     rewriterUtils.rewriteCall(
@@ -237,6 +222,56 @@ object PreValidateReWriter {
       assignedFields,
       targetPosition,
       () => notSupported(source))
+  }
+
+  private def asd(sqlInsert: RichSqlInsert, typeFactory: RelDataTypeFactory, table: Prepare.PreparingTable) = {
+    val targetRowType1 = createTargetRowType(typeFactory, table)
+
+    val map = new util.HashMap[String, RelDataTypeField]
+    for (dtField <- targetRowType1.getFieldList) {
+      map.put(dtField.getName, dtField)
+    }
+    val list = new util.ArrayList[RelDataTypeField]
+    for (name <- sqlInsert.getTargetColumnList) {
+      list.add(map.get(name.asInstanceOf[SqlIdentifier].getSimple))
+    }
+    val implicitTargetRowType = typeFactory.createStructType(list)
+    implicitTargetRowType
+  }
+
+  private def ext(
+      typeFactory: RelDataTypeFactory,
+      rewriterUtils: SqlRewriterUtils,
+      targetRowType: RelDataType,
+      assignedFields: util.LinkedHashMap[Integer, SqlNode],
+      targetColumns: mutable.Buffer[RelDataTypeField],
+      partitionColumns: mutable.Buffer[RelDataTypeField]): util.List[Int] = {
+    val targetPosition = new util.ArrayList[Int]()
+    for (targetField <- targetRowType.getFieldList) {
+      if (!partitionColumns.contains(targetField)) {
+        if (!targetColumns.contains(targetField)) {
+          // padding null
+          val id = new SqlIdentifier(targetField.getName, SqlParserPos.ZERO)
+          if (!targetField.getType.isNullable) {
+            throw newValidationError(id, RESOURCE.columnNotNullable(targetField.getName))
+          }
+          validateField(idx => !assignedFields.contains(idx), id, targetField)
+          assignedFields.put(
+            targetField.getIndex,
+            rewriterUtils.maybeCast(
+              SqlLiteral.createNull(SqlParserPos.ZERO),
+              typeFactory.createUnknownType(),
+              targetField.getType,
+              typeFactory)
+          )
+        } else {
+          // handle reorder
+          targetPosition.add(targetColumns.indexOf(targetField))
+        }
+
+      }
+    }
+    targetPosition
   }
 
   /**

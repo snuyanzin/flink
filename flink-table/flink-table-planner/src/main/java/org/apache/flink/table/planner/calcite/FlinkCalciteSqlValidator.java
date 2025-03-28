@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.calcite;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.api.config.TableConfigOptions;
@@ -36,6 +37,7 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.SchemaVersion;
@@ -46,6 +48,7 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
@@ -86,9 +89,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.sql.type.SqlTypeName.DECIMAL;
 import static org.apache.flink.table.expressions.resolver.lookups.FieldReferenceLookup.includeExpandedColumn;
 import static org.apache.flink.util.Preconditions.checkNotNull;
@@ -407,6 +412,38 @@ public final class FlinkCalciteSqlValidator extends SqlValidatorImpl {
         }
 
         return rewritten;
+    }
+
+    protected RelDataType getLogicalTargetRowType(RelDataType targetRowType, SqlInsert insert) {
+        if (!(insert instanceof RichSqlInsert)) {
+            return super.getLogicalTargetRowType(targetRowType, insert);
+        }
+        if (insert.getTargetColumnList() != null) {
+            // Either the set of columns are explicitly targeted, or target the full
+            // set of columns.
+            final SqlNode source = insert.getSource();
+            final RelDataType sourceRowType = getNamespaceOrThrow(source).getRowType();
+            final RelDataType logicalSourceRowType = getLogicalSourceRowType(sourceRowType, insert);
+            Map<String, RelDataTypeField> map =
+                    targetRowType.getFieldList().stream()
+                            .collect(Collectors.toMap(t -> t.getName(), t -> t));
+            List<RelDataTypeField> list = new ArrayList<>();
+            for (SqlNode name : insert.getTargetColumnList()) {
+                list.add(map.get(((SqlIdentifier) name).getSimple()));
+            }
+            final RelDataType implicitTargetRowType = typeFactory.createStructType(list);
+            final SqlValidatorNamespace targetNamespace = getNamespaceOrThrow(insert);
+            validateNamespace(targetNamespace, implicitTargetRowType);
+            return implicitTargetRowType;
+            // return super.getLogicalTargetRowType(targetRowType, insert);
+            // return targetRowType;
+        }
+        return super.getLogicalTargetRowType(targetRowType, insert);
+    }
+
+
+    SqlValidatorNamespace getNamespaceOrThrow(SqlNode node) {
+        return requireNonNull(getNamespace(node), () -> "namespace for " + node);
     }
 
     // --------------------------------------------------------------------------------------------
