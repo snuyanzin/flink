@@ -26,7 +26,6 @@ import org.apache.flink.table.planner.hint.FlinkHints
 import org.apache.flink.table.planner.parse.CalciteParser
 import org.apache.flink.table.planner.plan.FlinkCalciteCatalogReader
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil
-
 import com.google.common.collect.ImmutableList
 import org.apache.calcite.config.NullCollation
 import org.apache.calcite.plan._
@@ -41,14 +40,13 @@ import org.apache.calcite.sql.util.SqlShuttle
 import org.apache.calcite.sql.validate.SqlValidator
 import org.apache.calcite.sql2rel.{SqlRexConvertletTable, SqlToRelConverter}
 import org.apache.calcite.tools.{FrameworkConfig, RelConversionException}
+import org.apache.flink.sql.parser.validate.FlinkSqlConformance
 
 import javax.annotation.Nullable
-
 import java.lang.{Boolean => JBoolean}
 import java.util
 import java.util.Locale
 import java.util.function.{Function => JFunction}
-
 import scala.collection.JavaConverters._
 
 /**
@@ -102,6 +100,7 @@ class FlinkPlannerImpl(
       catalogReader,
       typeFactory,
       SqlValidator.Config.DEFAULT
+        .withConformance(FlinkSqlConformance.DEFAULT)
         .withIdentifierExpansion(true)
         .withDefaultNullCollation(FlinkPlannerImpl.defaultNullCollation)
         .withTypeCoercionEnabled(false),
@@ -308,7 +307,6 @@ class FlinkPlannerImpl(
     // only validate source here.
     // ignore row type which will be verified in table environment.
     if (insert.getStaticPartitions.isEmpty) {
-      insert.accept(new PreValidateReWriter(validator, typeFactory))
       val validatedSource = validator.validate(insert)
       insert.setOperand(2, validatedSource.asInstanceOf[RichSqlInsert].getSource)
     } else {

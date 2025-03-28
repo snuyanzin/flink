@@ -104,7 +104,7 @@ public enum FlinkSqlConformance implements SqlConformance {
 
     @Override
     public boolean isInsertSubsetColumnsAllowed() {
-        return false;
+        return true;
     }
 
     @Override
