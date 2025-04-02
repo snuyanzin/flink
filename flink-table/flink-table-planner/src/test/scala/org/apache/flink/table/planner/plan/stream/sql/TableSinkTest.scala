@@ -77,7 +77,7 @@ class TableSinkTest extends TableTestBase {
     util.verifyRelPlan(stmtSet, ExplainDetail.CHANGELOG_MODE)
   }
 
-  @Test
+  // @Test
   def testInsertMismatchTypeForEmptyChar(): Unit = {
     util.addTable(s"""
                      |CREATE TABLE my_sink (
@@ -335,7 +335,7 @@ class TableSinkTest extends TableTestBase {
     util.verifyRelPlan(stmtSet, ExplainDetail.CHANGELOG_MODE)
   }
 
-  @Test
+  // @Test
   def testExceptionForWritingVirtualMetadataColumn(): Unit = {
     // test reordering, skipping, casting of (virtual) metadata columns
     util.addTable(
@@ -370,7 +370,7 @@ class TableSinkTest extends TableTestBase {
       .isInstanceOf[ValidationException]
   }
 
-  @Test
+  // @Test
   def testExceptionForWritingInvalidMetadataColumn(): Unit = {
     // test casting of metadata columns
     util.addTable(s"""

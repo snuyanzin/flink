@@ -201,8 +201,15 @@ public final class CatalogSourceTable extends FlinkPreparingTableBase {
                         .getColumns();
         List<ColumnStrategy> strategies = new ArrayList<>();
         for (Column column : columns) {
-            if (!column.isPersisted()) {
-                strategies.add(ColumnStrategy.VIRTUAL);
+            if (column instanceof Column.ComputedColumn) {
+                strategies.add(ColumnStrategy.DEFAULT);
+            } else if (column instanceof Column.MetadataColumn) {
+                strategies.add(
+                        ((Column.MetadataColumn) column).isVirtual()
+                                ? ColumnStrategy.VIRTUAL
+                                : ColumnStrategy.DEFAULT);
+            } else if (!column.isPersisted()) {
+                strategies.add(ColumnStrategy.DEFAULT);
             } else {
                 strategies.add(
                         column.getDataType().getLogicalType().isNullable()

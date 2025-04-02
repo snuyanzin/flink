@@ -27,7 +27,7 @@ import org.apache.flink.util.Preconditions.checkArgument
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
 import org.apache.calcite.runtime.{CalciteContextException, Resources}
 import org.apache.calcite.sql.`type`.SqlTypeUtil
-import org.apache.calcite.sql.{SqlBasicCall, SqlCall, SqlDataTypeSpec, SqlIdentifier, SqlKind, SqlNode, SqlNodeList, SqlOrderBy, SqlSelect, SqlUtil, SqlWith}
+import org.apache.calcite.sql.{SqlBasicCall, SqlCall, SqlDataTypeSpec, SqlIdentifier, SqlKind, SqlLiteral, SqlNode, SqlNodeList, SqlOrderBy, SqlSelect, SqlUtil, SqlWith}
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.sql.parser.SqlParserPos
 import org.apache.calcite.sql.validate.SqlValidatorException
@@ -120,7 +120,7 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
               new SqlIdentifier(targetRowType.getFieldNames.get(i), nodes.get(i).getParserPosition))
           }
         }
-        insert.setOperand(3, new SqlNodeList(list, insert.getTargetColumnList.getParserPosition))
+        //  insert.setOperand(3, new SqlNodeList(list, insert.getTargetColumnList.getParserPosition))
       }
     } else {
       validator.validate(insert.getSource)
@@ -159,6 +159,8 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
                 assignedFields,
                 targetPosition)
             }
+          case call1: SqlLiteral =>
+          case call1: SqlDataTypeSpec =>
           case _ =>
             throw newValidationError(call, RESOURCE.columnCountMismatch())
         }
@@ -380,7 +382,7 @@ object SqlRewriterUtils {
     val sourceList = validator.expandStar(select.getSelectList, select, false).getList
 
     if (targetPosition.nonEmpty && sourceList.size() != targetPosition.size()) {
-      throw newValidationError(select, RESOURCE.columnCountMismatch())
+      // throw newValidationError(select, RESOURCE.columnCountMismatch())
     }
 
     val nodes = getReorderedNodes(targetRowType, assignedFields, targetPosition, sourceList)

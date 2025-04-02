@@ -26,6 +26,7 @@ import org.apache.flink.table.planner.calcite.PreValidateReWriter.{appendPartiti
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
 import org.apache.flink.table.planner.plan.schema.{CatalogSourceTable, FlinkPreparingTableBase, LegacyCatalogSourceTable}
 import org.apache.flink.util.Preconditions.checkArgument
+
 import org.apache.calcite.plan.RelOptTable
 import org.apache.calcite.prepare.{CalciteCatalogReader, Prepare}
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory, RelDataTypeField}
@@ -39,8 +40,9 @@ import org.apache.calcite.sql.validate.{SqlValidatorException, SqlValidatorTable
 import org.apache.calcite.util.Static.RESOURCE
 
 import java.util
-import java.util.stream.Collectors
 import java.util.{ArrayList, Collections, List, Map}
+import java.util.stream.Collectors
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
@@ -224,19 +226,18 @@ object PreValidateReWriter {
       () => notSupported(source))
   }
 
-  private def asd(sqlInsert: RichSqlInsert, typeFactory: RelDataTypeFactory, table: Prepare.PreparingTable) = {
+  private def asd(
+      sqlInsert: RichSqlInsert,
+      typeFactory: RelDataTypeFactory,
+      table: Prepare.PreparingTable) = {
     val targetRowType1 = createTargetRowType(typeFactory, table)
 
     val map = new util.HashMap[String, RelDataTypeField]
     for (dtField <- targetRowType1.getFieldList) {
       map.put(dtField.getName, dtField)
     }
-    val list = new util.ArrayList[RelDataTypeField]
-    for (name <- sqlInsert.getTargetColumnList) {
-      list.add(map.get(name.asInstanceOf[SqlIdentifier].getSimple))
-    }
-    val implicitTargetRowType = typeFactory.createStructType(list)
-    implicitTargetRowType
+
+    targetRowType1
   }
 
   private def ext(
