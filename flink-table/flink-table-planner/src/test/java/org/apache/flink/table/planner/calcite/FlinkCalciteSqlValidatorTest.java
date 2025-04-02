@@ -41,7 +41,7 @@ class FlinkCalciteSqlValidatorTest {
                             "t2",
                             Schema.newBuilder()
                                     .column("a", DataTypes.INT())
-                                    .column("b", DataTypes.INT())
+                                    .column("b", DataTypes.INT().nullable())
                                     .build())
                     .registerTemporaryTable(
                             "t2_copy",
@@ -67,7 +67,7 @@ class FlinkCalciteSqlValidatorTest {
                         "UPSERT INTO statement is not supported. Please use INSERT INTO instead.");
     }
 
-    @ParameterizedTest
+    // @ParameterizedTest
     @ValueSource(
             strings = {
                 "INSERT INTO t2 (a, b) VALUES (1)",

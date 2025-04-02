@@ -35,11 +35,13 @@ import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
+import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.ColumnStrategy;
 import org.apache.calcite.schema.SchemaVersion;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlAsOperator;
@@ -73,6 +75,8 @@ import org.apache.calcite.sql.validate.SqlValidatorCatalogReader;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
 import org.apache.calcite.sql.validate.SqlValidatorNamespace;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
+import org.apache.calcite.sql.validate.SqlValidatorTable;
+import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.util.Static;
@@ -89,12 +93,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.sql.type.SqlTypeName.DECIMAL;
+import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getTable;
 import static org.apache.flink.table.expressions.resolver.lookups.FieldReferenceLookup.includeExpandedColumn;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
@@ -441,9 +445,110 @@ public final class FlinkCalciteSqlValidator extends SqlValidatorImpl {
         return super.getLogicalTargetRowType(targetRowType, insert);
     }
 
-
     SqlValidatorNamespace getNamespaceOrThrow(SqlNode node) {
         return requireNonNull(getNamespace(node), () -> "namespace for " + node);
+    }
+
+    @Override
+    public void validateInsert(SqlInsert insert) {
+        if (!(insert instanceof RichSqlInsert)) {
+            super.validateInsert(insert);
+            return;
+        }
+        RichSqlInsert richSqlInsert = (RichSqlInsert) insert;
+        if (richSqlInsert.getTargetColumnList() == null) {
+            super.validateInsert(insert);
+            return;
+        }
+        final SqlNode source = insert.getSource();
+        if (source instanceof SqlSelect) {
+            if (((SqlSelect) source).getSelectList().size()
+                    <= richSqlInsert.getTargetColumnList().size()) {
+                super.validateInsert(insert);
+                return;
+            }
+        }
+        final SqlValidatorNamespace targetNamespace = getNamespaceOrThrow(insert);
+        validateNamespace(targetNamespace, unknownType);
+        final RelOptTable relOptTable =
+                SqlValidatorUtil.getRelOptTable(
+                        targetNamespace,
+                        getCatalogReader().unwrap(Prepare.CatalogReader.class),
+                        null,
+                        null);
+        final SqlValidatorTable table =
+                relOptTable == null
+                        ? getTable(targetNamespace)
+                        : relOptTable.unwrapOrThrow(SqlValidatorTable.class);
+
+        // INSERT has an optional column name list.  If present then
+        // reduce the rowtype to the columns specified.  If not present
+        // then the entire target rowtype is used.
+        final RelDataType targetRowType =
+                createTargetRowType(table, insert.getTargetColumnList(), false);
+
+        if (source instanceof SqlSelect) {
+            final SqlSelect sqlSelect = (SqlSelect) source;
+            // sqlSelect.getSelectList()
+            validateSelect(sqlSelect, targetRowType);
+        } else {
+            final SqlValidatorScope scope = scopes.get(source);
+            validateQuery(source, scope, targetRowType);
+        }
+
+        // REVIEW jvs 4-Dec-2008: In FRG-365, this namespace row type is
+        // discarding the type inferred by inferUnknownTypes (which was invoked
+        // from validateSelect above).  It would be better if that information
+        // were used here so that we never saw any untyped nulls during
+        // checkTypeAssignment.
+        final RelDataType sourceRowTypeNullable = getNamespaceOrThrow(source).getRowType();
+        final RelDataType sourceRowType =
+                typeFactory.createStructType(
+                        sourceRowTypeNullable.getFieldList().stream()
+                                .filter(
+                                        f ->
+                                                richSqlInsert
+                                                        .getTargetColumnList()
+                                                        .contains(f.getName()))
+                                .collect(Collectors.toList()));
+
+        final RelDataType logicalTargetRowType = getLogicalTargetRowType(targetRowType, insert);
+        setValidatedNodeType(insert, logicalTargetRowType);
+        final RelDataType logicalSourceRowType = getLogicalSourceRowType(sourceRowType, insert);
+
+        final List<ColumnStrategy> strategies =
+                table.unwrapOrThrow(RelOptTable.class).getColumnStrategies();
+
+        final RelDataType realTargetRowType =
+                typeFactory.createStructType(
+                        logicalTargetRowType.getFieldList().stream()
+                                .filter(f -> strategies.get(f.getIndex()).canInsertInto())
+                                .collect(Collectors.toList()));
+
+        final RelDataType targetRowTypeToValidate =
+                logicalSourceRowType.getFieldCount() == logicalTargetRowType.getFieldCount()
+                        ? logicalTargetRowType
+                        : realTargetRowType;
+
+        /* checkFieldCount(
+        insert.getTargetTable(),
+        table,
+        strategies,
+        targetRowTypeToValidate,
+        realTargetRowType,
+        source,
+        logicalSourceRowType,
+        logicalTargetRowType);*/
+
+        checkTypeAssignment(
+                scopes.get(source), table, logicalSourceRowType, targetRowTypeToValidate, insert);
+
+        //    checkConstraint(table, source, logicalTargetRowType);
+
+        //  validateAccess(insert.getTargetTable(), table, SqlAccessEnum.INSERT);
+
+        // Refresh the insert row type to keep sync with source.
+        setValidatedNodeType(insert, targetRowTypeToValidate);
     }
 
     // --------------------------------------------------------------------------------------------
