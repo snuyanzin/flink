@@ -160,6 +160,7 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
                 targetPosition)
             }
           case call1: SqlLiteral =>
+          case call1: SqlWith =>
           case call1: SqlDataTypeSpec =>
           case _ =>
             throw newValidationError(call, RESOURCE.columnCountMismatch())

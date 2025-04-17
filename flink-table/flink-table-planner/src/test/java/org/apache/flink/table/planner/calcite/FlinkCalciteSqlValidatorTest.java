@@ -94,7 +94,37 @@ class FlinkCalciteSqlValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"INSERT INTO t2 (a, b) VALUES (1, NULL)"})
+    @ValueSource(
+            strings = {
+                "INSERT INTO t2 (a, b) VALUES (1, NULL)",
+                "INSERT INTO t2 (a, b) VALUES (1, 2), (3, 4)",
+                "INSERT INTO t2 (a) VALUES (1), (3)",
+                "INSERT INTO t2 (a, b) SELECT 1, 2",
+                "INSERT INTO t2 (a, b) SELECT LEAST(1, 2, 3), 2 * 2",
+                "INSERT INTO t2 (a, b) SELECT * FROM t2_copy",
+                "INSERT INTO t2 (a, b) SELECT *, * FROM t1",
+                "INSERT INTO t2 (a, b) SELECT *, 42 FROM t1",
+                "INSERT INTO t2 (a, b) SELECT 42, * FROM t1",
+                "INSERT INTO t2 (a, b) SELECT f.* FROM t_nested",
+                "INSERT INTO t2 (a, b) TABLE t2_copy",
+                "INSERT INTO t2 (a, b) WITH cte AS (SELECT 1, 2) SELECT * FROM cte",
+                "INSERT INTO t2 (a, b) WITH cte AS (SELECT * FROM t2_copy) SELECT * FROM cte",
+                "INSERT INTO t2 (a, b) WITH cte AS (SELECT t1.a, t2_copy.b FROM t1, t2_copy) SELECT * FROM cte",
+                "INSERT INTO t2 (a, b) WITH cte1 AS (SELECT 1), cte2 AS (SELECT 2) SELECT * FROM cte1, cte2",
+                "INSERT INTO t2 (a, b) "
+                        + "WITH cte1 AS (SELECT 1, 2), "
+                        + "cte2 AS (SELECT 2, 3) "
+                        + "SELECT * FROM cte1 UNION SELECT * FROM cte2",
+                "INSERT INTO t2 (a, b) "
+                        + "WITH cte1 AS (SELECT 1, 2), "
+                        + "cte2 AS (SELECT 2, 3), "
+                        + "cte3 AS (SELECT 3, 4), "
+                        + "cte4 AS (SELECT 4, 5) "
+                        + "SELECT * FROM cte1 "
+                        + "UNION SELECT * FROM cte2 "
+                        + "INTERSECT SELECT * FROM cte3 "
+                        + "UNION ALL SELECT * FROM cte4"
+            })
     void validInsertIntoTest(final String sql) {
         assertDoesNotThrow(
                 () -> {
