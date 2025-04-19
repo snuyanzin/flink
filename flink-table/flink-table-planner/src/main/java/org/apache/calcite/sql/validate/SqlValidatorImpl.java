@@ -137,7 +137,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -4673,7 +4672,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      *                         baseRowType</code>
      * @return Rowtype
      */
-    public RelDataType createTargetRowType(
+    protected RelDataType createTargetRowType(
             SqlValidatorTable table, @Nullable SqlNodeList targetColumnList, boolean append) {
         RelDataType baseRowType = table.getRowType();
         if (targetColumnList == null) {
@@ -4704,13 +4703,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             }
             fields.add(targetField);
         }
-        if (append) {
-            return typeFactory.createStructType(fields);
-        }
-        return typeFactory.createStructType(
-                fields.stream()
-                        .sorted(Comparator.comparingInt(o -> ((RelDataTypeField) o).getIndex()))
-                        .collect(Collectors.toList()));
+        return typeFactory.createStructType(fields);
     }
 
     @Override
