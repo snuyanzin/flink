@@ -97,39 +97,30 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
       targetPosition: util.List[Int]): SqlCall = {
     // Expands the select list first in case there is a star(*).
     // Validates the select first to register the where scope.
-    if (insert.getStaticPartitions.isEmpty) {
+    // if (insert.getStaticPartitions.isEmpty) {
 
-      validator.validate(insert)
-      reorderAndValidateForCall(
-        validator,
-        insert.getSource,
-        targetRowType,
-        assignedFields,
-        targetPosition)
-      val nodes =
-        getReorderedNodes(targetRowType, assignedFields, targetPosition, insert.getTargetColumnList)
-      if (nodes.size() == insert.getTargetColumnList.size()) {
-        insert.setOperand(3, new SqlNodeList(nodes, insert.getTargetColumnList.getParserPosition))
-      } else {
-        val list = new util.ArrayList[SqlNode]()
-        for (i <- 0 until nodes.size()) {
-          if (nodes.get(i).isInstanceOf[SqlIdentifier]) {
-            list.add(nodes.get(i))
-          } else {
-            list.add(
-              new SqlIdentifier(targetRowType.getFieldNames.get(i), nodes.get(i).getParserPosition))
-          }
-        }
-        //  insert.setOperand(3, new SqlNodeList(list, insert.getTargetColumnList.getParserPosition))
-      }
+    validator.validate(insert)
+    reorderAndValidateForCall(
+      validator,
+      insert.getSource,
+      targetRowType,
+      assignedFields,
+      targetPosition)
+    val nodes =
+      getReorderedNodes(targetRowType, assignedFields, targetPosition, insert.getTargetColumnList)
+    if (nodes.size() == insert.getTargetColumnList.size()) {
+      insert.setOperand(3, new SqlNodeList(nodes, insert.getTargetColumnList.getParserPosition))
     } else {
-      validator.validate(insert.getSource)
-      reorderAndValidateForCall(
-        validator,
-        insert.getSource,
-        targetRowType,
-        assignedFields,
-        targetPosition)
+      val list = new util.ArrayList[SqlNode]()
+      for (i <- 0 until nodes.size()) {
+        if (nodes.get(i).isInstanceOf[SqlIdentifier]) {
+          list.add(nodes.get(i))
+        } else {
+          list.add(
+            new SqlIdentifier(targetRowType.getFieldNames.get(i), nodes.get(i).getParserPosition))
+        }
+      }
+      // insert.setOperand(3, new SqlNodeList(list, insert.getTargetColumnList.getParserPosition))
     }
     insert
   }
@@ -383,7 +374,7 @@ object SqlRewriterUtils {
     val sourceList = validator.expandStar(select.getSelectList, select, false).getList
 
     if (targetPosition.nonEmpty && sourceList.size() != targetPosition.size()) {
-      // throw newValidationError(select, RESOURCE.columnCountMismatch())
+      return
     }
 
     val nodes = getReorderedNodes(targetRowType, assignedFields, targetPosition, sourceList)

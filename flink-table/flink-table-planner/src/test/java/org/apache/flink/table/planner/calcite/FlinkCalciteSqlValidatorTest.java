@@ -96,6 +96,7 @@ class FlinkCalciteSqlValidatorTest {
     @ParameterizedTest
     @ValueSource(
             strings = {
+                "INSERT INTO t2 PARTITION(`a`='2021') (b) SELECT count(1) FROM t2_copy GROUP BY b",
                 "INSERT INTO t2 (a, b) VALUES (1, NULL)",
                 "INSERT INTO t2 (a, b) VALUES (1, 2), (3, 4)",
                 "INSERT INTO t2 (a) VALUES (1), (3)",
@@ -107,6 +108,7 @@ class FlinkCalciteSqlValidatorTest {
                 "INSERT INTO t2 (a, b) SELECT 42, * FROM t1",
                 "INSERT INTO t2 (a, b) SELECT f.* FROM t_nested",
                 "INSERT INTO t2 (a, b) TABLE t2_copy",
+                "INSERT INTO t2 (a) WITH cte AS (SELECT 1) SELECT * FROM cte",
                 "INSERT INTO t2 (a, b) WITH cte AS (SELECT 1, 2) SELECT * FROM cte",
                 "INSERT INTO t2 (a, b) WITH cte AS (SELECT * FROM t2_copy) SELECT * FROM cte",
                 "INSERT INTO t2 (a, b) WITH cte AS (SELECT t1.a, t2_copy.b FROM t1, t2_copy) SELECT * FROM cte",
