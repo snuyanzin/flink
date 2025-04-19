@@ -21,7 +21,7 @@ import org.apache.flink.sql.parser.`type`.SqlMapTypeNameSpec
 import org.apache.flink.sql.parser.dml.RichSqlInsert
 import org.apache.flink.table.api.ValidationException
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator.ExplicitTableSqlSelect
-import org.apache.flink.table.planner.calcite.SqlRewriterUtils.{getReorderedNodes, newValidationError, reorderAndValidateForSelect, rewriteSqlCall, rewriteSqlSelect, rewriteSqlValues, rewriteSqlWith}
+import org.apache.flink.table.planner.calcite.SqlRewriterUtils.{extractSelectsFromCte, getReorderedNodes, newValidationError, reorderAndValidateForSelect, rewriteSqlCall, rewriteSqlSelect, rewriteSqlValues, rewriteSqlWith}
 import org.apache.flink.util.Preconditions.checkArgument
 
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory}
@@ -100,6 +100,21 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
     // if (insert.getStaticPartitions.isEmpty) {
 
     validator.validate(insert)
+    insert.getSource match {
+      case sqlWith: SqlWith =>
+        val selects = new util.ArrayList[SqlSelect]()
+        extractSelectsFromCte(sqlWith.body.asInstanceOf[SqlCall], selects)
+
+        for (select <- selects) {
+          reorderAndValidateForSelect(
+            validator,
+            select,
+            targetRowType,
+            assignedFields,
+            targetPosition)
+        }
+      case _ =>
+    }
     reorderAndValidateForCall(
       validator,
       insert.getSource,
@@ -110,17 +125,6 @@ class SqlRewriterUtils(validator: FlinkCalciteSqlValidator) {
       getReorderedNodes(targetRowType, assignedFields, targetPosition, insert.getTargetColumnList)
     if (nodes.size() == insert.getTargetColumnList.size()) {
       insert.setOperand(3, new SqlNodeList(nodes, insert.getTargetColumnList.getParserPosition))
-    } else {
-      val list = new util.ArrayList[SqlNode]()
-      for (i <- 0 until nodes.size()) {
-        if (nodes.get(i).isInstanceOf[SqlIdentifier]) {
-          list.add(nodes.get(i))
-        } else {
-          list.add(
-            new SqlIdentifier(targetRowType.getFieldNames.get(i), nodes.get(i).getParserPosition))
-        }
-      }
-      // insert.setOperand(3, new SqlNodeList(list, insert.getTargetColumnList.getParserPosition))
     }
     insert
   }
