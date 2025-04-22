@@ -637,6 +637,102 @@ class TableSinkITCase(mode: StateBackendMode) extends StreamingWithStateTestBase
   }
 
   @TestTemplate
+  def testInsertWithCTE1(): Unit = {
+    val srcDataId = TestValuesTableFactory.registerData(
+      Seq(
+        row(1L, "jason", 3L, "X", 43),
+        row(2L, "andy", 2L, "Y", 32),
+        row(3L, "clark", 1L, "Z", 29)
+      ))
+    tEnv.executeSql(s"""
+                       |CREATE TABLE test_source (
+                       |  id bigint,
+                       |  person String,
+                       |  votes bigint,
+                       |  city String,
+                       |  age int)
+                       |WITH (
+                       |  'connector' = 'values',
+                       |  'data-id' = '$srcDataId'
+                       |)
+                       |""".stripMargin)
+    tEnv
+      .executeSql("""
+                    |CREATE TABLE test_sink (
+                    |  id bigint,
+                    |  person ARRAY<ROW<f0 String, f1 Int>>,
+                    |  primary key(id) not enforced
+                    |) WITH (
+                    |  'connector' = 'values',
+                    |  'sink-insert-only' = 'false'
+                    |)
+                    |""".stripMargin)
+      .await()
+    tEnv
+      .executeSql("""
+                    |INSERT INTO test_sink
+                    |  WITH cte AS (SELECT
+                    |    id,
+                    |    array[row(person, null)] as person
+                    |  FROM
+                    |    test_source) SELECT * FROM cte
+                    |""".stripMargin)
+      .await()
+    val result = TestValuesTableFactory.getResultsAsStrings("test_sink")
+    val expected =
+      List("+I[1, [+I[jason, null]]]", "+I[2, [+I[andy, null]]]", "+I[3, [+I[clark, null]]]")
+    assertThat(result.sorted).isEqualTo(expected.sorted)
+  }
+
+  @TestTemplate
+  def testInsertWithCTE12(): Unit = {
+    val srcDataId = TestValuesTableFactory.registerData(
+      Seq(
+        row(1L, "jason", 3L, "X", 43),
+        row(2L, "andy", 2L, "Y", 32),
+        row(3L, "clark", 1L, "Z", 29)
+      ))
+    tEnv.executeSql(s"""
+                       |CREATE TABLE test_source (
+                       |  id bigint,
+                       |  person String,
+                       |  votes bigint,
+                       |  city String,
+                       |  age int)
+                       |WITH (
+                       |  'connector' = 'values',
+                       |  'data-id' = '$srcDataId'
+                       |)
+                       |""".stripMargin)
+    tEnv
+      .executeSql("""
+                    |CREATE TABLE test_sink (
+                    |  id bigint,
+                    |  person ARRAY<ROW<f0 String, f1 Int>> not null,
+                    |  primary key(id) not enforced
+                    |) WITH (
+                    |  'connector' = 'values',
+                    |  'sink-insert-only' = 'false'
+                    |)
+                    |""".stripMargin)
+      .await()
+    tEnv
+      .executeSql("""
+                    |INSERT INTO test_sink
+                    |  SELECT
+                    |    id,
+                    |    array[row(person, null)] as person
+                    |  FROM
+                    |    test_source
+                    |""".stripMargin)
+      .await()
+    val result = TestValuesTableFactory.getResultsAsStrings("test_sink")
+    val expected =
+      List("+I[1, [+I[jason, null]]]", "+I[2, [+I[andy, null]]]", "+I[3, [+I[clark, null]]]")
+    assertThat(result.sorted).isEqualTo(expected.sorted)
+  }
+
+  @TestTemplate
   def testUpsertSinkWithFailingSource(): Unit = {
     // enable checkpoint, we are using failing source to force have a complete checkpoint
     // and cover restore path

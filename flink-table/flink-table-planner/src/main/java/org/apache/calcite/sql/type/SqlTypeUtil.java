@@ -792,10 +792,13 @@ public abstract class SqlTypeUtil {
             if (toType.getFieldCount() != fromType.getFieldCount()) {
                 return false;
             }
-            List<RelDataTypeField> fields1 = toType.getFieldList();
-            List<RelDataTypeField> fields2 = fromType.getFieldList();
-            for (int i = 0; i < fields1.size(); ++i) {
-                if (!canAssignFrom(fields1.get(i).getType(), fields2.get(i).getType())) {
+            List<RelDataTypeField> toFields = toType.getFieldList();
+            List<RelDataTypeField> fromFields = fromType.getFieldList();
+            for (int i = 0; i < toFields.size(); ++i) {
+                if (fromFields.get(i).getType().getSqlTypeName() == SqlTypeName.NULL) {
+                    return false;
+                }
+                if (!canAssignFrom(toFields.get(i).getType(), fromFields.get(i).getType())) {
                     return false;
                 }
             }

@@ -67,7 +67,7 @@ class FlinkCalciteSqlValidatorTest {
                         "UPSERT INTO statement is not supported. Please use INSERT INTO instead.");
     }
 
-    // @ParameterizedTest
+    @ParameterizedTest
     @ValueSource(
             strings = {
                 "INSERT INTO t2 (a, b) VALUES (1)",

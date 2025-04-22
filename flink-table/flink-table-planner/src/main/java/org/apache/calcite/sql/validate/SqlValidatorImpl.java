@@ -4896,7 +4896,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      *     specified or if the sql dialect allows subset insert, make a subset of fields(start from
      *     the left first field) whose length is equals with the source row type fields number
      */
-    private void checkFieldCount(
+    protected void checkFieldCount(
             SqlNode node,
             SqlValidatorTable table,
             List<ColumnStrategy> strategies,

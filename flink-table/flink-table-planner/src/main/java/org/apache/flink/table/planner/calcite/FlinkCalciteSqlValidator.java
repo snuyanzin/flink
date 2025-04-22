@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.calcite;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.sql.parser.SqlProperty;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.ValidationException;
@@ -432,10 +433,18 @@ public final class FlinkCalciteSqlValidator extends SqlValidatorImpl {
                     targetRowType.getFieldList().stream()
                             .collect(Collectors.toMap(t -> t.getName(), t -> t));
             List<RelDataTypeField> list = new ArrayList<>();
+            for (SqlNode name : ((RichSqlInsert) insert).getStaticPartitions().getList()) {
+                list.add(map.get(((SqlProperty) name).getKey().getSimple()));
+            }
             for (SqlNode name : insert.getTargetColumnList()) {
                 list.add(map.get(((SqlIdentifier) name).getSimple()));
             }
-            final RelDataType implicitTargetRowType = typeFactory.createStructType(list);
+            final RelDataType implicitTargetRowType;
+            if (list.size() < logicalSourceRowType.getFieldCount()) {
+                implicitTargetRowType = logicalSourceRowType;
+            } else {
+                implicitTargetRowType=typeFactory.createStructType(list);
+            }
             final SqlValidatorNamespace targetNamespace = getNamespaceOrThrow(insert);
             validateNamespace(targetNamespace, implicitTargetRowType);
             return implicitTargetRowType;
@@ -484,8 +493,12 @@ public final class FlinkCalciteSqlValidator extends SqlValidatorImpl {
         // INSERT has an optional column name list.  If present then
         // reduce the rowtype to the columns specified.  If not present
         // then the entire target rowtype is used.
+        SqlNodeList list = new SqlNodeList(insert.getTargetColumnList(), insert.getTargetColumnList().getParserPosition());
+        list.addAll(((RichSqlInsert) insert).getStaticPartitions().getList().stream().map(s -> ((SqlProperty)s).getKey()).collect(
+                Collectors.toList()));
+
         final RelDataType targetRowType =
-                createTargetRowType(table, insert.getTargetColumnList(), false);
+                createTargetRowType(table, list, false);
 
         if (source instanceof SqlSelect) {
             final SqlSelect sqlSelect = (SqlSelect) source;
@@ -501,16 +514,7 @@ public final class FlinkCalciteSqlValidator extends SqlValidatorImpl {
         // from validateSelect above).  It would be better if that information
         // were used here so that we never saw any untyped nulls during
         // checkTypeAssignment.
-        final RelDataType sourceRowTypeNullable = getNamespaceOrThrow(source).getRowType();
-        final RelDataType sourceRowType =
-                typeFactory.createStructType(
-                        sourceRowTypeNullable.getFieldList().stream()
-                                .filter(
-                                        f ->
-                                                richSqlInsert
-                                                        .getTargetColumnList()
-                                                        .contains(f.getName()))
-                                .collect(Collectors.toList()));
+        final RelDataType sourceRowType = getNamespaceOrThrow(source).getRowType();
 
         final RelDataType logicalTargetRowType = getLogicalTargetRowType(targetRowType, insert);
         setValidatedNodeType(insert, logicalTargetRowType);
@@ -530,7 +534,7 @@ public final class FlinkCalciteSqlValidator extends SqlValidatorImpl {
                         ? logicalTargetRowType
                         : realTargetRowType;
 
-        /* checkFieldCount(
+         checkFieldCount(
         insert.getTargetTable(),
         table,
         strategies,
@@ -538,7 +542,7 @@ public final class FlinkCalciteSqlValidator extends SqlValidatorImpl {
         realTargetRowType,
         source,
         logicalSourceRowType,
-        logicalTargetRowType);*/
+        logicalTargetRowType);
 
         checkTypeAssignment(
                 scopes.get(source), table, logicalSourceRowType, targetRowTypeToValidate, insert);

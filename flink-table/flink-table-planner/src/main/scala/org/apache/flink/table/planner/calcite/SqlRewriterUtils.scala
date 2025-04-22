@@ -232,7 +232,56 @@ object SqlRewriterUtils {
         rewriterUtils.rewriteSelect(sqlSelect, targetRowType, assignedFields, targetPosition)
       case SqlKind.INSERT =>
         val sqlInsert = call.asInstanceOf[RichSqlInsert]
-        rewriterUtils.rewriteInsert(sqlInsert, targetRowType, assignedFields, targetPosition)
+        val sqlSource = sqlInsert.getSource
+        sqlSource match {
+          case basicCall: SqlBasicCall =>
+            if (basicCall.getOperator.getKind == SqlKind.VALUES) {
+              val size = basicCall.getOperandList.get(0).asInstanceOf[SqlCall].getOperandList.size()
+              basicCall.getOperandList.toSeq.foreach {
+                case sqlCall: SqlCall => {
+                  if (sqlCall.getOperandList.size() != size) {
+                    throw newValidationError(sqlInsert, RESOURCE.columnCountMismatch())
+                  }
+                }
+              }
+            }
+          case _ =>
+        }
+        val insert = rewriterUtils
+          .rewriteInsert(sqlInsert, targetRowType, assignedFields, targetPosition)
+          .asInstanceOf[RichSqlInsert]
+        val source = insert.getSource
+        source match {
+          case select: SqlSelect =>
+            if (select.getSelectList.size() != targetRowType.getFieldCount) {
+              throw newValidationError(insert, RESOURCE.columnCountMismatch())
+            }
+          case sqlWith: SqlWith =>
+            val selects = new util.ArrayList[SqlSelect]()
+            extractSelectsFromCte(sqlWith.body.asInstanceOf[SqlCall], selects)
+
+            for (select <- selects) {
+              if (select.getSelectList.size() != targetRowType.getFieldCount) {
+                throw newValidationError(insert, RESOURCE.columnCountMismatch())
+              }
+            }
+
+          case basicCall: SqlBasicCall =>
+            if (basicCall.getOperator.getKind == SqlKind.VALUES) {
+              basicCall.getOperandList.toSeq.foreach {
+                case sqlCall: SqlCall => {
+                  if (
+                    targetPosition.nonEmpty && sqlCall.getOperandList.size() + assignedFields
+                      .size() != targetRowType.getFieldCount
+                  ) {
+                    throw newValidationError(basicCall, RESOURCE.columnCountMismatch())
+                  }
+                }
+              }
+            }
+        }
+        insert
+
       case SqlKind.VALUES =>
         call.getOperandList.toSeq.foreach {
           case sqlCall: SqlCall => {

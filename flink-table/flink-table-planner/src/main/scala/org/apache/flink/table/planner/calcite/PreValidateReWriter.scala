@@ -32,7 +32,7 @@ import org.apache.calcite.prepare.{CalciteCatalogReader, Prepare}
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory, RelDataTypeField}
 import org.apache.calcite.runtime.{CalciteContextException, Resources}
 import org.apache.calcite.sql.`type`.SqlTypeUtil
-import org.apache.calcite.sql.{SqlCall, SqlDataTypeSpec, SqlIdentifier, SqlKind, SqlLiteral, SqlNode, SqlNodeList, SqlOrderBy, SqlSelect, SqlTableRef, SqlUtil}
+import org.apache.calcite.sql.{SqlBasicCall, SqlCall, SqlDataTypeSpec, SqlIdentifier, SqlKind, SqlLiteral, SqlNode, SqlNodeList, SqlOrderBy, SqlSelect, SqlTableRef, SqlUtil}
 import org.apache.calcite.sql.fun.SqlStdOperatorTable
 import org.apache.calcite.sql.parser.SqlParserPos
 import org.apache.calcite.sql.util.SqlBasicVisitor
@@ -85,6 +85,17 @@ class PreValidateReWriter(
           r.setOperand(3, newSource.asInstanceOf[RichSqlInsert].getTargetColumnList)
         case source => throw new ValidationException(notSupported(source))
       }
+    }
+    r.getSource match {
+      case call: SqlSelect =>
+        for (elem <- call.getSelectList) {
+          elem match {
+            case call1: SqlBasicCall =>
+              call1.getOperandList
+            case _ =>
+          }
+        }
+      case _ =>
     }
   }
 }
