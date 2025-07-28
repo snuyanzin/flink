@@ -374,7 +374,7 @@ under the License.
 			<dependency>
 				<groupId>org.apache.flink</groupId>
 				<artifactId>flink-shaded-netty</artifactId>
-				<version>4.1.123.Final-${flink.shaded.version}</version>
+				<version>4.1.122.Final-${flink.shaded.version}</version>
 			</dependency>
 
 			<dependency>
@@ -909,7 +909,7 @@ under the License.
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-bom</artifactId>
-				<version>4.1.123.Final</version>
+				<version>4.1.122.Final</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
