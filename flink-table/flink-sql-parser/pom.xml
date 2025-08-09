@@ -258,6 +258,12 @@ under the License.
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit</groupId>
+					<artifactId>junit-bom</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 
