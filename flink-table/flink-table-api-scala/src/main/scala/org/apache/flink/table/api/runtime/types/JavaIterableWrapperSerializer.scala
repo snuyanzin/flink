@@ -22,6 +22,8 @@ import com.esotericsoftware.kryo.io.{Input => KryoInput, Output => KryoOutput}
 
 import java.{lang, util}
 
+import scala.jdk.CollectionConverters._
+
 /*
 This code was copied as is from Twitter Chill 0.7.4 and modified to use Kryo 5.x
  */
@@ -35,8 +37,8 @@ This code was copied as is from Twitter Chill 0.7.4 and modified to use Kryo 5.x
  * Ported from Apache Spark's KryoSerializer.scala.
  */
 
-private class JavaIterableWrapperSerializer extends Serializer[lang.Iterable[_]] {
-  override def write(kryo: Kryo, output: KryoOutput, t: lang.Iterable[_]): Unit = {
+private class JavaIterableWrapperSerializer extends Serializer[java.lang.Iterable[_]] {
+  override def write(kryo: Kryo, output: KryoOutput, t: java.lang.Iterable[_]): Unit = {
     // If the object is the wrapper, simply serialize the underlying Scala Iterable object.
     // Otherwise, serialize the object itself.
     if (
@@ -53,19 +55,17 @@ private class JavaIterableWrapperSerializer extends Serializer[lang.Iterable[_]]
   override def read(
       kryo: Kryo,
       input: KryoInput,
-      aClass: Class[_ <: lang.Iterable[_]]): lang.Iterable[_] = {
-    kryo.readClassAndObject(input) match {
-      case scalaIterable: Iterable[_] =>
-        scala.collection.JavaConversions.asJavaIterable(scalaIterable)
-      case javaIterable: lang.Iterable[_] =>
-        javaIterable
+      aClass: Class[java.lang.Iterable[_]]): lang.Iterable[_] = {
+    kryo.readClassAndObject(KryoInput) match {
+      case scalaIterable: Iterable[_] => scalaIterable.asJava
+      case javaIterable: java.lang.Iterable[_] => javaIterable
     }
   }
 }
 
 private object JavaIterableWrapperSerializer {
   // The class returned by asJavaIterable (scala.collection.convert.Wrappers$IterableWrapper).
-  val wrapperClass = scala.collection.JavaConversions.asJavaIterable(Seq(1)).getClass
+  val wrapperClass = Seq(1).asJava.getClass
 
   // Get the underlying method so we can use it to get the Scala collection for serialization.
   private val underlyingMethodOpt = {

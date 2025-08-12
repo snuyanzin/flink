@@ -27,6 +27,7 @@ import org.apache.flink.core.memory.DataOutputView;
 
 import java.io.IOException;
 
+import scala.collection.IterableOnce;
 import scala.collection.TraversableOnce;
 
 import static org.apache.flink.util.Preconditions.checkArgument;
@@ -40,7 +41,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * constructor.
  */
 @Internal
-public class TraversableSerializerSnapshot<T extends TraversableOnce<E>, E>
+public class TraversableSerializerSnapshot<T extends IterableOnce<E>, E>
         extends CompositeTypeSerializerSnapshot<T, TraversableSerializer<T, E>> {
 
     private static final int VERSION = 2;

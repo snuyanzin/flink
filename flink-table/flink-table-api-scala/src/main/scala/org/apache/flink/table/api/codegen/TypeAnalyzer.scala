@@ -21,12 +21,12 @@ import org.apache.flink.annotation.Internal
 import org.apache.flink.types.{BooleanValue, ByteValue, CharValue, DoubleValue, FloatValue, IntValue, LongValue, ShortValue, StringValue}
 
 import scala.collection._
-import scala.collection.generic.CanBuildFrom
-import scala.reflect.macros.whitebox.Context
+import scala.collection.BuildFrom
+import scala.reflect.macros.whitebox
 import scala.util.DynamicVariable
 
 @Internal
-private[flink] trait TypeAnalyzer[C <: Context] {
+private[flink] trait TypeAnalyzer[C <: whitebox.Context] {
   this: MacroContextHolder[C] with TypeDescriptors[C] =>
 
   import c.universe._
@@ -102,7 +102,7 @@ private[flink] trait TypeAnalyzer[C <: Context] {
         case _ =>
           Seq[UDTDescriptor]()
       }
-      FactoryTypeDescriptor(id, tpe, baseType, params)
+      FactoryTypeDescriptor(id, tpe, baseType, params.toSeq)
     }
 
     private def analyzeArray(id: Int, tpe: Type, elemTpe: Type): UDTDescriptor = analyze(
@@ -165,7 +165,7 @@ private[flink] trait TypeAnalyzer[C <: Context] {
         .map(_.asTerm)
         .filter(_.isVar)
         .filter(!_.isStatic)
-        .filterNot(_.annotations.exists(_.tpe <:< typeOf[scala.transient]))
+        .filterNot(_.annotations.exists(_.tree.tpe <:< typeOf[scala.transient]))
 
       if (fields.isEmpty) {
         c.warning(
@@ -187,9 +187,9 @@ private[flink] trait TypeAnalyzer[C <: Context] {
       }
 
       // check whether we have a zero-parameter ctor
-      val hasZeroCtor = tpe.declarations.exists {
+      val hasZeroCtor = tpe.decls.exists {
         case m: MethodSymbol
-            if m.isConstructor && m.paramss.length == 1 && m.paramss(0).length == 0 =>
+            if m.isConstructor && m.paramLists.length == 1 && m.paramLists.head.isEmpty =>
           true
         case _ => false
       }
@@ -213,10 +213,10 @@ private[flink] trait TypeAnalyzer[C <: Context] {
       tpe.baseClasses.exists(bc => !(bc == tpe.typeSymbol) && bc.asClass.isCaseClass) match {
 
         case true =>
-          UnsupportedDescriptor(id, tpe, Seq("Case-to-case inheritance is not supported."))
+          UnsupportedDescriptor(id, tpe, Seq("Case-to-case inheritance is not supported.").toSeq)
 
         case false =>
-          val ctors = tpe.declarations.collect {
+          val ctors = tpe.decls.collect {
             case m: MethodSymbol if m.isPrimaryConstructor => m
           }
 
@@ -225,9 +225,9 @@ private[flink] trait TypeAnalyzer[C <: Context] {
               UnsupportedDescriptor(
                 id,
                 tpe,
-                Seq("Multiple constructors found, this is not supported."))
+                Seq("Multiple constructors found, this is not supported.").toSeq)
             case ctor :: Nil =>
-              val caseFields = ctor.paramss.flatten.map {
+              val caseFields = ctor.paramLists.flatten.map {
                 sym =>
                   {
                     val methodSym = tpe.member(sym.name).asMethod
@@ -241,7 +241,7 @@ private[flink] trait TypeAnalyzer[C <: Context] {
                 case (fgetter, fsetter, fTpe) =>
                   FieldDescriptor(fgetter.name.toString.trim, fgetter, fsetter, fTpe, analyze(fTpe))
               }
-              val mutable = enableMutableUDTs && (fields.forall { f => f.setter != NoSymbol })
+              val mutable = enableMutableUDTs && fields.forall(f => f.setter != NoSymbol)
               if (mutable) {
                 mutableTypes.add(tpe)
               }
@@ -299,12 +299,12 @@ private[flink] trait TypeAnalyzer[C <: Context] {
           // handled by generic serializer
           None
 
-        case _ if tpe <:< typeOf[TraversableOnce[_]] =>
+        case _ if tpe <:< typeOf[IterableOnce[_]] =>
 //          val traversable = tpe.baseClasses
 //            .map(tpe.baseType)
-//            .find(t => t.erasure =:= typeOf[TraversableOnce[_]].erasure)
+//            .find(t => t.erasure =:= typeOf[IterableOnce[_]].erasure)
 
-          val traversable = tpe.baseType(typeOf[TraversableOnce[_]].typeSymbol)
+          val traversable = tpe.baseType(typeOf[IterableOnce[_]].typeSymbol)
 
           traversable match {
             case TypeRef(_, _, elemTpe :: Nil) =>
@@ -314,8 +314,8 @@ private[flink] trait TypeAnalyzer[C <: Context] {
               // TypeInformationGen requires this. This catches the case where a user
               // has a custom class that implements Iterable[], for example.
               val cbfTpe = TypeRef(
-                typeOf[CanBuildFrom[_, _, _]],
-                typeOf[CanBuildFrom[_, _, _]].typeSymbol,
+                typeOf[BuildFrom[_, _, _]],
+                typeOf[BuildFrom[_, _, _]].typeSymbol,
                 tpe :: elemTpe :: tpe :: Nil)
 
               val cbf = c.inferImplicitValue(cbfTpe, silent = true)
@@ -498,16 +498,16 @@ private[flink] trait TypeAnalyzer[C <: Context] {
         t: Tree =>
           Apply(
             Select(
-              Select(Ident(newTermName("scala")), newTermName("Predef")),
-              newTermName(primName + "2" + boxName)),
+              Select(Ident(TermName("scala")), TermName("Predef")),
+              TermName(primName + "2" + boxName)),
             List(t))
       }
       val unbox = {
         t: Tree =>
           Apply(
             Select(
-              Select(Ident(newTermName("scala")), newTermName("Predef")),
-              newTermName(boxName + "2" + primName)),
+              Select(Ident(TermName("scala")), TermName("Predef")),
+              TermName(boxName + "2" + primName)),
             List(t))
       }
       (default, wrapper, box, unbox)

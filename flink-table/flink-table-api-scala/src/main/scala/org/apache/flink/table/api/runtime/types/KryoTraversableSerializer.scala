@@ -20,14 +20,14 @@ package org.apache.flink.table.api.runtime.types
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.esotericsoftware.kryo.io.{Input, Output}
 
-import scala.collection.generic.CanBuildFrom
+import scala.collection.{BuildFrom, Factory}
 
 /*
 This code was copied as is from Twitter Chill 0.7.4 and modified to use Kryo 5.x
  */
 
-private class KryoTraversableSerializer[T, C <: Traversable[T]](
-    override val isImmutable: Boolean = true)(implicit cbf: CanBuildFrom[C, T, C])
+private class KryoTraversableSerializer[T, C <: Iterable[T]](
+    override val isImmutable: Boolean = true)(implicit cbf: Factory[T, C])
   extends Serializer[C] {
 
   override def write(kser: Kryo, out: Output, obj: C) {
@@ -46,7 +46,7 @@ private class KryoTraversableSerializer[T, C <: Traversable[T]](
     val size = in.readInt(true)
     // Go ahead and be faster, and not as functional cool, and be mutable in here
     var idx = 0
-    val builder = cbf()
+    val builder = cbf.newBuilder
     builder.sizeHint(size)
 
     while (idx < size) {

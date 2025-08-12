@@ -24,20 +24,20 @@ import org.apache.flink.shaded.guava33.com.google.common.cache.{Cache, CacheBuil
 
 import java.io.ObjectInputStream
 import java.util.concurrent.Callable
-
+import scala.collection.BuildFrom
 import scala.collection.generic.CanBuildFrom
 import scala.ref.WeakReference
 
 /** Serializer for Scala Collections. */
 @Internal
 @SerialVersionUID(7522917416391312410L)
-class TraversableSerializer[T <: TraversableOnce[E], E](
+class TraversableSerializer[T <: IterableOnce[E], E](
     var elementSerializer: TypeSerializer[E],
     var cbfCode: String)
   extends TypeSerializer[T]
   with Cloneable {
 
-  @transient var cbf: CanBuildFrom[T, E, T] = compileCbf(cbfCode)
+  @transient var cbf: BuildFrom[T, E, T] = compileCbf(cbfCode)
 
   // this is needed for compatibility with pre-1.8 versions of this. Serialized instances
   // of this in savepoints don't have the cbfCode field, therefore we override it in the
@@ -45,7 +45,7 @@ class TraversableSerializer[T <: TraversableOnce[E], E](
   // if needed.
   protected def legacyCbfCode: String = null
 
-  def compileCbf(code: String): CanBuildFrom[T, E, T] = {
+  def compileCbf(code: String): BuildFrom[T, E, T] = {
     val cl = Thread.currentThread().getContextClassLoader
     TraversableSerializer.compileCbf(cl, code)
   }
@@ -80,9 +80,9 @@ class TraversableSerializer[T <: TraversableOnce[E], E](
   override def getLength: Int = -1
 
   override def copy(from: T): T = {
-    val builder = cbf()
-    builder.sizeHint(from.size)
-    from.foreach(e => builder += elementSerializer.copy(e))
+    val builder = cbf.newBuilder(from)
+    builder.sizeHint(from.iterator.size)
+    from.iterator.foreach(e => builder += elementSerializer.copy(e))
     builder.result()
   }
 
@@ -119,7 +119,7 @@ class TraversableSerializer[T <: TraversableOnce[E], E](
 
   override def deserialize(source: DataInputView): T = {
     val len = source.readInt()
-    val builder = cbf()
+    val builder = cbf.newBuilder(source.)
 
     var i = 0
     while (i < len) {
@@ -137,7 +137,7 @@ class TraversableSerializer[T <: TraversableOnce[E], E](
 
   override def deserialize(reuse: T, source: DataInputView): T = {
     val len = source.readInt()
-    val builder = cbf()
+    val builder = cbf.newBuilder(reuse)
 
     var i = 0
     while (i < len) {
@@ -172,18 +172,18 @@ class TraversableSerializer[T <: TraversableOnce[E], E](
 
 object TraversableSerializer {
 
-  private val CACHE: Cache[Key, CanBuildFrom[_, _, _]] = CacheBuilder
+  private val CACHE: Cache[Key, BuildFrom[_, _, _]] = CacheBuilder
     .newBuilder()
     .weakValues()
     .maximumSize(128)
     .build()
 
-  def compileCbf[T, E](classLoader: ClassLoader, cbfCode: String): CanBuildFrom[T, E, T] = {
+  def compileCbf[T, E](classLoader: ClassLoader, cbfCode: String): BuildFrom[T, E, T] = {
     val key = Key(classLoader, cbfCode)
 
     CACHE
       .get(key, LazyRuntimeCompiler(classLoader, cbfCode))
-      .asInstanceOf[CanBuildFrom[T, E, T]]
+      .asInstanceOf[BuildFrom[T, E, T]]
   }
 
   object Key {
@@ -216,13 +216,13 @@ object TraversableSerializer {
   }
 
   private case class LazyRuntimeCompiler[T, E](classLoader: ClassLoader, code: String)
-    extends Callable[CanBuildFrom[T, E, T]] {
+    extends Callable[BuildFrom[T, E, T]] {
 
-    override def call(): CanBuildFrom[T, E, T] = compileCbfInternal(classLoader, code)
+    override def call(): BuildFrom[T, E, T] = compileCbfInternal(classLoader, code)
 
     private def compileCbfInternal(
         classLoader: ClassLoader,
-        code: String): CanBuildFrom[T, E, T] = {
+        code: String): BuildFrom[T, E, T] = {
 
       import scala.reflect.runtime.universe._
       import scala.tools.reflect.ToolBox
@@ -231,7 +231,7 @@ object TraversableSerializer {
       val tree = tb.parse(code)
       val compiled = tb.compile(tree)
       val cbf = compiled()
-      cbf.asInstanceOf[CanBuildFrom[T, E, T]]
+      cbf.asInstanceOf[BuildFrom[T, E, T]]
     }
   }
 

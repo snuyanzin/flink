@@ -30,11 +30,15 @@ import java.lang.reflect.{Field, Modifier}
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.language.postfixOps
+import scala.reflect.macros.whitebox
 import scala.reflect.macros.whitebox.Context
 
 @Internal
-private[flink] trait TypeInformationGen[C <: Context] {
-  this: MacroContextHolder[C] with TypeDescriptors[C] with TypeAnalyzer[C] with TreeGen[C] =>
+private[flink] trait TypeInformationGen[C <: whitebox.Context] {
+  this: MacroContextHolder[C]
+    with org.apache.flink.table.api.codegen.TypeDescriptors[C]
+    with TypeAnalyzer[C]
+    with TreeGen[C] =>
 
   import c.universe._
 
@@ -134,8 +138,8 @@ private[flink] trait TypeInformationGen[C <: Context] {
       new CaseClassTypeInfo[T](
         tpeClazz.splice,
         genericTypeInfos.splice.toArray,
-        fieldsExpr.splice,
-        fieldNamesExpr.splice) {
+        fieldsExpr.splice.toSeq,
+        fieldNamesExpr.splice.toSeq) {
 
         override def createSerializer(serializerConfig: SerializerConfig): TypeSerializer[T] = {
           val fieldSerializers: Array[TypeSerializer[_]] = new Array[TypeSerializer[_]](getArity)

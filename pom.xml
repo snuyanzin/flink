@@ -141,8 +141,8 @@ under the License.
 		<maven.compiler.source>${target.java.version}</maven.compiler.source>
 		<maven.compiler.target>${target.java.version}</maven.compiler.target>
 		<scala.macros.version>2.1.1</scala.macros.version>
-		<scala.version>2.12.20</scala.version>
-		<scala.binary.version>2.12</scala.binary.version>
+		<scala.version>2.13.16</scala.version>
+		<scala.binary.version>2.13</scala.binary.version>
 		<!-- keep FlinkTestcontainersConfigurator.configureZookeeperContainer in sync -->
 		<zookeeper.version>3.7.2</zookeeper.version>
 		<!-- Project `flink-benchmarks` uses zk testing server in `curator-test` for performance
@@ -805,7 +805,7 @@ under the License.
 			<dependency>
 				<groupId>org.scalatest</groupId>
 				<artifactId>scalatest_${scala.binary.version}</artifactId>
-				<version>3.0.0</version>
+				<version>3.1.4</version>
 				<scope>test</scope>
 			</dependency>
 
@@ -967,8 +967,8 @@ under the License.
 		<profile>
 			<id>scala-2.12</id>
 			<properties>
-				<scala.version>2.12.20</scala.version>
-				<scala.binary.version>2.12</scala.binary.version>
+				<scala.version>2.13.16</scala.version>
+				<scala.binary.version>2.13</scala.binary.version>
 			</properties>
 			<activation>
 				<activeByDefault>true</activeByDefault>
@@ -992,6 +992,7 @@ under the License.
 											<excludes combine.children="append">
 												<exclude>*:*_2.11</exclude>
 												<exclude>*:*_2.10</exclude>
+												<exclude>*:*_2.12</exclude>
 											</excludes>
 											<message>Scala 2.10/2.11 dependencies are not allowed for Scala 2.12 builds. This can be caused by hard-coded scala versions, where the 'scala.binary.version' property should be used instead.</message>
 										</bannedDependencies>

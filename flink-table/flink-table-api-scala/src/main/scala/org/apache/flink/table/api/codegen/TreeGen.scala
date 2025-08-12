@@ -59,10 +59,10 @@ private[flink] trait TreeGen[C <: Context] { this: MacroContextHolder[C] with Ty
 
 //    def mkIdent(target: Symbol): Tree = Ident(target) setType target.tpe
   def mkSelect(rootModule: String, path: String*): Tree =
-    mkSelect(Ident(newTermName(rootModule)), path: _*)
+    mkSelect(Ident(TermName(rootModule)), path: _*)
 
   def mkSelect(source: Tree, path: String*): Tree =
-    path.foldLeft(source)((ret, item) => Select(ret, newTermName(item)))
+    path.foldLeft(source)((ret, item) => Select(ret, TermName(item)))
 
   def mkSelectSyms(source: Tree, path: Symbol*): Tree =
     path.foldLeft(source)((ret, item) => Select(ret, item))
@@ -219,13 +219,13 @@ private[flink] trait TreeGen[C <: Context] { this: MacroContextHolder[C] with Ty
     Apply(Select(Super(This(tpnme.EMPTY), tpnme.EMPTY), nme.CONSTRUCTOR), args)
 
   def mkWhile(cond: Tree)(body: Tree): Tree = {
-    val lblName = c.fresh[TermName]("while")
+    val lblName = c.freshName("while")
     val jump = Apply(Ident(lblName), Nil)
     val block = body match {
       case Block(stats, expr) => Block(stats :+ expr, jump)
       case _ => Block(List(body), jump)
     }
-    LabelDef(lblName, Nil, If(cond, block, EmptyTree))
+    LabelDef(TermName(lblName), Nil, If(cond, block, EmptyTree))
   }
 
   def typeCheck(classDef: ClassDef): (ClassDef, Type) = {

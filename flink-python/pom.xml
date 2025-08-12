@@ -344,7 +344,7 @@ under the License.
 		<dependency>
 			<!-- Indirectly accessed in pyflink_gateway_server -->
 			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-connector-cassandra_${scala.binary.version}</artifactId>
+			<artifactId>flink-connector-cassandra_2.12</artifactId>
 			<version>3.0.0-1.16</version>
 			<scope>test</scope>
 		</dependency>
@@ -598,7 +598,7 @@ under the License.
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.apache.flink</groupId>
-									<artifactId>flink-connector-cassandra_${scala.binary.version}
+									<artifactId>flink-connector-cassandra_2.12
 									</artifactId>
 								</artifactItem>
 								<artifactItem>
