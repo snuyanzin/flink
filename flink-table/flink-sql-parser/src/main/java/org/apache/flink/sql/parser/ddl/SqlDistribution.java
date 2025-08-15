@@ -79,15 +79,11 @@ public class SqlDistribution extends SqlCall {
 
     private void unparse(
             SqlWriter writer, int leftPrec, int rightPrec, String keyword, boolean printNewlines) {
-        if (printNewlines) {
-            writer.newlineAndIndent();
-        }
 
-        if (bucketColumns.size() == 0 && bucketCount != null) {
+        if (bucketColumns.isEmpty() && bucketCount != null) {
             writer.keyword(keyword + " INTO");
             bucketCount.unparse(writer, leftPrec, rightPrec);
             writer.keyword("BUCKETS");
-            writer.newlineAndIndent();
             return;
         }
 
@@ -103,9 +99,6 @@ public class SqlDistribution extends SqlCall {
             writer.keyword("INTO");
             bucketCount.unparse(writer, leftPrec, rightPrec);
             writer.keyword("BUCKETS");
-        }
-        if (printNewlines) {
-            writer.newlineAndIndent();
         }
     }
 
