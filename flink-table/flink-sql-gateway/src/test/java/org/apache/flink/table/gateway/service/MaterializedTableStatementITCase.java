@@ -1429,6 +1429,18 @@ public class MaterializedTableStatementITCase extends AbstractMaterializedTableS
         List<RowData> jobResults = fetchAllResults(service, sessionHandle, describeJobHandle);
         assertThat(jobResults.get(0).getString(2).toString()).isEqualTo("RUNNING");
 
+        OperationHandle handle;
+        /*        awaitOperationTermination(
+        service,
+        sessionHandle,
+        handle);*/
+        handle =
+                service.executeStatement(
+                        sessionHandle,
+                        "SHOW CREATE MATERIALIZED TABLE users_shops",
+                        -1,
+                        new Configuration());
+        awaitOperationTermination(service, sessionHandle, handle);
         // Drop materialized table using drop table statement
         String dropTableUsingMaterializedTableDDL = "DROP TABLE users_shops";
         OperationHandle dropTableUsingMaterializedTableHandle =

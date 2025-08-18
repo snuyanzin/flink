@@ -59,7 +59,7 @@ public class SqlShowCreateTable extends SqlShowCreate {
 
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.keyword("SHOW CREATE TABLE");
+        writer.keyword(OPERATOR.getName());
         sqlIdentifier.unparse(writer, leftPrec, rightPrec);
     }
 }

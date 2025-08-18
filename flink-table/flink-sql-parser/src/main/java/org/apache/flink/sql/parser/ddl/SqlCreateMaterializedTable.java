@@ -55,6 +55,8 @@ public class SqlCreateMaterializedTable extends SqlCreate {
 
     private final SqlTableConstraint tableConstraint;
 
+    private final SqlDistribution distribution;
+
     private final SqlNodeList partitionKeyList;
 
     private final SqlNodeList propertyList;
@@ -70,6 +72,7 @@ public class SqlCreateMaterializedTable extends SqlCreate {
             SqlIdentifier tableName,
             @Nullable SqlCharStringLiteral comment,
             @Nullable SqlTableConstraint tableConstraint,
+            @Nullable SqlDistribution distribution,
             SqlNodeList partitionKeyList,
             SqlNodeList propertyList,
             SqlIntervalLiteral freshness,
@@ -79,6 +82,7 @@ public class SqlCreateMaterializedTable extends SqlCreate {
         this.tableName = requireNonNull(tableName, "tableName should not be null");
         this.comment = comment;
         this.tableConstraint = tableConstraint;
+        this.distribution = distribution;
         this.partitionKeyList =
                 requireNonNull(partitionKeyList, "partitionKeyList should not be null");
         this.propertyList = requireNonNull(propertyList, "propertyList should not be null");
@@ -118,6 +122,10 @@ public class SqlCreateMaterializedTable extends SqlCreate {
 
     public Optional<SqlTableConstraint> getTableConstraint() {
         return Optional.ofNullable(tableConstraint);
+    }
+
+    public Optional<SqlDistribution> getDistribution() {
+        return Optional.ofNullable(distribution);
     }
 
     public SqlNodeList getPartitionKeyList() {
@@ -160,6 +168,11 @@ public class SqlCreateMaterializedTable extends SqlCreate {
             writer.newlineAndIndent();
             writer.keyword("COMMENT");
             comment.unparse(writer, leftPrec, rightPrec);
+        }
+
+        if (distribution != null) {
+            writer.newlineAndIndent();
+            distribution.unparse(writer, leftPrec, rightPrec);
         }
 
         if (!partitionKeyList.isEmpty()) {

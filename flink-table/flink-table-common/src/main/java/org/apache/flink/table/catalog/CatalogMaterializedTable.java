@@ -147,6 +147,11 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
     @Nullable
     byte[] getSerializedRefreshHandler();
 
+    /** Returns the distribution of the table if the {@code DISTRIBUTED} clause is defined. */
+    default Optional<TableDistribution> getDistribution() {
+        return Optional.empty();
+    }
+
     /** The logical refresh mode of materialized table. */
     @PublicEvolving
     enum LogicalRefreshMode {
@@ -202,6 +207,7 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
         private RefreshStatus refreshStatus;
         private @Nullable String refreshHandlerDescription;
         private @Nullable byte[] serializedRefreshHandler;
+        private @Nullable TableDistribution distribution;
 
         private Builder() {}
 
@@ -272,10 +278,16 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
             return this;
         }
 
+        public Builder distribution(@Nullable TableDistribution distribution) {
+            this.distribution = distribution;
+            return this;
+        }
+
         public CatalogMaterializedTable build() {
             return new DefaultCatalogMaterializedTable(
                     schema,
                     comment,
+                    distribution,
                     partitionKeys,
                     options,
                     snapshot,

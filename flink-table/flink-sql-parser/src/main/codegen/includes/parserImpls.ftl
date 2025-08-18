@@ -736,6 +736,44 @@ SqlShowTables SqlShowTables() :
 }
 
 /**
+* Parses a show tables statement.
+* SHOW TABLES [ ( FROM | IN ) [catalog_name.]database_name ] [ [NOT] LIKE pattern ];
+*/
+SqlShowMaterializedTables SqlShowMaterializedTables() :
+{
+    SqlIdentifier databaseName = null;
+    SqlCharStringLiteral likeLiteral = null;
+    String prep = null;
+    boolean notLike = false;
+    SqlParserPos pos;
+}
+{
+    <SHOW> <MATERIALIZED> <TABLES>
+    { pos = getPos(); }
+    [
+        ( <FROM> { prep = "FROM"; } | <IN> { prep = "IN"; } )
+        { pos = getPos(); }
+        databaseName = CompoundIdentifier()
+    ]
+    [
+        [
+            <NOT>
+            {
+                notLike = true;
+            }
+        ]
+        <LIKE>  <QUOTED_STRING>
+        {
+            String likeCondition = SqlParserUtil.parseString(token.image);
+            likeLiteral = SqlLiteral.createCharString(likeCondition, getPos());
+        }
+    ]
+    {
+        return new SqlShowMaterializedTables(pos, prep, databaseName, notLike, likeLiteral);
+    }
+}
+
+/**
 * SHOW COLUMNS FROM [[catalog.] database.]sqlIdentifier sql call.
 */
 SqlShowColumns SqlShowColumns() :
@@ -805,6 +843,13 @@ SqlShowCreate SqlShowCreate() :
         sqlIdentifier = CompoundIdentifier()
         {
             return new SqlShowCreateModel(pos, sqlIdentifier);
+        }
+    |
+        <MATERIALIZED> <TABLE>
+        { pos = getPos(); }
+        sqlIdentifier = CompoundIdentifier()
+        {
+            return new SqlShowCreateMaterializedTable(pos, sqlIdentifier);
         }
     )
 }
@@ -1887,6 +1932,7 @@ SqlCreate SqlCreateMaterializedTable(Span s, boolean replace, boolean isTemporar
     SqlNode freshness = null;
     SqlLiteral refreshMode = null;
     SqlNode asQuery = null;
+    SqlDistribution distribution = null;
 }
 {
     <MATERIALIZED>
@@ -1915,6 +1961,10 @@ SqlCreate SqlCreateMaterializedTable(Span s, boolean replace, boolean isTemporar
             String p = SqlParserUtil.parseString(token.image);
             comment = SqlLiteral.createCharString(p, getPos());
         }
+    ]
+    [
+        <DISTRIBUTED>
+        distribution = SqlDistribution(getPos())
     ]
     [
         <PARTITIONED> <BY>
@@ -1956,6 +2006,7 @@ SqlCreate SqlCreateMaterializedTable(Span s, boolean replace, boolean isTemporar
             tableName,
             comment,
             constraint,
+            distribution,
             partitionColumns,
             propertyList,
             (SqlIntervalLiteral) freshness,

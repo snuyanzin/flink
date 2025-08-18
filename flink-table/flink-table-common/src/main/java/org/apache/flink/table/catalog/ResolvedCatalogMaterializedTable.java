@@ -63,6 +63,11 @@ public class ResolvedCatalogMaterializedTable
     }
 
     @Override
+    public Optional<TableDistribution> getDistribution() {
+        return origin.getDistribution();
+    }
+
+    @Override
     public CatalogBaseTable copy() {
         return new ResolvedCatalogMaterializedTable(
                 (CatalogMaterializedTable) origin.copy(), resolvedSchema);

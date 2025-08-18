@@ -276,6 +276,11 @@ public abstract class AbstractMaterializedTableStatementITCase {
                         sessionHandle, materializedTableDDL, -1, new Configuration());
         awaitOperationTermination(service, sessionHandle, materializedTableHandle);
 
+        OperationHandle materializedTableHandle2 =
+                service.executeStatement(
+                        sessionHandle, "SHOW CREATE TABLE " + materializedTableName, -1, new Configuration());
+        awaitOperationTermination(service, sessionHandle, materializedTableHandle2);
+
         // verify data exists in materialized table
         CommonTestUtils.waitUtil(
                 () ->
