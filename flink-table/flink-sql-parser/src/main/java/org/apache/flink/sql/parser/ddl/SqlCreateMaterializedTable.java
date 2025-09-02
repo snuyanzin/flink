@@ -57,6 +57,8 @@ public class SqlCreateMaterializedTable extends SqlCreate {
 
     private final SqlNodeList partitionKeyList;
 
+    private final SqlDistribution distribution;
+
     private final SqlNodeList propertyList;
 
     private final SqlIntervalLiteral freshness;
@@ -68,9 +70,10 @@ public class SqlCreateMaterializedTable extends SqlCreate {
     public SqlCreateMaterializedTable(
             SqlParserPos pos,
             SqlIdentifier tableName,
-            @Nullable SqlCharStringLiteral comment,
             @Nullable SqlTableConstraint tableConstraint,
+            @Nullable SqlCharStringLiteral comment,
             SqlNodeList partitionKeyList,
+            @Nullable SqlDistribution distribution,
             SqlNodeList propertyList,
             SqlIntervalLiteral freshness,
             @Nullable SqlLiteral refreshMode,
@@ -79,6 +82,7 @@ public class SqlCreateMaterializedTable extends SqlCreate {
         this.tableName = requireNonNull(tableName, "tableName should not be null");
         this.comment = comment;
         this.tableConstraint = tableConstraint;
+        this.distribution = distribution;
         this.partitionKeyList =
                 requireNonNull(partitionKeyList, "partitionKeyList should not be null");
         this.propertyList = requireNonNull(propertyList, "propertyList should not be null");
@@ -118,6 +122,10 @@ public class SqlCreateMaterializedTable extends SqlCreate {
 
     public Optional<SqlTableConstraint> getTableConstraint() {
         return Optional.ofNullable(tableConstraint);
+    }
+
+    public Optional<SqlDistribution> getDistribution() {
+        return Optional.ofNullable(distribution);
     }
 
     public SqlNodeList getPartitionKeyList() {
@@ -168,6 +176,11 @@ public class SqlCreateMaterializedTable extends SqlCreate {
             SqlWriter.Frame partitionedByFrame = writer.startList("(", ")");
             partitionKeyList.unparse(writer, leftPrec, rightPrec);
             writer.endList(partitionedByFrame);
+        }
+
+        if (distribution != null) {
+            writer.newlineAndIndent();
+            distribution.unparse(writer, leftPrec, rightPrec);
         }
 
         if (!propertyList.isEmpty()) {

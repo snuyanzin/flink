@@ -1861,6 +1861,7 @@ SqlCreate SqlCreateMaterializedTable(Span s, boolean replace, boolean isTemporar
     SqlCharStringLiteral comment = null;
     SqlTableConstraint constraint = null;
     SqlNodeList partitionColumns = SqlNodeList.EMPTY;
+    SqlDistribution distribution = null;
     SqlNodeList propertyList = SqlNodeList.EMPTY;
     SqlNode freshness = null;
     SqlLiteral refreshMode = null;
@@ -1899,6 +1900,10 @@ SqlCreate SqlCreateMaterializedTable(Span s, boolean replace, boolean isTemporar
         partitionColumns = ParenthesizedSimpleIdentifierList()
     ]
     [
+        <DISTRIBUTED>
+        distribution = SqlDistribution(getPos())
+    ]
+    [
         <WITH>
         propertyList = Properties()
     ]
@@ -1932,9 +1937,10 @@ SqlCreate SqlCreateMaterializedTable(Span s, boolean replace, boolean isTemporar
         return new SqlCreateMaterializedTable(
             startPos.plus(getPos()),
             tableName,
-            comment,
             constraint,
+            comment,
             partitionColumns,
+            distribution,
             propertyList,
             (SqlIntervalLiteral) freshness,
             refreshMode,

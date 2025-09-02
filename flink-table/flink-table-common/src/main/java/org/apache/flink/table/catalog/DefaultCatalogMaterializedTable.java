@@ -39,6 +39,7 @@ public class DefaultCatalogMaterializedTable implements CatalogMaterializedTable
     private final Schema schema;
     private final @Nullable String comment;
     private final List<String> partitionKeys;
+    private final @Nullable TableDistribution distribution;
     private final Map<String, String> options;
 
     private final @Nullable Long snapshot;
@@ -55,6 +56,7 @@ public class DefaultCatalogMaterializedTable implements CatalogMaterializedTable
             Schema schema,
             @Nullable String comment,
             List<String> partitionKeys,
+            @Nullable TableDistribution distribution,
             Map<String, String> options,
             @Nullable Long snapshot,
             String definitionQuery,
@@ -67,6 +69,7 @@ public class DefaultCatalogMaterializedTable implements CatalogMaterializedTable
         this.schema = checkNotNull(schema, "Schema must not be null.");
         this.comment = comment;
         this.partitionKeys = checkNotNull(partitionKeys, "Partition keys must not be null.");
+        this.distribution = distribution;
         this.options = checkNotNull(options, "Options must not be null.");
         this.snapshot = snapshot;
         this.definitionQuery = checkNotNull(definitionQuery, "Definition query must not be null.");
@@ -105,6 +108,11 @@ public class DefaultCatalogMaterializedTable implements CatalogMaterializedTable
     }
 
     @Override
+    public Optional<TableDistribution> getDistribution() {
+        return Optional.ofNullable(distribution);
+    }
+
+    @Override
     public Map<String, String> getOptions() {
         return options;
     }
@@ -115,6 +123,7 @@ public class DefaultCatalogMaterializedTable implements CatalogMaterializedTable
                 schema,
                 comment,
                 partitionKeys,
+                distribution,
                 options,
                 snapshot,
                 definitionQuery,
@@ -132,6 +141,7 @@ public class DefaultCatalogMaterializedTable implements CatalogMaterializedTable
                 schema,
                 comment,
                 partitionKeys,
+                distribution,
                 options,
                 snapshot,
                 definitionQuery,
@@ -152,6 +162,7 @@ public class DefaultCatalogMaterializedTable implements CatalogMaterializedTable
                 schema,
                 comment,
                 partitionKeys,
+                distribution,
                 options,
                 snapshot,
                 definitionQuery,

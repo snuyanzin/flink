@@ -127,6 +127,7 @@ public class ShowCreateUtil {
         extractComment(table).ifPresent(c -> sb.append(formatComment(c)).append("\n"));
         extractFormattedPartitionedInfo(table)
                 .ifPresent(partitionedBy -> sb.append(formatPartitionedBy(partitionedBy)));
+        table.getDistribution().map(TableDistribution::toString).ifPresent(sb::append);
         extractFormattedOptions(table.getOptions(), PRINT_INDENT)
                 .ifPresent(v -> sb.append("WITH (\n").append(v).append("\n)\n"));
         sb.append(extractFreshness(table))

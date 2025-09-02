@@ -148,6 +148,11 @@ public class ResolvedCatalogMaterializedTable
         return origin.getRefreshHandlerDescription();
     }
 
+    @Override
+    public Optional<TableDistribution> getDistribution() {
+        return origin.getDistribution();
+    }
+
     @Nullable
     @Override
     public byte[] getSerializedRefreshHandler() {

@@ -79,6 +79,10 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
      */
     List<String> getPartitionKeys();
 
+    default Optional<TableDistribution> getDistribution() {
+        return Optional.empty();
+    }
+
     /**
      * Returns a copy of this {@code CatalogMaterializedTable} with given table options {@code
      * options}.
@@ -193,6 +197,7 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
         private Schema schema;
         private String comment;
         private List<String> partitionKeys = Collections.emptyList();
+        private TableDistribution distribution = null;
         private Map<String, String> options = Collections.emptyMap();
         private @Nullable Long snapshot;
         private String definitionQuery;
@@ -216,6 +221,12 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
         }
 
         public Builder partitionKeys(List<String> partitionKeys) {
+            this.partitionKeys =
+                    Preconditions.checkNotNull(partitionKeys, "Partition keys must not be null.");
+            return this;
+        }
+
+        public Builder distribution(List<String> partitionKeys) {
             this.partitionKeys =
                     Preconditions.checkNotNull(partitionKeys, "Partition keys must not be null.");
             return this;
@@ -272,11 +283,17 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
             return this;
         }
 
+        public Builder distribution(@Nullable TableDistribution distribution) {
+            this.distribution = distribution;
+            return this;
+        }
+
         public CatalogMaterializedTable build() {
             return new DefaultCatalogMaterializedTable(
                     schema,
                     comment,
                     partitionKeys,
+                    distribution,
                     options,
                     snapshot,
                     definitionQuery,
