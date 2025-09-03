@@ -192,6 +192,7 @@ public class ResolvedCatalogMaterializedTable
         return new ResolvedCatalogTable(
                 CatalogTable.newBuilder()
                         .schema(getUnresolvedSchema())
+                        .distribution(getDistribution().orElse(null))
                         .comment(getComment())
                         .partitionKeys(getPartitionKeys())
                         .options(getOptions())
