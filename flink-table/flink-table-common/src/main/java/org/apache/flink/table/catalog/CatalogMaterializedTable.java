@@ -226,12 +226,6 @@ public interface CatalogMaterializedTable extends CatalogBaseTable {
             return this;
         }
 
-        public Builder distribution(List<String> partitionKeys) {
-            this.partitionKeys =
-                    Preconditions.checkNotNull(partitionKeys, "Partition keys must not be null.");
-            return this;
-        }
-
         public Builder options(Map<String, String> options) {
             this.options = Preconditions.checkNotNull(options, "Options must not be null.");
             return this;
