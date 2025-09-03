@@ -32,6 +32,7 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.util.StringUtils;
 
 import javax.annotation.Nullable;
+import javax.swing.text.html.Option;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,6 +91,9 @@ public final class CatalogPropertiesUtil {
 
             serializePartitionKeys(properties, resolvedTable.getPartitionKeys());
 
+            final Optional<TableDistribution> distribution = resolvedTable.getDistribution();
+            distribution.ifPresent(d -> serializeTableDistribution(properties, d));
+
             properties.putAll(resolvedTable.getOptions());
 
             properties.remove(IS_GENERIC); // reserved option
@@ -144,6 +148,9 @@ public final class CatalogPropertiesUtil {
             snapshot.ifPresent(snapshotId -> properties.put(SNAPSHOT, Long.toString(snapshotId)));
 
             serializePartitionKeys(properties, resolvedMaterializedTable.getPartitionKeys());
+
+            final Optional<TableDistribution> distribution = resolvedMaterializedTable.getDistribution();
+            distribution.ifPresent(d -> serializeTableDistribution(properties, d));
 
             properties.putAll(resolvedMaterializedTable.getOptions());
 
@@ -562,6 +569,22 @@ public final class CatalogPropertiesUtil {
                 PARTITION_KEYS,
                 Collections.singletonList(NAME),
                 keys.stream().map(Collections::singletonList).collect(Collectors.toList()));
+    }
+
+    private static void serializeTableDistribution(Map<String, String> map, TableDistribution distribution) {
+        if (distribution == null) {
+            return;
+        }
+
+        map.put("distribution.kind", distribution.getKind().name());
+        distribution.getBucketCount().ifPresent(bc -> map.put("distribution.count",
+                String.valueOf(bc.intValue())));
+
+        putIndexedProperties(
+                map,
+                compoundKey("distribution", KEYS),
+                Collections.singletonList(NAME),
+                distribution.getBucketKeys().stream().map(Collections::singletonList).collect(Collectors.toList()));
     }
 
     private static void serializeResolvedModelSchema(

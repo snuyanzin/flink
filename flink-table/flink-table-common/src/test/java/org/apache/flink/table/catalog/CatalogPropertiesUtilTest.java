@@ -104,6 +104,7 @@ public class CatalogPropertiesUtilTest {
                                         .build())
                         .comment("some comment")
                         .options(options)
+                        .distribution(TableDistribution.of(TableDistribution.Kind.HASH, 3, List.of("f1")))
                         .build();
 
         final Column f1 = Column.physical("f1", DataTypes.INT());
@@ -121,9 +122,11 @@ public class CatalogPropertiesUtilTest {
 
         final Map<String, String> serializedMap =
                 CatalogPropertiesUtil.serializeCatalogTable(testTable, DefaultSqlFactory.INSTANCE);
+        System.out.println(serializedMap);
         final CatalogTable deserializedTable =
                 CatalogPropertiesUtil.deserializeCatalogTable(serializedMap);
 
+        System.out.println();
         assertThat(deserializedTable.getUnresolvedSchema().toString())
                 .isEqualTo(catalogTable.getUnresolvedSchema().toString());
     }
