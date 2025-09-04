@@ -104,7 +104,8 @@ public class CatalogPropertiesUtilTest {
                                         .build())
                         .comment("some comment")
                         .options(options)
-                        .distribution(TableDistribution.of(TableDistribution.Kind.HASH, 3, List.of("f1")))
+                        .distribution(
+                                TableDistribution.of(TableDistribution.Kind.HASH, 3, List.of("f1")))
                         .build();
 
         final Column f1 = Column.physical("f1", DataTypes.INT());

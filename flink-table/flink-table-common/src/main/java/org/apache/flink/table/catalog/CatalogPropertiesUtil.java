@@ -32,7 +32,6 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.util.StringUtils;
 
 import javax.annotation.Nullable;
-import javax.swing.text.html.Option;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -149,7 +148,8 @@ public final class CatalogPropertiesUtil {
 
             serializePartitionKeys(properties, resolvedMaterializedTable.getPartitionKeys());
 
-            final Optional<TableDistribution> distribution = resolvedMaterializedTable.getDistribution();
+            final Optional<TableDistribution> distribution =
+                    resolvedMaterializedTable.getDistribution();
             distribution.ifPresent(d -> serializeTableDistribution(properties, d));
 
             properties.putAll(resolvedMaterializedTable.getOptions());
@@ -472,8 +472,12 @@ public final class CatalogPropertiesUtil {
     }
 
     private static TableDistribution deserializeTableDistribution(Map<String, String> map) {
-        final TableDistribution.Kind kind = TableDistribution.Kind.valueOf(map.get(DISTRIBUTION_KIND));
-        final Integer bucketCount = map.get(DISTRIBUTION_COUNT) == null ? null : Integer.valueOf(map.get(DISTRIBUTION_COUNT));
+        final TableDistribution.Kind kind =
+                TableDistribution.Kind.valueOf(map.get(DISTRIBUTION_KIND));
+        final Integer bucketCount =
+                map.get(DISTRIBUTION_COUNT) == null
+                        ? null
+                        : Integer.valueOf(map.get(DISTRIBUTION_COUNT));
         final List<String> bucketKeys = new ArrayList<>();
         int i = 0;
         String bucketNameKey = compoundKey(DISTRIBUTION_KEYS, i, NAME);
@@ -592,20 +596,24 @@ public final class CatalogPropertiesUtil {
                 keys.stream().map(Collections::singletonList).collect(Collectors.toList()));
     }
 
-    private static void serializeTableDistribution(Map<String, String> map, TableDistribution distribution) {
+    private static void serializeTableDistribution(
+            Map<String, String> map, TableDistribution distribution) {
         if (distribution == null) {
             return;
         }
 
         map.put(DISTRIBUTION_KIND, distribution.getKind().name());
-        distribution.getBucketCount().ifPresent(bc -> map.put(DISTRIBUTION_COUNT,
-                String.valueOf(bc.intValue())));
+        distribution
+                .getBucketCount()
+                .ifPresent(bc -> map.put(DISTRIBUTION_COUNT, String.valueOf(bc.intValue())));
 
         putIndexedProperties(
                 map,
                 DISTRIBUTION_KEYS,
                 Collections.singletonList(NAME),
-                distribution.getBucketKeys().stream().map(Collections::singletonList).collect(Collectors.toList()));
+                distribution.getBucketKeys().stream()
+                        .map(Collections::singletonList)
+                        .collect(Collectors.toList()));
     }
 
     private static void serializeResolvedModelSchema(
