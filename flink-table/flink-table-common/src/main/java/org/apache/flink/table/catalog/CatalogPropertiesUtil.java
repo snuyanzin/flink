@@ -242,9 +242,11 @@ public final class CatalogPropertiesUtil {
 
             final List<String> partitionKeys = deserializePartitionKeys(properties);
 
-            final Map<String, String> options = deserializeOptions(properties, schemaKey);
+            final Map<String, String> options =
+                    deserializeOptions(properties, List.of(schemaKey, DISTRIBUTION));
 
-            final TableDistribution distribution = deserializeTableDistribution(properties);
+            final @Nullable TableDistribution distribution =
+                    deserializeTableDistribution(properties);
 
             return CatalogTable.newBuilder()
                     .schema(schema)
@@ -277,7 +279,8 @@ public final class CatalogPropertiesUtil {
 
             final List<String> partitionKeys = deserializePartitionKeys(properties);
 
-            final Map<String, String> options = deserializeOptions(properties, SCHEMA);
+            final Map<String, String> options =
+                    deserializeOptions(properties, List.of(SCHEMA, DISTRIBUTION));
 
             final String definitionQuery = properties.get(DEFINITION_QUERY);
 
@@ -302,10 +305,14 @@ public final class CatalogPropertiesUtil {
                             ? null
                             : decodeBase64ToBytes(refreshHandlerStringBytes);
 
+            final @Nullable TableDistribution distribution =
+                    deserializeTableDistribution(properties);
+
             CatalogMaterializedTable.Builder builder = CatalogMaterializedTable.newBuilder();
             builder.schema(schema)
                     .comment(comment)
                     .partitionKeys(partitionKeys)
+                    .distribution(distribution)
                     .options(options)
                     .snapshot(snapshot)
                     .definitionQuery(definitionQuery)
@@ -422,14 +429,13 @@ public final class CatalogPropertiesUtil {
 
     private static final String MODEL_OUTPUT_SCHEMA = "output-schema";
 
-    private static final String DISTRIBUTION_KIND = "distribution.kind";
-    private static final String DISTRIBUTION_COUNT = "distribution.count";
-    private static final String DISTRIBUTION_KEYS = compoundKey("distribution", KEYS);
+    private static final String DISTRIBUTION = "distribution";
 
-    private static Map<String, String> deserializeOptions(
-            Map<String, String> map, String schemaKey) {
-        return deserializeOptions(map, Collections.singletonList(schemaKey));
-    }
+    private static final String DISTRIBUTION_KIND = DISTRIBUTION + ".kind";
+
+    private static final String DISTRIBUTION_COUNT = DISTRIBUTION + ".count";
+
+    private static final String DISTRIBUTION_KEYS = compoundKey(DISTRIBUTION, KEYS);
 
     private static Map<String, String> deserializeOptions(
             Map<String, String> map, List<String> schemaKeys) {
@@ -472,12 +478,17 @@ public final class CatalogPropertiesUtil {
     }
 
     private static TableDistribution deserializeTableDistribution(Map<String, String> map) {
-        final TableDistribution.Kind kind =
-                TableDistribution.Kind.valueOf(map.get(DISTRIBUTION_KIND));
+        final String distributionKind = map.get(DISTRIBUTION_KIND);
+        if (distributionKind == null) {
+            return null;
+        }
+
+        final TableDistribution.Kind kind = TableDistribution.Kind.valueOf(distributionKind);
         final Integer bucketCount =
                 map.get(DISTRIBUTION_COUNT) == null
                         ? null
                         : Integer.valueOf(map.get(DISTRIBUTION_COUNT));
+
         final List<String> bucketKeys = new ArrayList<>();
         int i = 0;
         String bucketNameKey = compoundKey(DISTRIBUTION_KEYS, i, NAME);
