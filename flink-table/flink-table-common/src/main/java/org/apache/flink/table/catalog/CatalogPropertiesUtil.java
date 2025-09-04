@@ -244,10 +244,13 @@ public final class CatalogPropertiesUtil {
 
             final Map<String, String> options = deserializeOptions(properties, schemaKey);
 
+            final TableDistribution distribution = deserializeTableDistribution(properties);
+
             return CatalogTable.newBuilder()
                     .schema(schema)
                     .comment(comment)
                     .partitionKeys(partitionKeys)
+                    .distribution(distribution)
                     .options(options)
                     .snapshot(snapshot)
                     .build();
@@ -419,6 +422,10 @@ public final class CatalogPropertiesUtil {
 
     private static final String MODEL_OUTPUT_SCHEMA = "output-schema";
 
+    private static final String DISTRIBUTION_KIND = "distribution.kind";
+    private static final String DISTRIBUTION_COUNT = "distribution.count";
+    private static final String DISTRIBUTION_KEYS = compoundKey("distribution", KEYS);
+
     private static Map<String, String> deserializeOptions(
             Map<String, String> map, String schemaKey) {
         return deserializeOptions(map, Collections.singletonList(schemaKey));
@@ -462,6 +469,20 @@ public final class CatalogPropertiesUtil {
             partitionKeys.add(partitionName);
         }
         return partitionKeys;
+    }
+
+    private static TableDistribution deserializeTableDistribution(Map<String, String> map) {
+        final TableDistribution.Kind kind = TableDistribution.Kind.valueOf(map.get(DISTRIBUTION_KIND));
+        final Integer bucketCount = map.get(DISTRIBUTION_COUNT) == null ? null : Integer.valueOf(map.get(DISTRIBUTION_COUNT));
+        final List<String> bucketKeys = new ArrayList<>();
+        int i = 0;
+        String bucketNameKey = compoundKey(DISTRIBUTION_KEYS, i, NAME);
+        while (map.containsKey(bucketNameKey)) {
+            final String bucketName = getValue(map, bucketNameKey);
+            bucketKeys.add(bucketName);
+            bucketNameKey = compoundKey(DISTRIBUTION_KEYS, ++i, NAME);
+        }
+        return TableDistribution.of(kind, bucketCount, bucketKeys);
     }
 
     private static Schema deserializeSchema(Map<String, String> map, String schemaKey) {
@@ -576,13 +597,13 @@ public final class CatalogPropertiesUtil {
             return;
         }
 
-        map.put("distribution.kind", distribution.getKind().name());
-        distribution.getBucketCount().ifPresent(bc -> map.put("distribution.count",
+        map.put(DISTRIBUTION_KIND, distribution.getKind().name());
+        distribution.getBucketCount().ifPresent(bc -> map.put(DISTRIBUTION_COUNT,
                 String.valueOf(bc.intValue())));
 
         putIndexedProperties(
                 map,
-                compoundKey("distribution", KEYS),
+                DISTRIBUTION_KEYS,
                 Collections.singletonList(NAME),
                 distribution.getBucketKeys().stream().map(Collections::singletonList).collect(Collectors.toList()));
     }
