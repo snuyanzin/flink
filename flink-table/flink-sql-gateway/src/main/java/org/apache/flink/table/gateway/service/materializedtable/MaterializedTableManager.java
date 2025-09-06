@@ -169,7 +169,8 @@ public class MaterializedTableManager {
             OperationHandle handle,
             MaterializedTableOperation op,
             String statement) {
-;        if (op instanceof CreateMaterializedTableOperation) {
+        ;
+        if (op instanceof CreateMaterializedTableOperation) {
             return callCreateMaterializedTableOperation(
                     operationExecutor, handle, (CreateMaterializedTableOperation) op);
         } else if (op instanceof AlterMaterializedTableRefreshOperation) {
