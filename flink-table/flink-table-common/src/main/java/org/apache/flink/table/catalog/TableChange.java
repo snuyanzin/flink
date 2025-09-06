@@ -1120,7 +1120,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class DropDistribution implements CatalogTableChange {
+    class DropDistribution implements CatalogTableChange, MaterializedTableChange {
         static final DropDistribution INSTANCE = new DropDistribution();
 
         @Override

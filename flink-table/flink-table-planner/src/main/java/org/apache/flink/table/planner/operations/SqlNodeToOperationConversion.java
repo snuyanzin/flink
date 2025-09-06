@@ -21,6 +21,7 @@ package org.apache.flink.table.planner.operations;
 import org.apache.flink.sql.parser.ddl.SqlAddJar;
 import org.apache.flink.sql.parser.ddl.SqlAlterDatabase;
 import org.apache.flink.sql.parser.ddl.SqlAlterFunction;
+import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableDropColumn;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableDropConstraint;
@@ -84,6 +85,7 @@ import org.apache.flink.table.catalog.CatalogDatabaseImpl;
 import org.apache.flink.table.catalog.CatalogFunction;
 import org.apache.flink.table.catalog.CatalogFunctionImpl;
 import org.apache.flink.table.catalog.CatalogManager;
+import org.apache.flink.table.catalog.CatalogMaterializedTable;
 import org.apache.flink.table.catalog.CatalogPartition;
 import org.apache.flink.table.catalog.CatalogPartitionImpl;
 import org.apache.flink.table.catalog.CatalogPartitionSpec;
@@ -93,6 +95,7 @@ import org.apache.flink.table.catalog.Column;
 import org.apache.flink.table.catalog.ContextResolvedTable;
 import org.apache.flink.table.catalog.FunctionLanguage;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TableChange;
@@ -159,6 +162,7 @@ import org.apache.flink.table.operations.ddl.DropDatabaseOperation;
 import org.apache.flink.table.operations.ddl.DropTableOperation;
 import org.apache.flink.table.operations.ddl.DropTempSystemFunctionOperation;
 import org.apache.flink.table.operations.ddl.DropViewOperation;
+import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.operations.utils.LikeType;
 import org.apache.flink.table.operations.utils.ShowLikeOperator;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
@@ -533,6 +537,35 @@ public class SqlNodeToOperationConversion {
     }
 
     /** Convert ALTER TABLE DROP DISTRIBUTION statement. */
+    private static AlterMaterializedTableChangeOperation
+            convertAlterMaterializedTableDropDistribution(
+                    SqlAlterMaterializedTable sqlAlterTable,
+                    ResolvedCatalogMaterializedTable resolvedCatalogTable,
+                    ObjectIdentifier tableIdentifier) {
+        if (resolvedCatalogTable.getDistribution().isEmpty()) {
+            throw new ValidationException(
+                    String.format(
+                            "Materialized Table %s does not have a distribution to drop.",
+                            tableIdentifier));
+        }
+
+        List<TableChange.MaterializedTableChange> tableChanges =
+                Collections.singletonList(TableChange.dropDistribution());
+        CatalogMaterializedTable.Builder builder =
+                CatalogMaterializedTable.newBuilder()
+                        .comment(resolvedCatalogTable.getComment())
+                        .options(resolvedCatalogTable.getOptions())
+                        .schema(resolvedCatalogTable.getUnresolvedSchema())
+                        .partitionKeys(resolvedCatalogTable.getPartitionKeys())
+                        .options(resolvedCatalogTable.getOptions());
+
+        resolvedCatalogTable.getSnapshot().ifPresent(builder::snapshot);
+
+        CatalogMaterializedTable newTable = builder.build();
+        return new AlterMaterializedTableChangeOperation(tableIdentifier, tableChanges, newTable);
+    }
+
+    /** Convert ALTER TABLE DROP DISTRIBUTION statement. */
     private static AlterTableChangeOperation convertAlterTableDropDistribution(
             SqlAlterTable sqlAlterTable,
             ResolvedCatalogTable resolvedCatalogTable,
@@ -549,8 +582,7 @@ public class SqlNodeToOperationConversion {
                         .comment(resolvedCatalogTable.getComment())
                         .options(resolvedCatalogTable.getOptions())
                         .schema(resolvedCatalogTable.getUnresolvedSchema())
-                        .partitionKeys(resolvedCatalogTable.getPartitionKeys())
-                        .options(resolvedCatalogTable.getOptions());
+                        .partitionKeys(resolvedCatalogTable.getPartitionKeys());
 
         resolvedCatalogTable.getSnapshot().ifPresent(builder::snapshot);
 

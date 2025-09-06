@@ -1049,17 +1049,7 @@ public class MaterializedTableStatementITCase extends AbstractMaterializedTableS
 
         // Alter materialized table as query in full mode
         String alterMaterializedTableAsQueryDDL =
-                "ALTER MATERIALIZED TABLE users_shops"
-                        + " AS SELECT \n"
-                        + "  user_id,\n"
-                        + "  shop_id,\n"
-                        + "  ds,\n"
-                        + "  COUNT(order_id) AS order_cnt,\n"
-                        + "  SUM(order_amount) AS order_amount_sum\n"
-                        + " FROM (\n"
-                        + "    SELECT user_id, shop_id, order_created_at AS ds, order_id, 1 as order_amount FROM my_source"
-                        + " ) AS tmp\n"
-                        + " GROUP BY (user_id, shop_id, ds)";
+                "ALTER MATERIALIZED TABLE users_shops" + " MODIFY DISTRIBUTION INTO 3 BUCKETS";
 
         OperationHandle alterMaterializedTableAsQueryHandle =
                 service.executeStatement(

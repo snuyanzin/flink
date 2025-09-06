@@ -2077,6 +2077,25 @@ SqlAlterMaterializedTable SqlAlterMaterializedTable() :
                     tableIdentifier,
                     asQuery);
             }
+        |
+         <MODIFY> <DISTRIBUTION> {
+                 return new SqlAlterMaterializedTableModify(
+                 startPos.plus(getPos()),
+                 tableIdentifier,
+                 SqlDistribution(getPos()));
+                 }
+        |
+         <DROP> <DISTRIBUTION> {
+                 return new SqlAlterMaterializedTableDropDistribution(
+                 startPos.plus(getPos()),
+                 tableIdentifier);
+                 }
+        |
+         <ADD> <DISTRIBUTION> {
+                 return new SqlAlterMaterializedTableAdd(
+                 startPos.plus(getPos()),
+                 tableIdentifier, SqlDistribution(getPos()));
+                 }
     )
 }
 

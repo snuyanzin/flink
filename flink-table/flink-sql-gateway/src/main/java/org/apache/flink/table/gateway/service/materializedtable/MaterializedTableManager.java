@@ -169,7 +169,7 @@ public class MaterializedTableManager {
             OperationHandle handle,
             MaterializedTableOperation op,
             String statement) {
-        if (op instanceof CreateMaterializedTableOperation) {
+;        if (op instanceof CreateMaterializedTableOperation) {
             return callCreateMaterializedTableOperation(
                     operationExecutor, handle, (CreateMaterializedTableOperation) op);
         } else if (op instanceof AlterMaterializedTableRefreshOperation) {
@@ -185,6 +185,9 @@ public class MaterializedTableManager {
             return callDropMaterializedTableOperation(
                     operationExecutor, handle, (DropMaterializedTableOperation) op);
         } else if (op instanceof AlterMaterializedTableAsQueryOperation) {
+            return callAlterMaterializedTableAsQueryOperation(
+                    operationExecutor, handle, (AlterMaterializedTableAsQueryOperation) op);
+        } else if (op instanceof DropMaterializedTableOperation) {
             return callAlterMaterializedTableAsQueryOperation(
                     operationExecutor, handle, (AlterMaterializedTableAsQueryOperation) op);
         }
