@@ -8,6 +8,7 @@ import org.apache.flink.table.operations.materializedtable.AlterMaterializedTabl
 
 public class SqlAlterMaterializedTableModifyConverter
         implements SqlNodeConverter<SqlAlterMaterializedTableModify> {
+
     @Override
     public Operation convertSqlNode(SqlAlterMaterializedTableModify node, ConvertContext context) {
         UnresolvedIdentifier unresolvedIdentifier = UnresolvedIdentifier.of(node.fullTableName());

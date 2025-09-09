@@ -48,7 +48,7 @@ import java.util.List;
  * );
  * }</pre>
  */
-public class SqlAlterTableAdd extends SqlAlterTableSchema {
+public class SqlAlterTableAdd extends SqlAlterBaseTableSchema {
 
     public SqlAlterTableAdd(
             SqlParserPos pos,

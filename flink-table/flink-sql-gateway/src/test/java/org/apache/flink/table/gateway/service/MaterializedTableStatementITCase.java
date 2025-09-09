@@ -1049,7 +1049,7 @@ public class MaterializedTableStatementITCase extends AbstractMaterializedTableS
 
         // Alter materialized table as query in full mode
         String alterMaterializedTableAsQueryDDL =
-                "ALTER MATERIALIZED TABLE users_shops" + " MODIFY DISTRIBUTION INTO 3 BUCKETS";
+                "ALTER MATERIALIZED TABLE users_shops" + " DROP DISTRIBUTION";
 
         OperationHandle alterMaterializedTableAsQueryHandle =
                 service.executeStatement(

@@ -9,10 +9,10 @@ import javax.annotation.Nullable;
 
 import java.util.List;
 
-public class SqlAlterMaterializedTableAdd extends SqlAlterMaterializedTable {
+public class SqlAlterMaterializedTableAddDistribution extends SqlAlterMaterializedTable {
     protected final @Nullable SqlDistribution distribution;
 
-    public SqlAlterMaterializedTableAdd(
+    public SqlAlterMaterializedTableAddDistribution(
             SqlParserPos pos, SqlIdentifier tableName, SqlDistribution distribution) {
         super(pos, tableName);
         this.distribution = distribution;
