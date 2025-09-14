@@ -74,8 +74,6 @@ public class MemberFieldRewriter implements CodeRewriter {
 
     private String code;
     private TokenStreamRewriter rewriter;
-    private int programCnt = 0;
-    private int curInProgram;
 
     public MemberFieldRewriter(String code, int maxFieldCount) {
         this.code = code;
@@ -84,29 +82,15 @@ public class MemberFieldRewriter implements CodeRewriter {
 
     public String rewrite() {
         MemberFieldVisitor fieldVisitor = new MemberFieldVisitor();
-        JavaParser.CompilationUnitContext tree = prepareRewrite().compilationUnit();
-        fieldVisitor.visit(tree);
+        fieldVisitor.visit(prepareRewrite().compilationUnit());
         if (fieldVisitor.fieldCount >= maxFieldCount) {
-
-            code = rewriter.getText("program" + 0);
-            for (int i = 0; i <= programCnt; i++) {
-                new MemberFieldReplaceVisitor(fieldVisitor.replaceMap).visit(tree);
-                code = rewriter.getText("program" + i);
-            }
-            return code;
+            code = rewriter.getText();
+            new MemberFieldReplaceVisitor(fieldVisitor.replaceMap)
+                    .visit(prepareRewrite().compilationUnit());
+            return rewriter.getText();
         } else {
             return code;
         }
-    }
-
-    String getProgram() {
-        if (curInProgram == 2) {
-            curInProgram = 0;
-            programCnt++;
-        } else {
-            curInProgram++;
-        }
-        return "program" + programCnt;
     }
 
     private JavaParser prepareRewrite() {
@@ -205,7 +189,7 @@ public class MemberFieldRewriter implements CodeRewriter {
             classInfo.typeCounts.put(type, id + 1);
             classInfo.fields.add(new MemberField(fieldName, type, id, init));
 
-            rewriter.delete(getProgram(), ctx.getParent().start, ctx.getParent().stop);
+            rewriter.delete(ctx.getParent().start, ctx.getParent().stop);
             fieldCount++;
             return null;
         }
@@ -260,7 +244,7 @@ public class MemberFieldRewriter implements CodeRewriter {
                 newDeclaration.append("}\n");
             }
 
-            rewriter.insertAfter(getProgram(), ctx.classBody().start, newDeclaration.toString());
+            rewriter.insertAfter(ctx.classBody().start, newDeclaration.toString());
         }
 
         private void checkMemberDeclaration(JavaParser.MemberDeclarationContext ctx) {
@@ -341,11 +325,7 @@ public class MemberFieldRewriter implements CodeRewriter {
                     if (expressionContext.bop != null && expressionContext.IDENTIFIER() != null) {
                         String rep = replaceMap.get(expressionContext.IDENTIFIER().getText());
                         if (rep != null) {
-                            rewriter.replace(
-                                    getProgram(),
-                                    expressionContext.IDENTIFIER().getSymbol(),
-                                    expressionContext.IDENTIFIER().getSymbol(),
-                                    rep);
+                            rewriter.replace(expressionContext.IDENTIFIER().getSymbol(), rep);
                         }
                     }
                 }
@@ -356,11 +336,7 @@ public class MemberFieldRewriter implements CodeRewriter {
                 }
                 String rep = replaceMap.get(identifier);
                 if (rep != null) {
-                    rewriter.replace(
-                            getProgram(),
-                            ctx.IDENTIFIER().getSymbol(),
-                            ctx.IDENTIFIER().getSymbol(),
-                            rep);
+                    rewriter.replace(ctx.IDENTIFIER().getSymbol(), rep);
                 }
             } else {
                 visitChildren(ctx);

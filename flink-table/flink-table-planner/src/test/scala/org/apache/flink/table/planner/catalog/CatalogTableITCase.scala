@@ -1165,6 +1165,35 @@ class CatalogTableITCase(isStreamingMode: Boolean) extends TableITCaseBase {
   }
 
   @TestTemplate
+  def testCreateMaterializedTableAndShowCreateTableWithDistributionAlgorithm(): Unit = {
+    val executedDDL =
+      """
+        |create materialized table mt1 (
+        |PRIMARY KEY (a) not enforced)
+        |comment 'test show create table statement'
+        |distributed by range(a) into 7 buckets
+        |partitioned by (b,h)
+        |FRESHNESS = INTERVAL '1' HOUR
+        |as select 1 b, 'a' h, 123 a
+        |""".stripMargin
+
+    val expectedDDL =
+      """ |CREATE MATERIALIZED TABLE `default_catalog`.`default_database`.`mt1` (
+        |  CONSTRAINT `PK_a` PRIMARY KEY (`a`) NOT ENFORCED
+        |)
+        |COMMENT 'test show create table statement'
+        |DISTRIBUTED BY RANGE(`a`) INTO 7 BUCKETS
+        |PARTITIONED BY (`b`, `h`)
+        |FRESHNESS = INTERVAL '1' HOUR
+        |REFRESH_MODE = FULL
+        |AS SELECT 1 AS `b`, 'a' AS `h`, 123 AS `a`
+        |""".stripMargin
+    tableEnv.executeSql(executedDDL)
+    val row = tableEnv.executeSql("SHOW CREATE MATERIALIZED TABLE mt1").collect().next()
+    assertThat(row.getField(0)).isEqualTo(expectedDDL)
+  }
+
+  @TestTemplate
   def testCreateViewAndShowCreateTable(): Unit = {
     val createTableDDL =
       """ |create table `source` (

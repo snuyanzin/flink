@@ -1896,12 +1896,12 @@ SqlCreate SqlCreateMaterializedTable(Span s, boolean replace, boolean isTemporar
         }
     ]
     [
-        <PARTITIONED> <BY>
-        partitionColumns = ParenthesizedSimpleIdentifierList()
-    ]
-    [
         <DISTRIBUTED>
         distribution = SqlDistribution(getPos())
+    ]
+    [
+        <PARTITIONED> <BY>
+        partitionColumns = ParenthesizedSimpleIdentifierList()
     ]
     [
         <WITH>

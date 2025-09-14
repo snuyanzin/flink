@@ -124,8 +124,8 @@ public class SqlCreateMaterializedTable extends SqlCreate {
         return Optional.ofNullable(tableConstraint);
     }
 
-    public Optional<SqlDistribution> getDistribution() {
-        return Optional.ofNullable(distribution);
+    public SqlDistribution getDistribution() {
+        return distribution;
     }
 
     public SqlNodeList getPartitionKeyList() {
@@ -170,17 +170,17 @@ public class SqlCreateMaterializedTable extends SqlCreate {
             comment.unparse(writer, leftPrec, rightPrec);
         }
 
+        if (distribution != null) {
+            writer.newlineAndIndent();
+            distribution.unparse(writer, leftPrec, rightPrec);
+        }
+
         if (!partitionKeyList.isEmpty()) {
             writer.newlineAndIndent();
             writer.keyword("PARTITIONED BY");
             SqlWriter.Frame partitionedByFrame = writer.startList("(", ")");
             partitionKeyList.unparse(writer, leftPrec, rightPrec);
             writer.endList(partitionedByFrame);
-        }
-
-        if (distribution != null) {
-            writer.newlineAndIndent();
-            distribution.unparse(writer, leftPrec, rightPrec);
         }
 
         if (!propertyList.isEmpty()) {
