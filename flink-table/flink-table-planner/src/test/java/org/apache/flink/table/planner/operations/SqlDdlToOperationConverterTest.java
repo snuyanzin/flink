@@ -35,7 +35,6 @@ import org.apache.flink.table.catalog.CatalogMaterializedTable.RefreshMode;
 import org.apache.flink.table.catalog.CatalogMaterializedTable.RefreshStatus;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.Column;
-import org.apache.flink.table.catalog.DefaultCatalogMaterializedTable;
 import org.apache.flink.table.catalog.FunctionLanguage;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.catalog.IntervalFreshness;
@@ -96,7 +95,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.apache.flink.table.api.Expressions.$;
@@ -1407,7 +1405,8 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
 
     @Test
     void testAlterMaterializedTableDropDistribution() throws Exception {
-        prepareMaterializedTable("tb1", false, 1, TableDistribution.of(Kind.HASH, 2, List.of("a")), "SELECT 1");
+        prepareMaterializedTable(
+                "tb1", false, 1, TableDistribution.of(Kind.HASH, 2, List.of("a")), "SELECT 1");
         String sql = "ALTER MATERIALIZED TABLE cat1.db1.tb1\n DROP DISTRIBUTION";
 
         Operation operation = parse("alter MATERIALIZED table tb1 drop distribution");
@@ -1420,7 +1419,58 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
 
         assertThatThrownBy(() -> parse("alter MATERIALIZED table tb2 drop distribution"))
                 .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("Materialized table `cat1`.`db1`.`tb2` does not have a distribution to drop.");
+                .hasMessageContaining(
+                        "Materialized table `cat1`.`db1`.`tb2` does not have a distribution to drop.");
+    }
+
+    @Test
+    void testAlterMaterializedTableAddDistribution() throws Exception {
+        prepareMaterializedTable("tb1", false, 1, null, "SELECT 1");
+        String sql = "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  ADD DISTRIBUTED INTO 3 BUCKETS";
+
+        Operation operation = parse("alter MATERIALIZED table tb1 add distribution into 3 buckets");
+        assertThat(operation).isInstanceOf(AlterMaterializedTableChangeOperation.class);
+        assertThat(operation.asSummaryString()).isEqualTo(sql);
+        assertThat(((AlterMaterializedTableChangeOperation) operation).getTableChanges())
+                .containsExactly(TableChange.add(TableDistribution.of(Kind.UNKNOWN, 3, List.of())));
+
+        prepareMaterializedTable(
+                "tb2", false, 1, TableDistribution.of(Kind.HASH, 1, List.of("a")), "SELECT 1");
+
+        assertThatThrownBy(
+                        () ->
+                                parse(
+                                        "alter MATERIALIZED table cat1.db1.tb2 add distribution into 3 buckets"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining(
+                        "Materialized table `cat1`.`db1`.`tb2` has already defined "
+                                + "the distribution `DISTRIBUTED BY HASH(`a`) INTO 1 BUCKETS`."
+                                + " You can modify it or drop it before adding a new one.");
+    }
+
+    @Test
+    void testAlterMaterializedTableModifyDistribution() throws Exception {
+        prepareMaterializedTable(
+                "tb1", false, 1, TableDistribution.of(Kind.HASH, 1, List.of("a")), "SELECT 1");
+        String sql = "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  MODIFY DISTRIBUTED INTO 3 BUCKETS";
+
+        Operation operation =
+                parse("alter MATERIALIZED table tb1 modify distribution into 3 buckets");
+        assertThat(operation).isInstanceOf(AlterMaterializedTableChangeOperation.class);
+        assertThat(operation.asSummaryString()).isEqualTo(sql);
+        assertThat(((AlterMaterializedTableChangeOperation) operation).getTableChanges())
+                .containsExactly(
+                        TableChange.modify(TableDistribution.of(Kind.UNKNOWN, 3, List.of())));
+
+        prepareMaterializedTable("tb2", false, 1, null, "SELECT 1");
+
+        assertThatThrownBy(
+                        () ->
+                                parse(
+                                        "alter MATERIALIZED table cat1.db1.tb2 modify distribution into 3 buckets"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining(
+                        "Materialized table `cat1`.`db1`.`tb2` does not have a distribution to modify.");
     }
 
     @Test
@@ -2212,7 +2262,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
                 operation,
                 tableIdentifier,
                 TableDistribution.ofHash(Collections.singletonList("a"), 12),
-                "ALTER TABLE cat1.db1.tb1\n" + "  ADD DISTRIBUTED BY HASH(`a`) INTO 12 BUCKETS\n");
+                "ALTER TABLE cat1.db1.tb1\n" + "  ADD DISTRIBUTED BY HASH(`a`) INTO 12 BUCKETS");
     }
 
     @Test
@@ -2268,8 +2318,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
                 operation,
                 tableIdentifier,
                 TableDistribution.ofHash(Collections.singletonList("c"), 12),
-                "ALTER TABLE cat1.db1.tb1\n"
-                        + "  MODIFY DISTRIBUTED BY HASH(`c`) INTO 12 BUCKETS\n");
+                "ALTER TABLE cat1.db1.tb1\n" + "  MODIFY DISTRIBUTED BY HASH(`c`) INTO 12 BUCKETS");
     }
 
     @Test
@@ -2547,8 +2596,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
     private CatalogTable prepareTableWithDistribution(String tableName, boolean withWatermark)
             throws Exception {
         TableDistribution distribution =
-                TableDistribution.of(
-                        Kind.HASH, 6, Collections.singletonList("c"));
+                TableDistribution.of(Kind.HASH, 6, Collections.singletonList("c"));
         return prepareTable(tableName, false, withWatermark, 0, distribution);
     }
 

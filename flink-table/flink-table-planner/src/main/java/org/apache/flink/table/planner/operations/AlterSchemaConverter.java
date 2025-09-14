@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.planner.operations;
 
+import org.apache.flink.sql.parser.ddl.SqlAlterBaseTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableAdd;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableDropColumn;
@@ -26,7 +27,6 @@ import org.apache.flink.sql.parser.ddl.SqlAlterTableDropPrimaryKey;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableDropWatermark;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableModify;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableRenameColumn;
-import org.apache.flink.sql.parser.ddl.SqlAlterBaseTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;

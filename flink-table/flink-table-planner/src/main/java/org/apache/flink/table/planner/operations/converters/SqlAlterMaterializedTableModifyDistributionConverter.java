@@ -1,6 +1,6 @@
 package org.apache.flink.table.planner.operations.converters;
 
-import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableAddDistribution;
+import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableModifyDistribution;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogMaterializedTable;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -13,11 +13,12 @@ import org.apache.flink.table.planner.utils.OperationConverterUtils;
 
 import java.util.List;
 
-public class SqlAlterMaterializedTableAddDistributionConverter
-        extends AbstractAlterMaterializedTableConverter<SqlAlterMaterializedTableAddDistribution> {
+public class SqlAlterMaterializedTableModifyDistributionConverter
+        extends AbstractAlterMaterializedTableConverter<
+                SqlAlterMaterializedTableModifyDistribution> {
     @Override
     public Operation convertSqlNode(
-            SqlAlterMaterializedTableAddDistribution node, ConvertContext context) {
+            SqlAlterMaterializedTableModifyDistribution node, ConvertContext context) {
         ObjectIdentifier identifier = resolveIdentifier(node, context);
 
         ResolvedCatalogMaterializedTable oldTable =
@@ -26,12 +27,11 @@ public class SqlAlterMaterializedTableAddDistributionConverter
                         identifier,
                         () -> "Operation is supported only for materialized tables");
 
-        if (oldTable.getDistribution().isPresent()) {
+        if (oldTable.getDistribution().isEmpty()) {
             throw new ValidationException(
                     String.format(
-                            "Materialized table %s has already defined the distribution `%s`. "
-                                    + "You can modify it or drop it before adding a new one.",
-                            identifier, oldTable.getDistribution().get().toString().strip()));
+                            "Materialized table %s does not have a distribution to modify.",
+                            identifier));
         }
 
         TableDistribution tableDistribution =
@@ -43,6 +43,6 @@ public class SqlAlterMaterializedTableAddDistributionConverter
                         oldTable, builder -> builder.distribution(tableDistribution));
 
         return new AlterMaterializedTableChangeOperation(
-                identifier, List.of(TableChange.add(tableDistribution)), updatedTable);
+                identifier, List.of(TableChange.modify(tableDistribution)), updatedTable);
     }
 }

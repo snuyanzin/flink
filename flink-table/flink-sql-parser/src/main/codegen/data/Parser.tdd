@@ -41,7 +41,7 @@
     "org.apache.flink.sql.parser.ddl.SqlAlterFunction"
     "org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTable"
     "org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableAddDistribution"
-    "org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableModify"
+    "org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableModifyDistribution"
     "org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableDropDistribution"
     "org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableAsQuery"
     "org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableFreshness"

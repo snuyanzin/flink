@@ -144,15 +144,6 @@ public class DefaultCatalogTable implements CatalogTable {
                 && Objects.equals(snapshot, that.snapshot);
     }
 
-    /**
-     * ( `f1` [INT], `f2` [VARCHAR(2147483647)], CONSTRAINT `PK_f1` PRIMARY KEY (`f1`) NOT ENFORCED,
-     * INDEX `f1` (`f1`) )
-     *
-     * <p>( `f1` [INT], `f2` [VARCHAR(2147483647)], CONSTRAINT `PK_f1` PRIMARY KEY (`f1`) NOT
-     * ENFORCED, INDEX `f1` (`f1`) )
-     *
-     * @return
-     */
     @Override
     public int hashCode() {
         return Objects.hash(schema, comment, distribution, partitionKeys, options, snapshot);

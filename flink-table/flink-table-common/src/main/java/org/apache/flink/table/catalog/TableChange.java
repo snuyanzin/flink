@@ -507,7 +507,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class AddDistribution implements CatalogTableChange {
+    class AddDistribution implements CatalogTableChange, MaterializedTableChange {
 
         private final TableDistribution distribution;
 
@@ -908,7 +908,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class ModifyDistribution implements CatalogTableChange {
+    class ModifyDistribution implements CatalogTableChange, MaterializedTableChange {
 
         private final TableDistribution distribution;
 

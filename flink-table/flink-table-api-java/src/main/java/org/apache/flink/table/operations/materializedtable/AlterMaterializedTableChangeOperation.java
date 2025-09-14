@@ -98,7 +98,7 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
                     " MODIFY DEFINITION QUERY TO '%s'", definitionQuery.getDefinitionQuery());
         } else if (tableChange instanceof TableChange.DropDistribution) {
             return " DROP DISTRIBUTION";
-        }else {
+        } else {
             return AlterTableChangeOperation.toString(tableChange);
         }
     }

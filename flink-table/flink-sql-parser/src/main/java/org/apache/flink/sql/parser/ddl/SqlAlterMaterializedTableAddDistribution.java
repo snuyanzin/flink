@@ -8,6 +8,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import javax.annotation.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 public class SqlAlterMaterializedTableAddDistribution extends SqlAlterMaterializedTable {
     protected final @Nullable SqlDistribution distribution;
@@ -30,5 +31,9 @@ public class SqlAlterMaterializedTableAddDistribution extends SqlAlterMaterializ
         if (distribution != null) {
             distribution.unparseAlter(writer, leftPrec, rightPrec);
         }
+    }
+
+    public Optional<SqlDistribution> getDistribution() {
+        return Optional.ofNullable(distribution);
     }
 }

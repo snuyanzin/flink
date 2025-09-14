@@ -97,7 +97,8 @@ public class ShowCreateUtil {
                 .ifPresent(pk -> sb.append(",\n").append(pk));
         sb.append("\n)\n");
         extractComment(table).ifPresent(c -> sb.append(formatComment(c)).append("\n"));
-        extractFormattedDistributedInfo((ResolvedCatalogTable) table).ifPresent(sb::append);
+        extractFormattedDistributedInfo((ResolvedCatalogTable) table)
+                .ifPresent(d -> sb.append(d).append("\n"));
         extractFormattedPartitionedInfo((ResolvedCatalogTable) table)
                 .ifPresent(
                         partitionedInfoFormatted ->
@@ -127,7 +128,9 @@ public class ShowCreateUtil {
         extractComment(table).ifPresent(c -> sb.append(formatComment(c)).append("\n"));
         extractFormattedPartitionedInfo(table)
                 .ifPresent(partitionedBy -> sb.append(formatPartitionedBy(partitionedBy)));
-        table.getDistribution().map(TableDistribution::toString).ifPresent(sb::append);
+        table.getDistribution()
+                .map(TableDistribution::toString)
+                .ifPresent(d -> sb.append(d).append("\n"));
         extractFormattedOptions(table.getOptions(), PRINT_INDENT)
                 .ifPresent(v -> sb.append("WITH (\n").append(v).append("\n)\n"));
         sb.append(extractFreshness(table))

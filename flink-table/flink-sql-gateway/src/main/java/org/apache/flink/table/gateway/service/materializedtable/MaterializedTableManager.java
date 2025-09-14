@@ -829,7 +829,9 @@ public class MaterializedTableManager {
             // directly apply the alter operation
             AlterMaterializedTableChangeOperation alterMaterializedTableChangeOperation =
                     new AlterMaterializedTableChangeOperation(
-                            tableIdentifier, op.getTableChanges(), op.getCatalogMaterializedTable());
+                            tableIdentifier,
+                            op.getTableChanges(),
+                            op.getCatalogMaterializedTable());
             return operationExecutor.callExecutableOperation(
                     handle, alterMaterializedTableChangeOperation);
         }
@@ -894,7 +896,8 @@ public class MaterializedTableManager {
                 throw new SqlExecutionException(
                         String.format(
                                 "Failed to start the continuous refresh job using new query %s when altering materialized table %s select query.",
-                                op.getCatalogMaterializedTable().getDefinitionQuery(), tableIdentifier),
+                                op.getCatalogMaterializedTable().getDefinitionQuery(),
+                                tableIdentifier),
                         e);
             }
         } else if (CatalogMaterializedTable.RefreshStatus.SUSPENDED

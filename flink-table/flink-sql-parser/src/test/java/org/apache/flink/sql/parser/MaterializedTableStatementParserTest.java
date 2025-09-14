@@ -159,9 +159,12 @@ class MaterializedTableStatementParserTest {
                 .fails(
                         "Encountered \"<EOF>\" at line 1, column 28.\n"
                                 + "Was expecting one of:\n"
+                                + "    \"ADD\" ...\n"
                                 + "    \"AS\" ...\n"
+                                + "    \"DROP\" ...\n"
                                 + "    \"RESET\" ...\n"
                                 + "    \"SET\" ...\n"
+                                + "    \"MODIFY\" ...\n"
                                 + "    \"SUSPEND\" ...\n"
                                 + "    \"REFRESH\" ...\n"
                                 + "    \"RESUME\" ...\n"

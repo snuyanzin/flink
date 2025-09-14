@@ -2079,7 +2079,7 @@ SqlAlterMaterializedTable SqlAlterMaterializedTable() :
             }
         |
          <MODIFY> <DISTRIBUTION> {
-                 return new SqlAlterMaterializedTableModify(
+                 return new SqlAlterMaterializedTableModifyDistribution(
                  startPos.plus(getPos()),
                  tableIdentifier,
                  SqlDistribution(getPos()));
@@ -2092,7 +2092,7 @@ SqlAlterMaterializedTable SqlAlterMaterializedTable() :
                  }
         |
          <ADD> <DISTRIBUTION> {
-                 return new SqlAlterMaterializedTableAdd(
+                 return new SqlAlterMaterializedTableAddDistribution(
                  startPos.plus(getPos()),
                  tableIdentifier, SqlDistribution(getPos()));
                  }
