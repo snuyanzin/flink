@@ -1169,11 +1169,11 @@ class CatalogTableITCase(isStreamingMode: Boolean) extends TableITCaseBase {
     val executedDDL =
       """
         |create materialized table mt1 (
-        |PRIMARY KEY (a) not enforced)
+        |primary key (a) not enforced)
         |comment 'test show create table statement'
         |distributed by range(a) into 7 buckets
         |partitioned by (b,h)
-        |FRESHNESS = INTERVAL '1' HOUR
+        |freshness = interval '1' hour
         |as select 1 b, 'a' h, 123 a
         |""".stripMargin
 
