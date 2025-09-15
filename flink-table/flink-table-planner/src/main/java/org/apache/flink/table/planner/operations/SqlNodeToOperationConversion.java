@@ -19,7 +19,6 @@
 package org.apache.flink.table.planner.operations;
 
 import org.apache.flink.sql.parser.ddl.SqlAddJar;
-import org.apache.flink.sql.parser.ddl.SqlAlterBaseTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlAlterDatabase;
 import org.apache.flink.sql.parser.ddl.SqlAlterFunction;
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTable;
@@ -33,6 +32,7 @@ import org.apache.flink.sql.parser.ddl.SqlAlterTableOptions;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableRename;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableRenameColumn;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableReset;
+import org.apache.flink.sql.parser.ddl.SqlAlterTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlAnalyzeTable;
 import org.apache.flink.sql.parser.ddl.SqlCompilePlan;
 import org.apache.flink.sql.parser.ddl.SqlCreateDatabase;
@@ -461,9 +461,9 @@ public class SqlNodeToOperationConversion {
         } else if (sqlAlterTable instanceof SqlAlterTableRenameColumn) {
             return alterSchemaConverter.convertAlterSchema(
                     (SqlAlterTableRenameColumn) sqlAlterTable, resolvedCatalogTable);
-        } else if (sqlAlterTable instanceof SqlAlterBaseTableSchema) {
+        } else if (sqlAlterTable instanceof SqlAlterTableSchema) {
             return alterSchemaConverter.convertAlterSchema(
-                    (SqlAlterBaseTableSchema) sqlAlterTable, resolvedCatalogTable);
+                    (SqlAlterTableSchema) sqlAlterTable, resolvedCatalogTable);
         } else {
             throw new ValidationException(
                     String.format(

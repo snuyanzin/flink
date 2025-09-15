@@ -18,7 +18,6 @@
 
 package org.apache.flink.table.planner.operations;
 
-import org.apache.flink.sql.parser.ddl.SqlAlterBaseTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableAdd;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableDropColumn;
@@ -27,6 +26,7 @@ import org.apache.flink.sql.parser.ddl.SqlAlterTableDropPrimaryKey;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableDropWatermark;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableModify;
 import org.apache.flink.sql.parser.ddl.SqlAlterTableRenameColumn;
+import org.apache.flink.sql.parser.ddl.SqlAlterTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
@@ -83,7 +83,7 @@ import static org.apache.flink.table.planner.utils.OperationConverterUtils.build
 import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDataType;
 
 /**
- * Converter to convert {@link SqlAlterBaseTableSchema} with source table to generate new {@link
+ * Converter to convert {@link SqlAlterTableSchema} with source table to generate new {@link
  * Schema}.
  */
 public class AlterSchemaConverter {
@@ -108,7 +108,7 @@ public class AlterSchemaConverter {
      * to generate an updated Schema.
      */
     public Operation convertAlterSchema(
-            SqlAlterBaseTableSchema alterTableSchema, ResolvedCatalogTable oldTable) {
+            SqlAlterTableSchema alterTableSchema, ResolvedCatalogTable oldTable) {
         SchemaConverter converter = createSchemaConverter(alterTableSchema, oldTable);
         converter.updateColumn(alterTableSchema.getColumnPositions().getList());
         alterTableSchema.getWatermark().ifPresent(converter::updateWatermark);
@@ -981,9 +981,9 @@ public class AlterSchemaConverter {
 
     private TableDistribution getTableDistribution(
             SqlAlterTable alterTable, ResolvedCatalogTable oldTable) {
-        if (alterTable instanceof SqlAlterBaseTableSchema) {
+        if (alterTable instanceof SqlAlterTableSchema) {
             final Optional<TableDistribution> tableDistribution =
-                    ((SqlAlterBaseTableSchema) alterTable)
+                    ((SqlAlterTableSchema) alterTable)
                             .getDistribution()
                             .map(OperationConverterUtils::getDistributionFromSqlDistribution);
             if (tableDistribution.isPresent()) {
@@ -1027,7 +1027,7 @@ public class AlterSchemaConverter {
     }
 
     private SchemaConverter createSchemaConverter(
-            SqlAlterBaseTableSchema alterTableSchema, ResolvedCatalogTable oldTable) {
+            SqlAlterTableSchema alterTableSchema, ResolvedCatalogTable oldTable) {
         if (alterTableSchema instanceof SqlAlterTableAdd) {
             return new AddSchemaConverter(
                     oldTable,

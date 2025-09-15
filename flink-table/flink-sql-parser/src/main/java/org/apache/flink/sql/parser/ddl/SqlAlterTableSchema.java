@@ -40,14 +40,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /** Abstract class to describe statements which are used to alter table schema. */
-public abstract class SqlAlterBaseTableSchema extends SqlAlterTable implements ExtendedSqlNode {
+public abstract class SqlAlterTableSchema extends SqlAlterTable implements ExtendedSqlNode {
 
     protected final SqlNodeList columnList;
     @Nullable protected final SqlWatermark watermark;
     @Nullable protected final SqlDistribution distribution;
     protected final List<SqlTableConstraint> constraints;
 
-    public SqlAlterBaseTableSchema(
+    public SqlAlterTableSchema(
             SqlParserPos pos,
             SqlIdentifier tableName,
             SqlNodeList columnList,
