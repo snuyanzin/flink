@@ -41,6 +41,8 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
+import org.apache.flink.table.catalog.TableDistribution;
+import org.apache.flink.table.catalog.TableDistribution.Kind;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.gateway.AbstractMaterializedTableStatementITCase;
 import org.apache.flink.table.gateway.api.operation.OperationHandle;
@@ -1049,7 +1051,17 @@ public class MaterializedTableStatementITCase extends AbstractMaterializedTableS
 
         // Alter materialized table as query in full mode
         String alterMaterializedTableAsQueryDDL =
-                "ALTER MATERIALIZED TABLE users_shops" + " ADD DISTRIBUTION INTO 2 BUCKETS";
+                "ALTER MATERIALIZED TABLE users_shops"
+                        + " AS SELECT \n"
+                        + "  user_id,\n"
+                        + "  shop_id,\n"
+                        + "  ds,\n"
+                        + "  COUNT(order_id) AS order_cnt,\n"
+                        + "  SUM(order_amount) AS order_amount_sum\n"
+                        + " FROM (\n"
+                        + "    SELECT user_id, shop_id, order_created_at AS ds, order_id, 1 as order_amount FROM my_source"
+                        + " ) AS tmp\n"
+                        + " GROUP BY (user_id, shop_id, ds)";
 
         OperationHandle alterMaterializedTableAsQueryHandle =
                 service.executeStatement(
@@ -1083,6 +1095,51 @@ public class MaterializedTableStatementITCase extends AbstractMaterializedTableS
         assertThat(oldTable.getSerializedRefreshHandler())
                 .isEqualTo(newTable.getSerializedRefreshHandler());
         assertThat(oldTable.getDefinitionFreshness()).isEqualTo(newTable.getDefinitionFreshness());
+    }
+
+    @Test
+    void testAlterMaterializedTableAddDistribution() throws Exception {
+        createAndVerifyCreateMaterializedTableWithData(
+                "users_shops", Collections.emptyList(), Collections.emptyMap(), RefreshMode.FULL);
+
+        ResolvedCatalogMaterializedTable oldTable =
+                (ResolvedCatalogMaterializedTable)
+                        service.getTable(
+                                sessionHandle,
+                                ObjectIdentifier.of(
+                                        fileSystemCatalogName,
+                                        TEST_DEFAULT_DATABASE,
+                                        "users_shops"));
+
+        // Alter materialized table as query in full mode
+        String alterMaterializedTableAsQueryDDL =
+                "ALTER MATERIALIZED TABLE users_shops ADD DISTRIBUTION BY HASH (`order_id`) INTO 2 BUCKETS";
+
+        OperationHandle alterMaterializedTableAsQueryHandle =
+                service.executeStatement(
+                        sessionHandle, alterMaterializedTableAsQueryDDL, -1, new Configuration());
+
+        awaitOperationTermination(service, sessionHandle, alterMaterializedTableAsQueryHandle);
+
+        // verify the altered materialized table
+        ResolvedCatalogMaterializedTable newTable =
+                (ResolvedCatalogMaterializedTable)
+                        service.getTable(
+                                sessionHandle,
+                                ObjectIdentifier.of(
+                                        fileSystemCatalogName,
+                                        TEST_DEFAULT_DATABASE,
+                                        "users_shops"));
+
+        assertThat(newTable.getDefinitionQuery()).isEqualTo(oldTable.getDefinitionQuery());
+
+        // the refresh handler in full mode should be the same as the old one
+        assertThat(oldTable.getSerializedRefreshHandler())
+                .isEqualTo(newTable.getSerializedRefreshHandler());
+        assertThat(oldTable.getDefinitionFreshness()).isEqualTo(newTable.getDefinitionFreshness());
+
+        assertThat(newTable.getDistribution().get())
+                .isEqualTo(TableDistribution.of(Kind.HASH, 2, List.of("order_id")));
     }
 
     @Test
