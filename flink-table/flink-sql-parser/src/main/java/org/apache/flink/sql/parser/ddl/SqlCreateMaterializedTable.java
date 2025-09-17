@@ -37,7 +37,6 @@ import org.apache.calcite.util.ImmutableNullableList;
 
 import javax.annotation.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,13 +50,17 @@ public class SqlCreateMaterializedTable extends SqlCreate {
 
     private final SqlIdentifier tableName;
 
-    private final SqlCharStringLiteral comment;
+    private final SqlNodeList columnList;
 
-    private final SqlTableConstraint tableConstraint;
+    private final List<SqlTableConstraint> tableConstraints;
+
+    private final SqlCharStringLiteral comment;
 
     private final SqlDistribution distribution;
 
     private final SqlNodeList partitionKeyList;
+
+    private final SqlWatermark watermark;
 
     private final SqlNodeList propertyList;
 
@@ -70,7 +73,9 @@ public class SqlCreateMaterializedTable extends SqlCreate {
     public SqlCreateMaterializedTable(
             SqlParserPos pos,
             SqlIdentifier tableName,
-            @Nullable SqlTableConstraint tableConstraint,
+            SqlNodeList columnList,
+            List<SqlTableConstraint> tableConstraints,
+            SqlWatermark watermark,
             @Nullable SqlCharStringLiteral comment,
             @Nullable SqlDistribution distribution,
             SqlNodeList partitionKeyList,
@@ -80,8 +85,10 @@ public class SqlCreateMaterializedTable extends SqlCreate {
             SqlNode asQuery) {
         super(OPERATOR, pos, false, false);
         this.tableName = requireNonNull(tableName, "tableName should not be null");
+        this.columnList = columnList;
+        this.tableConstraints = tableConstraints;
+        this.watermark = watermark;
         this.comment = comment;
-        this.tableConstraint = tableConstraint;
         this.distribution = distribution;
         this.partitionKeyList =
                 requireNonNull(partitionKeyList, "partitionKeyList should not be null");
@@ -100,8 +107,10 @@ public class SqlCreateMaterializedTable extends SqlCreate {
     public List<SqlNode> getOperandList() {
         return ImmutableNullableList.of(
                 tableName,
+                columnList,
+                new SqlNodeList(tableConstraints, SqlParserPos.ZERO),
+                watermark,
                 comment,
-                tableConstraint,
                 partitionKeyList,
                 propertyList,
                 freshness,
@@ -116,12 +125,20 @@ public class SqlCreateMaterializedTable extends SqlCreate {
         return tableName.names.toArray(new String[0]);
     }
 
-    public Optional<SqlCharStringLiteral> getComment() {
-        return Optional.ofNullable(comment);
+    public SqlNodeList getColumnList() {
+        return columnList;
     }
 
-    public Optional<SqlTableConstraint> getTableConstraint() {
-        return Optional.ofNullable(tableConstraint);
+    public List<SqlTableConstraint> getTableConstraints() {
+        return tableConstraints;
+    }
+
+    public Optional<SqlWatermark> getWatermark() {
+        return Optional.ofNullable(watermark);
+    }
+
+    public Optional<SqlCharStringLiteral> getComment() {
+        return Optional.ofNullable(comment);
     }
 
     public SqlDistribution getDistribution() {
@@ -153,15 +170,9 @@ public class SqlCreateMaterializedTable extends SqlCreate {
         writer.keyword("CREATE MATERIALIZED TABLE");
         tableName.unparse(writer, leftPrec, rightPrec);
 
-        if (tableConstraint != null) {
-            writer.newlineAndIndent();
+        if (!columnList.isEmpty() || !tableConstraints.isEmpty() || watermark != null) {
             SqlUnparseUtils.unparseTableSchema(
-                    writer,
-                    leftPrec,
-                    rightPrec,
-                    SqlNodeList.EMPTY,
-                    Collections.singletonList(tableConstraint),
-                    null);
+                    writer, leftPrec, rightPrec, columnList, tableConstraints, watermark);
         }
 
         if (comment != null) {

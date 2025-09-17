@@ -413,8 +413,7 @@ class MaterializedTableStatementParserTest {
                         + ")\n"
                         + "FRESHNESS = INTERVAL '3' MINUTE\n"
                         + "AS SELECT a, b, h, t m FROM source",
-                "CREATE MATERIALIZED TABLE `TBL1`\n"
-                        + "(\n"
+                "CREATE MATERIALIZED TABLE `TBL1` (\n"
                         + "  PRIMARY KEY (`A`, `B`)\n"
                         + ")\n"
                         + "COMMENT 'table comment'\n"
@@ -440,8 +439,7 @@ class MaterializedTableStatementParserTest {
                         + "FRESHNESS = INTERVAL '3' MINUTE\n"
                         + "REFRESH_MODE = FULL\n"
                         + "AS SELECT a, b, h, t m FROM source",
-                "CREATE MATERIALIZED TABLE `TBL1`\n"
-                        + "(\n"
+                "CREATE MATERIALIZED TABLE `TBL1` (\n"
                         + "  PRIMARY KEY (`A`, `B`)\n"
                         + ")\n"
                         + "COMMENT 'table comment'\n"
