@@ -138,12 +138,9 @@ public class SqlCreateMaterializedTableConverter
                         .collect(Collectors.toSet()));
 
         // verify and build primary key
-        sqlCreateMaterializedTable
-                .getTableConstraint()
-                .ifPresent(
-                        sqlTableConstraint ->
-                                verifyAndBuildPrimaryKey(
-                                        builder, resolvedSchema, sqlTableConstraint));
+        for (SqlTableConstraint constraint : sqlCreateMaterializedTable.getTableConstraints()) {
+            verifyAndBuildPrimaryKey(builder, resolvedSchema, constraint);
+        }
 
         Optional<TableDistribution> tableDistribution =
                 Optional.ofNullable(sqlCreateMaterializedTable.getDistribution())
