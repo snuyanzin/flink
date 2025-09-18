@@ -169,7 +169,7 @@ under the License.
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.40</version>
+			<version>1.18.42</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -196,14 +196,13 @@ under the License.
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<compilerArgs>
-						<!-- Prevents recompilation due to missing package-info.class, see MCOMPILER-205 -->
-						<arg>-Xpkginfo:always</arg>
-						<arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
-						<arg>--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED</arg>
-						<arg>--add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED</arg>
-						<arg>-proc:full</arg>
-					</compilerArgs>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>1.18.42</version>
+						</path>
+					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 			<!-- publish some test base classes -->
