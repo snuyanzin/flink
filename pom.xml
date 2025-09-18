@@ -127,7 +127,7 @@ under the License.
 		<flink.forkCountUnitTest>4</flink.forkCountUnitTest>
 		<flink.reuseForks>true</flink.reuseForks>
 		<flink.surefire.baseArgLine>-XX:+UseG1GC -Xms256m -XX:+IgnoreUnrecognizedVMOptions ${surefire.module.config}</flink.surefire.baseArgLine>
-		<flink.shaded.version>20.0</flink.shaded.version>
+		<flink.shaded.version>21.0</flink.shaded.version>
 		<flink.shaded.jackson.version>2.18.2</flink.shaded.jackson.version>
 		<flink.shaded.jsonpath.version>2.9.0</flink.shaded.jsonpath.version>
 		<flink.markBundledAsOptional>true</flink.markBundledAsOptional>
@@ -141,6 +141,7 @@ under the License.
 		<maven.compiler.source>${target.java.version}</maven.compiler.source>
 		<maven.compiler.target>${target.java.version}</maven.compiler.target>
 		<scala.macros.version>2.1.1</scala.macros.version>
+		<scala.compat.version>2.12.20</scala.compat.version>
 		<scala.version>2.12.20</scala.version>
 		<scala.binary.version>2.12</scala.binary.version>
 		<!-- keep FlinkTestcontainersConfigurator.configureZookeeperContainer in sync -->
@@ -182,7 +183,7 @@ under the License.
 		<japicmp.outputDir>tools/japicmp-output</japicmp.outputDir>
 		<checkstyle.version>10.18.2</checkstyle.version>
 		<spotless.skip>false</spotless.skip>
-		<spotless.version>2.43.0</spotless.version>
+		<spotless.version>2.46.1</spotless.version>
 		<spotless.scalafmt.version>3.4.3</spotless.scalafmt.version>
 		<spotless.delimiter>package</spotless.delimiter>
 		<spotless.license.header>
@@ -355,7 +356,7 @@ under the License.
 			<dependency>
 				<groupId>org.apache.flink</groupId>
 				<artifactId>flink-shaded-asm-9</artifactId>
-				<version>9.6-${flink.shaded.version}</version>
+				<version>9.8-${flink.shaded.version}</version>
 			</dependency>
 
 			<dependency>
@@ -610,13 +611,13 @@ under the License.
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy</artifactId>
-				<version>1.15.11</version>
+				<version>1.17.6</version>
 			</dependency>
 
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy-agent</artifactId>
-				<version>1.15.11</version>
+				<version>1.17.6</version>
 			</dependency>
 
 			<!-- For dependency convergence -->
@@ -787,25 +788,25 @@ under the License.
 			<dependency>
 				<groupId>org.scala-lang</groupId>
 				<artifactId>scala-library</artifactId>
-				<version>${scala.version}</version>
+				<version>${scala.compat.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.scala-lang</groupId>
 				<artifactId>scala-reflect</artifactId>
-				<version>${scala.version}</version>
+				<version>${scala.compat.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.scala-lang</groupId>
 				<artifactId>scala-compiler</artifactId>
-				<version>${scala.version}</version>
+				<version>${scala.compat.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.scalatest</groupId>
 				<artifactId>scalatest_${scala.binary.version}</artifactId>
-				<version>3.0.0</version>
+				<version>3.1.4</version>
 				<scope>test</scope>
 			</dependency>
 
@@ -967,7 +968,7 @@ under the License.
 		<profile>
 			<id>scala-2.12</id>
 			<properties>
-				<scala.version>2.12.20</scala.version>
+				<scala.compat.version>2.12.20</scala.compat.version>
 				<scala.binary.version>2.12</scala.binary.version>
 			</properties>
 			<activation>
@@ -2188,6 +2189,7 @@ under the License.
 
 							<removeUnusedImports />
 						</java>
+						<skip>true</skip>
 					</configuration>
 					<executions>
 						<execution>
@@ -2297,10 +2299,17 @@ under the License.
 				<plugin>
 					<groupId>net.alchim31.maven</groupId>
 					<artifactId>scala-maven-plugin</artifactId>
-					<version>3.2.2</version>
+					<version>4.4.1</version>
 					<configuration>
+						<recompileMode>incremental</recompileMode>
+						<javacArgs>
+							<javacArg>-Xlint:unchecked</javacArg>
+							<javacArg>-Xlint:deprecation</javacArg>
+							<javacArg>-proc:full</javacArg>
+						</javacArgs>
 						<args>
 							<arg>-nobootcp</arg>
+							<arg>-nowarn</arg>
 						</args>
 						<jvmArgs>
 							<arg>-Xss2m</arg>

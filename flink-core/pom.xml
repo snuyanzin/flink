@@ -192,6 +192,20 @@ under the License.
 				</configuration>
 			</plugin>
 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<compilerArgs>
+						<!-- Prevents recompilation due to missing package-info.class, see MCOMPILER-205 -->
+						<arg>-Xpkginfo:always</arg>
+						<arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
+						<arg>--add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED</arg>
+						<arg>--add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED</arg>
+						<arg>-proc:full</arg>
+					</compilerArgs>
+				</configuration>
+			</plugin>
 			<!-- publish some test base classes -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
