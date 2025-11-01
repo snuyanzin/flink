@@ -251,7 +251,7 @@ public class DiffRepository {
 
     // ~ Methods ----------------------------------------------------------------
 
-    private static URL findFile(Class clazz, final String suffix) {
+    private static URL findFile(Class<?> clazz, final String suffix) {
         // The reference file for class "com.foo.Bar" is "com/foo/Bar.xml"
         String rest = "/" + clazz.getName().replace('.', File.separatorChar) + suffix;
         URL url = clazz.getResource(rest);
@@ -277,7 +277,7 @@ public class DiffRepository {
      * Expands a string containing one or more variables. (Currently only works if there is one
      * variable.)
      */
-    public synchronized String expand(String testCaseName, String tag, String text) {
+    public String expand(String testCaseName, String tag, String text) {
         if (text == null) {
             return null;
         } else if (text.startsWith("${") && text.endsWith("}")) {
@@ -764,12 +764,12 @@ public class DiffRepository {
 
     /** Cache key. */
     private static class Key {
-        private final Class clazz;
+        private final Class<?> clazz;
         private final DiffRepository baseRepository;
         private final Filter filter;
 
-        Key(Class clazz, DiffRepository baseRepository, Filter filter) {
-            this.clazz = Objects.requireNonNull(clazz);
+        Key(Class<?> clazz, DiffRepository baseRepository, Filter filter) {
+            this.clazz = Objects.requireNonNull(clazz, "clazz");
             this.baseRepository = baseRepository;
             this.filter = filter;
         }
