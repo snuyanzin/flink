@@ -17,6 +17,10 @@
 
 package org.apache.flink.table.planner.utils;
 
+import org.apache.flink.shaded.guava33.com.google.common.cache.CacheBuilder;
+import org.apache.flink.shaded.guava33.com.google.common.cache.CacheLoader;
+import org.apache.flink.shaded.guava33.com.google.common.cache.LoadingCache;
+
 import org.apache.calcite.avatica.util.Spaces;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Sources;
@@ -45,10 +49,9 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 // THIS FILE IS COPIED FROM APACHE CALCITE
@@ -188,7 +191,8 @@ public class DiffRepository {
      * share the same diff-repository: if the repository gets loaded once per test case, then only
      * one diff is recorded.
      */
-    private static final Map<Class<?>, DiffRepository> MAP_CLASS_TO_REPOSITORY = new HashMap<>();
+    private static final LoadingCache<Key, DiffRepository> REPOSITORY_CACHE =
+            CacheBuilder.newBuilder().build(CacheLoader.from(Key::toRepo));
 
     // ~ Instance fields --------------------------------------------------------
 
@@ -198,8 +202,6 @@ public class DiffRepository {
     private final Element root;
     private final File logFile;
     private final Filter filter;
-
-    // ~ Constructors -----------------------------------------------------------
 
     /**
      * Creates a DiffRepository.
@@ -736,19 +738,8 @@ public class DiffRepository {
      */
     public static synchronized DiffRepository lookup(
             Class<?> clazz, DiffRepository baseRepository, Filter filter) {
-        DiffRepository diffRepository = MAP_CLASS_TO_REPOSITORY.get(clazz);
-        if (diffRepository == null) {
-            final URL refFile = findFile(clazz, ".xml");
-            final File logFile =
-                    new File(
-                            Sources.of(refFile)
-                                    .file()
-                                    .getAbsolutePath()
-                                    .replace("test-classes", "surefire"));
-            diffRepository = new DiffRepository(refFile, logFile, baseRepository, filter);
-            MAP_CLASS_TO_REPOSITORY.put(clazz, diffRepository);
-        }
-        return diffRepository;
+        final Key key = new Key(clazz, baseRepository, filter);
+        return REPOSITORY_CACHE.getUnchecked(key);
     }
 
     /** Callback to filter strings before returning them. */
@@ -770,6 +761,40 @@ public class DiffRepository {
                 String text,
                 String expanded);
     }
-}
 
-// End DiffRepository.java
+    /** Cache key. */
+    private static class Key {
+        private final Class clazz;
+        private final DiffRepository baseRepository;
+        private final Filter filter;
+
+        Key(Class clazz, DiffRepository baseRepository, Filter filter) {
+            this.clazz = Objects.requireNonNull(clazz);
+            this.baseRepository = baseRepository;
+            this.filter = filter;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(clazz, baseRepository, filter);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return this == obj
+                    || obj instanceof Key
+                            && clazz.equals(((Key) obj).clazz)
+                            && Objects.equals(baseRepository, ((Key) obj).baseRepository)
+                            && Objects.equals(filter, ((Key) obj).filter);
+        }
+
+        DiffRepository toRepo() {
+            final URL refFile = findFile(clazz, ".xml");
+            final String refFilePath = Sources.of(refFile).file().getAbsolutePath();
+            final String logFilePath = refFilePath.replace(".xml", "_actual.xml");
+            final File logFile = new File(logFilePath);
+            assert !refFilePath.equals(logFile.getAbsolutePath());
+            return new DiffRepository(refFile, logFile, baseRepository, filter);
+        }
+    }
+}
