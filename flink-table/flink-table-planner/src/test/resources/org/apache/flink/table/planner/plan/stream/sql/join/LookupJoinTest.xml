@@ -277,6 +277,20 @@ GroupAggregate(groupBy=[b], select=[b, COUNT_RETRACT(a) AS EXPR$1, SUM_RETRACT(c
     </Resource>
   </TestCase>
   <TestCase name="testJoinAsyncTableKeyOrderedWithAppendOnlySource">
+    <Resource name="sql">
+      <![CDATA[SELECT /*+ LOOKUP('table'='D', 'async'='true', 'output-mode'='allow_unordered') */ * FROM (SELECT *, PROCTIME() AS proctime FROM AppendOnlyTable) AS T JOIN AsyncLookupTable FOR SYSTEM_TIME AS OF T.proctime AS D ON T.id = D.id]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(id=[$0], name=[$1], age=[$2], proctime=[$3], id0=[$4], name0=[$5], age0=[$6])
++- LogicalCorrelate(correlation=[$cor0], joinType=[inner], requiredColumns=[{0, 3}], joinHints=[[[LOOKUP inheritPath:[0] options:{async=true, output-mode=allow_unordered, table=D}]]])
+   :- LogicalProject(id=[$0], name=[$1], age=[$2], proctime=[PROCTIME()])
+   :  +- LogicalTableScan(table=[[default_catalog, default_database, AppendOnlyTable]], hints=[[[ALIAS inheritPath:[] options:[AppendOnlyTable]]]])
+   +- LogicalFilter(condition=[=($cor0.id, $0)])
+      +- LogicalSnapshot(period=[$cor0.proctime])
+         +- LogicalTableScan(table=[[default_catalog, default_database, AsyncLookupTable]])
+]]>
+    </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
 Calc(select=[id, name, age, PROCTIME_MATERIALIZE(proctime) AS proctime, id0, name0, age0])

@@ -487,15 +487,6 @@ Sink(table=[default_catalog.default_database.sink], fields=[a, b])
          +- DataStreamScan(table=[[default_catalog, default_database, MyTable]], fields=[a, b, c])
 ]]>
     </Resource>
-    <Resource name="optimized rel plan">
-      <![CDATA[
-Sink(table=[default_catalog.default_database.sink], fields=[a, b])
-+- Sort(orderBy=[a ASC])
-   +- Exchange(distribution=[single])
-      +- Calc(select=[a, b])
-         +- DataStreamScan(table=[[default_catalog, default_database, MyTable]], fields=[a, b, c])
-]]>
-    </Resource>
   </TestCase>
   <TestCase name="testInsertPartColumn">
     <Resource name="ast">

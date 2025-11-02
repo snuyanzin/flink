@@ -532,7 +532,7 @@ public class DiffRepository {
         int i = 0;
         final List<String> names = Pair.left(map);
         for (String s : names) {
-            if (s.compareToIgnoreCase(testCaseName) <= 0) {
+            if (s.compareTo(testCaseName) <= 0) {
                 ++i;
             }
         }
@@ -543,13 +543,13 @@ public class DiffRepository {
         // The intended effect is that if the list is already sorted, the new item
         // will end up in exactly the right position, and if the list is not sorted,
         // the new item will end up in approximately the right position.
-        while (i < map.size() && names.get(i).compareToIgnoreCase(testCaseName) < 0) {
+        while (i < map.size() && names.get(i).compareTo(testCaseName) < 0) {
             ++i;
         }
-        if (i >= map.size() - 1) {
+        if (i > map.size() - 1) {
             return null;
         }
-        while (i >= 0 && names.get(i).compareToIgnoreCase(testCaseName) > 0) {
+        while (i >= 0 && names.get(i).compareTo(testCaseName) > 0) {
             --i;
         }
         return map.get(i + 1).right;
@@ -884,10 +884,12 @@ public class DiffRepository {
 
         DiffRepository toRepo() {
             final URL refFile = findFile(clazz, ".xml");
-            final String refFilePath = Sources.of(refFile).file().getAbsolutePath();
-            final String logFilePath = refFilePath.replace(".xml", "_actual.xml");
+            final File file = Sources.of(refFile).file();
+            final String refFilePath = file.getAbsolutePath();
+            final String logFilePath =
+                    file.length() > 0 ? refFilePath.replace(".xml", "_actual.xml") : refFilePath;
             final File logFile = new File(logFilePath);
-            assert !refFilePath.equals(logFile.getAbsolutePath());
+            assert file.length() == 0 || !refFilePath.equals(logFile.getAbsolutePath());
             return new DiffRepository(refFile, logFile, baseRepository, filter, indent);
         }
     }
