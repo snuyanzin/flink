@@ -23,7 +23,6 @@ import org.apache.flink.shaded.guava33.com.google.common.cache.LoadingCache;
 import org.apache.flink.shaded.guava33.com.google.common.collect.ImmutableSortedSet;
 
 import org.apache.calcite.avatica.util.Spaces;
-import org.apache.calcite.linq4j.Nullness;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Sources;
 import org.apache.calcite.util.Util;
@@ -255,8 +254,7 @@ public class DiffRepository {
 
         // Load the document.
         try {
-            DocumentBuilder docBuilder =
-                    DOCUMENT_BUILDER_FACTORY.get().newDocumentBuilder();
+            DocumentBuilder docBuilder = DOCUMENT_BUILDER_FACTORY.get().newDocumentBuilder();
             try (InputStream inputStream = refFile.openStream()) {
                 // Parse the reference file.
                 this.doc = docBuilder.parse(inputStream);
