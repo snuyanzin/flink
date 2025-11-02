@@ -23,6 +23,7 @@ import org.apache.flink.shaded.guava33.com.google.common.cache.LoadingCache;
 import org.apache.flink.shaded.guava33.com.google.common.collect.ImmutableSortedSet;
 
 import org.apache.calcite.avatica.util.Spaces;
+import org.apache.calcite.linq4j.Nullness;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Sources;
 import org.apache.calcite.util.Util;
@@ -40,12 +41,14 @@ import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -198,6 +201,27 @@ public class DiffRepository {
     private static final LoadingCache<Key, DiffRepository> REPOSITORY_CACHE =
             CacheBuilder.newBuilder().build(CacheLoader.from(Key::toRepo));
 
+    private static final ThreadLocal<DocumentBuilderFactory> DOCUMENT_BUILDER_FACTORY =
+            ThreadLocal.withInitial(
+                    () -> {
+                        final DocumentBuilderFactory documentBuilderFactory =
+                                DocumentBuilderFactory.newInstance();
+                        documentBuilderFactory.setXIncludeAware(false);
+                        documentBuilderFactory.setExpandEntityReferences(false);
+                        documentBuilderFactory.setNamespaceAware(true);
+
+                        try {
+                            documentBuilderFactory.setFeature(
+                                    XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                            documentBuilderFactory.setFeature(
+                                    "http://apache.org/xml/features/disallow-doctype-decl", true);
+                        } catch (final ParserConfigurationException e) {
+                            throw new IllegalStateException(
+                                    "Document Builder configuration failed", e);
+                        }
+                        return documentBuilderFactory;
+                    });
+
     // ~ Instance fields --------------------------------------------------------
 
     private final DiffRepository baseRepository;
@@ -230,14 +254,13 @@ public class DiffRepository {
         this.modCount = 0;
 
         // Load the document.
-        DocumentBuilderFactory fac = DocumentBuilderFactory.newInstance();
         try {
-            DocumentBuilder docBuilder = fac.newDocumentBuilder();
-            try {
+            DocumentBuilder docBuilder =
+                    Nullness.castNonNull(DOCUMENT_BUILDER_FACTORY.get()).newDocumentBuilder();
+            try (InputStream inputStream = refFile.openStream()) {
                 // Parse the reference file.
-                this.doc = docBuilder.parse(refFile.openStream());
-                // Don't write a log file yet -- as far as we know, it's still
-                // identical.
+                this.doc = docBuilder.parse(inputStream);
+                // Don't write a log file yet -- as far as we know, it's still identical.
             } catch (IOException | SAXParseException e) {
                 // There's no reference file. Create and write a log file.
                 this.doc = docBuilder.newDocument();
