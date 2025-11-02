@@ -44,18 +44,18 @@ class SortAggregateTest(aggStrategy: AggregatePhaseStrategy) extends AggregateTe
   def testApproximateCountDistinct(): Unit = {
     val sql =
       """
-        |SELECT 
-        | APPROX_COUNT_DISTINCT(`byte`), 
-        | APPROX_COUNT_DISTINCT(`short`), 
-        | APPROX_COUNT_DISTINCT(`int`), 
-        | APPROX_COUNT_DISTINCT(`long`), 
-        | APPROX_COUNT_DISTINCT(`float`), 
-        | APPROX_COUNT_DISTINCT(`double`), 
-        | APPROX_COUNT_DISTINCT(`string`), 
-        | APPROX_COUNT_DISTINCT(`date`), 
-        | APPROX_COUNT_DISTINCT(`time`), 
-        | APPROX_COUNT_DISTINCT(`timestamp`), 
-        | APPROX_COUNT_DISTINCT(`decimal3020`), 
+        |SELECT
+        | APPROX_COUNT_DISTINCT(`byte`),
+        | APPROX_COUNT_DISTINCT(`short`),
+        | APPROX_COUNT_DISTINCT(`int`),
+        | APPROX_COUNT_DISTINCT(`long`),
+        | APPROX_COUNT_DISTINCT(`float`),
+        | APPROX_COUNT_DISTINCT(`double`),
+        | APPROX_COUNT_DISTINCT(`string`),
+        | APPROX_COUNT_DISTINCT(`date`),
+        | APPROX_COUNT_DISTINCT(`time`),
+        | APPROX_COUNT_DISTINCT(`timestamp`),
+        | APPROX_COUNT_DISTINCT(`decimal3020`),
         | APPROX_COUNT_DISTINCT(`decimal105`)
         | FROM MyTable
       """.stripMargin

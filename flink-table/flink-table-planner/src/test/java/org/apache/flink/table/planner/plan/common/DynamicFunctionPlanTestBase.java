@@ -91,7 +91,7 @@ public abstract class DynamicFunctionPlanTestBase extends TableTestBase {
     @Test
     void testCalcMerge() {
         util.verifyExecPlan(
-                "SELECT * FROM ( \n"
+                "SELECT * FROM (\n"
                         + "   SELECT *, SUBSTR(CAST(LOCALTIME AS VARCHAR), 1, 2) hh\n"
                         + "   FROM src\n"
                         + " ) t1 WHERE hh > 12 AND cat LIKE 'fruit%'\n");

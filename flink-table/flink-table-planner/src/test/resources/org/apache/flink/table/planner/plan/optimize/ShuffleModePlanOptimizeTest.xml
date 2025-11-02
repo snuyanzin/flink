@@ -17,12 +17,12 @@
   ~ limitations under the License.
   -->
 <Root>
-	<TestCase name="testMultipleInputWithDPP[mode = ALL_EXCHANGES_BLOCKING]">
-		<Resource name="sql">
-			<![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 400) s3]]>
-		</Resource>
-		<Resource name="ast">
-			<![CDATA[
+  <TestCase name="testMultipleInputWithDPP[mode = ALL_EXCHANGES_BLOCKING]">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 400) s3]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
 LogicalProject(c1=[$0], c2=[$1], c3=[$2])
 +- LogicalJoin(condition=[true], joinType=[inner])
    :- LogicalJoin(condition=[true], joinType=[inner])
@@ -42,9 +42,9 @@ LogicalProject(c1=[$0], c2=[$1], c3=[$2])
             :- LogicalTableScan(table=[[testCatalog, test_database, fact_part]])
             +- LogicalTableScan(table=[[testCatalog, test_database, dim]])
 ]]>
-		</Resource>
-		<Resource name="optimized exec plan">
-			<![CDATA[
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
 MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2, c3], build=[right], singleRowJoin=[true])\n:- NestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2], build=[left], singleRowJoin=[true])\n:  :- [#2] Exchange(distribution=[broadcast])\n:  +- [#3] HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c2])\n+- [#1] Exchange(distribution=[broadcast])\n])
 :- Exchange(distribution=[broadcast])
 :  +- HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c3])
@@ -84,14 +84,14 @@ MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin],
             +- Exchange(distribution=[hash[dim_date_sk]])
                +- Reused(reference_id=[3])
 ]]>
-		</Resource>
-	</TestCase>
-	<TestCase name="testMultipleInputWithDPP[mode = ALL_EXCHANGES_HYBRID_SELECTIVE]">
-		<Resource name="sql">
-			<![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 400) s3]]>
-		</Resource>
-		<Resource name="ast">
-			<![CDATA[
+    </Resource>
+  </TestCase>
+  <TestCase name="testMultipleInputWithDPP[mode = ALL_EXCHANGES_HYBRID_FULL]">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 400) s3]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
 LogicalProject(c1=[$0], c2=[$1], c3=[$2])
 +- LogicalJoin(condition=[true], joinType=[inner])
    :- LogicalJoin(condition=[true], joinType=[inner])
@@ -111,9 +111,9 @@ LogicalProject(c1=[$0], c2=[$1], c3=[$2])
             :- LogicalTableScan(table=[[testCatalog, test_database, fact_part]])
             +- LogicalTableScan(table=[[testCatalog, test_database, dim]])
 ]]>
-		</Resource>
-		<Resource name="optimized exec plan">
-			<![CDATA[
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
 MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2, c3], build=[right], singleRowJoin=[true])\n:- NestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2], build=[left], singleRowJoin=[true])\n:  :- [#2] Exchange(distribution=[broadcast])\n:  +- [#3] HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c2])\n+- [#1] Exchange(distribution=[broadcast])\n])
 :- Exchange(distribution=[broadcast])
 :  +- HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c3])
@@ -153,14 +153,14 @@ MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin],
             +- Exchange(distribution=[hash[dim_date_sk]], shuffle_mode=[BATCH])
                +- Reused(reference_id=[3])
 ]]>
-		</Resource>
-	</TestCase>
-	<TestCase name="testMultipleInputWithDPP[mode = ALL_EXCHANGES_HYBRID_FULL]">
-		<Resource name="sql">
-			<![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 400) s3]]>
-		</Resource>
-		<Resource name="ast">
-			<![CDATA[
+    </Resource>
+  </TestCase>
+  <TestCase name="testMultipleInputWithDPP[mode = ALL_EXCHANGES_HYBRID_SELECTIVE]">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and dim.price < 400) s3]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
 LogicalProject(c1=[$0], c2=[$1], c3=[$2])
 +- LogicalJoin(condition=[true], joinType=[inner])
    :- LogicalJoin(condition=[true], joinType=[inner])
@@ -180,9 +180,9 @@ LogicalProject(c1=[$0], c2=[$1], c3=[$2])
             :- LogicalTableScan(table=[[testCatalog, test_database, fact_part]])
             +- LogicalTableScan(table=[[testCatalog, test_database, dim]])
 ]]>
-		</Resource>
-		<Resource name="optimized exec plan">
-			<![CDATA[
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
 MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2, c3], build=[right], singleRowJoin=[true])\n:- NestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2], build=[left], singleRowJoin=[true])\n:  :- [#2] Exchange(distribution=[broadcast])\n:  +- [#3] HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c2])\n+- [#1] Exchange(distribution=[broadcast])\n])
 :- Exchange(distribution=[broadcast])
 :  +- HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c3])
@@ -222,14 +222,14 @@ MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin],
             +- Exchange(distribution=[hash[dim_date_sk]], shuffle_mode=[BATCH])
                +- Reused(reference_id=[3])
 ]]>
-		</Resource>
-	</TestCase>
-	<TestCase name="testMultipleInputWithoutDPP[mode = ALL_EXCHANGES_BLOCKING]">
-		<Resource name="sql">
-			<![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 400) s3]]>
-		</Resource>
-		<Resource name="ast">
-		<![CDATA[
+    </Resource>
+  </TestCase>
+  <TestCase name="testMultipleInputWithoutDPP[mode = ALL_EXCHANGES_BLOCKING]">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 400) s3]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
 LogicalProject(c1=[$0], c2=[$1], c3=[$2])
 +- LogicalJoin(condition=[true], joinType=[inner])
    :- LogicalJoin(condition=[true], joinType=[inner])
@@ -249,9 +249,9 @@ LogicalProject(c1=[$0], c2=[$1], c3=[$2])
             :- LogicalTableScan(table=[[testCatalog, test_database, fact_part]])
             +- LogicalTableScan(table=[[testCatalog, test_database, dim]])
 ]]>
-		</Resource>
-		<Resource name="optimized exec plan">
-		<![CDATA[
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
 MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2, c3], build=[right], singleRowJoin=[true])\n:- NestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2], build=[left], singleRowJoin=[true])\n:  :- [#2] Exchange(distribution=[broadcast])\n:  +- [#3] HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c2])\n+- [#1] Exchange(distribution=[broadcast])\n])
 :- Exchange(distribution=[broadcast])
 :  +- HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c3])
@@ -281,14 +281,14 @@ MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin],
             :     +- Reused(reference_id=[1])
             +- Reused(reference_id=[2])
 ]]>
-		</Resource>
-	</TestCase>
-	<TestCase name="testMultipleInputWithoutDPP[mode = ALL_EXCHANGES_HYBRID_SELECTIVE]">
-		<Resource name="sql">
-			<![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 400) s3]]>
-		</Resource>
-		<Resource name="ast">
-			<![CDATA[
+    </Resource>
+  </TestCase>
+  <TestCase name="testMultipleInputWithoutDPP[mode = ALL_EXCHANGES_HYBRID_FULL]">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 400) s3]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
 LogicalProject(c1=[$0], c2=[$1], c3=[$2])
 +- LogicalJoin(condition=[true], joinType=[inner])
    :- LogicalJoin(condition=[true], joinType=[inner])
@@ -308,9 +308,9 @@ LogicalProject(c1=[$0], c2=[$1], c3=[$2])
             :- LogicalTableScan(table=[[testCatalog, test_database, fact_part]])
             +- LogicalTableScan(table=[[testCatalog, test_database, dim]])
 ]]>
-		</Resource>
-		<Resource name="optimized exec plan">
-			<![CDATA[
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
 MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2, c3], build=[right], singleRowJoin=[true])\n:- NestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2], build=[left], singleRowJoin=[true])\n:  :- [#2] Exchange(distribution=[broadcast])\n:  +- [#3] HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c2])\n+- [#1] Exchange(distribution=[broadcast])\n])
 :- Exchange(distribution=[broadcast])
 :  +- HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c3])
@@ -340,14 +340,14 @@ MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin],
             :     +- Reused(reference_id=[1])
             +- Reused(reference_id=[2])
 ]]>
-		</Resource>
-	</TestCase>
-	<TestCase name="testMultipleInputWithoutDPP[mode = ALL_EXCHANGES_HYBRID_FULL]">
-		<Resource name="sql">
-			<![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 400) s3]]>
-		</Resource>
-		<Resource name="ast">
-			<![CDATA[
+    </Resource>
+  </TestCase>
+  <TestCase name="testMultipleInputWithoutDPP[mode = ALL_EXCHANGES_HYBRID_SELECTIVE]">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM (Select count(*) c1 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 100) s1, (Select count(*) c2 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 200) s2, (Select count(*) c3 from fact_part, dim where fact_part.fact_date_sk = dim_date_sk and fact_part.price < 400) s3]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
 LogicalProject(c1=[$0], c2=[$1], c3=[$2])
 +- LogicalJoin(condition=[true], joinType=[inner])
    :- LogicalJoin(condition=[true], joinType=[inner])
@@ -367,9 +367,9 @@ LogicalProject(c1=[$0], c2=[$1], c3=[$2])
             :- LogicalTableScan(table=[[testCatalog, test_database, fact_part]])
             +- LogicalTableScan(table=[[testCatalog, test_database, dim]])
 ]]>
-		</Resource>
-		<Resource name="optimized exec plan">
-			<![CDATA[
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
 MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2, c3], build=[right], singleRowJoin=[true])\n:- NestedLoopJoin(joinType=[InnerJoin], where=[true], select=[c1, c2], build=[left], singleRowJoin=[true])\n:  :- [#2] Exchange(distribution=[broadcast])\n:  +- [#3] HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c2])\n+- [#1] Exchange(distribution=[broadcast])\n])
 :- Exchange(distribution=[broadcast])
 :  +- HashAggregate(isMerge=[true], select=[Final_COUNT(count1$0) AS c3])
@@ -399,6 +399,6 @@ MultipleInput(readOrder=[0,0,1], members=[\nNestedLoopJoin(joinType=[InnerJoin],
             :     +- Reused(reference_id=[1])
             +- Reused(reference_id=[2])
 ]]>
-		</Resource>
-	</TestCase>
+    </Resource>
+  </TestCase>
 </Root>
