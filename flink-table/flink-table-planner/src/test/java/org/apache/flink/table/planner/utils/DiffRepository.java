@@ -56,6 +56,8 @@ import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static java.util.Objects.requireNonNull;
+
 // THIS FILE IS COPIED FROM APACHE CALCITE
 
 /**
@@ -206,6 +208,8 @@ public class DiffRepository {
     private final URL refFile;
     private final File logFile;
     private final Filter filter;
+    private int modCount;
+    private int modCountAtLastWrite;
 
     /**
      * Creates a DiffRepository.
@@ -220,11 +224,10 @@ public class DiffRepository {
         this.baseRepository = baseRepository;
         this.filter = filter;
         this.indent = indent;
-        if (refFile == null) {
-            throw new IllegalArgumentException("url must not be null");
-        }
-        this.refFile = refFile;
+        this.refFile = requireNonNull(refFile, "refFile");
         this.logFile = logFile;
+        this.modCountAtLastWrite = 0;
+        this.modCount = 0;
 
         // Load the document.
         DocumentBuilderFactory fac = DocumentBuilderFactory.newInstance();
@@ -405,6 +408,7 @@ public class DiffRepository {
                                         + "not specify 'overrides=true'");
                     }
                     if (outOfOrderTests.contains(testCaseName)) {
+                        ++modCount;
                         flushDoc();
                         throw new IllegalArgumentException(
                                 "TestCase '"
@@ -471,24 +475,34 @@ public class DiffRepository {
             testCaseElement.setAttribute(TEST_CASE_NAME_ATTR, testCaseName);
             Node refElement = ref(testCaseName, map);
             root.insertBefore(testCaseElement, refElement);
+            ++modCount;
         }
         Element resourceElement = getResourceElement(testCaseElement, resourceName, true);
         if (resourceElement == null) {
             resourceElement = doc.createElement(RESOURCE_TAG);
             resourceElement.setAttribute(RESOURCE_NAME_ATTR, resourceName);
             testCaseElement.appendChild(resourceElement);
+            ++modCount;
+            if (!value.equals("")) {
+                resourceElement.appendChild(doc.createCDATASection(value));
+            }
         } else {
-            removeAllChildren(resourceElement);
-        }
-        if (!value.equals("")) {
-            resourceElement.appendChild(doc.createCDATASection(value));
+            final List<Node> newChildList;
+            if (value.equals("")) {
+                newChildList = List.of();
+            } else {
+                newChildList = List.of(doc.createCDATASection(value));
+            }
+            if (replaceChildren(resourceElement, newChildList)) {
+                ++modCount;
+            }
         }
 
         // Write out the document.
         flushDoc();
     }
 
-    private Node ref(String testCaseName, List<Pair<String, Element>> map) {
+    private static Node ref(String testCaseName, List<Pair<String, Element>> map) {
         if (map.isEmpty()) {
             return null;
         }
@@ -521,7 +535,11 @@ public class DiffRepository {
     }
 
     /** Flushes the reference document to the file system. */
-    private void flushDoc() {
+    private synchronized void flushDoc() {
+        if (modCount == modCountAtLastWrite) {
+            // Document has not been modified since last write.
+            return;
+        }
         try {
             boolean b = logFile.getParentFile().mkdirs();
             Util.discard(b);
@@ -529,9 +547,10 @@ public class DiffRepository {
                 write(doc, w, indent);
             }
         } catch (IOException e) {
-            throw new RuntimeException(
+            throw Util.throwAsRuntime(
                     "error while writing test reference log '" + logFile + "'", e);
         }
+        modCountAtLastWrite = modCount;
     }
 
     /**
@@ -636,6 +655,33 @@ public class DiffRepository {
         }
     }
 
+    private static boolean replaceChildren(Element element, List<Node> children) {
+        // Current children
+        final NodeList childNodes = element.getChildNodes();
+        final List<Node> list = new ArrayList<>();
+        for (Node item : iterate(childNodes)) {
+            if (item.getNodeType() != Node.TEXT_NODE) {
+                list.add(item);
+            }
+        }
+
+        // Are new children equal to old?
+        if (equalList(children, list)) {
+            return false;
+        }
+
+        // Replace old children with new children
+        removeAllChildren(element);
+        children.forEach(element::appendChild);
+        return true;
+    }
+
+    /** Returns whether two lists of nodes are equal. */
+    private static boolean equalList(List<Node> list0, List<Node> list1) {
+        return list1.size() == list0.size()
+                && Pair.zip(list1, list0).stream().allMatch(p -> p.left.isEqualNode(p.right));
+    }
+
     /**
      * Serializes an XML document as text.
      *
@@ -736,24 +782,7 @@ public class DiffRepository {
      * @return The diff repository shared between test cases in this class.
      */
     public static DiffRepository lookup(Class<?> clazz) {
-        return lookup(clazz, null);
-    }
-
-    /**
-     * Finds the repository instance for a given class and inheriting from a given repository.
-     *
-     * @param clazz Test case class
-     * @param baseRepository Base class of test class
-     * @return The diff repository shared between test cases in this class.
-     */
-    public static DiffRepository lookup(Class<?> clazz, DiffRepository baseRepository) {
-        return lookup(clazz, baseRepository, null);
-    }
-
-    @Deprecated // to be removed before 1.28
-    public static DiffRepository lookup(
-            Class<?> clazz, DiffRepository baseRepository, Filter filter) {
-        return lookup(clazz, baseRepository, filter, 2);
+        return lookup(clazz, null, null, 2);
     }
 
     /**
@@ -812,7 +841,7 @@ public class DiffRepository {
         private final int indent;
 
         Key(Class<?> clazz, DiffRepository baseRepository, Filter filter, int indent) {
-            this.clazz = Objects.requireNonNull(clazz, "clazz");
+            this.clazz = requireNonNull(clazz, "clazz");
             this.baseRepository = baseRepository;
             this.filter = filter;
             this.indent = indent;
