@@ -256,7 +256,7 @@ public class DiffRepository {
         // Load the document.
         try {
             DocumentBuilder docBuilder =
-                    Nullness.castNonNull(DOCUMENT_BUILDER_FACTORY.get()).newDocumentBuilder();
+                    DOCUMENT_BUILDER_FACTORY.get().newDocumentBuilder();
             try (InputStream inputStream = refFile.openStream()) {
                 // Parse the reference file.
                 this.doc = docBuilder.parse(inputStream);
