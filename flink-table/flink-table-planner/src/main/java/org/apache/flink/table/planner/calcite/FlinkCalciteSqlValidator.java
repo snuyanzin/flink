@@ -19,7 +19,7 @@
 package org.apache.flink.table.planner.calcite;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.sql.parser.SqlValidatorWithExtendedStructType;
+import org.apache.flink.sql.parser.FlinkSqlParsingValidator;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.api.config.TableConfigOptions;
@@ -101,7 +101,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /** Extends Calcite's {@link SqlValidator} by Flink-specific behavior. */
 @Internal
-public final class FlinkCalciteSqlValidator extends SqlValidatorWithExtendedStructType {
+public final class FlinkCalciteSqlValidator extends FlinkSqlParsingValidator {
 
     // Enables CallContext#getOutputDataType() when validating SQL expressions.
     private SqlNode sqlNodeForExpectedOutputType;

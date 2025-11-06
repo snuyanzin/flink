@@ -591,7 +591,7 @@ class FlinkDDLDataTypeTest {
                     DEFAULT_OPTIONS,
                     MockCatalogReaderSimple::create,
                     (sqlOperatorTable, sqlValidatorCatalogReader, relDataTypeFactory, config) ->
-                            new SqlValidatorWithExtendedStructType(
+                            new FlinkSqlParsingValidator(
                                     sqlOperatorTable,
                                     sqlValidatorCatalogReader,
                                     relDataTypeFactory,

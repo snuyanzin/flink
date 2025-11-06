@@ -25,22 +25,15 @@ import org.apache.calcite.sql.validate.SqlValidatorCatalogReader;
 import org.apache.calcite.sql.validate.SqlValidatorImpl;
 
 /**
- * Extends Calcite's {@link org.apache.calcite.sql.validate.SqlValidator} by row struct kind
- * depending on a table config option value {@code
- * table.legacy-extended-row-struct-kind-as-fully-qualified}.
+ * Extends Calcite's {@link org.apache.calcite.sql.validate.SqlValidator}. Right now it extends by
+ * row struct kind depending on a table config option value {@code
+ * table.legacy-extended-row-struct-kind-as-fully-qualified}. However, in future more config option
+ * dependent fields might be added here.
  */
-public class SqlValidatorWithExtendedStructType extends SqlValidatorImpl {
+public class FlinkSqlParsingValidator extends SqlValidatorImpl {
     private final StructKind extendedRowStructKind;
 
-    /**
-     * Creates a validator.
-     *
-     * @param opTab Operator table
-     * @param catalogReader Catalog reader
-     * @param typeFactory Type factory
-     * @param config Config
-     */
-    protected SqlValidatorWithExtendedStructType(
+    protected FlinkSqlParsingValidator(
             SqlOperatorTable opTab,
             SqlValidatorCatalogReader catalogReader,
             RelDataTypeFactory typeFactory,

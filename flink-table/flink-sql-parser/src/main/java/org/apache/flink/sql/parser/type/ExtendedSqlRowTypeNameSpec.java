@@ -18,7 +18,7 @@
 
 package org.apache.flink.sql.parser.type;
 
-import org.apache.flink.sql.parser.SqlValidatorWithExtendedStructType;
+import org.apache.flink.sql.parser.FlinkSqlParsingValidator;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -158,7 +158,7 @@ public class ExtendedSqlRowTypeNameSpec extends SqlTypeNameSpec {
     public RelDataType deriveType(SqlValidator sqlValidator) {
         final RelDataTypeFactory typeFactory = sqlValidator.getTypeFactory();
         return typeFactory.createStructType(
-                ((SqlValidatorWithExtendedStructType) sqlValidator).getExtendedRowStructKind(),
+                ((FlinkSqlParsingValidator) sqlValidator).getExtendedRowStructKind(),
                 fieldTypes.stream()
                         .map(
                                 dt ->
