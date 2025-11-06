@@ -160,7 +160,11 @@ public class ExtendedSqlRowTypeNameSpec extends SqlTypeNameSpec {
         return typeFactory.createStructType(
                 ((SqlValidatorWithExtendedStructType) sqlValidator).getExtendedRowStructKind(),
                 fieldTypes.stream()
-                        .map(dt -> dt.deriveType(sqlValidator))
+                        .map(
+                                dt ->
+                                        dt.deriveType(
+                                                sqlValidator,
+                                                dt.getNullable() == null || dt.getNullable()))
                         .collect(Collectors.toList()),
                 fieldNames.stream().map(SqlIdentifier::toString).collect(Collectors.toList()));
     }

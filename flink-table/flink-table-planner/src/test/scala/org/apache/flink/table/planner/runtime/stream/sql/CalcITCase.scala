@@ -855,4 +855,39 @@ class CalcITCase extends StreamingTestBase {
       .toList
     assertThat(actual).isEqualTo(expected)
   }
+
+  @Test
+  def testCastRow2(): Unit = {
+    val actual = tEnv.executeSql(s"""
+                                    |SELECT * FROM
+                                    |(VALUES (
+                                    |    ARRAY[
+                                    |                ROW(
+                                    |                    ROW('Test1', 'True')
+                                    |                ),
+                                    |                ROW(
+                                    |                    ROW('Test2', 'False')
+                                    |                )
+                                    |    ]
+                                    |))
+                                    |""".stripMargin)
+  }
+
+  @Test
+  def testCastRow3(): Unit = {
+    val actual = tEnv.executeSql(s"""
+                                    |SELECT * FROM
+                                    |(VALUES (
+                                    |    ARRAY[
+                                    |                MAP['asd',
+                                    |                    ARRAY['Test1', 'True']
+                                    |                ],
+                                    |                MAP[
+                                    |                    'asqwdqw',
+                                    |                    ARRAY['Test2', 'Falsewqe']
+                                    |                ]
+                                    |    ]
+                                    |))
+                                    |""".stripMargin)
+  }
 }
