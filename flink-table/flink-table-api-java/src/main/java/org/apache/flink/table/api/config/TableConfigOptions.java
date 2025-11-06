@@ -163,9 +163,8 @@ public class TableConfigOptions {
                     .booleanType()
                     .defaultValue(false)
                     .withDescription(
-                            "Configures the default expansion behavior of 'SELECT *'. "
-                                    + "By default, all top-level columns of the table's "
-                                    + "schema are selected and nested fields are retained.");
+                            "Configures the default struct kind for rows processed by ExtendedSqlRowTypeNameSpec."
+                                    + " By default it uses PEEK_FIELDS_NO_EXPAND, legacy behavior uses FULLY_QUALIFIED.");
 
     // ------------------------------------------------------------------------------------------
     // Options for plan handling
