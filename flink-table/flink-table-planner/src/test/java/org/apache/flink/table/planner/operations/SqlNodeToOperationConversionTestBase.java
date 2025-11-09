@@ -96,7 +96,7 @@ public class SqlNodeToOperationConversionTestBase {
                     plannerContext.getRexFactory());
 
     @BeforeEach
-    public void before() throws TableAlreadyExistException, DatabaseNotExistException {
+    void before() throws TableAlreadyExistException, DatabaseNotExistException {
         catalogManager.initSchemaResolver(
                 isStreamingMode,
                 ExpressionResolverMocks.basicResolver(catalogManager, functionCatalog, parser),
@@ -122,7 +122,7 @@ public class SqlNodeToOperationConversionTestBase {
     }
 
     @AfterEach
-    public void after() throws TableNotExistException {
+    void after() throws TableNotExistException {
         final ObjectPath path1 = new ObjectPath(catalogManager.getCurrentDatabase(), "t1");
         final ObjectPath path2 = new ObjectPath(catalogManager.getCurrentDatabase(), "t2");
         catalog.dropTable(path1, true);
