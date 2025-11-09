@@ -183,7 +183,7 @@ public class SqlCreateMaterializedTable extends SqlCreate implements ExtendedSql
     }
 
     public boolean isSchemaWithColumnsIdentifiersOnly() {
-        // CREATE AS SELECT supports passing only column identifiers in the column list. If
+        // CREATE MATERIALIZED TABLE supports passing only column identifiers in the column list. If
         // the first column in the list is an identifier, then we assume the rest of the
         // columns are identifiers as well.
         return !getColumnList().isEmpty() && getColumnList().get(0) instanceof SqlIdentifier;
