@@ -596,7 +596,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
     }
 
     @Test
-    public void testAlterMaterializedTableRefreshOperationWithoutPartitionSpec() {
+    void testAlterMaterializedTableRefreshOperationWithoutPartitionSpec() {
         final String sql = "ALTER MATERIALIZED TABLE mtbl1 REFRESH";
 
         Operation operation = parse(sql);
