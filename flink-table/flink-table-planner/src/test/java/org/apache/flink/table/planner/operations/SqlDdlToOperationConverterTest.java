@@ -1519,6 +1519,35 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
     }
 
     @Test
+    void testAlterMaterializedTableAddColumn() throws Exception {
+        prepareMaterializedTable("tb1", false, 1, null, "SELECT 1");
+
+        final String expectedSummaryString =
+                "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  ADD category_id AS 2 + 2";
+
+        final Operation operation =
+                parse("ALTER MATERIALIZED TABLE cat1.db1.tb1\n  ADD category_id AS 2 + 2");
+
+        assertThat(operation).isInstanceOf(AlterMaterializedTableChangeOperation.class);
+        assertThat(operation.asSummaryString()).isEqualTo(expectedSummaryString);
+        assertThat(((AlterMaterializedTableChangeOperation) operation).getTableChanges())
+                .containsExactly(TableChange.add(TableDistribution.of(Kind.UNKNOWN, 3, List.of())));
+
+        prepareMaterializedTable(
+                "tb2", false, 1, TableDistribution.of(Kind.HASH, 1, List.of("a")), "SELECT 1");
+
+        assertThatThrownBy(
+                        () ->
+                                parse(
+                                        "alter materialized table cat1.db1.tb2 add distribution into 3 buckets"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining(
+                        "Materialized table `cat1`.`db1`.`tb2` has already defined "
+                                + "the distribution `DISTRIBUTED BY HASH(`a`) INTO 1 BUCKETS`."
+                                + " You can modify it or drop it before adding a new one.");
+    }
+
+    @Test
     void testAlterMaterializedTableAddDistribution() throws Exception {
         prepareMaterializedTable("tb1", false, 1, null, "SELECT 1");
 

@@ -2009,6 +2009,7 @@ SqlAlterMaterializedTable SqlAlterMaterializedTable() :
     SqlNodeList partSpec = SqlNodeList.EMPTY;
     SqlNode freshness = null;
     SqlNode asQuery = null;
+    AlterTableContext ctx = new AlterTableContext();
 }
 {
     <ALTER> <MATERIALIZED> <TABLE> { startPos = getPos();}
@@ -2112,11 +2113,28 @@ SqlAlterMaterializedTable SqlAlterMaterializedTable() :
                 tableIdentifier);
             }
         |
-        <ADD> <DISTRIBUTION> {
-                return new SqlAlterMaterializedTableAddDistribution(
-                startPos.plus(getPos()),
-                tableIdentifier, SqlDistribution(getPos()));
+        <ADD>
+        (
+            (
+                AlterTableAddOrModify(ctx)
+                |
+                <LPAREN>
+                AlterTableAddOrModify(ctx)
+                (
+                    <COMMA> AlterTableAddOrModify(ctx)
+                )*
+                <RPAREN>
+            )
+            {
+                return new SqlAlterMaterializedTableAdd(
+                    startPos.plus(getPos()),
+                    tableIdentifier,
+                    new SqlNodeList(ctx.columnPositions, startPos.plus(getPos())),
+                    ctx.constraints,
+                    ctx.watermark,
+                    ctx.distribution);
             }
+        )
     )
 }
 
