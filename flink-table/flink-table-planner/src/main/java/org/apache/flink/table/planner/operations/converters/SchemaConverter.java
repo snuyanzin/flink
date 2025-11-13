@@ -27,6 +27,7 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogBaseTable;
+import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TableChange;
 import org.apache.flink.table.catalog.TableDistribution;
@@ -60,7 +61,7 @@ import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDa
 
 /** Base class for schema conversion operations. */
 public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
-    protected static final String EX_MSG_PREFIX = "Failed to execute ALTER TABLE statement.\n";
+    private static final String EX_MSG_PREFIX = "Failed to execute ALTER %s statement.\n";
     protected List<String> sortedColumnNames = new ArrayList<>();
     protected Set<String> alterColNames = new HashSet<>();
     protected Map<String, Schema.UnresolvedColumn> columns = new HashMap<>();
@@ -73,6 +74,7 @@ public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
 
     protected List<TableChange> changesCollector;
     protected List<Function<ResolvedSchema, List<TableChange>>> changeBuilders = new ArrayList<>();
+    protected final String tableTypeInErrorMsg;
 
     SchemaConverter(TABLE oldTable, ConvertContext context, TableDistribution tableDistribution) {
         this.changesCollector = new ArrayList<>();
@@ -86,6 +88,8 @@ public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
         populatePrimaryKeyFromSourceTable(oldSchema);
         populateWatermarkFromSourceTable(oldSchema);
         this.distribution = tableDistribution;
+        this.tableTypeInErrorMsg =
+                oldTable instanceof ResolvedCatalogTable ? "TABLE" : "MATERIALIZED TABLE";
     }
 
     public List<TableChange> getChangesCollector() {
@@ -171,7 +175,7 @@ public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
             throw new ValidationException(
                     String.format(
                             "%sWatermark strategy on nested column is not supported yet.",
-                            EX_MSG_PREFIX));
+                            getMsgErrorPrefix()));
         }
         watermarkSpec =
                 new Schema.UnresolvedWatermarkSpec(
@@ -236,7 +240,8 @@ public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
             if (!alterColNames.add(columnName)) {
                 throw new ValidationException(
                         String.format(
-                                "%sEncounter duplicate column `%s`.", EX_MSG_PREFIX, columnName));
+                                "%sEncounter duplicate column `%s`.",
+                                getMsgErrorPrefix(), columnName));
             }
             updatePositionAndCollectColumnChange(columnPosition, columnName);
         }
@@ -246,17 +251,18 @@ public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
         SqlIdentifier referencedIdent = columnPosition.getAfterReferencedColumn();
         Preconditions.checkNotNull(
                 referencedIdent,
-                String.format("%sCould not refer to a null column", EX_MSG_PREFIX));
+                String.format("%sCould not refer to a null column", getMsgErrorPrefix()));
         if (!referencedIdent.isSimple()) {
             throw new UnsupportedOperationException(
-                    String.format("%sAlter nested row type is not supported yet.", EX_MSG_PREFIX));
+                    String.format(
+                            "%sAlter nested row type is not supported yet.", getMsgErrorPrefix()));
         }
         String referencedName = referencedIdent.getSimple();
         if (!sortedColumnNames.contains(referencedName)) {
             throw new ValidationException(
                     String.format(
                             "%sReferenced column `%s` by 'AFTER' does not exist in the table.",
-                            EX_MSG_PREFIX, referencedName));
+                            getMsgErrorPrefix(), referencedName));
         }
         return referencedName;
     }
@@ -294,7 +300,8 @@ public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
                             .collect(Collectors.toList()));
             return updatedSchema;
         } catch (Exception e) {
-            throw new ValidationException(String.format("%s%s", EX_MSG_PREFIX, e.getMessage()), e);
+            throw new ValidationException(
+                    String.format("%s%s", getMsgErrorPrefix(), e.getMessage()), e);
         }
     }
 
@@ -307,17 +314,21 @@ public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
 
     protected abstract void checkAndCollectWatermarkChange();
 
-    protected static String getColumnName(SqlIdentifier identifier) {
+    protected String getColumnName(SqlIdentifier identifier) {
         if (!identifier.isSimple()) {
             throw new UnsupportedOperationException(
                     String.format(
                             "%sAlter nested row type %s is not supported yet.",
-                            EX_MSG_PREFIX, identifier));
+                            getMsgErrorPrefix(), identifier));
         }
         return identifier.getSimple();
     }
 
     protected <T> T unwrap(Optional<T> value) {
         return value.orElseThrow(() -> new TableException("The value should never be empty."));
+    }
+
+    protected String getMsgErrorPrefix() {
+        return String.format(EX_MSG_PREFIX, tableTypeInErrorMsg);
     }
 }

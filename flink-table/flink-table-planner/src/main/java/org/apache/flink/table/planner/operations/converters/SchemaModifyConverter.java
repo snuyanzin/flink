@@ -52,7 +52,7 @@ public class SchemaModifyConverter<T extends ResolvedCatalogTable> extends Schem
             throw new ValidationException(
                     String.format(
                             "%sTry to modify a column `%s` which does not exist in the table.",
-                            EX_MSG_PREFIX, columnName));
+                            getMsgErrorPrefix(), columnName));
         }
 
         Column oldColumn = unwrap(oldTable.getResolvedSchema().getColumn(columnName));
@@ -92,7 +92,7 @@ public class SchemaModifyConverter<T extends ResolvedCatalogTable> extends Schem
                     String.format(
                             "%sThe base table does not define any primary key constraint. You might "
                                     + "want to add a new one.",
-                            EX_MSG_PREFIX));
+                            getMsgErrorPrefix()));
         }
         changeBuilders.add(
                 schema ->
@@ -107,7 +107,7 @@ public class SchemaModifyConverter<T extends ResolvedCatalogTable> extends Schem
                     String.format(
                             "%sThe base table does not define any distribution. You might "
                                     + "want to add a new one.",
-                            EX_MSG_PREFIX));
+                            getMsgErrorPrefix()));
         }
         changesCollector.add(TableChange.modify(newDistribution));
     }
@@ -119,7 +119,7 @@ public class SchemaModifyConverter<T extends ResolvedCatalogTable> extends Schem
                     String.format(
                             "%sThe base table does not define any watermark. You might "
                                     + "want to add a new one.",
-                            EX_MSG_PREFIX));
+                            getMsgErrorPrefix()));
         }
         changeBuilders.add(
                 schema ->

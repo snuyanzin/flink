@@ -39,7 +39,7 @@ public final class ValidationUtils {
 
         throw new ValidationException(
                 String.format(
-                        "%s for a %s is not allowed",
+                        "%s for a %s is not allowed.",
                         operationName.toUpperCase(Locale.ROOT),
                         kind.name().toLowerCase(Locale.ROOT).replace('_', ' ')));
     }

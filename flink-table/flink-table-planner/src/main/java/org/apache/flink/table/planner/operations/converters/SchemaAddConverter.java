@@ -27,9 +27,10 @@ import org.apache.flink.table.expressions.SqlCallExpression;
 import org.apache.flink.table.planner.operations.converters.SqlNodeConverter.ConvertContext;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
-/** Converter for ALTER TABLE ADD ... schema operations. */
+/** Converter for ALTER [MATERIALIZED] TABLE ADD ... schema operations. */
 public class SchemaAddConverter<T extends CatalogBaseTable> extends SchemaConverter<T> {
 
     public SchemaAddConverter(
@@ -42,9 +43,10 @@ public class SchemaAddConverter<T extends CatalogBaseTable> extends SchemaConver
         if (primaryKey != null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table has already defined the primary key constraint %s. You might "
+                            "%sThe base %s has already defined the primary key constraint %s. You might "
                                     + "want to drop it before adding a new one.",
-                            EX_MSG_PREFIX,
+                            getMsgErrorPrefix(),
+                            tableTypeInErrorMsg.toLowerCase(Locale.ROOT),
                             primaryKey.getColumnNames().stream()
                                     .collect(Collectors.joining("`, `", "[`", "`]"))));
         }
@@ -58,9 +60,11 @@ public class SchemaAddConverter<T extends CatalogBaseTable> extends SchemaConver
         if (distribution != null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table has already defined the distribution `%s`. "
+                            "%sThe base %s has already defined the distribution `%s`. "
                                     + "You can modify it or drop it before adding a new one.",
-                            EX_MSG_PREFIX, distribution));
+                            getMsgErrorPrefix(),
+                            tableTypeInErrorMsg.toLowerCase(Locale.ROOT),
+                            distribution));
         }
         changesCollector.add(TableChange.add(newDistribution));
     }
@@ -70,9 +74,10 @@ public class SchemaAddConverter<T extends CatalogBaseTable> extends SchemaConver
         if (watermarkSpec != null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table has already defined the watermark strategy `%s` AS %s. You might "
+                            "%sThe base %s has already defined the watermark strategy `%s` AS %s. You might "
                                     + "want to drop it before adding a new one.",
-                            EX_MSG_PREFIX,
+                            getMsgErrorPrefix(),
+                            tableTypeInErrorMsg.toLowerCase(Locale.ROOT),
                             watermarkSpec.getColumnName(),
                             ((SqlCallExpression) watermarkSpec.getWatermarkExpression())
                                     .getSqlExpression()));
@@ -90,7 +95,7 @@ public class SchemaAddConverter<T extends CatalogBaseTable> extends SchemaConver
             throw new ValidationException(
                     String.format(
                             "%sTry to add a column `%s` which already exists in the table.",
-                            EX_MSG_PREFIX, columnName));
+                            getMsgErrorPrefix(), columnName));
         }
 
         if (columnPosition.isFirstColumn()) {

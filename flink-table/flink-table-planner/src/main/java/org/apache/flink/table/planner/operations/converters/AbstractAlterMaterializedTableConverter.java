@@ -28,12 +28,9 @@ import org.apache.flink.table.catalog.ContextResolvedTable;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
-import org.apache.flink.table.catalog.TableChange.MaterializedTableChange;
 import org.apache.flink.table.catalog.TableDistribution;
 import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.operations.Operation;
-import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.operations.utils.ValidationUtils;
 import org.apache.flink.table.planner.utils.OperationConverterUtils;
 
@@ -60,8 +57,8 @@ public abstract class AbstractAlterMaterializedTableConverter<T extends SqlAlter
     }
 
     protected final TableDistribution getOldTableDistribution(
-            ResolvedCatalogMaterializedTable resolvedCatalogTable) {
-        return resolvedCatalogTable.getDistribution().orElse(null);
+            ResolvedCatalogMaterializedTable resolvedCatalogMaterializedTable) {
+        return resolvedCatalogMaterializedTable.getDistribution().orElse(null);
     }
 
     protected final List<String> getOldPartitionKeys(
@@ -74,8 +71,9 @@ public abstract class AbstractAlterMaterializedTableConverter<T extends SqlAlter
         return resolvedCatalogMaterializedTable.getComment();
     }
 
-    protected final Map<String, String> getOldOptions(ResolvedCatalogTable resolvedCatalogTable) {
-        return resolvedCatalogTable.getOptions();
+    protected final Map<String, String> getOldOptions(
+            ResolvedCatalogMaterializedTable resolvedCatalogMaterializedTable) {
+        return resolvedCatalogMaterializedTable.getOptions();
     }
 
     @Override
@@ -134,39 +132,6 @@ public abstract class AbstractAlterMaterializedTableConverter<T extends SqlAlter
 
         consumer.accept(builder);
         return builder.build();
-    }
-
-    protected final Operation buildAlterTableChangeOperation(
-            SqlAlterMaterializedTable alterMaterializedTable,
-            List<MaterializedTableChange> tableChanges,
-            Schema newSchema,
-            ResolvedCatalogMaterializedTable oldMaterializedTable,
-            CatalogManager catalogManager) {
-        final TableDistribution tableDistribution =
-                getTableDistribution(alterMaterializedTable, oldMaterializedTable);
-
-        CatalogMaterializedTable.Builder builder =
-                CatalogMaterializedTable.newBuilder()
-                        .schema(oldMaterializedTable.getUnresolvedSchema())
-                        .comment(oldMaterializedTable.getComment())
-                        .partitionKeys(oldMaterializedTable.getPartitionKeys())
-                        .options(oldMaterializedTable.getOptions())
-                        .definitionQuery(oldMaterializedTable.getDefinitionQuery())
-                        .distribution(tableDistribution)
-                        .freshness(oldMaterializedTable.getDefinitionFreshness())
-                        .logicalRefreshMode(oldMaterializedTable.getLogicalRefreshMode())
-                        .refreshMode(oldMaterializedTable.getRefreshMode())
-                        .refreshStatus(oldMaterializedTable.getRefreshStatus())
-                        .refreshHandlerDescription(
-                                oldMaterializedTable.getRefreshHandlerDescription().orElse(null))
-                        .serializedRefreshHandler(
-                                oldMaterializedTable.getSerializedRefreshHandler());
-
-        return new AlterMaterializedTableChangeOperation(
-                catalogManager.qualifyIdentifier(
-                        UnresolvedIdentifier.of(alterMaterializedTable.fullTableName())),
-                tableChanges,
-                builder.build());
     }
 
     protected final ObjectIdentifier getIdentifier(
