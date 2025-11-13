@@ -1705,7 +1705,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "ALTER TABLE IF EXISTS cat1.db1.tb1\n"
-                                + "  ADD `h` DOUBLE NOT NULL COMMENT 'h is double not null' ");
+                                + "  ADD `h` DOUBLE NOT NULL COMMENT 'h is double not null'");
         assertAlterTableSchema(
                 operation,
                 tableIdentifier,
@@ -1772,8 +1772,8 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "ALTER TABLE cat1.db1.tb1\n"
-                                + "  ADD `r` ROW<`r1` BIGINT, `r2` STRING, `r3` ARRAY<DOUBLE> NOT NULL> NOT NULL COMMENT 'add composite type' ,\n"
-                                + "  ADD `m` MAP<STRING NOT NULL, INT NOT NULL> ,\n"
+                                + "  ADD `r` ROW<`r1` BIGINT, `r2` STRING, `r3` ARRAY<DOUBLE> NOT NULL> NOT NULL COMMENT 'add composite type',\n"
+                                + "  ADD `m` MAP<STRING NOT NULL, INT NOT NULL>,\n"
                                 + "  ADD `n` BIGINT AS `r`.`r1` * 2 AFTER `r`,\n"
                                 + "  ADD `tss` TIMESTAMP(3) AS `to_timestamp`(`r`.`r2`) COMMENT 'rowtime' AFTER `ts`,\n"
                                 + "  ADD `na` ARRAY<DOUBLE> NOT NULL AS `r`.`r3` AFTER `ts`");
@@ -1905,7 +1905,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "ALTER TABLE cat1.db1.tb1\n"
-                                + "  ADD `x` BIGINT NOT NULL ,\n"
+                                + "  ADD `x` BIGINT NOT NULL,\n"
                                 + "  ADD CONSTRAINT `PK_x` PRIMARY KEY (`x`) NOT ENFORCED");
         assertAlterTableSchema(
                 operation,
@@ -1921,7 +1921,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "ALTER TABLE cat1.db1.tb1\n"
-                                + "  ADD `x` BIGINT NOT NULL ,\n"
+                                + "  ADD `x` BIGINT NOT NULL,\n"
                                 + "  ADD CONSTRAINT `PK_x` PRIMARY KEY (`x`) NOT ENFORCED");
         assertAlterTableSchema(
                 operation,
@@ -2014,7 +2014,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "ALTER TABLE cat1.db1.tb1\n"
-                                + "  ADD `tss` TIMESTAMP(3) NOT NULL ,\n"
+                                + "  ADD `tss` TIMESTAMP(3) NOT NULL,\n"
                                 + "  ADD WATERMARK FOR `tss`: TIMESTAMP(3) NOT NULL AS `tss`");
         assertAlterTableSchema(
                 operation,
@@ -2034,8 +2034,8 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "ALTER TABLE cat1.db1.tb1\n"
-                                + "  ADD `log_ts` STRING NOT NULL ,\n"
-                                + "  ADD `tss` TIMESTAMP(3) AS `to_timestamp`(`log_ts`) ,\n"
+                                + "  ADD `log_ts` STRING NOT NULL,\n"
+                                + "  ADD `tss` TIMESTAMP(3) AS `to_timestamp`(`log_ts`),\n"
                                 + "  ADD WATERMARK FOR `tss`: TIMESTAMP(3) AS `tss` - INTERVAL '3' SECOND");
         assertAlterTableSchema(
                 operation,
@@ -2055,8 +2055,8 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "ALTER TABLE cat1.db1.tb1\n"
-                                + "  ADD `x` ROW<`f0` STRING, `f1` TIMESTAMP(3) NOT NULL> NOT NULL ,\n"
-                                + "  ADD `y` TIMESTAMP(3) NOT NULL AS `x`.`f1` ,\n"
+                                + "  ADD `x` ROW<`f0` STRING, `f1` TIMESTAMP(3) NOT NULL> NOT NULL,\n"
+                                + "  ADD `y` TIMESTAMP(3) NOT NULL AS `x`.`f1`,\n"
                                 + "  ADD WATERMARK FOR `y`: TIMESTAMP(3) NOT NULL AS `y` - INTERVAL '1' DAY");
         assertAlterTableSchema(
                 operation,

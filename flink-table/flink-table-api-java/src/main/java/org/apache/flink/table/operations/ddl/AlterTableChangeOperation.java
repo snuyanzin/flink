@@ -78,9 +78,9 @@ public class AlterTableChangeOperation extends AlterTableOperation {
         } else if (tableChange instanceof TableChange.AddColumn) {
             TableChange.AddColumn addColumn = (TableChange.AddColumn) tableChange;
             return String.format(
-                    "  ADD %s %s",
+                    "  ADD %s%s",
                     addColumn.getColumn(),
-                    addColumn.getPosition() == null ? "" : addColumn.getPosition());
+                    addColumn.getPosition() == null ? "" : " " + addColumn.getPosition());
         } else if (tableChange instanceof TableChange.AddDistribution) {
             TableChange.AddDistribution addDistribution = (TableChange.AddDistribution) tableChange;
             return String.format("  ADD %s", addDistribution.getDistribution());
