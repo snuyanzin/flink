@@ -111,6 +111,7 @@ public class SqlNodeConverters {
         register(new SqlAlterTableOptionsConverter());
         register(new SqlAlterTableSchemaModifyConverter());
         register(new SqlAlterTableSchemaAddConverter());
+        register(new SqlAlterMaterializedTableSchemaAddConverter());
         register(new SqlAlterTableRenameConverter());
     }
 

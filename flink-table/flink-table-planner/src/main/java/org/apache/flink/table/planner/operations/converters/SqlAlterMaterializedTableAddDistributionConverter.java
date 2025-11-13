@@ -35,31 +35,29 @@ import java.util.List;
 public class SqlAlterMaterializedTableAddDistributionConverter
         extends AbstractAlterMaterializedTableConverter<SqlAlterMaterializedTableAddDistribution> {
     @Override
-    public Operation convertSqlNode(
-            SqlAlterMaterializedTableAddDistribution node, ConvertContext context) {
-        ObjectIdentifier identifier = resolveIdentifier(node, context);
+    protected Operation convertToOperation(
+            SqlAlterMaterializedTableAddDistribution sqlAlterMaterializedTableAddDistribution,
+            ResolvedCatalogMaterializedTable oldMaterializedTable,
+            ConvertContext context) {
 
-        ResolvedCatalogMaterializedTable oldTable =
-                getResolvedMaterializedTable(
-                        context,
-                        identifier,
-                        () -> "Operation is supported only for materialized tables");
-
-        if (oldTable.getDistribution().isPresent()) {
+        final ObjectIdentifier identifier =
+                getIdentifier(sqlAlterMaterializedTableAddDistribution, context);
+        if (oldMaterializedTable.getDistribution().isPresent()) {
             throw new ValidationException(
                     String.format(
                             "Materialized table %s has already defined the distribution `%s`. "
                                     + "You can modify it or drop it before adding a new one.",
-                            identifier, oldTable.getDistribution().get().toString().strip()));
+                            identifier,
+                            oldMaterializedTable.getDistribution().get().toString().strip()));
         }
 
         TableDistribution tableDistribution =
                 OperationConverterUtils.getDistributionFromSqlDistribution(
-                        node.getDistribution().get());
+                        sqlAlterMaterializedTableAddDistribution.getDistribution().get());
         // Build new materialized table and apply changes
         CatalogMaterializedTable updatedTable =
                 buildUpdatedMaterializedTable(
-                        oldTable, builder -> builder.distribution(tableDistribution));
+                        oldMaterializedTable, builder -> builder.distribution(tableDistribution));
 
         return new AlterMaterializedTableChangeOperation(
                 identifier, List.of(TableChange.add(tableDistribution)), updatedTable);

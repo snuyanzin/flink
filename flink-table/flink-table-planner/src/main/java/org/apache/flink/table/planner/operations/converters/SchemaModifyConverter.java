@@ -35,12 +35,13 @@ import java.util.List;
 import java.util.Objects;
 
 /** Converter for ALTER TABLE MODIFY ... schema operations. */
-public class SchemaModifyConverter extends SchemaConverter {
+public class SchemaModifyConverter<T extends ResolvedCatalogTable> extends SchemaConverter<T> {
 
-    private final ResolvedCatalogTable oldTable;
+    private final T oldTable;
 
-    public SchemaModifyConverter(ResolvedCatalogTable oldTable, ConvertContext context) {
-        super(oldTable, context);
+    public SchemaModifyConverter(
+            T oldTable, ConvertContext context, TableDistribution tableDistribution) {
+        super(oldTable, context, tableDistribution);
         this.oldTable = oldTable;
     }
 

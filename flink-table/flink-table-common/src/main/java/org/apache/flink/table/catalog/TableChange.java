@@ -461,7 +461,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class AddUniqueConstraint implements CatalogTableChange {
+    class AddUniqueConstraint implements CatalogTableChange, MaterializedTableChange {
 
         private final UniqueConstraint constraint;
 
@@ -559,7 +559,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class AddWatermark implements CatalogTableChange {
+    class AddWatermark implements CatalogTableChange, MaterializedTableChange {
 
         private final WatermarkSpec watermarkSpec;
 
@@ -621,7 +621,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class ModifyColumn implements CatalogTableChange {
+    class ModifyColumn implements CatalogTableChange, MaterializedTableChange {
 
         protected final Column oldColumn;
         protected final Column newColumn;
@@ -868,7 +868,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class ModifyUniqueConstraint implements CatalogTableChange {
+    class ModifyUniqueConstraint implements CatalogTableChange, MaterializedTableChange {
 
         private final UniqueConstraint newConstraint;
 
@@ -966,7 +966,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class ModifyWatermark implements CatalogTableChange {
+    class ModifyWatermark implements CatalogTableChange, MaterializedTableChange {
 
         private final WatermarkSpec newWatermark;
 
@@ -1067,7 +1067,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class DropWatermark implements CatalogTableChange {
+    class DropWatermark implements CatalogTableChange, MaterializedTableChange {
         static final DropWatermark INSTANCE = new DropWatermark();
 
         @Override
@@ -1086,7 +1086,7 @@ public interface TableChange {
      * </pre>
      */
     @PublicEvolving
-    class DropConstraint implements CatalogTableChange {
+    class DropConstraint implements CatalogTableChange, MaterializedTableChange {
 
         private final String constraintName;
 

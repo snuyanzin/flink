@@ -36,9 +36,12 @@ public class SqlAlterMaterializedTableModifyDistributionConverter
         extends AbstractAlterMaterializedTableConverter<
                 SqlAlterMaterializedTableModifyDistribution> {
     @Override
-    public Operation convertSqlNode(
-            SqlAlterMaterializedTableModifyDistribution node, ConvertContext context) {
-        ObjectIdentifier identifier = resolveIdentifier(node, context);
+    protected Operation convertToOperation(
+            SqlAlterMaterializedTableModifyDistribution sqlAlterMaterializedTableModifyDistribution,
+            ResolvedCatalogMaterializedTable oldMaterializedTable,
+            ConvertContext context) {
+        final ObjectIdentifier identifier =
+                getIdentifier(sqlAlterMaterializedTableModifyDistribution, context);
 
         ResolvedCatalogMaterializedTable oldTable =
                 getResolvedMaterializedTable(
@@ -55,7 +58,7 @@ public class SqlAlterMaterializedTableModifyDistributionConverter
 
         TableDistribution tableDistribution =
                 OperationConverterUtils.getDistributionFromSqlDistribution(
-                        node.getDistribution().get());
+                        sqlAlterMaterializedTableModifyDistribution.getDistribution().get());
         // Build new materialized table and apply changes
         CatalogMaterializedTable updatedTable =
                 buildUpdatedMaterializedTable(

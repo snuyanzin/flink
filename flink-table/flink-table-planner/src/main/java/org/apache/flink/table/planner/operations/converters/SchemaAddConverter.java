@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.operations.converters;
 
 import org.apache.flink.sql.parser.ddl.position.SqlTableColumnPosition;
 import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
+import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.TableChange;
 import org.apache.flink.table.catalog.TableDistribution;
 import org.apache.flink.table.expressions.SqlCallExpression;
@@ -30,10 +30,11 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 /** Converter for ALTER TABLE ADD ... schema operations. */
-public class SchemaAddConverter extends SchemaConverter {
+public class SchemaAddConverter<T extends CatalogBaseTable> extends SchemaConverter<T> {
 
-    public SchemaAddConverter(ResolvedCatalogTable oldTable, ConvertContext context) {
-        super(oldTable, context);
+    public SchemaAddConverter(
+            T oldTable, ConvertContext context, TableDistribution tableDistribution) {
+        super(oldTable, context, tableDistribution);
     }
 
     @Override

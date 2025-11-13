@@ -42,14 +42,12 @@ public class SqlAlterMaterializedTableAsQueryConverter
         extends AbstractAlterMaterializedTableConverter<SqlAlterMaterializedTableAsQuery> {
 
     @Override
-    public Operation convertSqlNode(
+    protected Operation convertToOperation(
             SqlAlterMaterializedTableAsQuery sqlAlterMaterializedTableAsQuery,
+            ResolvedCatalogMaterializedTable oldMaterializedTable,
             ConvertContext context) {
-        ObjectIdentifier identifier = resolveIdentifier(sqlAlterMaterializedTableAsQuery, context);
 
         // Validate and extract schema from query
-        String originalQuery =
-                context.toQuotedSqlString(sqlAlterMaterializedTableAsQuery.getAsQuery());
         SqlNode validatedQuery =
                 context.getSqlValidator().validate(sqlAlterMaterializedTableAsQuery.getAsQuery());
         String definitionQuery = context.toQuotedSqlString(validatedQuery);
@@ -57,6 +55,8 @@ public class SqlAlterMaterializedTableAsQueryConverter
                 new PlannerQueryOperation(
                         context.toRelRoot(validatedQuery).project(), () -> definitionQuery);
 
+        final ObjectIdentifier identifier =
+                getIdentifier(sqlAlterMaterializedTableAsQuery, context);
         ResolvedCatalogMaterializedTable oldTable =
                 getResolvedMaterializedTable(
                         context,

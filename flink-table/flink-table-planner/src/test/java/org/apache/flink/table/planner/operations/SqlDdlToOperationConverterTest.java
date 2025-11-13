@@ -71,6 +71,9 @@ import org.apache.flink.table.operations.ddl.DropPartitionsOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.operations.materializedtable.CreateMaterializedTableOperation;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
+import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.expressions.utils.Func0$;
 import org.apache.flink.table.planner.expressions.utils.Func1$;
 import org.apache.flink.table.planner.expressions.utils.Func8$;
@@ -81,7 +84,10 @@ import org.apache.flink.table.resource.ResourceType;
 import org.apache.flink.table.resource.ResourceUri;
 import org.apache.flink.table.types.DataType;
 
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.type.SqlTypeName;
 import org.assertj.core.api.HamcrestCondition;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
@@ -116,6 +122,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Test cases for the DDL statements for {@link SqlNodeToOperationConversion}. */
 class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBase {
+
+    private static final FlinkTypeFactory FACTORY =
+            new FlinkTypeFactory(
+                    SqlDdlToOperationConverterTest.class.getClassLoader(),
+                    FlinkTypeSystem.INSTANCE);
+    private static final RexBuilder REX_BUILDER = new RexBuilder(FACTORY);
+
+    private static final RexNode REX_NODE =
+            REX_BUILDER.makeInputRef(FACTORY.createSqlType(SqlTypeName.INTEGER), 1);
+    private static final RexNodeExpression REX_NODE_EXPRESSION =
+            new RexNodeExpression(REX_NODE, DataTypes.INT().notNull(), "3 + 3", "3 + 3");
 
     @Test
     void testAlterCatalog() {
@@ -1523,28 +1540,19 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         prepareMaterializedTable("tb1", false, 1, null, "SELECT 1");
 
         final String expectedSummaryString =
-                "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  ADD category_id AS 2 + 2";
+                "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  ADD `category_id` INT NOT NULL METADATA";
 
         final Operation operation =
-                parse("ALTER MATERIALIZED TABLE cat1.db1.tb1\n  ADD category_id AS 2 + 2");
+                parse(
+                        "ALTER MATERIALIZED TABLE cat1.db1.tb1\n ADD category_id INT NOT NULL METADATA");
 
         assertThat(operation).isInstanceOf(AlterMaterializedTableChangeOperation.class);
         assertThat(operation.asSummaryString()).isEqualTo(expectedSummaryString);
         assertThat(((AlterMaterializedTableChangeOperation) operation).getTableChanges())
-                .containsExactly(TableChange.add(TableDistribution.of(Kind.UNKNOWN, 3, List.of())));
-
-        prepareMaterializedTable(
-                "tb2", false, 1, TableDistribution.of(Kind.HASH, 1, List.of("a")), "SELECT 1");
-
-        assertThatThrownBy(
-                        () ->
-                                parse(
-                                        "alter materialized table cat1.db1.tb2 add distribution into 3 buckets"))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Materialized table `cat1`.`db1`.`tb2` has already defined "
-                                + "the distribution `DISTRIBUTED BY HASH(`a`) INTO 1 BUCKETS`."
-                                + " You can modify it or drop it before adding a new one.");
+                .containsExactly(
+                        TableChange.add(
+                                Column.metadata(
+                                        "category_id", DataTypes.INT().notNull(), null, false)));
     }
 
     @Test

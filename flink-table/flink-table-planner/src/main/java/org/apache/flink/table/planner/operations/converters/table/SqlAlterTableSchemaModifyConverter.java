@@ -30,10 +30,11 @@ import org.apache.flink.table.planner.operations.converters.SchemaModifyConverte
 public class SqlAlterTableSchemaModifyConverter
         extends SqlAlterTableSchemaConverter<SqlAlterTableModify> {
     @Override
-    protected SchemaModifyConverter createSchemaConverter(
+    protected SchemaModifyConverter<ResolvedCatalogTable> createSchemaConverter(
             SqlAlterTableSchema alterTableSchema,
             ResolvedCatalogTable oldTable,
             ConvertContext context) {
-        return new SchemaModifyConverter(oldTable, context);
+        return new SchemaModifyConverter<>(
+                oldTable, context, oldTable.getDistribution().orElse(null));
     }
 }

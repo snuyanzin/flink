@@ -33,10 +33,12 @@ import java.util.List;
 public class SqlAlterMaterializedTableDropDistributionConverter
         extends AbstractAlterMaterializedTableConverter<SqlAlterMaterializedTableDropDistribution> {
     @Override
-    public Operation convertSqlNode(
-            SqlAlterMaterializedTableDropDistribution node, ConvertContext context) {
-        ObjectIdentifier identifier = resolveIdentifier(node, context);
-
+    protected Operation convertToOperation(
+            SqlAlterMaterializedTableDropDistribution sqlAlterMaterializedTableDropDistribution,
+            ResolvedCatalogMaterializedTable oldMaterializedTable,
+            ConvertContext context) {
+        final ObjectIdentifier identifier =
+                getIdentifier(sqlAlterMaterializedTableDropDistribution, context);
         ResolvedCatalogMaterializedTable oldTable =
                 getResolvedMaterializedTable(
                         context,

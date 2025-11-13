@@ -26,7 +26,7 @@ import org.apache.flink.sql.parser.ddl.position.SqlTableColumnPosition;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
+import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TableChange;
 import org.apache.flink.table.catalog.TableDistribution;
@@ -59,7 +59,7 @@ import static org.apache.flink.table.planner.calcite.FlinkTypeFactory.toLogicalT
 import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDataType;
 
 /** Base class for schema conversion operations. */
-public abstract class SchemaConverter {
+public abstract class SchemaConverter<TABLE extends CatalogBaseTable> {
     protected static final String EX_MSG_PREFIX = "Failed to execute ALTER TABLE statement.\n";
     protected List<String> sortedColumnNames = new ArrayList<>();
     protected Set<String> alterColNames = new HashSet<>();
@@ -74,7 +74,7 @@ public abstract class SchemaConverter {
     protected List<TableChange> changesCollector;
     protected List<Function<ResolvedSchema, List<TableChange>>> changeBuilders = new ArrayList<>();
 
-    SchemaConverter(ResolvedCatalogTable oldTable, ConvertContext context) {
+    SchemaConverter(TABLE oldTable, ConvertContext context, TableDistribution tableDistribution) {
         this.changesCollector = new ArrayList<>();
         this.context = context;
         this.escapeExpressions =
@@ -85,7 +85,7 @@ public abstract class SchemaConverter {
         populateColumnsFromSourceTable(oldSchema);
         populatePrimaryKeyFromSourceTable(oldSchema);
         populateWatermarkFromSourceTable(oldSchema);
-        populateDistributionFromSourceTable(oldTable);
+        this.distribution = tableDistribution;
     }
 
     public List<TableChange> getChangesCollector() {
@@ -107,10 +107,6 @@ public abstract class SchemaConverter {
         if (oldSchema.getPrimaryKey().isPresent()) {
             primaryKey = oldSchema.getPrimaryKey().get();
         }
-    }
-
-    private void populateDistributionFromSourceTable(ResolvedCatalogTable oldTable) {
-        oldTable.getDistribution().ifPresent(distribution -> this.distribution = distribution);
     }
 
     private void populateWatermarkFromSourceTable(Schema oldSchema) {
