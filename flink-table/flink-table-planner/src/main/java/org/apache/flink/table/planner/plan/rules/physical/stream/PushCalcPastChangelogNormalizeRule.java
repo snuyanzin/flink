@@ -39,6 +39,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.rex.RexProgramBuilder;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
 import org.immutables.value.Value;
@@ -87,7 +88,7 @@ public class PushCalcPastChangelogNormalizeRule
     @Override
     public boolean matches(RelOptRuleCall call) {
         final StreamPhysicalChangelogNormalize changelogNormalize = call.rel(1);
-        return (!changelogNormalize.sourceReused() || changelogNormalize.commonFilter().length > 0)
+        return (!changelogNormalize.sourceReused() || !changelogNormalize.commonFilter().isEmpty())
                 && super.matches(call);
     }
 
@@ -126,29 +127,38 @@ public class PushCalcPastChangelogNormalizeRule
                         call, primaryKeyPredicates, otherPredicates, usedInputFields, rexExecutor);
         final List<RexNode> nonCommonConditions =
                 getNonCommonConditions(
-                        rexBuilder, changelogNormalize.commonFilter(), calc.getProgram());
+                        rexBuilder,
+                        changelogNormalize.commonFilter(),
+                        calc.getProgram(),
+                        conditions);
         // Retain only filters which haven't been pushed
         transformWithRemainingPredicates(
                 call, newChangelogNormalize, usedInputFields, nonCommonConditions, rexExecutor);
     }
 
     private List<RexNode> getCommonConditions(
-            RexBuilder rexBuilder, RexNode[] commonFilter, RexProgram rexProgram) {
-        if (commonFilter.length > 0) {
-            return List.of(commonFilter);
+            RexBuilder rexBuilder, List<RexNode> commonFilter, RexProgram rexProgram) {
+        if (!commonFilter.isEmpty()) {
+            // Assuming it is in CNF after
+            // FlinkMarkChangelogNormalizeProgram#calculateCommonCondition
+            return commonFilter;
         }
         return FlinkRexUtil.extractConjunctiveConditions(rexBuilder, rexProgram);
     }
 
     private List<RexNode> getNonCommonConditions(
-            RexBuilder rexBuilder, RexNode[] commonFilter, RexProgram rexProgram) {
-        if (commonFilter.length > 0) {
-            List<RexNode> conditionsFromProgram =
-                    FlinkRexUtil.extractConjunctiveConditions(rexBuilder, rexProgram);
-            conditionsFromProgram.removeAll(List.of(commonFilter));
-            return conditionsFromProgram;
+            RexBuilder rexBuilder,
+            List<RexNode> commonFilter,
+            RexProgram rexProgram,
+            List<RexNode> conditions) {
+        if (commonFilter.isEmpty() || rexProgram.getCondition() == null) {
+            return List.of();
         }
-        return List.of();
+
+        List<RexNode> conditionsFromProgram =
+                FlinkRexUtil.extractConjunctiveConditions(rexBuilder, rexProgram);
+        conditionsFromProgram.removeAll(conditions);
+        return conditionsFromProgram;
     }
 
     /** Extracts input fields which are used in the Calc node and the ChangelogNormalize node. */
@@ -334,10 +344,10 @@ public class PushCalcPastChangelogNormalizeRule
         }
 
         final RexProgram newProgram = programBuilder.getProgram();
-        if (newProgram.isTrivial()) {
+        if (skipCalc(newProgram, changelogNormalize, calc, relBuilder, rexExecutor)) {
             call.transformTo(changelogNormalize);
         } else {
-            changelogNormalize.setCommonFilter(new RexNode[0]);
+            changelogNormalize.setCommonFilter(List.of());
             final StreamPhysicalCalc newProjectedCalc =
                     new StreamPhysicalCalc(
                             changelogNormalize.getCluster(),
@@ -347,6 +357,31 @@ public class PushCalcPastChangelogNormalizeRule
                             newProgram.getOutputRowType());
             call.transformTo(newProjectedCalc);
         }
+    }
+
+    private boolean skipCalc(
+            final RexProgram newProgram,
+            StreamPhysicalChangelogNormalize changelogNormalize,
+            StreamPhysicalCalc calc,
+            RelBuilder relBuilder,
+            RexExecutor rexExecutor) {
+        if (!newProgram.isTrivial()) {
+            return false;
+        }
+
+        final RexProgram calcProgram = calc.getProgram();
+        if (calcProgram == null || calcProgram.getCondition() == null) {
+            return true;
+        }
+
+        final RexNode expandedLocalRef = calcProgram.expandLocalRef(calcProgram.getCondition());
+        final RexNode rex =
+                RexUtil.expandSearch(relBuilder.getRexBuilder(), calcProgram, expandedLocalRef);
+
+        return changelogNormalize.commonFilter() == null
+                || changelogNormalize.commonFilter().equals(rex)
+                || FlinkRexUtil.simplify(relBuilder.getRexBuilder(), rex, rexExecutor)
+                        .equals(changelogNormalize.filterCondition());
     }
 
     /** Adjust the {@param expr} field indices according to the field index {@param mapping}. */

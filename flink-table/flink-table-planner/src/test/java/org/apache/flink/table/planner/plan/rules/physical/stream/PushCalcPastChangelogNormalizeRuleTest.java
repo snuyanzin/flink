@@ -120,6 +120,39 @@ class PushCalcPastChangelogNormalizeRuleTest extends TableTestBase {
     }
 
     @Test
+    void testPrimaryKeySeveralSameSourcesWithFullPushDownVarchar() {
+        util.tableEnv().createTable("T", sourceDescriptor);
+        // Here filter should be fully pushed down
+        // verifyExecPlan is intended here as it will show whether the node is reused or not
+        util.verifyExecPlan(
+                "SELECT * FROM T WHERE f2 < '1' AND f2 > '0'\n"
+                        + " UNION SELECT * FROM T WHERE '1' > f2 AND '0' < f2\n"
+                        + " INTERSECT SELECT * FROM T WHERE f2 < '1' AND f2 > '0'");
+    }
+
+    @Test
+    void testPrimaryKeySeveralSameSourcesWithFullPushDownWithOrCondition() {
+        util.tableEnv().createTable("T", sourceDescriptor);
+        // Here filter should be fully pushed down
+        // verifyExecPlan is intended here as it will show whether the node is reused or not
+        util.verifyExecPlan(
+                "SELECT * FROM T WHERE (f1 < 1 AND TRIM(f2) = '' OR f1 < 1 AND TRY_CAST(TRIM(f2) AS INTEGER) > 1) OR (f1 < 1 AND f2 IS NOT NULL OR f1 < 1 AND TRIM(f2) <> '')\n"
+                        + " UNION SELECT * FROM T WHERE (f1 < 1 AND TRIM(f2) = '' OR f1 < 1 AND TRY_CAST(TRIM(f2) AS INTEGER) > 1) OR (f1 < 1 AND f2 IS NOT NULL OR f1 < 1 AND TRIM(f2) <> '')\n"
+                        + " INTERSECT SELECT * FROM T WHERE (f1 < 1 AND TRIM(f2) = '' OR f1 < 1 AND TRY_CAST(TRIM(f2) AS INTEGER) > 1) OR (f1 < 1 AND f2 IS NOT NULL OR f1 < 1 AND TRIM(f2) <> '')");
+    }
+
+    @Test
+    void testPrimaryKeySeveralSameSourcesWithFullPushDown2() {
+        util.tableEnv().createTable("T", sourceDescriptor);
+        // Here filter should be fully pushed down
+        // verifyExecPlan is intended here as it will show whether the node is reused or not
+        util.verifyExecPlan(
+                "SELECT * FROM T WHERE (f1 < 1 AND TRIM(f2) = '' OR f1 < 3 AND TRY_CAST(TRIM(f2) AS INTEGER) > 1) OR (f1 > 0 AND f2 IS NOT NULL OR f1 > 10 AND TRIM(f2) <> '')\n"
+                        + " UNION SELECT * FROM T WHERE (f1 < 1 AND TRIM(f2) = '' OR f1 < 3 AND TRY_CAST(TRIM(f2) AS INTEGER) > 1) OR (f1 > 0 AND f2 IS NOT NULL OR f1 > 10 AND TRIM(f2) <> '')\n"
+                        + " INTERSECT SELECT * FROM T WHERE (f1 < 1 AND TRIM(f2) = '' OR f1 < 3 AND TRY_CAST(TRIM(f2) AS INTEGER) > 1) OR (f1 > 0 AND f2 IS NOT NULL OR f1 > 10 AND TRIM(f2) <> '')");
+    }
+
+    @Test
     void testPrimaryKeySeveralDifferentSources() {
         util.tableEnv().createTable("T", sourceDescriptor);
         util.tableEnv().createTable("T2", sourceDescriptor);
@@ -129,6 +162,14 @@ class PushCalcPastChangelogNormalizeRuleTest extends TableTestBase {
                 "SELECT * FROM T WHERE f1 < 1 AND f1 > 0\n"
                         + " UNION SELECT * FROM T2 WHERE f1 < 1 AND f1 > 0\n"
                         + " INTERSECT SELECT * FROM T3 WHERE f1 < 1 AND f1 > 0");
+    }
+
+    @Test
+    void testNoConditionsSeveralSameSources() {
+        util.tableEnv().createTable("T", sourceDescriptor);
+        // verifyExecPlan is intended here as it will show whether the node is reused or not
+        util.verifyExecPlan(
+                "SELECT * FROM T\n" + "UNION SELECT * FROM T\n" + "INTERSECT SELECT * FROM T");
     }
 
     @Test
@@ -157,9 +198,9 @@ class PushCalcPastChangelogNormalizeRuleTest extends TableTestBase {
         // Here filter should be fully pushed down
         // verifyExecPlan is intended here as it will show whether the node is reused or not
         util.verifyExecPlan(
-                "SELECT * FROM T WHERE f3 < 1 AND f3 > 0\n"
-                        + " UNION SELECT * FROM T WHERE f3 < 1 AND f3 > 0\n"
-                        + " INTERSECT SELECT * FROM T WHERE f3 < 1 AND f3 > 0");
+                "SELECT * FROM T WHERE f0 < 1 AND f0 > -2 and f0 is not null\n"
+                        + " UNION SELECT * FROM T WHERE f0 < 1 AND f0 > -2 or f0 < 1 and f0 > -2 and f0 is not null\n"
+                        + " INTERSECT SELECT * FROM T WHERE f0 < 1 AND f0 > -2 or f0 < 1 and f0 > -2 and f0 is not null\n");
     }
 
     @Test
@@ -172,6 +213,18 @@ class PushCalcPastChangelogNormalizeRuleTest extends TableTestBase {
                 "SELECT * FROM T WHERE f3 < 1 AND f3 > 0\n"
                         + " UNION SELECT * FROM T2 WHERE f3 < 1 AND f3 > 0\n"
                         + " INTERSECT SELECT * FROM T3 WHERE f3 < 1 AND f3 > 0");
+    }
+
+    @Test
+    void testNonPrimaryKeySeveralDifferentSourcesWithCase() {
+        util.tableEnv().createTable("T", sourceDescriptor);
+        util.tableEnv().createTable("T2", sourceDescriptor);
+        util.tableEnv().createTable("T3", sourceDescriptor);
+        // verifyExecPlan is intended here as it will show whether the node is reused or not
+        util.verifyExecPlan(
+                "SELECT * FROM T WHERE CASE WHEN TRIM(f2) = '' THEN TRUE WHEN TRY_CAST(TRIM(f2) AS INTEGER) > 0 THEN TRUE ELSE FALSE END\n"
+                        + " UNION SELECT * FROM T2 WHERE CASE WHEN TRIM(f2) = '' THEN TRUE WHEN TRY_CAST(TRIM(f2) AS INTEGER) > 0 THEN TRUE ELSE FALSE END\n"
+                        + " INTERSECT SELECT * FROM T3 WHERE CASE WHEN TRIM(f2) = '' THEN TRUE WHEN TRY_CAST(TRIM(f2) AS INTEGER) > 0 THEN TRUE ELSE FALSE END");
     }
 
     @Test

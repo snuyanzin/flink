@@ -17,15 +17,13 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.JList
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecChangelogNormalize
 import org.apache.flink.table.planner.plan.utils.ChangelogPlanUtils
-import org.apache.flink.table.planner.plan.utils.RelExplainUtil.{conditionsToString, conditionToString, preferExpressionFormat}
+import org.apache.flink.table.planner.plan.utils.RelExplainUtil.{conditionsToString, preferExpressionFormat}
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
-import org.apache.flink.table.runtime.generated.FilterCondition
 
 import org.apache.calcite.plan.{RelOptCluster, RelTraitSet}
 import org.apache.calcite.rel.`type`.RelDataType
@@ -47,7 +45,7 @@ class StreamPhysicalChangelogNormalize(
     val uniqueKeys: Array[Int],
     val filterCondition: RexNode = null,
     var sourceReused: Boolean = false,
-    var commonFilter: Array[RexNode] = Array())
+    var commonFilter: util.List[RexNode] = new util.ArrayList[RexNode]())
   extends SingleRel(cluster, traitSet, input)
   with StreamPhysicalRel {
 
@@ -85,7 +83,7 @@ class StreamPhysicalChangelogNormalize(
     sourceReused = true
   }
 
-  def setCommonFilter(list: Array[RexNode]): Unit = {
+  def setCommonFilter(list: util.List[RexNode]): Unit = {
     commonFilter = list
   }
 
