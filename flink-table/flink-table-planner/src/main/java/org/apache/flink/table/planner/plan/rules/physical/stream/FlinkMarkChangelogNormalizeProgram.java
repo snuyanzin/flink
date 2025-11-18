@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A {@link FlinkOptimizeProgram} that marks ChangelogNormalize nodes using the same source and
@@ -168,20 +169,16 @@ public class FlinkMarkChangelogNormalizeProgram
             RexBuilder rexBuilder, List<ChangelogNormalizeContext> changelogNormalizeContexts) {
         if (changelogNormalizeContexts.stream()
                 .map(ChangelogNormalizeContext::getConditions)
-                .anyMatch(c -> c == null || c.isEmpty())) {
+                .anyMatch(c -> c == null)) {
             return List.of();
         }
 
-        List<RexNode> nodes = new ArrayList<>();
-        for (ChangelogNormalizeContext cn : changelogNormalizeContexts) {
-            if (cn.getConditions().size() == 1) {
-                nodes.add(cn.getConditions().get(0));
-            } else {
-                nodes.add(rexBuilder.makeCall(SqlStdOperatorTable.AND, cn.getConditions()));
-            }
-        }
-
-        final RexNode or = rexBuilder.makeCall(SqlStdOperatorTable.OR, nodes);
+        final RexNode or =
+                rexBuilder.makeCall(
+                        SqlStdOperatorTable.OR,
+                        changelogNormalizeContexts.stream()
+                                .map(t -> t.getConditions())
+                                .collect(Collectors.toList()));
         final RexCall res = (RexCall) RexUtil.pullFactors(rexBuilder, or);
         final List<RexNode> result = new ArrayList<>();
         if (res.getKind() == SqlKind.AND) {
@@ -224,9 +221,7 @@ public class FlinkMarkChangelogNormalizeProgram
                     }
                     gatherTableScanToChangelogNormalizeMap(
                             input,
-                            ChangelogNormalizeContext.of(
-                                    changelogNormalize,
-                                    condition == null ? null : List.of(condition)),
+                            ChangelogNormalizeContext.of(changelogNormalize, condition),
                             map);
                 }
             } else {
@@ -250,16 +245,16 @@ public class FlinkMarkChangelogNormalizeProgram
 
     private static class ChangelogNormalizeContext {
         private final StreamPhysicalChangelogNormalize changelogNormalize;
-        private final List<RexNode> conditions;
+        private final RexNode conditions;
 
         private ChangelogNormalizeContext(
-                StreamPhysicalChangelogNormalize changelogNormalize, List<RexNode> conditions) {
+                StreamPhysicalChangelogNormalize changelogNormalize, RexNode conditions) {
             this.changelogNormalize = changelogNormalize;
             this.conditions = conditions;
         }
 
         public static ChangelogNormalizeContext of(
-                StreamPhysicalChangelogNormalize changelogNormalize, List<RexNode> conditions) {
+                StreamPhysicalChangelogNormalize changelogNormalize, RexNode conditions) {
             return new ChangelogNormalizeContext(changelogNormalize, conditions);
         }
 
@@ -267,7 +262,7 @@ public class FlinkMarkChangelogNormalizeProgram
             return changelogNormalize;
         }
 
-        public List<RexNode> getConditions() {
+        public RexNode getConditions() {
             return conditions;
         }
     }
