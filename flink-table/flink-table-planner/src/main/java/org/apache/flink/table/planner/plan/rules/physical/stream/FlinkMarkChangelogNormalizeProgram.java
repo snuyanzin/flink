@@ -168,7 +168,7 @@ public class FlinkMarkChangelogNormalizeProgram
             RexBuilder rexBuilder, List<ChangelogNormalizeContext> changelogNormalizeContexts) {
         if (changelogNormalizeContexts.stream()
                 .map(ChangelogNormalizeContext::getConditions)
-                .anyMatch(List::isEmpty)) {
+                .anyMatch(c -> c == null || c.isEmpty())) {
             return List.of();
         }
 
