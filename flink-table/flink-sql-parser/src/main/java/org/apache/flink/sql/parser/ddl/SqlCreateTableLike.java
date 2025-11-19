@@ -69,7 +69,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class SqlCreateTableLike extends SqlCreateTable {
 
-    public static final SqlSpecialOperator OPERATOR =
+    private static final SqlSpecialOperator OPERATOR =
             new SqlSpecialOperator("CREATE TABLE LIKE", SqlKind.CREATE_TABLE);
 
     private final SqlTableLike tableLike;

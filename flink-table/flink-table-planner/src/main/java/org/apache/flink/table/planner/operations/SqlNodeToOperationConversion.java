@@ -360,10 +360,10 @@ public class SqlNodeToOperationConversion {
     /** Convert CREATE FUNCTION statement. */
     private Operation convertCreateFunction(SqlCreateFunction sqlCreateFunction) {
         UnresolvedIdentifier unresolvedIdentifier =
-                UnresolvedIdentifier.of(sqlCreateFunction.getFunctionIdentifier());
+                UnresolvedIdentifier.of(sqlCreateFunction.getFullName());
         List<ResourceUri> resourceUris = getFunctionResources(sqlCreateFunction.getResourceInfos());
         final Map<String, String> options =
-                sqlCreateFunction.getPropertyList().getList().stream()
+                sqlCreateFunction.getProperties().getList().stream()
                         .map(SqlTableOption.class::cast)
                         .collect(
                                 Collectors.toMap(
@@ -568,7 +568,7 @@ public class SqlNodeToOperationConversion {
 
     /** Convert CREATE DATABASE statement. */
     private Operation convertCreateDatabase(SqlCreateDatabase sqlCreateDatabase) {
-        String[] fullDatabaseName = sqlCreateDatabase.fullDatabaseName();
+        String[] fullDatabaseName = sqlCreateDatabase.getFullName();
         if (fullDatabaseName.length > 2) {
             throw new ValidationException("create database identifier format error");
         }
@@ -586,7 +586,7 @@ public class SqlNodeToOperationConversion {
                         .orElse(null);
         // set with properties
         final Map<String, String> properties =
-                OperationConverterUtils.getProperties(sqlCreateDatabase.getPropertyList());
+                OperationConverterUtils.getProperties(sqlCreateDatabase.getProperties());
         CatalogDatabase catalogDatabase = new CatalogDatabaseImpl(properties, databaseComment);
         return new CreateDatabaseOperation(
                 catalogName, databaseName, catalogDatabase, ignoreIfExists);

@@ -18,8 +18,6 @@
 
 package org.apache.flink.sql.parser.ddl;
 
-import org.apache.flink.sql.parser.SqlUnparseUtils;
-
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
@@ -48,7 +46,7 @@ public class SqlAlterCatalogReset extends SqlAlterCatalog {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableNullableList.of(catalogName, propertyKeyList);
+        return ImmutableNullableList.of(getName(), propertyKeyList);
     }
 
     public SqlNodeList getPropertyList() {
@@ -62,15 +60,7 @@ public class SqlAlterCatalogReset extends SqlAlterCatalog {
     }
 
     @Override
-    public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        super.unparse(writer, leftPrec, rightPrec);
-        writer.keyword("RESET");
-        SqlWriter.Frame withFrame = writer.startList("(", ")");
-        for (SqlNode property : propertyKeyList) {
-            SqlUnparseUtils.printIndent(writer);
-            property.unparse(writer, leftPrec, rightPrec);
-        }
-        writer.newlineAndIndent();
-        writer.endList(withFrame);
+    public void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
+        UnparseUtils.unparseResetProperties(propertyKeyList, writer, leftPrec, rightPrec);
     }
 }

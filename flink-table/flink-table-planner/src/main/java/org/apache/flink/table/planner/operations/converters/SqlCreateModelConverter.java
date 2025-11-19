@@ -47,7 +47,7 @@ public class SqlCreateModelConverter implements SqlNodeConverter<SqlCreateModel>
     @Override
     public Operation convertSqlNode(SqlCreateModel sqlCreateModel, ConvertContext context) {
         UnresolvedIdentifier unresolvedIdentifier =
-                UnresolvedIdentifier.of(sqlCreateModel.fullModelName());
+                UnresolvedIdentifier.of(sqlCreateModel.getFullName());
         ObjectIdentifier identifier =
                 context.getCatalogManager().qualifyIdentifier(unresolvedIdentifier);
         Map<String, String> modelOptions = getModelOptions(sqlCreateModel);
@@ -75,7 +75,7 @@ public class SqlCreateModelConverter implements SqlNodeConverter<SqlCreateModel>
     private Map<String, String> getModelOptions(SqlCreateModel sqlCreateModel) {
         Map<String, String> options = new HashMap<>();
         sqlCreateModel
-                .getPropertyList()
+                .getProperties()
                 .getList()
                 .forEach(
                         p ->

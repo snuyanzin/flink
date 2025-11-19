@@ -144,7 +144,7 @@ SqlCreate SqlCreateCatalog(Span s, boolean replace) :
     SqlParserPos startPos;
     SqlIdentifier catalogName;
     SqlNodeList propertyList = SqlNodeList.EMPTY;
-    SqlNode comment = null;
+    SqlCharStringLiteral comment = null;
     boolean ifNotExists = false;
 }
 {
@@ -154,8 +154,8 @@ SqlCreate SqlCreateCatalog(Span s, boolean replace) :
 
     catalogName = SimpleIdentifier()
     [
-        <COMMENT>
-        comment = StringLiteral()
+        <COMMENT> <QUOTED_STRING>
+        { comment = Comment(); }
     ]
     [
         <WITH>
@@ -195,7 +195,7 @@ SqlAlterCatalog SqlAlterCatalog() :
     SqlParserPos startPos;
     SqlIdentifier catalogName;
     SqlNodeList propertyList = SqlNodeList.EMPTY;
-    SqlNode comment = null;
+    SqlCharStringLiteral comment = null;
 }
 {
     <ALTER> <CATALOG> { startPos = getPos(); }
@@ -217,9 +217,9 @@ SqlAlterCatalog SqlAlterCatalog() :
                            propertyList);
         }
     |
-        <COMMENT>
-        comment = StringLiteral()
+        <COMMENT> <QUOTED_STRING>
         {
+            comment = Comment();
             return new SqlAlterCatalogComment(startPos.plus(getPos()),
                                        catalogName,
                                        comment);
@@ -314,8 +314,7 @@ SqlCreate SqlCreateDatabase(Span s, boolean replace) :
     databaseName = CompoundIdentifier()
     [ <COMMENT> <QUOTED_STRING>
         {
-            String p = SqlParserUtil.parseString(token.image);
-            comment = SqlLiteral.createCharString(p, getPos());
+            comment = Comment();
         }
     ]
     [
@@ -1131,15 +1130,17 @@ SqlTableColumn ComputedColumn(TableCreationContext context) :
     SqlIdentifier name;
     SqlParserPos pos;
     SqlNode expr;
-    SqlNode comment = null;
+    SqlCharStringLiteral comment = null;
 }
 {
     name = SimpleIdentifier() {pos = getPos();}
     <AS>
     expr = Expression(ExprContext.ACCEPT_NON_QUERY)
     [
-        <COMMENT>
-        comment = StringLiteral()
+        <COMMENT> <QUOTED_STRING>
+        {
+            comment = Comment();
+        }
     ]
     {
         SqlTableColumn computedColumn = new SqlTableColumn.SqlComputedColumn(
@@ -1157,7 +1158,7 @@ SqlTableColumn MetadataColumn(TableCreationContext context, SqlIdentifier name, 
 {
     SqlNode metadataAlias = null;
     boolean isVirtual = false;
-    SqlNode comment = null;
+    SqlCharStringLiteral comment = null;
 }
 {
     <METADATA>
@@ -1171,8 +1172,10 @@ SqlTableColumn MetadataColumn(TableCreationContext context, SqlIdentifier name, 
         }
     ]
     [
-        <COMMENT>
-        comment = StringLiteral()
+        <COMMENT> <QUOTED_STRING>
+        {
+            comment = Comment();
+        }
     ]
     {
         SqlTableColumn metadataColumn = new SqlTableColumn.SqlMetadataColumn(
@@ -1191,15 +1194,17 @@ SqlTableColumn MetadataColumn(TableCreationContext context, SqlIdentifier name, 
 SqlTableColumn RegularColumn(TableCreationContext context, SqlIdentifier name, SqlDataTypeSpec type) :
 {
     SqlTableConstraint constraint = null;
-    SqlNode comment = null;
+    SqlCharStringLiteral comment = null;
 }
 {
     [
         constraint = ColumnConstraint(name)
     ]
     [
-        <COMMENT>
-        comment = StringLiteral()
+        <COMMENT> <QUOTED_STRING>
+        {
+            comment = Comment();
+        }
     ]
     {
         SqlTableColumn regularColumn = new SqlTableColumn.SqlRegularColumn(
@@ -1580,8 +1585,7 @@ SqlCreate SqlCreateTable(Span s, boolean replace, boolean isTemporary) :
         <RPAREN>
     ]
     [ <COMMENT> <QUOTED_STRING> {
-        String p = SqlParserUtil.parseString(token.image);
-        comment = SqlLiteral.createCharString(p, getPos());
+          comment = Comment();
     }]
     [
         <DISTRIBUTED>
@@ -1914,8 +1918,7 @@ SqlCreate SqlCreateOrAlterMaterializedTable(Span s, boolean replace, boolean isT
     [
         <COMMENT> <QUOTED_STRING>
         {
-            String p = SqlParserUtil.parseString(token.image);
-            comment = SqlLiteral.createCharString(p, getPos());
+            comment = Comment();
         }
     ]
     [
@@ -2243,8 +2246,7 @@ SqlCreate SqlCreateView(Span s, boolean replace, boolean isTemporary) : {
         fieldList = ParenthesizedSimpleIdentifierList()
     ]
     [ <COMMENT> <QUOTED_STRING> {
-            String p = SqlParserUtil.parseString(token.image);
-            comment = SqlLiteral.createCharString(p, getPos());
+            comment = Comment();
         }
     ]
     <AS>
@@ -3490,8 +3492,7 @@ SqlCreate SqlCreateModel(Span s, boolean isTemporary) :
     ]
     [ <COMMENT> <QUOTED_STRING>
         {
-            String p = SqlParserUtil.parseString(token.image);
-            comment = SqlLiteral.createCharString(p, getPos());
+            comment = Comment();
         }
     ]
     [
@@ -3522,5 +3523,15 @@ SqlCreate SqlCreateModel(Span s, boolean isTemporary) :
             propertyList,
             isTemporary,
             ifNotExists);
+    }
+}
+
+SqlCharStringLiteral Comment() :
+{
+}
+{
+    {
+        String p = SqlParserUtil.parseString(token.image);
+        return SqlLiteral.createCharString(p, getPos());
     }
 }

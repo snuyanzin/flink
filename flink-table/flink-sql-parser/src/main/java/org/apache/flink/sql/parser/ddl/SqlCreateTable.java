@@ -20,14 +20,11 @@ package org.apache.flink.sql.parser.ddl;
 
 import org.apache.flink.sql.parser.ExtendedSqlNode;
 import org.apache.flink.sql.parser.SqlConstraintValidator;
-import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlComputedColumn;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.error.SqlValidateException;
 
 import org.apache.calcite.sql.SqlCharStringLiteral;
-import org.apache.calcite.sql.SqlCreate;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
@@ -49,16 +46,12 @@ import java.util.Optional;
 import static java.util.Objects.requireNonNull;
 
 /** CREATE TABLE DDL sql call. */
-public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
+public class SqlCreateTable extends SqlCreateObject implements ExtendedSqlNode {
 
-    public static final SqlSpecialOperator OPERATOR =
+    private static final SqlSpecialOperator OPERATOR =
             new SqlSpecialOperator("CREATE TABLE", SqlKind.CREATE_TABLE);
 
-    private final SqlIdentifier tableName;
-
     private final SqlNodeList columnList;
-
-    private final SqlNodeList propertyList;
 
     private final List<SqlTableConstraint> tableConstraints;
 
@@ -67,10 +60,6 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
     private final SqlNodeList partitionKeyList;
 
     private final SqlWatermark watermark;
-
-    private final SqlCharStringLiteral comment;
-
-    private final boolean isTemporary;
 
     public SqlCreateTable(
             SqlParserPos pos,
@@ -114,34 +103,27 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
             boolean isTemporary,
             boolean ifNotExists,
             boolean replace) {
-        super(operator, pos, replace, ifNotExists);
-        this.tableName = requireNonNull(tableName, "tableName should not be null");
+        super(operator, pos, tableName, isTemporary, replace, ifNotExists, propertyList, comment);
         this.columnList = requireNonNull(columnList, "columnList should not be null");
         this.tableConstraints =
                 requireNonNull(tableConstraints, "table constraints should not be null");
-        this.propertyList = requireNonNull(propertyList, "propertyList should not be null");
+        requireNonNull(propertyList, "propertyList should not be null");
         this.distribution = distribution;
         this.partitionKeyList =
                 requireNonNull(partitionKeyList, "partitionKeyList should not be null");
         this.watermark = watermark;
-        this.comment = comment;
-        this.isTemporary = isTemporary;
     }
 
     @Override
     public @Nonnull List<SqlNode> getOperandList() {
         return ImmutableNullableList.of(
-                tableName,
+                getName(),
                 columnList,
                 new SqlNodeList(tableConstraints, SqlParserPos.ZERO),
-                propertyList,
+                getProperties(),
                 partitionKeyList,
                 watermark,
-                comment);
-    }
-
-    public SqlIdentifier getTableName() {
-        return tableName;
+                getComment());
     }
 
     public SqlNodeList getColumnList() {
@@ -150,10 +132,6 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
 
     public final SqlDistribution getDistribution() {
         return distribution;
-    }
-
-    public SqlNodeList getPropertyList() {
-        return propertyList;
     }
 
     public SqlNodeList getPartitionKeyList() {
@@ -168,31 +146,14 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
         return Optional.ofNullable(watermark);
     }
 
-    public Optional<SqlCharStringLiteral> getComment() {
-        return Optional.ofNullable(comment);
-    }
-
-    public boolean isIfNotExists() {
-        return ifNotExists;
-    }
-
-    public boolean isTemporary() {
-        return isTemporary;
+    @Override
+    protected String getScope() {
+        return "TABLE";
     }
 
     @Override
     public void validate() throws SqlValidateException {
         SqlConstraintValidator.validateAndChangeColumnNullability(tableConstraints, columnList);
-    }
-
-    public boolean hasRegularColumnsOnly() {
-        for (SqlNode column : columnList) {
-            final SqlTableColumn tableColumn = (SqlTableColumn) column;
-            if (!(tableColumn instanceof SqlRegularColumn)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /** Returns the column constraints plus the table constraints. */
@@ -242,50 +203,13 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
 
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.keyword("CREATE");
-        if (isTemporary()) {
-            writer.keyword("TEMPORARY");
-        }
-        writer.keyword("TABLE");
-        if (isIfNotExists()) {
-            writer.keyword("IF NOT EXISTS");
-        }
-        tableName.unparse(writer, leftPrec, rightPrec);
-        if (!columnList.isEmpty() || !tableConstraints.isEmpty() || watermark != null) {
-            SqlUnparseUtils.unparseTableSchema(
-                    writer, leftPrec, rightPrec, columnList, tableConstraints, watermark);
-        }
-
-        if (comment != null) {
-            writer.newlineAndIndent();
-            writer.keyword("COMMENT");
-            comment.unparse(writer, leftPrec, rightPrec);
-        }
-
-        if (this.distribution != null) {
-            writer.newlineAndIndent();
-            distribution.unparse(writer, leftPrec, rightPrec);
-        }
-
-        if (!this.partitionKeyList.isEmpty()) {
-            writer.newlineAndIndent();
-            writer.keyword("PARTITIONED BY");
-            SqlWriter.Frame partitionedByFrame = writer.startList("(", ")");
-            this.partitionKeyList.unparse(writer, leftPrec, rightPrec);
-            writer.endList(partitionedByFrame);
-        }
-
-        if (!this.propertyList.isEmpty()) {
-            writer.newlineAndIndent();
-            writer.keyword("WITH");
-            SqlWriter.Frame withFrame = writer.startList("(", ")");
-            for (SqlNode property : propertyList) {
-                SqlUnparseUtils.printIndent(writer);
-                property.unparse(writer, leftPrec, rightPrec);
-            }
-            writer.newlineAndIndent();
-            writer.endList(withFrame);
-        }
+        unparseCreateIfNotExists(writer, leftPrec, rightPrec);
+        UnparseUtils.unparseTableSchema(
+                columnList, tableConstraints, watermark, writer, leftPrec, rightPrec);
+        UnparseUtils.unparseComment(getComment(), writer, leftPrec, rightPrec);
+        UnparseUtils.unparseDistribution(distribution, writer, leftPrec, rightPrec);
+        UnparseUtils.unparsePartitionKeyList(partitionKeyList, writer, leftPrec, rightPrec);
+        unparseProperties(writer, leftPrec, rightPrec);
     }
 
     /** Table creation context. */
@@ -298,9 +222,5 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
         public boolean isColumnsIdentifiersOnly() {
             return !columnList.isEmpty() && columnList.get(0) instanceof SqlIdentifier;
         }
-    }
-
-    public String[] fullTableName() {
-        return tableName.names.toArray(new String[0]);
     }
 }

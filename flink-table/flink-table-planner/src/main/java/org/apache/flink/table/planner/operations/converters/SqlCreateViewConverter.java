@@ -41,7 +41,7 @@ public class SqlCreateViewConverter implements SqlNodeConverter<SqlCreateView> {
         final List<SqlNode> viewFields = sqlCreateView.getFieldList().getList();
 
         UnresolvedIdentifier unresolvedIdentifier =
-                UnresolvedIdentifier.of(sqlCreateView.fullViewName());
+                UnresolvedIdentifier.of(sqlCreateView.getFullName());
         ObjectIdentifier identifier =
                 context.getCatalogManager().qualifyIdentifier(unresolvedIdentifier);
 
@@ -51,7 +51,7 @@ public class SqlCreateViewConverter implements SqlNodeConverter<SqlCreateView> {
                         .map(c -> c.getValueAs(NlsString.class).getValue())
                         .orElse(null);
         Map<String, String> viewOptions =
-                OperationConverterUtils.getProperties(sqlCreateView.getProperties().orElse(null));
+                OperationConverterUtils.getProperties(sqlCreateView.getProperties());
         CatalogView catalogView =
                 SqlNodeConvertUtils.toCatalogView(
                         query, viewFields, viewOptions, viewComment, context);

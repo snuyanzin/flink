@@ -67,7 +67,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class SqlCreateTableAs extends SqlCreateTable {
 
-    public static final SqlSpecialOperator OPERATOR =
+    private static final SqlSpecialOperator OPERATOR =
             new SqlSpecialOperator("CREATE TABLE AS", SqlKind.CREATE_TABLE);
 
     private final SqlNode asQuery;
