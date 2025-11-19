@@ -48,6 +48,9 @@ public class SqlAlterMaterializedTableAsQueryConverter
             ConvertContext context) {
 
         // Validate and extract schema from query
+        String originalQuery =
+                context.toQuotedSqlString(sqlAlterMaterializedTableAsQuery.getAsQuery());
+        // Validate and extract schema from query
         SqlNode validatedQuery =
                 context.getSqlValidator().validate(sqlAlterMaterializedTableAsQuery.getAsQuery());
         String definitionQuery = context.toQuotedSqlString(validatedQuery);
