@@ -66,8 +66,8 @@ public class SqlAlterTableDropColumn extends SqlAlterTable {
     }
 
     @Override
-    public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        super.unparse(writer, leftPrec, rightPrec);
+    public void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
+        super.unparseAlterOperation(writer, leftPrec, rightPrec);
         writer.keyword("DROP");
         // unparse table column
         SqlUnparseUtils.unparseTableSchema(

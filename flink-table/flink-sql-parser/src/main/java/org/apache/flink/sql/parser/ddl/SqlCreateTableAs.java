@@ -26,7 +26,6 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -102,11 +101,6 @@ public class SqlCreateTableAs extends SqlCreateTable {
                 false);
         this.asQuery =
                 requireNonNull(asQuery, "As clause is required for CREATE TABLE AS SELECT DDL");
-    }
-
-    @Override
-    public @Nonnull SqlOperator getOperator() {
-        return OPERATOR;
     }
 
     @Override

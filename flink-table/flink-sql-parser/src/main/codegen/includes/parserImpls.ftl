@@ -923,6 +923,13 @@ SqlAlterTable SqlAlterTable() :
                         addPartitionCtx.partProps);
             }
         |
+            <DISTRIBUTION>
+                distribution = SqlDistribution(getPos())
+                {
+                return new SqlAddDistribution(startPos.plus(getPos()),
+                tableIdentifier, ifExists, distribution);
+                }
+        |
         (
             AlterTableAddOrModify(ctx)
         |

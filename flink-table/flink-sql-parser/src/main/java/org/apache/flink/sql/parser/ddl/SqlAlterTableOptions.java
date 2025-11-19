@@ -75,8 +75,8 @@ public class SqlAlterTableOptions extends SqlAlterTable {
     }
 
     @Override
-    public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        super.unparse(writer, leftPrec, rightPrec);
+    public void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
+        super.unparseAlterOperation(writer, leftPrec, rightPrec);
         writer.keyword("SET");
         SqlWriter.Frame withFrame = writer.startList("(", ")");
         for (SqlNode property : propertyList) {
