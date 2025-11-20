@@ -349,7 +349,7 @@ public class SqlNodeToOperationConversion {
     /** Convert DROP TABLE statement. */
     private Operation convertDropTable(SqlDropTable sqlDropTable) {
         UnresolvedIdentifier unresolvedIdentifier =
-                UnresolvedIdentifier.of(sqlDropTable.fullTableName());
+                UnresolvedIdentifier.of(sqlDropTable.getFullName());
         ObjectIdentifier identifier = catalogManager.qualifyIdentifier(unresolvedIdentifier);
 
         return new DropTableOperation(
@@ -450,7 +450,7 @@ public class SqlNodeToOperationConversion {
     /** Convert DROP FUNCTION statement. */
     private Operation convertDropFunction(SqlDropFunction sqlDropFunction) {
         UnresolvedIdentifier unresolvedIdentifier =
-                UnresolvedIdentifier.of(sqlDropFunction.getFunctionIdentifier());
+                UnresolvedIdentifier.of(sqlDropFunction.getFullName());
         if (sqlDropFunction.isSystemFunction()) {
             return new DropTempSystemFunctionOperation(
                     unresolvedIdentifier.getObjectName(), sqlDropFunction.getIfExists());
@@ -589,7 +589,7 @@ public class SqlNodeToOperationConversion {
 
     /** Convert DROP DATABASE statement. */
     private Operation convertDropDatabase(SqlDropDatabase sqlDropDatabase) {
-        String[] fullDatabaseName = sqlDropDatabase.fullDatabaseName();
+        String[] fullDatabaseName = sqlDropDatabase.getFullName();
         if (fullDatabaseName.length > 2) {
             throw new ValidationException("drop database identifier format error");
         }
@@ -691,7 +691,7 @@ public class SqlNodeToOperationConversion {
     /** Convert DROP VIEW statement. */
     private Operation convertDropView(SqlDropView sqlDropView) {
         UnresolvedIdentifier unresolvedIdentifier =
-                UnresolvedIdentifier.of(sqlDropView.fullViewName());
+                UnresolvedIdentifier.of(sqlDropView.getFullName());
         ObjectIdentifier identifier = catalogManager.qualifyIdentifier(unresolvedIdentifier);
 
         return new DropViewOperation(
