@@ -30,8 +30,8 @@ import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.ddl.CreateModelOperation;
 import org.apache.flink.table.planner.operations.converters.table.SchemaBuilderUtil;
+import org.apache.flink.table.planner.utils.OperationConverterUtils;
 
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.validate.SqlValidator;
@@ -63,7 +63,7 @@ public class SqlCreateModelConverter implements SqlNodeConverter<SqlCreateModel>
                         schemaBuilderUtil.getSchema(sqlCreateModel.getInputColumnList(), true),
                         schemaBuilderUtil.getSchema(sqlCreateModel.getOutputColumnList(), false),
                         modelOptions,
-                        sqlCreateModel.getComment().map(SqlLiteral::toValue).orElse(null));
+                        OperationConverterUtils.getComment(sqlCreateModel.getComment()));
 
         return new CreateModelOperation(
                 identifier,

@@ -20,6 +20,7 @@ package org.apache.flink.sql.parser.ddl;
 
 import org.apache.flink.sql.parser.ExtendedSqlNode;
 import org.apache.flink.sql.parser.SqlConstraintValidator;
+import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.error.SqlValidateException;
 
@@ -122,7 +123,7 @@ public class SqlReplaceTableAs extends SqlCreateTable implements ExtendedSqlNode
                 getProperties(),
                 getPartitionKeyList(),
                 getWatermark().get(),
-                getComment(),
+                getComment().orElse(null),
                 asQuery);
     }
 
@@ -175,9 +176,10 @@ public class SqlReplaceTableAs extends SqlCreateTable implements ExtendedSqlNode
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         unparseCreateOrReplace(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseComment(getComment(), writer, leftPrec, rightPrec);
-        unparseProperties(writer, leftPrec, rightPrec);
-        unparseQuery(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseComment(
+                getComment().orElse(null), true, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseProperties(getProperties(), writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseAsQuery(asQuery, writer, leftPrec, rightPrec);
     }
 
     protected void unparseCreateOrReplace(SqlWriter writer, int leftPrec, int rightPrec) {
@@ -186,12 +188,5 @@ public class SqlReplaceTableAs extends SqlCreateTable implements ExtendedSqlNode
         }
         writer.keyword("REPLACE TABLE");
         getName().unparse(writer, leftPrec, rightPrec);
-    }
-
-    protected void unparseQuery(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.newlineAndIndent();
-        writer.keyword("AS");
-        writer.newlineAndIndent();
-        this.asQuery.unparse(writer, leftPrec, rightPrec);
     }
 }

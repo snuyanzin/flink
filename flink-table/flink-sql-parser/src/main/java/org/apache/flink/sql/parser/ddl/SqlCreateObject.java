@@ -23,13 +23,14 @@ import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlCreate;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 import javax.annotation.Nullable;
+
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -67,8 +68,8 @@ public abstract class SqlCreateObject extends SqlCreate {
         return isTemporary;
     }
 
-    public @Nullable SqlCharStringLiteral getComment() {
-        return comment;
+    public Optional<SqlCharStringLiteral> getComment() {
+        return Optional.ofNullable(comment);
     }
 
     public SqlNodeList getProperties() {
@@ -86,8 +87,8 @@ public abstract class SqlCreateObject extends SqlCreate {
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         unparseCreateIfNotExists(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseComment(comment, writer, leftPrec, rightPrec);
-        unparseProperties(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseComment(comment, true, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseProperties(properties, writer, leftPrec, rightPrec);
     }
 
     protected void unparseCreateIfNotExists(SqlWriter writer, int leftPrec, int rightPrec) {
@@ -100,20 +101,5 @@ public abstract class SqlCreateObject extends SqlCreate {
             writer.keyword("IF NOT EXISTS");
         }
         name.unparse(writer, leftPrec, rightPrec);
-    }
-
-    protected void unparseProperties(SqlWriter writer, int leftPrec, int rightPrec) {
-        if (properties == null || properties.isEmpty()) {
-            return;
-        }
-        writer.newlineAndIndent();
-        writer.keyword("WITH");
-        SqlWriter.Frame withFrame = writer.startList("(", ")");
-        for (SqlNode property : properties) {
-            SqlUnparseUtils.printIndent(writer);
-            property.unparse(writer, leftPrec, rightPrec);
-        }
-        writer.newlineAndIndent();
-        writer.endList(withFrame);
     }
 }

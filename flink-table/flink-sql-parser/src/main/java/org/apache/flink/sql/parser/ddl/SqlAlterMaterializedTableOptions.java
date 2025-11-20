@@ -18,6 +18,8 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
+
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -47,12 +49,12 @@ public class SqlAlterMaterializedTableOptions extends SqlAlterMaterializedTable 
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableNullableList.of(getTableName(), propertyList);
+        return ImmutableNullableList.of(getName(), propertyList);
     }
 
     @Override
-    public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        super.unparse(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseSetProperties(propertyList, writer, leftPrec, rightPrec);
+    public void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
+        super.unparseAlterOperation(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseSetProperties(propertyList, writer, leftPrec, rightPrec);
     }
 }

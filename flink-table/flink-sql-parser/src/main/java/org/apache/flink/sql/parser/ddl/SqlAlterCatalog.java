@@ -35,7 +35,7 @@ public class SqlAlterCatalog extends SqlAlterObject {
             new SqlSpecialOperator("ALTER CATALOG", SqlKind.OTHER_DDL);
 
     public SqlAlterCatalog(SqlParserPos position, SqlIdentifier catalogName) {
-        super(OPERATOR, position, catalogName);
+        super(OPERATOR, position, "CATALOG", catalogName);
     }
 
     @Override
@@ -49,7 +49,6 @@ public class SqlAlterCatalog extends SqlAlterObject {
 
     @Override
     protected void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.keyword("ALTER CATALOG");
         getName().unparse(writer, leftPrec, rightPrec);
     }
 }

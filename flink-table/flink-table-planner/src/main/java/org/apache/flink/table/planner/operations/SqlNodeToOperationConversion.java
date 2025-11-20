@@ -163,7 +163,6 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlUpdate;
 import org.apache.calcite.sql.SqlUtil;
-import org.apache.calcite.util.NlsString;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -439,7 +438,7 @@ public class SqlNodeToOperationConversion {
                         sqlAlterFunction.getFunctionClassName().getValueAs(String.class), language);
 
         UnresolvedIdentifier unresolvedIdentifier =
-                UnresolvedIdentifier.of(sqlAlterFunction.getFunctionIdentifier());
+                UnresolvedIdentifier.of(sqlAlterFunction.getFullName());
         ObjectIdentifier identifier = catalogManager.qualifyIdentifier(unresolvedIdentifier);
         return new AlterCatalogFunctionOperation(
                 identifier,
@@ -579,11 +578,7 @@ public class SqlNodeToOperationConversion {
         String databaseName =
                 (fullDatabaseName.length == 1) ? fullDatabaseName[0] : fullDatabaseName[1];
         boolean ignoreIfExists = sqlCreateDatabase.isIfNotExists();
-        String databaseComment =
-                sqlCreateDatabase
-                        .getComment()
-                        .map(comment -> comment.getValueAs(NlsString.class).getValue())
-                        .orElse(null);
+        String databaseComment = OperationConverterUtils.getComment(sqlCreateDatabase.getComment());
         // set with properties
         final Map<String, String> properties =
                 OperationConverterUtils.getProperties(sqlCreateDatabase.getProperties());
@@ -613,7 +608,7 @@ public class SqlNodeToOperationConversion {
 
     /** Convert ALTER DATABASE statement. */
     private Operation convertAlterDatabase(SqlAlterDatabase sqlAlterDatabase) {
-        String[] fullDatabaseName = sqlAlterDatabase.fullDatabaseName();
+        String[] fullDatabaseName = sqlAlterDatabase.getFullName();
         if (fullDatabaseName.length > 2) {
             throw new ValidationException("alter database identifier format error");
         }

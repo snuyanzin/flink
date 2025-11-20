@@ -18,6 +18,8 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
+
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -75,6 +77,6 @@ public class SqlAlterTableOptions extends SqlAlterTable {
     @Override
     public void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
         super.unparseAlterOperation(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseSetProperties(propertyList, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseSetProperties(propertyList, writer, leftPrec, rightPrec);
     }
 }

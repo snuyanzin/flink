@@ -18,6 +18,8 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
+
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
@@ -51,6 +53,7 @@ public class SqlAlterCatalogComment extends SqlAlterCatalog {
 
     @Override
     protected void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
-        UnparseUtils.unparseComment(getComment(), writer, leftPrec, rightPrec);
+        super.unparseAlterOperation(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseComment(getComment(), false, writer, leftPrec, rightPrec);
     }
 }

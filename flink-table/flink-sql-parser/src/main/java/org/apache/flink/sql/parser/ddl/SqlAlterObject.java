@@ -50,6 +50,10 @@ public abstract class SqlAlterObject extends SqlAlter {
         return name;
     }
 
+    public String[] getFullName() {
+        return name.names.toArray(new String[0]);
+    }
+
     @Override
     public SqlOperator getOperator() {
         return operator;

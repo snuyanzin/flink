@@ -71,6 +71,6 @@ public class SqlAlterTableDropColumn extends SqlAlterTable {
         writer.keyword("DROP");
         // unparse table column
         SqlUnparseUtils.unparseTableSchema(
-                writer, leftPrec, rightPrec, columnList, Collections.emptyList(), null);
+                columnList, Collections.emptyList(), null, writer, leftPrec, rightPrec);
     }
 }

@@ -18,6 +18,7 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.flink.sql.parser.error.SqlValidateException;
 
 import org.apache.calcite.sql.SqlCharStringLiteral;
@@ -107,13 +108,6 @@ public class SqlCreateModelAs extends SqlCreateModel {
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         super.unparse(writer, leftPrec, rightPrec);
-        unparseQuery(writer, leftPrec, rightPrec);
-    }
-
-    private void unparseQuery(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.newlineAndIndent();
-        writer.keyword("AS");
-        writer.newlineAndIndent();
-        this.asQuery.unparse(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseAsQuery(asQuery, writer, leftPrec, rightPrec);
     }
 }

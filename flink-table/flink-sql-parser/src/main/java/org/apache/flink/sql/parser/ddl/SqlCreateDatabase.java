@@ -49,7 +49,7 @@ public class SqlCreateDatabase extends SqlCreateObject {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableNullableList.of(getName(), getProperties(), getComment());
+        return ImmutableNullableList.of(getName(), getProperties(), getComment().orElse(null));
     }
 
     @Override

@@ -23,8 +23,6 @@ import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.ddl.CreateCatalogOperation;
 import org.apache.flink.table.planner.utils.OperationConverterUtils;
 
-import org.apache.calcite.util.NlsString;
-
 import java.util.Map;
 
 /** A converter for {@link SqlCreateCatalog}. */
@@ -39,7 +37,7 @@ public class SqlCreateCatalogConverter implements SqlNodeConverter<SqlCreateCata
         return new CreateCatalogOperation(
                 node.catalogName(),
                 properties,
-                node.getComment().map(c -> c.getValueAs(NlsString.class).getValue()).orElse(null),
+                OperationConverterUtils.getComment(node.getComment()),
                 node.isIfNotExists());
     }
 }

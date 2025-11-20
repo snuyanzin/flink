@@ -68,7 +68,11 @@ public class SqlCreateModel extends SqlCreateObject implements ExtendedSqlNode {
     @Override
     public @Nonnull List<SqlNode> getOperandList() {
         return ImmutableNullableList.of(
-                getName(), getComment(), inputColumnList, outputColumnList, getProperties());
+                getName(),
+                getComment().orElse(null),
+                inputColumnList,
+                outputColumnList,
+                getProperties());
     }
 
     public SqlNodeList getInputColumnList() {
@@ -107,8 +111,9 @@ public class SqlCreateModel extends SqlCreateObject implements ExtendedSqlNode {
         unparseCreateIfNotExists(writer, leftPrec, rightPrec);
         unparseInputColumnList(writer, leftPrec, rightPrec);
         unparseOutputColumnList(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseComment(getComment(), writer, leftPrec, rightPrec);
-        unparseProperties(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseComment(
+                getComment().orElse(null), true, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseProperties(getProperties(), writer, leftPrec, rightPrec);
     }
 
     private void unparseInputColumnList(SqlWriter writer, int leftPrec, int rightPrec) {

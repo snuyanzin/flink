@@ -18,6 +18,8 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
+
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -42,7 +44,7 @@ public class SqlAlterViewProperties extends SqlAlterView {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableNullableList.of(viewIdentifier, propertyList);
+        return ImmutableNullableList.of(getName(), propertyList);
     }
 
     public SqlNodeList getPropertyList() {
@@ -50,7 +52,7 @@ public class SqlAlterViewProperties extends SqlAlterView {
     }
 
     @Override
-    public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        UnparseUtils.unparseSetProperties(propertyList, writer, leftPrec, rightPrec);
+    public void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
+        SqlUnparseUtils.unparseSetProperties(propertyList, writer, leftPrec, rightPrec);
     }
 }

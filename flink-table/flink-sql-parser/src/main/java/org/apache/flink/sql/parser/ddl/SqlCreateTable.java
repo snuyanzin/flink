@@ -20,6 +20,7 @@ package org.apache.flink.sql.parser.ddl;
 
 import org.apache.flink.sql.parser.ExtendedSqlNode;
 import org.apache.flink.sql.parser.SqlConstraintValidator;
+import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlComputedColumn;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.error.SqlValidateException;
@@ -123,7 +124,7 @@ public class SqlCreateTable extends SqlCreateObject implements ExtendedSqlNode {
                 getProperties(),
                 partitionKeyList,
                 watermark,
-                getComment());
+                getComment().orElse(null));
     }
 
     public SqlNodeList getColumnList() {
@@ -204,12 +205,13 @@ public class SqlCreateTable extends SqlCreateObject implements ExtendedSqlNode {
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         unparseCreateIfNotExists(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseTableSchema(
+        SqlUnparseUtils.unparseTableSchema(
                 columnList, tableConstraints, watermark, writer, leftPrec, rightPrec);
-        UnparseUtils.unparseComment(getComment(), writer, leftPrec, rightPrec);
-        UnparseUtils.unparseDistribution(distribution, writer, leftPrec, rightPrec);
-        UnparseUtils.unparsePartitionKeyList(partitionKeyList, writer, leftPrec, rightPrec);
-        unparseProperties(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseComment(
+                getComment().orElse(null), true, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseDistribution(distribution, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparsePartitionKeyList(partitionKeyList, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseProperties(getProperties(), writer, leftPrec, rightPrec);
     }
 
     /** Table creation context. */

@@ -18,6 +18,8 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
+
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -52,12 +54,12 @@ public class SqlAlterModelSet extends SqlAlterModel {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return List.of(modelName, modelOptionList);
+        return List.of(getName(), modelOptionList);
     }
 
     @Override
-    public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-        super.unparse(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseSetProperties(modelOptionList, writer, leftPrec, rightPrec);
+    public void unparseAlterOperation(SqlWriter writer, int leftPrec, int rightPrec) {
+        super.unparseAlterOperation(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseSetProperties(modelOptionList, writer, leftPrec, rightPrec);
     }
 }

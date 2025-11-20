@@ -2551,7 +2551,7 @@ class FlinkSqlParserImplTest extends SqlParserTest {
         sql("load module dummy with ('k1' = 'v1', 'k2' = 'v2')")
                 .ok(
                         "LOAD MODULE `DUMMY`"
-                                + " WITH (\n"
+                                + "\nWITH (\n"
                                 + "  'k1' = 'v1',\n"
                                 + "  'k2' = 'v2'\n"
                                 + ")");

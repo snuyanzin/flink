@@ -56,7 +56,7 @@ public class SqlCreateCatalog extends SqlCreateObject {
 
     @Override
     public List<SqlNode> getOperandList() {
-        return ImmutableNullableList.of(getName(), getProperties(), getComment());
+        return ImmutableNullableList.of(getName(), getProperties(), getComment().orElse(null));
     }
 
     public String catalogName() {

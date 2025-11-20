@@ -18,6 +18,7 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.error.SqlValidateException;
 
@@ -138,10 +139,6 @@ public class SqlCreateTableAs extends SqlCreateTable {
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         super.unparse(writer, leftPrec, rightPrec);
-
-        writer.newlineAndIndent();
-        writer.keyword("AS");
-        writer.newlineAndIndent();
-        this.asQuery.unparse(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseAsQuery(asQuery, writer, leftPrec, rightPrec);
     }
 }

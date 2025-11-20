@@ -18,6 +18,8 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
+
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -104,7 +106,7 @@ public class SqlCreateFunction extends SqlCreateObject {
 
         unparseFunctionLanguage(writer, leftPrec, rightPrec);
         unparseResourceInfo(writer, leftPrec, rightPrec);
-        unparseProperties(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseProperties(getProperties(), writer, leftPrec, rightPrec);
     }
 
     @Override

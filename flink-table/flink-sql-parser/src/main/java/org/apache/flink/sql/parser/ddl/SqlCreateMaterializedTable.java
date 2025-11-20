@@ -20,6 +20,7 @@ package org.apache.flink.sql.parser.ddl;
 
 import org.apache.flink.sql.parser.ExtendedSqlNode;
 import org.apache.flink.sql.parser.SqlConstraintValidator;
+import org.apache.flink.sql.parser.SqlUnparseUtils;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.error.SqlValidateException;
 
@@ -97,7 +98,7 @@ public class SqlCreateMaterializedTable extends SqlCreateObject implements Exten
                 columnList,
                 new SqlNodeList(tableConstraints, SqlParserPos.ZERO),
                 watermark,
-                getComment(),
+                getComment().orElse(null),
                 partitionKeyList,
                 getProperties(),
                 freshness,
@@ -161,39 +162,15 @@ public class SqlCreateMaterializedTable extends SqlCreateObject implements Exten
     @Override
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         unparseCreateIfNotExists(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseTableSchema(
+        SqlUnparseUtils.unparseTableSchema(
                 columnList, tableConstraints, watermark, writer, leftPrec, rightPrec);
-        UnparseUtils.unparseComment(getComment(), writer, leftPrec, rightPrec);
-        UnparseUtils.unparseDistribution(distribution, writer, leftPrec, rightPrec);
-        UnparseUtils.unparsePartitionKeyList(partitionKeyList, writer, leftPrec, rightPrec);
-        unparseProperties(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseFreshness(freshness, writer, leftPrec, rightPrec);
-        UnparseUtils.unparseRefreshMode(refreshMode, writer, leftPrec, rightPrec);
-        unparseQuery(writer, leftPrec, rightPrec);
-    }
-
-    protected void unparseFreshness(SqlWriter writer, int leftPrec, int rightPrec) {
-        if (freshness != null) {
-            writer.newlineAndIndent();
-            writer.keyword("FRESHNESS");
-            writer.keyword("=");
-            freshness.unparse(writer, leftPrec, rightPrec);
-        }
-    }
-
-    protected void unparseRefreshMode(SqlWriter writer, int leftPrec, int rightPrec) {
-        if (refreshMode != null) {
-            writer.newlineAndIndent();
-            writer.keyword("REFRESH_MODE");
-            writer.keyword("=");
-            writer.keyword(refreshMode.name());
-        }
-    }
-
-    protected void unparseQuery(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.newlineAndIndent();
-        writer.keyword("AS");
-        writer.newlineAndIndent();
-        asQuery.unparse(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseComment(
+                getComment().orElse(null), true, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseDistribution(distribution, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparsePartitionKeyList(partitionKeyList, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseProperties(getProperties(), writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseFreshness(freshness, true, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseRefreshMode(refreshMode, writer);
+        SqlUnparseUtils.unparseAsQuery(asQuery, writer, leftPrec, rightPrec);
     }
 }

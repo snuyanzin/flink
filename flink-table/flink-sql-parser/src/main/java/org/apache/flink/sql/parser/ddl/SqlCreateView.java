@@ -18,6 +18,8 @@
 
 package org.apache.flink.sql.parser.ddl;
 
+import org.apache.flink.sql.parser.SqlUnparseUtils;
+
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -83,20 +85,14 @@ public class SqlCreateView extends SqlCreateObject {
     public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
         unparseCreateIfNotExists(writer, leftPrec, rightPrec);
         unparseFieldList(writer, leftPrec, rightPrec);
-        UnparseUtils.unparseComment(getComment(), writer, leftPrec, rightPrec);
-        unparseQuery(writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseComment(
+                getComment().orElse(null), true, writer, leftPrec, rightPrec);
+        SqlUnparseUtils.unparseAsQuery(query, writer, leftPrec, rightPrec);
     }
 
     private void unparseFieldList(SqlWriter writer, int leftPrec, int rightPrec) {
         if (!fieldList.isEmpty()) {
             fieldList.unparse(writer, 1, rightPrec);
         }
-    }
-
-    private void unparseQuery(SqlWriter writer, int leftPrec, int rightPrec) {
-        writer.newlineAndIndent();
-        writer.keyword("AS");
-        writer.newlineAndIndent();
-        query.unparse(writer, leftPrec, rightPrec);
     }
 }
