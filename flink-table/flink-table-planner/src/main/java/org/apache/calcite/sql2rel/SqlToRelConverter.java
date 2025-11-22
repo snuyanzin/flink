@@ -4574,9 +4574,18 @@ public class SqlToRelConverter {
         }
 
         if (e0.left instanceof RexCorrelVariable) {
-            assert e instanceof RexFieldAccess;
-            final RexNode prev =
-                    bb.mapCorrelateToRex.put(((RexCorrelVariable) e0.left).id, (RexFieldAccess) e);
+            assert e instanceof RexFieldAccess
+                    || e instanceof RexCall
+                            && e.getKind() == SqlKind.CAST
+                            && ((RexCall) e).getOperands().size() == 1
+                            && ((RexCall) e).getOperands().get(0) instanceof RexFieldAccess;
+            final RexFieldAccess rfa;
+            if (e instanceof RexFieldAccess) {
+                rfa = (RexFieldAccess) e;
+            } else {
+                rfa = (RexFieldAccess) ((RexCall) e).getOperands().get(0);
+            }
+            final RexNode prev = bb.mapCorrelateToRex.put(((RexCorrelVariable) e0.left).id, rfa);
             assert prev == null;
         }
         return e;

@@ -621,6 +621,39 @@ Calc(select=[person, sum_votes, prize, age])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testJoinOnNestedNotNullFieldsWithCorrelation">
+    <Resource name="sql">
+      <![CDATA[SELECT 1
+FROM `test.table.tbl1.v1` t1
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM `upd.table.tbl2.v1` t2
+    WHERE `t2`.`f0`.`nested` = `t1`.`nested1`.`nested2`.`nested3`.`nested4`
+)]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(EXPR$0=[1])
++- LogicalFilter(condition=[NOT(EXISTS({
+LogicalFilter(condition=[=(CAST($0.nested):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", CAST($cor0.f0.nested1.nested2.nested3.nested4):VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
+  LogicalTableScan(table=[[default_catalog, default_database, upd.table.tbl2.v1]])
+}))], variablesSet=[[$cor0]])
+   +- LogicalTableScan(table=[[default_catalog, default_database, test.table.tbl1.v1]])
+]]>
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
+Calc(select=[1 AS EXPR$0])
++- Join(joinType=[LeftAntiJoin], where=[($f10 = $f1)], select=[f0, $f1], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[$f1]])
+   :  +- Calc(select=[f0, f0.nested1.nested2.nested3.nested4 AS $f1])
+   :     +- TableSourceScan(table=[[default_catalog, default_database, test.table.tbl1.v1]], fields=[f0])
+   +- Exchange(distribution=[hash[$f1]])
+      +- Calc(select=[f0.nested AS $f1])
+         +- TableSourceScan(table=[[default_catalog, default_database, upd.table.tbl2.v1]], fields=[f0])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testJoinOutputLostUpsertKeyWithSinkPk">
     <Resource name="explain">
       <![CDATA[== Abstract Syntax Tree ==

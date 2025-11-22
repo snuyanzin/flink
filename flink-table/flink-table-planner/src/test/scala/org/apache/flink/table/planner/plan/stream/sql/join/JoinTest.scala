@@ -686,4 +686,34 @@ class JoinTest extends TableTestBase {
         "Key: 'table.exec.mini-batch.size' , default: -1 (fallback keys: []) must be > 0.")
       .isInstanceOf[IllegalArgumentException]
   }
+
+  @Test
+  def testJoinOnNestedNotNullFieldsWithCorrelation(): Unit = {
+    util.tableEnv
+      .executeSql(
+        "CREATE TABLE `upd.table.tbl2.v1` (\n"
+          + "  `f0` ROW<`nested` VARCHAR(2147483647) NOT NULL>\n"
+          + ") WITH (\n"
+          + " 'connector' = 'values',\n"
+          + " 'bounded' = 'true'\n"
+          + ")")
+
+    util.tableEnv
+      .executeSql(
+        "CREATE TABLE `test.table.tbl1.v1` (\n"
+          + "  `f0` ROW<`nested1` ROW< `nested2` ROW<`nested3` ROW<`nested4` VARCHAR(2147483647) NOT NULL>>>>\n"
+          + ") WITH (\n"
+          + " 'connector' = 'values',\n"
+          + " 'bounded' = 'true'\n"
+          + ")")
+
+    util.verifyExecPlan(
+      "SELECT 1\n"
+        + "FROM `test.table.tbl1.v1` t1\n"
+        + "WHERE NOT EXISTS (\n"
+        + "    SELECT 1\n"
+        + "    FROM `upd.table.tbl2.v1` t2\n"
+        + "    WHERE `t2`.`f0`.`nested` = `t1`.`nested1`.`nested2`.`nested3`.`nested4`\n"
+        + ")")
+  }
 }
