@@ -28,12 +28,12 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-/** ALTER Distribution DDL sql call for tables and materialized tables. */
-public abstract class SqlAlterDistribution extends SqlAlterTable {
+/** ALTER TABLE DDL to alter distribution for a table. */
+public abstract class SqlAlterTableDistribution extends SqlAlterTable {
 
     private final SqlDistribution distribution;
 
-    public SqlAlterDistribution(
+    public SqlAlterTableDistribution(
             SqlParserPos pos, SqlIdentifier tableName, SqlDistribution distribution) {
         super(pos, tableName, false);
         this.distribution = distribution;
@@ -61,9 +61,9 @@ public abstract class SqlAlterDistribution extends SqlAlterTable {
         distribution.unparseAlter(writer, leftPrec, rightPrec);
     }
 
-    public static class SqlAddDistribution extends SqlAlterDistribution {
+    public static class SqlAlterTableAddDistribution extends SqlAlterTableDistribution {
 
-        public SqlAddDistribution(
+        public SqlAlterTableAddDistribution(
                 SqlParserPos pos, SqlIdentifier tableName, SqlDistribution distribution) {
             super(pos, tableName, distribution);
         }
@@ -74,9 +74,9 @@ public abstract class SqlAlterDistribution extends SqlAlterTable {
         }
     }
 
-    public static class SqlModifyDistribution extends SqlAlterDistribution {
+    public static class SqlAlterTableModifyDistribution extends SqlAlterTableDistribution {
 
-        public SqlModifyDistribution(
+        public SqlAlterTableModifyDistribution(
                 SqlParserPos pos, SqlIdentifier tableName, SqlDistribution distribution) {
             super(pos, tableName, distribution);
         }

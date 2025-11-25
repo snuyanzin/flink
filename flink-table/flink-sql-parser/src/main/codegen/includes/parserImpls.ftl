@@ -924,7 +924,7 @@ SqlAlterTable SqlAlterTable() :
         |
         (
             <DISTRIBUTION>
-            {return new SqlAddDistribution(getPos(), tableIdentifier, SqlDistribution(getPos()));}
+            {return new SqlAlterTableAddDistribution(getPos(), tableIdentifier, SqlDistribution(getPos()));}
         |
             AlterTableAddOrModify(ctx)
         |
@@ -949,7 +949,7 @@ SqlAlterTable SqlAlterTable() :
         <MODIFY>
         (
             <DISTRIBUTION>
-            {return new SqlModifyDistribution(getPos(), tableIdentifier, SqlDistribution(getPos()));}
+            {return new SqlAlterTableModifyDistribution(getPos(), tableIdentifier, SqlDistribution(getPos()));}
         |
             AlterTableAddOrModify(ctx)
         |
@@ -2102,23 +2102,63 @@ SqlAlterMaterializedTable SqlAlterMaterializedTable() :
                     asQuery);
             }
         |
-        <MODIFY> <DISTRIBUTION> {
+        <ADD>
+        (
+            <DISTRIBUTION> {
+                return new SqlAlterMaterializedTableAddDistribution(
+                startPos.plus(getPos()),
+                tableIdentifier, SqlDistribution(getPos()));
+            }
+        |
+            AlterTableAddOrModify(ctx)
+        |
+            <LPAREN>
+            AlterTableAddOrModify(ctx)
+            (
+                <COMMA> AlterTableAddOrModify(ctx)
+            )*
+            <RPAREN>
+        )
+        {
+            return new SqlAlterMaterializedTableAddSchema(
+              startPos.plus(getPos()),
+              tableIdentifier,
+              new SqlNodeList(ctx.columnPositions, startPos.plus(getPos())),
+              ctx.constraints,
+              ctx.watermark);
+        }
+        |
+        <MODIFY>
+        (
+            <DISTRIBUTION> {
                 return new SqlAlterMaterializedTableModifyDistribution(
                 startPos.plus(getPos()),
                 tableIdentifier,
                 SqlDistribution(getPos()));
             }
         |
+            AlterTableAddOrModify(ctx)
+        |
+            <LPAREN>
+            AlterTableAddOrModify(ctx)
+            (
+                <COMMA> AlterTableAddOrModify(ctx)
+            )*
+            <RPAREN>
+        )
+        {
+            return new SqlAlterMaterializedTableModifySchema(
+              startPos.plus(getPos()),
+              tableIdentifier,
+              new SqlNodeList(ctx.columnPositions, startPos.plus(getPos())),
+              ctx.constraints,
+              ctx.watermark);
+        }
+        |
         <DROP> <DISTRIBUTION> {
                 return new SqlAlterMaterializedTableDropDistribution(
                 startPos.plus(getPos()),
                 tableIdentifier);
-            }
-        |
-        <ADD> <DISTRIBUTION> {
-                return new SqlAlterMaterializedTableAddDistribution(
-                startPos.plus(getPos()),
-                tableIdentifier, SqlDistribution(getPos()));
             }
     )
 }
