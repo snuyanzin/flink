@@ -140,36 +140,19 @@ class SqlMaterializedTableNodeToOperationConverterTest
         CreateMaterializedTableOperation op = (CreateMaterializedTableOperation) operation;
         ResolvedCatalogMaterializedTable materializedTable = op.getCatalogMaterializedTable();
 
-        Map<String, String> options = Map.of("connector", "filesystem", "format", "json");
-        CatalogMaterializedTable expected =
-                CatalogMaterializedTable.newBuilder()
-                        .schema(
-                                Schema.newBuilder()
-                                        .column("a", DataTypes.BIGINT().notNull())
-                                        .column("b", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .column("c", DataTypes.INT())
-                                        .column("d", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .primaryKeyNamed("ct1", Collections.singletonList("a"))
-                                        .build())
-                        .comment("materialized table comment")
-                        .options(options)
-                        .partitionKeys(Arrays.asList("a", "d"))
-                        .freshness(IntervalFreshness.ofSecond("30"))
-                        .logicalRefreshMode(CatalogMaterializedTable.LogicalRefreshMode.FULL)
-                        .refreshMode(RefreshMode.FULL)
-                        .refreshStatus(CatalogMaterializedTable.RefreshStatus.INITIALIZING)
-                        .originalQuery("SELECT *\nFROM `t1`")
-                        .expandedQuery(
-                                "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
-                                        + "FROM `builtin`.`default`.`t1` AS `t1`")
-                        .build();
-
         final IntervalFreshness resolvedFreshness = materializedTable.getDefinitionFreshness();
         assertThat(resolvedFreshness).isEqualTo(IntervalFreshness.ofSecond("30"));
 
         final RefreshMode resolvedRefreshMode = materializedTable.getRefreshMode();
         assertThat(resolvedRefreshMode).isSameAs(RefreshMode.FULL);
 
+        final CatalogMaterializedTable expected =
+                getDefaultMaterializedTablebuilder()
+                        .freshness(IntervalFreshness.ofSecond("30"))
+                        .logicalRefreshMode(CatalogMaterializedTable.LogicalRefreshMode.FULL)
+                        .refreshMode(RefreshMode.FULL)
+                        .refreshStatus(CatalogMaterializedTable.RefreshStatus.INITIALIZING)
+                        .build();
         assertThat(materializedTable.getOrigin()).isEqualTo(expected);
     }
 
@@ -194,30 +177,6 @@ class SqlMaterializedTableNodeToOperationConverterTest
         ResolvedCatalogMaterializedTable materializedTable = op.getCatalogMaterializedTable();
         assertThat(materializedTable).isInstanceOf(ResolvedCatalogMaterializedTable.class);
 
-        Map<String, String> options = Map.of("connector", "filesystem", "format", "json");
-
-        CatalogMaterializedTable expected =
-                CatalogMaterializedTable.newBuilder()
-                        .schema(
-                                Schema.newBuilder()
-                                        .column("a", DataTypes.BIGINT().notNull())
-                                        .column("b", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .column("c", DataTypes.INT())
-                                        .column("d", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .primaryKeyNamed("ct1", Collections.singletonList("a"))
-                                        .build())
-                        .comment("materialized table comment")
-                        .options(options)
-                        .partitionKeys(Arrays.asList("a", "d"))
-                        .logicalRefreshMode(LogicalRefreshMode.FULL)
-                        .refreshMode(RefreshMode.FULL)
-                        .refreshStatus(CatalogMaterializedTable.RefreshStatus.INITIALIZING)
-                        .originalQuery("SELECT *\nFROM `t1`")
-                        .expandedQuery(
-                                "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
-                                        + "FROM `builtin`.`default`.`t1` AS `t1`")
-                        .build();
-
         // The resolved freshness should default to 1 minute
         final IntervalFreshness resolvedFreshness = materializedTable.getDefinitionFreshness();
         assertThat(resolvedFreshness).isEqualTo(IntervalFreshness.ofHour("1"));
@@ -225,6 +184,12 @@ class SqlMaterializedTableNodeToOperationConverterTest
         final RefreshMode resolvedRefreshMode = materializedTable.getRefreshMode();
         assertThat(resolvedRefreshMode).isSameAs(RefreshMode.FULL);
 
+        final CatalogMaterializedTable expected =
+                getDefaultMaterializedTablebuilder()
+                        .logicalRefreshMode(LogicalRefreshMode.FULL)
+                        .refreshMode(RefreshMode.FULL)
+                        .refreshStatus(CatalogMaterializedTable.RefreshStatus.INITIALIZING)
+                        .build();
         assertThat(materializedTable.getOrigin()).isEqualTo(expected);
     }
 
@@ -248,31 +213,13 @@ class SqlMaterializedTableNodeToOperationConverterTest
         ResolvedCatalogMaterializedTable materializedTable = op.getCatalogMaterializedTable();
         assertThat(materializedTable).isInstanceOf(ResolvedCatalogMaterializedTable.class);
 
-        Map<String, String> options = Map.of("connector", "filesystem", "format", "json");
-
-        CatalogMaterializedTable expected =
-                CatalogMaterializedTable.newBuilder()
-                        .schema(
-                                Schema.newBuilder()
-                                        .column("a", DataTypes.BIGINT().notNull())
-                                        .column("b", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .column("c", DataTypes.INT())
-                                        .column("d", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .primaryKeyNamed("ct1", Collections.singletonList("a"))
-                                        .build())
-                        .comment("materialized table comment")
-                        .options(options)
-                        .partitionKeys(Arrays.asList("a", "d"))
-                        .logicalRefreshMode(LogicalRefreshMode.AUTOMATIC)
-                        .refreshStatus(CatalogMaterializedTable.RefreshStatus.INITIALIZING)
-                        .originalQuery("SELECT *\nFROM `t1`")
-                        .expandedQuery(
-                                "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
-                                        + "FROM `builtin`.`default`.`t1` AS `t1`")
-                        .build();
-
         final IntervalFreshness resolvedFreshness = materializedTable.getDefinitionFreshness();
         assertThat(resolvedFreshness).isEqualTo(IntervalFreshness.ofMinute("3"));
+        final CatalogMaterializedTable expected =
+                getDefaultMaterializedTablebuilder()
+                        .logicalRefreshMode(LogicalRefreshMode.AUTOMATIC)
+                        .refreshStatus(CatalogMaterializedTable.RefreshStatus.INITIALIZING)
+                        .build();
         assertThat(materializedTable.getOrigin()).isEqualTo(expected);
     }
 
@@ -378,162 +325,15 @@ class SqlMaterializedTableNodeToOperationConverterTest
         assertThat(materializedTable2.getLogicalRefreshMode())
                 .isEqualTo(CatalogMaterializedTable.LogicalRefreshMode.FULL);
         assertThat(materializedTable2.getRefreshMode()).isEqualTo(RefreshMode.FULL);
-        final String sql3 =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "FRESHNESS = INTERVAL '40' MINUTE\n"
-                        + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t1";
-        assertThatThrownBy(() -> parse(sql3))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "In full refresh mode, only freshness that are factors of 60 are currently supported when the time unit is MINUTE.");
-
-        final String sql4 =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "FRESHNESS = INTERVAL '40' MINUTE\n"
-                        + "AS SELECT * FROM t1";
-
-        assertThatThrownBy(() -> parse(sql4))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "In full refresh mode, only freshness that are factors of 60 are currently supported when the time unit is MINUTE.");
-    }
-
-    @Test
-    void testCreateMaterializedTableWithInvalidPrimaryKey() {
-        // test unsupported constraint
-        final String sql =
-                "CREATE MATERIALIZED TABLE mtbl1 (\n"
-                        + "   CONSTRAINT ct1 UNIQUE(a) NOT ENFORCED"
-                        + ")\n"
-                        + "FRESHNESS = INTERVAL '30' SECOND\n"
-                        + "AS SELECT * FROM t1";
-
-        assertThatThrownBy(() -> parse(sql))
-                .isInstanceOf(SqlValidateException.class)
-                .hasMessageContaining("UNIQUE constraint is not supported yet");
-
-        // test primary key not defined in source table
-        final String sql2 =
-                "CREATE MATERIALIZED TABLE mtbl1 (\n"
-                        + "   CONSTRAINT ct1 PRIMARY KEY(e) NOT ENFORCED"
-                        + ")\n"
-                        + "FRESHNESS = INTERVAL '30' SECOND\n"
-                        + "AS SELECT * FROM t1";
-
-        assertThatThrownBy(() -> parse(sql2))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Primary key column 'e' is not defined in the schema at line 2, column 31");
-
-        // test primary key with nullable source column
-        final String sql3 =
-                "CREATE MATERIALIZED TABLE mtbl1 (\n"
-                        + "   CONSTRAINT ct1 PRIMARY KEY(d) NOT ENFORCED"
-                        + ")\n"
-                        + "FRESHNESS = INTERVAL '30' SECOND\n"
-                        + "AS SELECT * FROM t1";
-
-        assertThatThrownBy(() -> parse(sql3))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("Invalid primary key 'ct1'. Column 'd' is nullable.");
-    }
-
-    @Test
-    void testCreateMaterializedTableWithInvalidPartitionKey() {
-        final String sql =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "PARTITIONED BY (a, e)\n"
-                        + "FRESHNESS = INTERVAL '30' SECOND\n"
-                        + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t1";
-        assertThatThrownBy(() -> parse(sql))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Partition column 'e' not defined in the query schema. Available columns: ['a', 'b', 'c', 'd']");
-
-        final String sql2 =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "PARTITIONED BY (b, c)\n"
-                        + "WITH (\n"
-                        + " 'partition.fields.ds.date-formatter' = 'yyyy-MM-dd'\n"
-                        + ")\n"
-                        + "FRESHNESS = INTERVAL '30' SECOND\n"
-                        + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t3";
-        assertThatThrownBy(() -> parse(sql2))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Column 'ds' referenced by materialized table option 'partition.fields.ds.date-formatter' isn't a partition column. Available partition columns: ['b', 'c'].");
-
-        final String sql3 =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "WITH (\n"
-                        + " 'partition.fields.c.date-formatter' = 'yyyy-MM-dd'\n"
-                        + ")\n"
-                        + "FRESHNESS = INTERVAL '30' SECOND\n"
-                        + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t3";
-        assertThatThrownBy(() -> parse(sql3))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Column 'c' referenced by materialized table option 'partition.fields.c.date-formatter' isn't a partition column. Available partition columns: [''].");
-
-        final String sql4 =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "PARTITIONED BY (b, c)\n"
-                        + "WITH (\n"
-                        + " 'partition.fields.c.date-formatter' = 'yyyy-MM-dd'\n"
-                        + ")\n"
-                        + "FRESHNESS = INTERVAL '30' SECOND\n"
-                        + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t3";
-        assertThatThrownBy(() -> parse(sql4))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Materialized table option 'partition.fields.c.date-formatter' only supports referring to char, varchar and string type partition column. Column c type is INT.");
-    }
-
-    @Test
-    void testCreateMaterializedTableWithInvalidFreshnessType() {
-        // test negative freshness value
-        final String sql =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "FRESHNESS = INTERVAL -'30' SECOND\n"
-                        + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t1";
-        assertThatThrownBy(() -> parse(sql))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Materialized table freshness doesn't support negative value.");
-
-        // test unsupported freshness type
-        final String sql2 =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "FRESHNESS = INTERVAL '30' YEAR\n"
-                        + "AS SELECT * FROM t1";
-        assertThatThrownBy(() -> parse(sql2))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Materialized table freshness only support SECOND, MINUTE, HOUR, DAY as the time unit.");
-
-        // test unsupported freshness type
-        final String sql3 =
-                "CREATE MATERIALIZED TABLE mtbl1\n"
-                        + "FRESHNESS = INTERVAL '30' DAY TO HOUR\n"
-                        + "AS SELECT * FROM t1";
-        assertThatThrownBy(() -> parse(sql3))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Materialized table freshness only support SECOND, MINUTE, HOUR, DAY as the time unit.");
     }
 
     @ParameterizedTest
     @MethodSource("testDataForCreateMaterializedTableFailedCase")
-    void createMaterializedTableFailedCase(String sql, String expectedErrorMsg) {
+    void createMaterializedTableFailedCase(
+            String sql, Class<?> expectedException, String expectedErrorMsg) {
         assertThatThrownBy(() -> parse(sql))
                 .as(sql)
-                .isInstanceOf(ValidationException.class)
+                .isInstanceOf(expectedException)
                 .hasMessage(expectedErrorMsg);
     }
 
@@ -762,27 +562,12 @@ class SqlMaterializedTableNodeToOperationConverterTest
         Map<String, String> options = new HashMap<>();
         options.put("connector", "filesystem");
         options.put("format", "json");
-        CatalogMaterializedTable expected =
-                CatalogMaterializedTable.newBuilder()
-                        .schema(
-                                Schema.newBuilder()
-                                        .column("a", DataTypes.BIGINT().notNull())
-                                        .column("b", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .column("c", DataTypes.INT())
-                                        .column("d", DataTypes.VARCHAR(Integer.MAX_VALUE))
-                                        .primaryKeyNamed("ct1", Collections.singletonList("a"))
-                                        .build())
-                        .comment("materialized table comment")
-                        .options(options)
-                        .partitionKeys(Arrays.asList("a", "d"))
+        final CatalogMaterializedTable expected =
+                getDefaultMaterializedTablebuilder()
                         .freshness(IntervalFreshness.ofSecond("30"))
                         .logicalRefreshMode(CatalogMaterializedTable.LogicalRefreshMode.FULL)
                         .refreshMode(CatalogMaterializedTable.RefreshMode.FULL)
                         .refreshStatus(CatalogMaterializedTable.RefreshStatus.INITIALIZING)
-                        .originalQuery("SELECT *\nFROM `t1`")
-                        .expandedQuery(
-                                "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
-                                        + "FROM `builtin`.`default`.`t1` AS `t1`")
                         .build();
 
         assertThat(materializedTable.getOrigin()).isEqualTo(expected);
@@ -864,7 +649,9 @@ class SqlMaterializedTableNodeToOperationConverterTest
 
     private static Collection<Arguments> testDataForCreateMaterializedTableFailedCase() {
         final Collection<Arguments> list = new ArrayList<>();
-        list.addAll(create());
+        list.addAll(createWithInvalidSchema());
+        list.addAll(createWithInvalidFreshness());
+        list.addAll(createWithInvalidPartitions());
         list.addAll(alter());
         return list;
     }
@@ -873,12 +660,14 @@ class SqlMaterializedTableNodeToOperationConverterTest
         return List.of(
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl AS SELECT a, b FROM t3",
+                        ValidationException.class,
                         "Failed to modify query because drop column is unsupported. When modifying "
                                 + "a query, you can only append new columns at the end of original "
                                 + "schema. The original schema has 4 columns, but the newly derived "
                                 + "schema from the query has 2 columns."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl AS SELECT a, b, d, c FROM t3",
+                        ValidationException.class,
                         "When modifying the query of a materialized table, currently only support "
                                 + "appending columns at the end of original schema, dropping, "
                                 + "renaming, and reordering columns are not supported.\n"
@@ -886,6 +675,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "but new column is [`d` STRING]."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl AS SELECT a, b, c, CAST(d AS INT) AS d FROM t3",
+                        ValidationException.class,
                         "When modifying the query of a materialized table, currently only support "
                                 + "appending columns at the end of original schema, dropping, "
                                 + "renaming, and reordering columns are not supported.\n"
@@ -893,6 +683,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "but new column is [`d` INT]."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl AS SELECT a, b, c, CAST('d' AS STRING) AS d FROM t3",
+                        ValidationException.class,
                         "When modifying the query of a materialized table, currently only support "
                                 + "appending columns at the end of original schema, dropping, "
                                 + "renaming, and reordering columns are not supported.\n"
@@ -900,59 +691,176 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "but new column is [`d` STRING NOT NULL]."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE t1 AS SELECT * FROM t1",
+                        ValidationException.class,
                         "ALTER MATERIALIZED TABLE for a table is not allowed"));
     }
 
-    private static Collection<Arguments> create() {
+    private static List<Arguments> createWithInvalidSchema() {
         return List.of(
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (shop_id)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "The number of columns in the column list must match the number of columns in the source schema."),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (id, name, address)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "The number of columns in the column list must match the number of columns in the source schema."),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (id, name)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "Column 'id' not found in the source schema."),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (shop_id STRING, user_id STRING)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "Incompatible types for sink column 'shop_id' at position 0. The source column has type 'INT NOT NULL', "
                                 + "while the target column has type 'STRING'."),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (shop_id INT, WATERMARK FOR ts AS `ts` - INTERVAL '5' SECOND)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "The rowtime attribute field 'ts' is not defined in the table schema, at line 1, column 67\n"
                                 + "Available fields: ['shop_id', 'user_id']"),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (shop_id INT, user_id INT, PRIMARY KEY(id) NOT ENFORCED)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "Primary key column 'id' is not defined in the schema at line 1, column 78"),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (WATERMARK FOR ts AS ts - INTERVAL '2' SECOND)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "The rowtime attribute field 'ts' is not defined in the table schema, at line 1, column 54\n"
                                 + "Available fields: ['shop_id', 'user_id']"),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (a INT, b INT)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
+                        ValidationException.class,
                         "Invalid as physical column 'a' is defined in the DDL, but is not used in a query column."),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE users_shops (shop_id INT, b INT)"
                                 + " FRESHNESS = INTERVAL '30' SECOND"
                                 + " AS SELECT 1 AS shop_id, 2 AS user_id",
-                        "Invalid as physical column 'b' is defined in the DDL, but is not used in a query column."));
+                        ValidationException.class,
+                        "Invalid as physical column 'b' is defined in the DDL, but is not used in a query column."),
+                // test unsupported constraint
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1 (\n"
+                                + "   CONSTRAINT ct1 UNIQUE(a) NOT ENFORCED"
+                                + ")\n"
+                                + "FRESHNESS = INTERVAL '30' SECOND\n"
+                                + "AS SELECT * FROM t1",
+                        SqlValidateException.class,
+                        "UNIQUE constraint is not supported yet"),
+                // test primary key not defined in source table
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1 (\n"
+                                + "   CONSTRAINT ct1 PRIMARY KEY(e) NOT ENFORCED"
+                                + ")\n"
+                                + "FRESHNESS = INTERVAL '30' SECOND\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "Primary key column 'e' is not defined in the schema at line 2, column 31"),
+                // test primary key with nullable source column
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1 (\n"
+                                + "   CONSTRAINT ct1 PRIMARY KEY(d) NOT ENFORCED"
+                                + ")\n"
+                                + "FRESHNESS = INTERVAL '30' SECOND\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "Invalid primary key 'ct1'. Column 'd' is nullable."));
+    }
+
+    private static List<Arguments> createWithInvalidPartitions() {
+        return List.of(
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "PARTITIONED BY (a, e)\n"
+                                + "FRESHNESS = INTERVAL '30' SECOND\n"
+                                + "REFRESH_MODE = FULL\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "Partition column 'e' not defined in the query schema. Available columns: ['a', 'b', 'c', 'd']"),
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "PARTITIONED BY (b, c)\n"
+                                + "WITH (\n"
+                                + " 'partition.fields.ds.date-formatter' = 'yyyy-MM-dd'\n"
+                                + ")\n"
+                                + "FRESHNESS = INTERVAL '30' SECOND\n"
+                                + "REFRESH_MODE = FULL\n"
+                                + "AS SELECT * FROM t3",
+                        ValidationException.class,
+                        "Column 'ds' referenced by materialized table option 'partition.fields.ds.date-formatter' isn't a partition column. Available partition columns: ['b', 'c']."),
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "WITH (\n"
+                                + " 'partition.fields.c.date-formatter' = 'yyyy-MM-dd'\n"
+                                + ")\n"
+                                + "FRESHNESS = INTERVAL '30' SECOND\n"
+                                + "REFRESH_MODE = FULL\n"
+                                + "AS SELECT * FROM t3",
+                        ValidationException.class,
+                        "Column 'c' referenced by materialized table option 'partition.fields.c.date-formatter' isn't a partition column. Available partition columns: ['']."),
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "PARTITIONED BY (b, c)\n"
+                                + "WITH (\n"
+                                + " 'partition.fields.c.date-formatter' = 'yyyy-MM-dd'\n"
+                                + ")\n"
+                                + "FRESHNESS = INTERVAL '30' SECOND\n"
+                                + "REFRESH_MODE = FULL\n"
+                                + "AS SELECT * FROM t3",
+                        ValidationException.class,
+                        "Materialized table option 'partition.fields.c.date-formatter' only supports referring to char, varchar and string type partition column. Column c type is INT."));
+    }
+
+    private static List<Arguments> createWithInvalidFreshness() {
+        return List.of(
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "FRESHNESS = INTERVAL '40' MINUTE\n"
+                                + "REFRESH_MODE = FULL\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "In full refresh mode, only freshness that are factors of 60 are currently supported when the time unit is MINUTE."),
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "FRESHNESS = INTERVAL '40' MINUTE\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "In full refresh mode, only freshness that are factors of 60 are currently supported when the time unit is MINUTE."),
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "FRESHNESS = INTERVAL -'30' SECOND\n"
+                                + "REFRESH_MODE = FULL\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "Materialized table freshness doesn't support negative value."),
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "FRESHNESS = INTERVAL '30' YEAR\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "Materialized table freshness only support SECOND, MINUTE, HOUR, DAY as the time unit."),
+                Arguments.of(
+                        "CREATE MATERIALIZED TABLE mtbl1\n"
+                                + "FRESHNESS = INTERVAL '30' DAY TO HOUR\n"
+                                + "AS SELECT * FROM t1",
+                        ValidationException.class,
+                        "Materialized table freshness only support SECOND, MINUTE, HOUR, DAY as the time unit."));
     }
 
     private static Collection<Arguments> testDataWithDifferentSchemasSuccessCase() {
@@ -1022,5 +930,24 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 org.apache.flink.table.catalog.UniqueConstraint.primaryKey(
                                         "PK_user_id", List.of("user_id")),
                                 List.of())));
+    }
+
+    private CatalogMaterializedTable.Builder getDefaultMaterializedTablebuilder() {
+        return CatalogMaterializedTable.newBuilder()
+                .schema(
+                        Schema.newBuilder()
+                                .column("a", DataTypes.BIGINT().notNull())
+                                .column("b", DataTypes.VARCHAR(Integer.MAX_VALUE))
+                                .column("c", DataTypes.INT())
+                                .column("d", DataTypes.VARCHAR(Integer.MAX_VALUE))
+                                .primaryKeyNamed("ct1", Collections.singletonList("a"))
+                                .build())
+                .comment("materialized table comment")
+                .options(Map.of("connector", "filesystem", "format", "json"))
+                .partitionKeys(Arrays.asList("a", "d"))
+                .originalQuery("SELECT *\nFROM `t1`")
+                .expandedQuery(
+                        "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
+                                + "FROM `builtin`.`default`.`t1` AS `t1`");
     }
 }
