@@ -18,7 +18,6 @@
 
 package org.apache.flink.table.planner.operations.converters;
 
-import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
@@ -26,10 +25,9 @@ import org.apache.flink.sql.parser.ddl.position.SqlTableColumnPosition;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
+import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TableChange;
-import org.apache.flink.table.catalog.TableDistribution;
 import org.apache.flink.table.expressions.SqlCallExpression;
 import org.apache.flink.table.planner.operations.converters.SqlNodeConverter.ConvertContext;
 import org.apache.flink.table.planner.utils.OperationConverterUtils;
@@ -65,7 +63,6 @@ public abstract class SchemaConverter {
     protected Set<String> alterColNames = new HashSet<>();
     protected Map<String, Schema.UnresolvedColumn> columns = new HashMap<>();
     protected @Nullable Schema.UnresolvedWatermarkSpec watermarkSpec = null;
-    protected @Nullable TableDistribution distribution = null;
     protected @Nullable Schema.UnresolvedPrimaryKey primaryKey = null;
 
     protected Function<SqlNode, String> escapeExpressions;
@@ -74,7 +71,7 @@ public abstract class SchemaConverter {
     protected List<TableChange> changesCollector;
     protected List<Function<ResolvedSchema, List<TableChange>>> changeBuilders = new ArrayList<>();
 
-    SchemaConverter(ResolvedCatalogTable oldTable, ConvertContext context) {
+    SchemaConverter(ResolvedCatalogBaseTable oldTable, ConvertContext context) {
         this.changesCollector = new ArrayList<>();
         this.context = context;
         this.escapeExpressions =
@@ -85,7 +82,6 @@ public abstract class SchemaConverter {
         populateColumnsFromSourceTable(oldSchema);
         populatePrimaryKeyFromSourceTable(oldSchema);
         populateWatermarkFromSourceTable(oldSchema);
-        populateDistributionFromSourceTable(oldTable);
     }
 
     public List<TableChange> getChangesCollector() {
@@ -107,10 +103,6 @@ public abstract class SchemaConverter {
         if (oldSchema.getPrimaryKey().isPresent()) {
             primaryKey = oldSchema.getPrimaryKey().get();
         }
-    }
-
-    private void populateDistributionFromSourceTable(ResolvedCatalogTable oldTable) {
-        oldTable.getDistribution().ifPresent(distribution -> this.distribution = distribution);
     }
 
     private void populateWatermarkFromSourceTable(Schema oldSchema) {
@@ -183,14 +175,6 @@ public abstract class SchemaConverter {
                         new SqlCallExpression(
                                 escapeExpressions.apply(
                                         alterWatermarkSpec.getWatermarkStrategy())));
-    }
-
-    public void updateDistribution(SqlDistribution distribution) {
-        TableDistribution tableDistribution =
-                OperationConverterUtils.getDistributionFromSqlDistribution(distribution);
-        checkAndCollectDistributionChange(tableDistribution);
-        this.distribution =
-                OperationConverterUtils.getDistributionFromSqlDistribution(distribution);
     }
 
     private Schema.UnresolvedPhysicalColumn convertPhysicalColumn(
@@ -306,8 +290,6 @@ public abstract class SchemaConverter {
             SqlTableColumnPosition columnPosition, String columnName);
 
     protected abstract void checkAndCollectPrimaryKeyChange();
-
-    protected abstract void checkAndCollectDistributionChange(TableDistribution distribution);
 
     protected abstract void checkAndCollectWatermarkChange();
 

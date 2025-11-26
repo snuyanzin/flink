@@ -86,6 +86,12 @@ public abstract class SqlAlterMaterializedTableSchema extends SqlAlterMaterializ
         return constraints;
     }
 
+    public Optional<SqlTableConstraint> getFullConstraint() {
+        List<SqlTableConstraint> primaryKeys =
+                SqlConstraintValidator.getFullConstraints(constraints, getColumns());
+        return primaryKeys.isEmpty() ? Optional.empty() : Optional.of(primaryKeys.get(0));
+    }
+
     private SqlNodeList getColumns() {
         return new SqlNodeList(
                 columnList.getList().stream()
