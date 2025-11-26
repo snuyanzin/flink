@@ -85,7 +85,8 @@ public abstract class AbstractCreateTableConverter<T extends SqlCreateTable>
         return context.getCatalogManager().resolveCatalogTable(catalogTable);
     }
 
-    protected final ObjectIdentifier resolveIdentifier(SqlCreateTable node, ConvertContext context) {
+    protected final ObjectIdentifier resolveIdentifier(
+            SqlCreateTable node, ConvertContext context) {
         UnresolvedIdentifier unresolvedIdentifier = UnresolvedIdentifier.of(node.getFullName());
         return context.getCatalogManager().qualifyIdentifier(unresolvedIdentifier);
     }

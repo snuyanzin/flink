@@ -88,9 +88,9 @@ public class SchemaModifyConverter extends SchemaConverter {
         if (primaryKey == null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table does not define any primary key constraint. You might "
+                            "%sThe base %s does not define any primary key constraint. You might "
                                     + "want to add a new one.",
-                            exMsgPrefix));
+                            exMsgPrefix, tableKindStr));
         }
         changeBuilders.add(
                 schema ->
@@ -103,9 +103,9 @@ public class SchemaModifyConverter extends SchemaConverter {
         if (watermarkSpec == null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table does not define any watermark. You might "
+                            "%sThe base %s does not define any watermark. You might "
                                     + "want to add a new one.",
-                            exMsgPrefix));
+                            exMsgPrefix, tableKindStr));
         }
         changeBuilders.add(
                 schema ->

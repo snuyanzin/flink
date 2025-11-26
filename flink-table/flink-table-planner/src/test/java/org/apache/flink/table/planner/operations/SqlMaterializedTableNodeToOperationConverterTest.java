@@ -42,7 +42,6 @@ import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableAsQueryOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
-import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableRefreshOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableResumeOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableSuspendOperation;
@@ -114,7 +113,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         + ")\n"
                         + "FRESHNESS = INTERVAL '30' SECOND\n"
                         + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t1";
+                        + "AS SELECT * FROM t1 WHERE c > 3";
         final ObjectPath path4 = new ObjectPath(catalogManager.getCurrentDatabase(), "base_mtbl");
 
         CreateMaterializedTableOperation operation = (CreateMaterializedTableOperation) parse(sql);
@@ -348,7 +347,9 @@ class SqlMaterializedTableNodeToOperationConverterTest
 
     @Test
     void createMaterializedTableSuccessCase2() {
-        AlterMaterializedTableChangeOperation operation = (AlterMaterializedTableChangeOperation) parse("ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS `a` + 1");
+        AlterMaterializedTableChangeOperation operation =
+                (AlterMaterializedTableChangeOperation)
+                        parse("ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS `a` + 1");
         System.out.println(operation.getCatalogMaterializedTable().getOriginalQuery());
     }
 
@@ -707,28 +708,43 @@ class SqlMaterializedTableNodeToOperationConverterTest
     private static List<Arguments> alterWithInvalidSchema() {
         return List.of(
                 Arguments.of(
-                        "ALTER MATERIALIZED TABLE base_mtbl ADD WATERMARK for x as x",
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD WATERMARK for invalid_column as invalid_column",
                         ValidationException.class,
-                        "Invalid column name 'x' for rowtime attribute in watermark declaration. Available columns are: [a, b, c, d]"),
+                        "Invalid column name 'invalid_column' for rowtime attribute in watermark declaration. Available columns are: [a, b, c, d]"),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl MODIFY WATERMARK for x as x",
                         ValidationException.class,
                         "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
-                                + "The base table does not define any watermark. You might want to add a new one."),
+                                + "The base materialized table does not define any watermark. You might want to add a new one."),
                 Arguments.of(
-                        "ALTER MATERIALIZED TABLE base_mtbl ADD `i` BIGINT NOT NULL",
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD `physical_not_used_in_query` BIGINT NOT NULL",
                         ValidationException.class,
-                        "Invalid as physical column 'i' is defined in the DDL, but is not used in a query column."),
+                        "Invalid as physical column 'physical_not_used_in_query' is defined in the DDL, but is not used in a query column."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `a` BIGINT NOT NULL",
                         ValidationException.class,
                         "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
                                 + "Try to add a column `a` which already exists in the table."),
                 Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY `a` DATE",
+                        ValidationException.class,
+                        "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
+                                + "Try to add a column `a` which already exists in the table."),
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS `non_existing_column` + 2",
+                        ValidationException.class,
+                        "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
+                                + "Invalid expression for computed column 'q'."),
+                Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl DROP WATERMARK",
                         ValidationException.class,
-                        "Failed to execute ALTER TABLE statement.\n"
-                                + "The base table does not define any watermark. You might want to add a new one."));
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "The base materialized table does not define any watermark strategy."),
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl DROP `c`",
+                        ValidationException.class,
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "The base materialized table does not define any watermark strategy."));
     }
 
     private static List<Arguments> createWithInvalidSchema() {

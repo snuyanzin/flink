@@ -25,6 +25,7 @@ import org.apache.flink.sql.parser.ddl.position.SqlTableColumnPosition;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.catalog.CatalogBaseTable.TableKind;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TableChange;
@@ -47,6 +48,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -60,6 +62,7 @@ import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDa
 public abstract class SchemaConverter {
     private static final String ERROR_TEMPLATE = "Failed to execute ALTER %s statement.\n";
     protected final String exMsgPrefix;
+    protected final String tableKindStr;
     protected List<String> sortedColumnNames = new ArrayList<>();
     protected Set<String> alterColNames = new HashSet<>();
     protected Map<String, Schema.UnresolvedColumn> columns = new HashMap<>();
@@ -74,7 +77,9 @@ public abstract class SchemaConverter {
 
     SchemaConverter(ResolvedCatalogBaseTable oldTable, ConvertContext context) {
         this.changesCollector = new ArrayList<>();
-        this.exMsgPrefix = String.format(ERROR_TEMPLATE, oldTable.getTableKind().toString());
+        final TableKind tableKind = oldTable.getTableKind();
+        this.tableKindStr = tableKind.toString().toLowerCase(Locale.ROOT).replace('_', ' ');
+        this.exMsgPrefix = String.format(ERROR_TEMPLATE, tableKind);
         this.context = context;
         this.escapeExpressions =
                 sqlNode ->

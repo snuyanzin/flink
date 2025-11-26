@@ -22,6 +22,7 @@ import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.Column;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
+import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.TableDistribution;
 import org.apache.flink.table.planner.expressions.ColumnReferenceFinder;
@@ -85,6 +86,45 @@ public class SchemaReferencesManager {
     }
 
     public static SchemaReferencesManager create(ResolvedCatalogTable catalogTable) {
+        Map<String, Set<String>> columnToReferences = new HashMap<>();
+        Map<String, Set<String>> columnToDependencies = new HashMap<>();
+        catalogTable.getResolvedSchema().getColumns().stream()
+                .filter(column -> column instanceof Column.ComputedColumn)
+                .forEach(
+                        column -> {
+                            Set<String> referencedColumns =
+                                    ColumnReferenceFinder.findReferencedColumn(
+                                            column.getName(), catalogTable.getResolvedSchema());
+                            for (String referencedColumn : referencedColumns) {
+                                columnToReferences
+                                        .computeIfAbsent(referencedColumn, key -> new HashSet<>())
+                                        .add(column.getName());
+                                columnToDependencies
+                                        .computeIfAbsent(column.getName(), key -> new HashSet<>())
+                                        .add(referencedColumn);
+                            }
+                        });
+
+        return new SchemaReferencesManager(
+                new HashSet<>(catalogTable.getResolvedSchema().getColumnNames()),
+                columnToReferences,
+                columnToDependencies,
+                catalogTable
+                        .getResolvedSchema()
+                        .getPrimaryKey()
+                        .map(constraint -> new HashSet<>(constraint.getColumns()))
+                        .orElse(new HashSet<>()),
+                ColumnReferenceFinder.findWatermarkReferencedColumn(
+                        catalogTable.getResolvedSchema()),
+                new HashSet<>(catalogTable.getPartitionKeys()),
+                new HashSet<>(
+                        catalogTable
+                                .getDistribution()
+                                .map(TableDistribution::getBucketKeys)
+                                .orElse(List.of())));
+    }
+
+    public static SchemaReferencesManager create(ResolvedCatalogMaterializedTable catalogTable) {
         Map<String, Set<String>> columnToReferences = new HashMap<>();
         Map<String, Set<String>> columnToDependencies = new HashMap<>();
         catalogTable.getResolvedSchema().getColumns().stream()
