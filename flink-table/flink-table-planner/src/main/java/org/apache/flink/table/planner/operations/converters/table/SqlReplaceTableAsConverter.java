@@ -74,7 +74,7 @@ public class SqlReplaceTableAsConverter extends AbstractCreateTableConverter<Sql
                                 sqlReplaceTableAs.getAsQuery(),
                                 tableWithResolvedSchema);
 
-        ObjectIdentifier identifier = getIdentifier(sqlReplaceTableAs, context);
+        ObjectIdentifier identifier = resolveIdentifier(sqlReplaceTableAs, context);
         CreateTableOperation createTableOperation =
                 getCreateTableOperation(identifier, tableWithResolvedSchema, sqlReplaceTableAs);
 

@@ -41,6 +41,8 @@ import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableAsQueryOperation;
+import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
+import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableRefreshOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableResumeOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableSuspendOperation;
@@ -342,6 +344,12 @@ class SqlMaterializedTableNodeToOperationConverterTest
     void createMaterializedTableSuccessCase(String sql, ResolvedSchema expected) {
         CreateMaterializedTableOperation operation = (CreateMaterializedTableOperation) parse(sql);
         assertThat(operation.getCatalogMaterializedTable().getResolvedSchema()).isEqualTo(expected);
+    }
+
+    @Test
+    void createMaterializedTableSuccessCase2() {
+        AlterMaterializedTableChangeOperation operation = (AlterMaterializedTableChangeOperation) parse("ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS `a` + 1");
+        System.out.println(operation.getCatalogMaterializedTable().getOriginalQuery());
     }
 
     @Test

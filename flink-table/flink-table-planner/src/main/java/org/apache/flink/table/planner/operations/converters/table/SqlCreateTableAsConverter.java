@@ -73,7 +73,7 @@ public class SqlCreateTableAsConverter extends AbstractCreateTableConverter<SqlC
                                 validatedAsQuery,
                                 tableWithResolvedSchema);
 
-        ObjectIdentifier identifier = getIdentifier(sqlCreateTableAs, context);
+        ObjectIdentifier identifier = resolveIdentifier(sqlCreateTableAs, context);
         CreateTableOperation createTableOperation =
                 getCreateTableOperation(identifier, tableWithResolvedSchema, sqlCreateTableAs);
 

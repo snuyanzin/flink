@@ -32,6 +32,7 @@ import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.DataTypeFactory;
+import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
@@ -97,7 +98,7 @@ public class MergeTableAsUtil {
             FlinkPlannerImpl flinkPlanner,
             PlannerQueryOperation origQueryOperation,
             SqlNode origQueryNode,
-            ResolvedCatalogTable sinkTable) {
+            ResolvedCatalogBaseTable sinkTable) {
         FlinkCalciteSqlValidator sqlValidator = flinkPlanner.getOrCreateSqlValidator();
         SqlRewriterUtils rewriterUtils = new SqlRewriterUtils(sqlValidator);
         FlinkTypeFactory typeFactory = (FlinkTypeFactory) sqlValidator.getTypeFactory();

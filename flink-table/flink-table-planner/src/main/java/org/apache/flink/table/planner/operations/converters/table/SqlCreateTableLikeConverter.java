@@ -48,7 +48,7 @@ public class SqlCreateTableLikeConverter extends AbstractCreateTableConverter<Sq
                 // no schema definition to merge for CREATE TABLE ... LIKE, schema from source table
                 // will be merged
                 getResolvedCatalogTable(sqlCreateTableLike, context, null);
-        final ObjectIdentifier identifier = getIdentifier(sqlCreateTableLike, context);
+        final ObjectIdentifier identifier = resolveIdentifier(sqlCreateTableLike, context);
         return getCreateTableOperation(identifier, catalogTable, sqlCreateTableLike);
     }
 

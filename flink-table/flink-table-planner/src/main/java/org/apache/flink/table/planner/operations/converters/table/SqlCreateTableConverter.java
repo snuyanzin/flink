@@ -41,7 +41,7 @@ public class SqlCreateTableConverter extends AbstractCreateTableConverter<SqlCre
         // no schema to merge for CREATE TABLE
         ResolvedCatalogTable catalogTable = getResolvedCatalogTable(sqlCreateTable, context, null);
 
-        ObjectIdentifier identifier = getIdentifier(sqlCreateTable, context);
+        ObjectIdentifier identifier = resolveIdentifier(sqlCreateTable, context);
         return getCreateTableOperation(identifier, catalogTable, sqlCreateTable);
     }
 
