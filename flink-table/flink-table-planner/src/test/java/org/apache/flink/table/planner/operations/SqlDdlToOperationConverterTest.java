@@ -1498,7 +1498,12 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
     @Test
     void testAlterMaterializedTableDropDistribution() throws Exception {
         prepareMaterializedTable(
-                "tb1", false, 1, TableDistribution.of(Kind.HASH, 2, List.of("a")), "SELECT 1");
+                "tb1",
+                false,
+                1,
+                true,
+                TableDistribution.of(Kind.HASH, 2, List.of("a")),
+                "SELECT 1");
 
         final String expectedSummaryString =
                 "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  DROP DISTRIBUTION";
@@ -1510,7 +1515,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(((AlterMaterializedTableChangeOperation) operation).getTableChanges())
                 .containsExactly(TableChange.dropDistribution());
 
-        prepareMaterializedTable("tb2", false, 1, null, "SELECT 1");
+        prepareMaterializedTable("tb2", false, 1, false, null, "SELECT 1");
 
         assertThatThrownBy(() -> parse("alter MATERIALIZED table tb2 drop distribution"))
                 .isInstanceOf(ValidationException.class)
@@ -1520,7 +1525,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
 
     @Test
     void testAlterMaterializedTableAddDistribution() throws Exception {
-        prepareMaterializedTable("tb1", false, 1, null, "SELECT 1");
+        prepareMaterializedTable("tb1", false, 1, false, null, "SELECT 1");
 
         final String expectedSummaryString =
                 "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  ADD DISTRIBUTED INTO 3 BUCKETS";
@@ -1534,7 +1539,12 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
                 .containsExactly(TableChange.add(TableDistribution.of(Kind.UNKNOWN, 3, List.of())));
 
         prepareMaterializedTable(
-                "tb2", false, 1, TableDistribution.of(Kind.HASH, 1, List.of("a")), "SELECT 1");
+                "tb2",
+                false,
+                1,
+                true,
+                TableDistribution.of(Kind.HASH, 1, List.of("a")),
+                "SELECT 1");
 
         assertThatThrownBy(
                         () ->
@@ -1542,15 +1552,20 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
                                         "alter materialized table cat1.db1.tb2 add distribution into 3 buckets"))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining(
-                        "Materialized table `cat1`.`db1`.`tb2` has already defined "
-                                + "the distribution `DISTRIBUTED BY HASH(`a`) INTO 1 BUCKETS`."
-                                + " You can modify it or drop it before adding a new one.");
+                        "The base materialized table has already defined the distribution "
+                                + "`DISTRIBUTED BY HASH(`a`) INTO 1 BUCKETS`. "
+                                + "You can modify it or drop it before adding a new one.");
     }
 
     @Test
     void testAlterMaterializedTableModifyDistribution() throws Exception {
         prepareMaterializedTable(
-                "tb1", false, 1, TableDistribution.of(Kind.HASH, 1, List.of("a")), "SELECT 1");
+                "tb1",
+                false,
+                1,
+                true,
+                TableDistribution.of(Kind.HASH, 1, List.of("a")),
+                "SELECT 1");
         String expectedSummaryString =
                 "ALTER MATERIALIZED TABLE cat1.db1.tb1\n  MODIFY DISTRIBUTED INTO 3 BUCKETS";
 
@@ -1562,7 +1577,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
                 .containsExactly(
                         TableChange.modify(TableDistribution.of(Kind.UNKNOWN, 3, List.of())));
 
-        prepareMaterializedTable("tb2", false, 1, null, "SELECT 1");
+        prepareMaterializedTable("tb2", false, 1, true, null, "SELECT 1");
 
         assertThatThrownBy(
                         () ->
@@ -1948,6 +1963,44 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
                 .hasMessageContaining(
                         "The base table has already defined the watermark strategy "
                                 + "`ts` AS ts - interval '5' seconds. "
+                                + "You might want to drop it before adding a new one.");
+        checkAlterNonExistTable("alter table %s nonexistent add watermark for ts as ts");
+    }
+
+    @Test
+    void testFailedToAlterTableAddWatermark2() throws Exception {
+        prepareMaterializedTable("tb1", false, 1, false, null, "select 1");
+
+        // add watermark with an undefined column as rowtime
+        assertThatThrownBy(() -> parse("alter materialized table tb1 add watermark for x as x"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining(
+                        "Invalid column name 'x' for rowtime attribute in watermark declaration. "
+                                + "Available columns are: [a, b, c, d, e, f, g, ts]");
+
+        // add watermark with invalid type
+        assertThatThrownBy(() -> parse("alter materialized table tb1 add watermark for b as b"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining(
+                        "Invalid data type of time field for watermark definition. "
+                                + "The field must be of type TIMESTAMP(p) or TIMESTAMP_LTZ(p), "
+                                + "the supported precision 'p' is from 0 to 3, but the time field type is BIGINT NOT NULL");
+
+        // add watermark with an undefined nested column as rowtime
+        assertThatThrownBy(
+                        () ->
+                                parse(
+                                        "alter materialized table tb1 add (x row<f0 string, f1 timestamp(3)>, watermark for x.f1 as x.f1)"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Watermark strategy on nested column is not supported yet.");
+
+        prepareMaterializedTable("tb2", false, 1, true, null, "select 1");
+
+        assertThatThrownBy(() -> parse("alter materialized table tb2 add watermark for ts as ts"))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining(
+                        "The base table has already defined the watermark strategy "
+                                + "`ts` AS `ts` - INTERVAL '5' SECOND. "
                                 + "You might want to drop it before adding a new one.");
         checkAlterNonExistTable("alter table %s nonexistent add watermark for ts as ts");
     }
@@ -2669,7 +2722,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
 
     @Test
     void testAlterInvalidOperationsForMaterializedTables() throws Exception {
-        prepareMaterializedTable("my_materialized_table", false, 1, null, "SELECT 1");
+        prepareMaterializedTable("my_materialized_table", false, 1, true, null, "SELECT 1");
 
         assertThatThrownBy(() -> parse("alter table my_materialized_table RENAME to new_name"))
                 .isInstanceOf(ValidationException.class)
@@ -2803,6 +2856,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
             String tableName,
             boolean hasPartition,
             int numOfPkFields,
+            boolean hasWatermark,
             @Nullable TableDistribution tableDistribution,
             String query)
             throws Exception {
@@ -2845,6 +2899,10 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         } else {
             throw new IllegalArgumentException(
                     String.format("Don't support to set pk with %s fields.", numOfPkFields));
+        }
+
+        if (hasWatermark) {
+            builder.watermark("ts", "ts - interval '5' seconds");
         }
 
         CatalogMaterializedTable.Builder tableBuilder =
