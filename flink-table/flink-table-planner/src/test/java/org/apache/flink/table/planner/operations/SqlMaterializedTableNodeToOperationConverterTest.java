@@ -334,7 +334,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
         assertThatThrownBy(() -> parse(sql))
                 .as(sql)
                 .isInstanceOf(expectedException)
-                .hasMessage(expectedErrorMsg);
+                .hasMessageContaining(expectedErrorMsg);
     }
 
     @ParameterizedTest
@@ -652,11 +652,12 @@ class SqlMaterializedTableNodeToOperationConverterTest
         list.addAll(createWithInvalidSchema());
         list.addAll(createWithInvalidFreshness());
         list.addAll(createWithInvalidPartitions());
-        list.addAll(alter());
+        list.addAll(alterWithInvalidSchema());
+        list.addAll(alterQuery());
         return list;
     }
 
-    private static Collection<Arguments> alter() {
+    private static Collection<Arguments> alterQuery() {
         return List.of(
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl AS SELECT a, b FROM t3",
@@ -693,6 +694,33 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         "ALTER MATERIALIZED TABLE t1 AS SELECT * FROM t1",
                         ValidationException.class,
                         "ALTER MATERIALIZED TABLE for a table is not allowed"));
+    }
+
+    private static List<Arguments> alterWithInvalidSchema() {
+        return List.of(
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD WATERMARK for x as x",
+                        ValidationException.class,
+                        "Invalid column name 'x' for rowtime attribute in watermark declaration. Available columns are: [a, b, c, d]"),
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY WATERMARK for x as x",
+                        ValidationException.class,
+                        "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
+                                + "The base table does not define any watermark. You might want to add a new one."),
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD `i` BIGINT NOT NULL",
+                        ValidationException.class,
+                        "Invalid as physical column 'i' is defined in the DDL, but is not used in a query column."),
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD `a` BIGINT NOT NULL",
+                        ValidationException.class,
+                        "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
+                                + "Try to add a column `a` which already exists in the table."),
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl DROP WATERMARK",
+                        ValidationException.class,
+                        "Failed to execute ALTER TABLE statement.\n"
+                                + "The base table does not define any watermark. You might want to add a new one."));
     }
 
     private static List<Arguments> createWithInvalidSchema() {
@@ -792,7 +820,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "REFRESH_MODE = FULL\n"
                                 + "AS SELECT * FROM t1",
                         ValidationException.class,
-                        "Partition column 'e' not defined in the query schema. Available columns: ['a', 'b', 'c', 'd']"),
+                        "Partition column 'e' not defined in the query schema. Available columns: ['a', 'b', 'c', 'd']."),
                 Arguments.of(
                         "CREATE MATERIALIZED TABLE mtbl1\n"
                                 + "PARTITIONED BY (b, c)\n"

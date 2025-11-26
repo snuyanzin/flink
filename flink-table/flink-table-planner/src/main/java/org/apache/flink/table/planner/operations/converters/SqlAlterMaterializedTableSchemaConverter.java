@@ -7,6 +7,7 @@ import org.apache.flink.table.catalog.CatalogMaterializedTable;
 import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
+import org.apache.flink.table.planner.utils.MaterializedTableUtils;
 
 public abstract class SqlAlterMaterializedTableSchemaConverter<
                 T extends SqlAlterMaterializedTableSchema>
@@ -14,6 +15,8 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
     @Override
     protected Operation convertToOperation(
             T alterTableSchema, ResolvedCatalogMaterializedTable oldTable, ConvertContext context) {
+        MaterializedTableUtils.validatePhysicalColumnsUsedByQuery(
+                oldTable, alterTableSchema, context);
         SchemaConverter converter = createSchemaConverter(oldTable, context);
         converter.updateColumn(alterTableSchema.getColumnPositions().getList());
         alterTableSchema.getWatermark().ifPresent(converter::updateWatermark);

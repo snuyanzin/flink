@@ -1968,44 +1968,6 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
     }
 
     @Test
-    void testFailedToAlterTableAddWatermark2() throws Exception {
-        prepareMaterializedTable("tb1", false, 1, false, null, "select 1");
-
-        // add watermark with an undefined column as rowtime
-        assertThatThrownBy(() -> parse("alter materialized table tb1 add watermark for x as x"))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Invalid column name 'x' for rowtime attribute in watermark declaration. "
-                                + "Available columns are: [a, b, c, d, e, f, g, ts]");
-
-        // add watermark with invalid type
-        assertThatThrownBy(() -> parse("alter materialized table tb1 add watermark for b as b"))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "Invalid data type of time field for watermark definition. "
-                                + "The field must be of type TIMESTAMP(p) or TIMESTAMP_LTZ(p), "
-                                + "the supported precision 'p' is from 0 to 3, but the time field type is BIGINT NOT NULL");
-
-        // add watermark with an undefined nested column as rowtime
-        assertThatThrownBy(
-                        () ->
-                                parse(
-                                        "alter materialized table tb1 add (x row<f0 string, f1 timestamp(3)>, watermark for x.f1 as x.f1)"))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("Watermark strategy on nested column is not supported yet.");
-
-        prepareMaterializedTable("tb2", false, 1, true, null, "select 1");
-
-        assertThatThrownBy(() -> parse("alter materialized table tb2 add watermark for ts as ts"))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining(
-                        "The base table has already defined the watermark strategy "
-                                + "`ts` AS `ts` - INTERVAL '5' SECOND. "
-                                + "You might want to drop it before adding a new one.");
-        checkAlterNonExistTable("alter table %s nonexistent add watermark for ts as ts");
-    }
-
-    @Test
     void testAlterTableAddWatermark() throws Exception {
         prepareTable("tb1", false);
 

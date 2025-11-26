@@ -50,7 +50,7 @@ public class SchemaModifyConverter extends SchemaConverter {
             throw new ValidationException(
                     String.format(
                             "%sTry to modify a column `%s` which does not exist in the table.",
-                            EX_MSG_PREFIX, columnName));
+                            exMsgPrefix, columnName));
         }
 
         Column oldColumn = unwrap(oldTable.getResolvedSchema().getColumn(columnName));
@@ -90,7 +90,7 @@ public class SchemaModifyConverter extends SchemaConverter {
                     String.format(
                             "%sThe base table does not define any primary key constraint. You might "
                                     + "want to add a new one.",
-                            EX_MSG_PREFIX));
+                            exMsgPrefix));
         }
         changeBuilders.add(
                 schema ->
@@ -105,7 +105,7 @@ public class SchemaModifyConverter extends SchemaConverter {
                     String.format(
                             "%sThe base table does not define any watermark. You might "
                                     + "want to add a new one.",
-                            EX_MSG_PREFIX));
+                            exMsgPrefix));
         }
         changeBuilders.add(
                 schema ->

@@ -58,7 +58,8 @@ import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDa
 
 /** Base class for schema conversion operations. */
 public abstract class SchemaConverter {
-    protected static final String EX_MSG_PREFIX = "Failed to execute ALTER TABLE statement.\n";
+    private static final String ERROR_TEMPLATE = "Failed to execute ALTER %s statement.\n";
+    protected final String exMsgPrefix;
     protected List<String> sortedColumnNames = new ArrayList<>();
     protected Set<String> alterColNames = new HashSet<>();
     protected Map<String, Schema.UnresolvedColumn> columns = new HashMap<>();
@@ -73,6 +74,7 @@ public abstract class SchemaConverter {
 
     SchemaConverter(ResolvedCatalogBaseTable oldTable, ConvertContext context) {
         this.changesCollector = new ArrayList<>();
+        this.exMsgPrefix = String.format(ERROR_TEMPLATE, oldTable.getTableKind().toString());
         this.context = context;
         this.escapeExpressions =
                 sqlNode ->
@@ -167,7 +169,7 @@ public abstract class SchemaConverter {
             throw new ValidationException(
                     String.format(
                             "%sWatermark strategy on nested column is not supported yet.",
-                            EX_MSG_PREFIX));
+                            exMsgPrefix));
         }
         watermarkSpec =
                 new Schema.UnresolvedWatermarkSpec(
@@ -224,7 +226,7 @@ public abstract class SchemaConverter {
             if (!alterColNames.add(columnName)) {
                 throw new ValidationException(
                         String.format(
-                                "%sEncounter duplicate column `%s`.", EX_MSG_PREFIX, columnName));
+                                "%sEncounter duplicate column `%s`.", exMsgPrefix, columnName));
             }
             updatePositionAndCollectColumnChange(columnPosition, columnName);
         }
@@ -233,18 +235,17 @@ public abstract class SchemaConverter {
     protected String getReferencedColumn(SqlTableColumnPosition columnPosition) {
         SqlIdentifier referencedIdent = columnPosition.getAfterReferencedColumn();
         Preconditions.checkNotNull(
-                referencedIdent,
-                String.format("%sCould not refer to a null column", EX_MSG_PREFIX));
+                referencedIdent, String.format("%sCould not refer to a null column", exMsgPrefix));
         if (!referencedIdent.isSimple()) {
             throw new UnsupportedOperationException(
-                    String.format("%sAlter nested row type is not supported yet.", EX_MSG_PREFIX));
+                    String.format("%sAlter nested row type is not supported yet.", exMsgPrefix));
         }
         String referencedName = referencedIdent.getSimple();
         if (!sortedColumnNames.contains(referencedName)) {
             throw new ValidationException(
                     String.format(
                             "%sReferenced column `%s` by 'AFTER' does not exist in the table.",
-                            EX_MSG_PREFIX, referencedName));
+                            exMsgPrefix, referencedName));
         }
         return referencedName;
     }
@@ -282,7 +283,7 @@ public abstract class SchemaConverter {
                             .collect(Collectors.toList()));
             return updatedSchema;
         } catch (Exception e) {
-            throw new ValidationException(String.format("%s%s", EX_MSG_PREFIX, e.getMessage()), e);
+            throw new ValidationException(String.format("%s%s", exMsgPrefix, e.getMessage()), e);
         }
     }
 
@@ -293,12 +294,12 @@ public abstract class SchemaConverter {
 
     protected abstract void checkAndCollectWatermarkChange();
 
-    protected static String getColumnName(SqlIdentifier identifier) {
+    protected String getColumnName(SqlIdentifier identifier) {
         if (!identifier.isSimple()) {
             throw new UnsupportedOperationException(
                     String.format(
                             "%sAlter nested row type %s is not supported yet.",
-                            EX_MSG_PREFIX, identifier));
+                            exMsgPrefix, identifier));
         }
         return identifier.getSimple();
     }
