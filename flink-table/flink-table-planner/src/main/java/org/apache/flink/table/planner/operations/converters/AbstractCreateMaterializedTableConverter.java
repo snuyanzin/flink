@@ -167,7 +167,7 @@ public abstract class AbstractCreateMaterializedTableConverter<T extends SqlCrea
                                 .build());
     }
 
-    protected final ObjectIdentifier getIdentifier(
+    protected final ObjectIdentifier resolveIdentifier(
             SqlCreateMaterializedTable node, ConvertContext context) {
         UnresolvedIdentifier unresolvedIdentifier = UnresolvedIdentifier.of(node.getFullName());
         return context.getCatalogManager().qualifyIdentifier(unresolvedIdentifier);

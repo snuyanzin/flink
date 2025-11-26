@@ -20,8 +20,6 @@ package org.apache.flink.table.planner.operations.converters;
 
 import org.apache.flink.sql.parser.ddl.SqlCreateOrAlterMaterializedTable;
 import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.catalog.CatalogBaseTable.TableKind;
 import org.apache.flink.table.catalog.CatalogMaterializedTable;
 import org.apache.flink.table.catalog.CatalogMaterializedTable.LogicalRefreshMode;
 import org.apache.flink.table.catalog.CatalogMaterializedTable.RefreshMode;
@@ -37,6 +35,7 @@ import org.apache.flink.table.catalog.TableDistribution;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableAsQueryOperation;
 import org.apache.flink.table.operations.materializedtable.CreateMaterializedTableOperation;
+import org.apache.flink.table.operations.utils.ValidationUtils;
 import org.apache.flink.table.planner.operations.converters.table.MergeTableAsUtil;
 import org.apache.flink.table.planner.utils.MaterializedTableUtils;
 
@@ -47,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.apache.flink.table.catalog.CatalogBaseTable.TableKind.MATERIALIZED_TABLE;
+
 /** A converter for {@link SqlCreateOrAlterMaterializedTable}. */
 public class SqlCreateOrAlterMaterializedTableConverter
         extends AbstractCreateMaterializedTableConverter<SqlCreateOrAlterMaterializedTable> {
@@ -56,7 +57,7 @@ public class SqlCreateOrAlterMaterializedTableConverter
             SqlCreateOrAlterMaterializedTable sqlCreateOrAlterMaterializedTable,
             ConvertContext context) {
         final ObjectIdentifier identifier =
-                this.getIdentifier(sqlCreateOrAlterMaterializedTable, context);
+                resolveIdentifier(sqlCreateOrAlterMaterializedTable, context);
 
         if (createOrAlterOperation(sqlCreateOrAlterMaterializedTable)) {
             return handleCreateOrAlter(sqlCreateOrAlterMaterializedTable, context, identifier);
@@ -73,12 +74,10 @@ public class SqlCreateOrAlterMaterializedTableConverter
         return resolvedBaseTable
                 .map(
                         oldBaseTable -> {
-                            if (oldBaseTable.getTableKind() != TableKind.MATERIALIZED_TABLE) {
-                                throw new ValidationException(
-                                        String.format(
-                                                "Table %s is not a materialized table. Only materialized table support create or alter operation.",
-                                                identifier.asSummaryString()));
-                            }
+                            ValidationUtils.validateTableKind(
+                                    oldBaseTable,
+                                    MATERIALIZED_TABLE,
+                                    "create or alter materialized table");
                             return handleAlter(
                                     sqlCreateOrAlterMaterializedTable,
                                     (ResolvedCatalogMaterializedTable) oldBaseTable,
@@ -115,8 +114,7 @@ public class SqlCreateOrAlterMaterializedTableConverter
             final ConvertContext context,
             final ObjectIdentifier identifier) {
         final ResolvedCatalogMaterializedTable resolvedCatalogMaterializedTable =
-                this.getResolvedCatalogMaterializedTable(
-                        sqlCreateOrAlterMaterializedTable, context);
+                getResolvedCatalogMaterializedTable(sqlCreateOrAlterMaterializedTable, context);
 
         return new CreateMaterializedTableOperation(identifier, resolvedCatalogMaterializedTable);
     }
@@ -127,7 +125,7 @@ public class SqlCreateOrAlterMaterializedTableConverter
             final ConvertContext context) {
         List<TableChange> changes = new ArrayList<>();
         final MergeContext mergeContext =
-                this.getMergeContext(sqlCreateOrAlterMaterializedTable, context);
+                getMergeContext(sqlCreateOrAlterMaterializedTable, context);
 
         final ResolvedSchema oldSchema = oldTable.getResolvedSchema();
         final List<Column> newColumns =
@@ -150,18 +148,17 @@ public class SqlCreateOrAlterMaterializedTableConverter
         // Add new columns if this is an alter operation
         final ResolvedSchema oldSchema = oldMaterializedTable.getResolvedSchema();
         final MergeContext mergeContext =
-                this.getMergeContext(sqlCreateOrAlterMaterializedTable, context);
+                getMergeContext(sqlCreateOrAlterMaterializedTable, context);
         final List<Column> newColumns =
                 MaterializedTableUtils.validateAndExtractNewColumns(
                         oldSchema, mergeContext.getMergedQuerySchema());
         newColumns.forEach(col -> schemaBuilder.column(col.getName(), col.getDataType()));
 
         final String comment = sqlCreateOrAlterMaterializedTable.getComment();
-        final IntervalFreshness freshness =
-                this.getDerivedFreshness(sqlCreateOrAlterMaterializedTable);
+        final IntervalFreshness freshness = getDerivedFreshness(sqlCreateOrAlterMaterializedTable);
         final LogicalRefreshMode logicalRefreshMode =
-                this.getDerivedLogicalRefreshMode(sqlCreateOrAlterMaterializedTable);
-        final RefreshMode refreshMode = this.getDerivedRefreshMode(logicalRefreshMode);
+                getDerivedLogicalRefreshMode(sqlCreateOrAlterMaterializedTable);
+        final RefreshMode refreshMode = getDerivedRefreshMode(logicalRefreshMode);
 
         CatalogMaterializedTable.Builder builder =
                 CatalogMaterializedTable.newBuilder()
@@ -239,7 +236,7 @@ public class SqlCreateOrAlterMaterializedTableConverter
 
             @Override
             public String getMergedOriginalQuery() {
-                return this.originalQuery;
+                return originalQuery;
             }
 
             @Override
@@ -250,7 +247,7 @@ public class SqlCreateOrAlterMaterializedTableConverter
 
             @Override
             public ResolvedSchema getMergedQuerySchema() {
-                return this.querySchema;
+                return querySchema;
             }
         };
     }
