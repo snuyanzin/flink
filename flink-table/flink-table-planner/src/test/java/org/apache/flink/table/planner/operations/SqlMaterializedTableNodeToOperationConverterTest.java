@@ -532,6 +532,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
     @MethodSource("testDataForCreateMaterializedTableFailedCase")
     void createMaterializedTableFailedCase(String sql, String expectedErrorMsg) {
         assertThatThrownBy(() -> parse(sql))
+                .as(sql)
                 .isInstanceOf(ValidationException.class)
                 .hasMessage(expectedErrorMsg);
     }
@@ -899,7 +900,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "but new column is [`d` STRING NOT NULL]."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE t1 AS SELECT * FROM t1",
-                        "Only materialized tables support modifying the definition query."));
+                        "ALTER MATERIALIZED TABLE for a table is not allowed"));
     }
 
     private static Collection<Arguments> create() {

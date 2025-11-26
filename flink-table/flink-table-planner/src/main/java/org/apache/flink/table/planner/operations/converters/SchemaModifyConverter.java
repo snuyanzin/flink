@@ -22,9 +22,8 @@ import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.position.SqlTableColumnPosition;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.Column;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
+import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.TableChange;
-import org.apache.flink.table.catalog.TableDistribution;
 import org.apache.flink.table.planner.operations.converters.SqlNodeConverter.ConvertContext;
 
 import javax.annotation.Nullable;
@@ -34,12 +33,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/** Converter for ALTER TABLE MODIFY ... schema operations. */
+/** Converter for ALTER [MATERIALIZED ]TABLE MODIFY ... schema operations. */
 public class SchemaModifyConverter extends SchemaConverter {
 
-    private final ResolvedCatalogTable oldTable;
+    private final ResolvedCatalogBaseTable oldTable;
 
-    public SchemaModifyConverter(ResolvedCatalogTable oldTable, ConvertContext context) {
+    public SchemaModifyConverter(ResolvedCatalogBaseTable oldTable, ConvertContext context) {
         super(oldTable, context);
         this.oldTable = oldTable;
     }
@@ -97,18 +96,6 @@ public class SchemaModifyConverter extends SchemaConverter {
                 schema ->
                         Collections.singletonList(
                                 TableChange.modify(unwrap(schema.getPrimaryKey()))));
-    }
-
-    @Override
-    protected void checkAndCollectDistributionChange(TableDistribution newDistribution) {
-        if (distribution == null) {
-            throw new ValidationException(
-                    String.format(
-                            "%sThe base table does not define any distribution. You might "
-                                    + "want to add a new one.",
-                            EX_MSG_PREFIX));
-        }
-        changesCollector.add(TableChange.modify(newDistribution));
     }
 
     @Override
