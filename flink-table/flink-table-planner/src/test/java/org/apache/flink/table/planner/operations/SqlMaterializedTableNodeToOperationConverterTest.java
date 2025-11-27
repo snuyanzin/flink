@@ -723,6 +723,9 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `physical_not_used_in_query` BIGINT NOT NULL",
                         "Invalid as physical column 'physical_not_used_in_query' is defined in the DDL, but is not used in a query column."),
                 TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD (`physical_not_used_in_query` BIGINT NOT NULL COMMENT 'comment' FIRST)",
+                        "Invalid as physical column 'physical_not_used_in_query' is defined in the DDL, but is not used in a query column."),
+                TestSpec.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `a` BIGINT NOT NULL",
                         "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
                                 + "Try to add a column `a` which already exists in the table."),
