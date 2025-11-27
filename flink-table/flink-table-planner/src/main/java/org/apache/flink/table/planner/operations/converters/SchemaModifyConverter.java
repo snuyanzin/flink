@@ -36,11 +36,11 @@ import java.util.Objects;
 /** Converter for ALTER [MATERIALIZED ]TABLE MODIFY ... schema operations. */
 public class SchemaModifyConverter extends SchemaConverter {
 
-    private final ResolvedCatalogBaseTable oldTable;
+    private final ResolvedCatalogBaseTable<?> oldBaseTable;
 
-    public SchemaModifyConverter(ResolvedCatalogBaseTable oldTable, ConvertContext context) {
-        super(oldTable, context);
-        this.oldTable = oldTable;
+    public SchemaModifyConverter(ResolvedCatalogBaseTable<?> oldBaseTable, ConvertContext context) {
+        super(oldBaseTable, context);
+        this.oldBaseTable = oldBaseTable;
     }
 
     @Override
@@ -50,10 +50,10 @@ public class SchemaModifyConverter extends SchemaConverter {
             throw new ValidationException(
                     String.format(
                             "%sTry to modify a column `%s` which does not exist in the table.",
-                            EX_MSG_PREFIX, columnName));
+                            exMsgPrefix, columnName));
         }
 
-        Column oldColumn = unwrap(oldTable.getResolvedSchema().getColumn(columnName));
+        Column oldColumn = unwrap(oldBaseTable.getResolvedSchema().getColumn(columnName));
         if (columnPosition.isFirstColumn()) {
             sortedColumnNames.remove(columnName);
             sortedColumnNames.add(0, columnName);
@@ -88,9 +88,9 @@ public class SchemaModifyConverter extends SchemaConverter {
         if (primaryKey == null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table does not define any primary key constraint. You might "
+                            "%sThe base %s does not define any primary key constraint. You might "
                                     + "want to add a new one.",
-                            EX_MSG_PREFIX));
+                            exMsgPrefix, tableKindStr));
         }
         changeBuilders.add(
                 schema ->
@@ -103,9 +103,9 @@ public class SchemaModifyConverter extends SchemaConverter {
         if (watermarkSpec == null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table does not define any watermark. You might "
+                            "%sThe base %s does not define any watermark. You might "
                                     + "want to add a new one.",
-                            EX_MSG_PREFIX));
+                            exMsgPrefix, tableKindStr));
         }
         changeBuilders.add(
                 schema ->
