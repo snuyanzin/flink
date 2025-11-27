@@ -113,11 +113,32 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         + ")\n"
                         + "FRESHNESS = INTERVAL '30' SECOND\n"
                         + "REFRESH_MODE = FULL\n"
-                        + "AS SELECT * FROM t1 WHERE c > 3";
+                        + "AS SELECT * FROM t1";
         final ObjectPath path4 = new ObjectPath(catalogManager.getCurrentDatabase(), "base_mtbl");
 
         CreateMaterializedTableOperation operation = (CreateMaterializedTableOperation) parse(sql);
         catalog.createTable(path4, operation.getCatalogMaterializedTable(), true);
+
+        // create materialized table
+        final String sqlWithWatermark =
+                "CREATE MATERIALIZED TABLE base_mtbl_w (\n"
+                        + "   t AS current_timestamp,"
+                        + "   CONSTRAINT ct1 PRIMARY KEY(a) NOT ENFORCED,"
+                        + "   WATERMARK FOR t as current_timestamp - INTERVAL '5' SECOND"
+                        + ")\n"
+                        + "COMMENT 'materialized table comment'\n"
+                        + "PARTITIONED BY (a, d)\n"
+                        + "WITH (\n"
+                        + "  'connector' = 'filesystem', \n"
+                        + "  'format' = 'json'\n"
+                        + ")\n"
+                        + "FRESHNESS = INTERVAL '30' SECOND\n"
+                        + "REFRESH_MODE = FULL\n"
+                        + "AS SELECT t1.* FROM t1";
+        final ObjectPath path_with_w = new ObjectPath(catalogManager.getCurrentDatabase(), "base_mtbl_w");
+
+        CreateMaterializedTableOperation operation1 = (CreateMaterializedTableOperation) parse(sqlWithWatermark);
+        catalog.createTable(path_with_w, operation1.getCatalogMaterializedTable(), true);
     }
 
     @Test
@@ -733,7 +754,12 @@ class SqlMaterializedTableNodeToOperationConverterTest
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl DROP `c`",
                         CalciteContextException.class,
-                        "Number of columns must match number of query columns"));
+                        "Number of columns must match number of query columns"),
+                Arguments.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl_w DROP `t`",
+                        ValidationException.class,
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "The column `t` is referenced by watermark expression."));
     }
 
     private static List<Arguments> createWithInvalidSchema() {

@@ -141,12 +141,12 @@ class SqlRTASNodeToOperationConverterTest extends SqlNodeToOperationConversionTe
         String sql =
                 "CREATE OR REPLACE TABLE "
                         + tableName
-                        + "(c0 row<`f0` boolean>, a double, bb string, c int metadata, dd string metadata) "
+                        + "(c0 int, a double, bb string, c int metadata, dd string metadata) "
                         + " WITH ('k1' = 'v1', 'k2' = 'v2') "
                         + "as SELECT a, b as `bb`, c, d as `dd` FROM t1";
         Schema tableSchema =
                 Schema.newBuilder()
-                        .column("c0", DataTypes.ROW(DataTypes.BOOLEAN()))
+                        .column("c0", DataTypes.INT())
                         .column("a", DataTypes.DOUBLE())
                         .column("bb", DataTypes.STRING())
                         .columnByMetadata("c", DataTypes.INT())
