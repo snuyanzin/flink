@@ -123,7 +123,6 @@ public class SqlNodeConverters {
         register(new SqlAlterMaterializedTableAsQueryConverter());
         register(new SqlAlterMaterializedTableDropDistributionConverter());
         register(new SqlAlterMaterializedTableModifyDistributionConverter());
-        register(new SqlAlterMaterializedTableAddSchemaConverter());
         register(new SqlAlterMaterializedTableModifySchemaConverter());
         register(new SqlAlterMaterializedTableRefreshConverter());
         register(new SqlAlterMaterializedTableResumeConverter());

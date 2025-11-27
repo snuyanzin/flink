@@ -121,7 +121,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
 
         // create materialized table
         final String sqlWithWatermark =
-                "CREATE MATERIALIZED TABLE base_mtbl_w (\n"
+                "CREATE MATERIALIZED TABLE base_mtbl_with_watermark (\n"
                         + "   t AS current_timestamp,"
                         + "   CONSTRAINT ct1 PRIMARY KEY(a) NOT ENFORCED,"
                         + "   WATERMARK FOR t as current_timestamp - INTERVAL '5' SECOND"
@@ -135,12 +135,13 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         + "FRESHNESS = INTERVAL '30' SECOND\n"
                         + "REFRESH_MODE = FULL\n"
                         + "AS SELECT t1.* FROM t1";
-        final ObjectPath path_with_w =
-                new ObjectPath(catalogManager.getCurrentDatabase(), "base_mtbl_w");
+        final ObjectPath materializedTableWithWatermarkPath =
+                new ObjectPath(catalogManager.getCurrentDatabase(), "base_mtbl_with_watermark");
 
         CreateMaterializedTableOperation operation1 =
                 (CreateMaterializedTableOperation) parse(sqlWithWatermark);
-        catalog.createTable(path_with_w, operation1.getCatalogMaterializedTable(), true);
+        catalog.createTable(
+                materializedTableWithWatermarkPath, operation1.getCatalogMaterializedTable(), true);
     }
 
     @Test
