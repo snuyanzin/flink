@@ -75,21 +75,21 @@ public class SqlNodeConverters {
     }
 
     private static void registerTableConverters() {
+        register(new SqlAlterTableAddDistributionConverter());
+        register(new SqlAlterTableAddPartitionConverter());
         register(new SqlAlterTableDropPrimaryKeyConverter());
         register(new SqlAlterTableDropColumnConverter());
         register(new SqlAlterTableDropConstraintConverter());
-        register(new SqlAlterTableDropWatermarkConverter());
         register(new SqlAlterTableDropDistributionConverter());
-        register(new SqlAlterTableAddDistributionConverter());
+        register(new SqlAlterTableDropPartitionConverter());
+        register(new SqlAlterTableDropWatermarkConverter());
         register(new SqlAlterTableModifyDistributionConverter());
-        register(new SqlAlterTableRenameColumnConverter());
-        register(new SqlAlterTableResetConverter());
         register(new SqlAlterTableOptionsConverter());
+        register(new SqlAlterTableRenameColumnConverter());
+        register(new SqlAlterTableRenameConverter());
+        register(new SqlAlterTableResetConverter());
         register(new SqlAlterTableSchemaModifyConverter());
         register(new SqlAlterTableSchemaAddConverter());
-        register(new SqlAlterTableRenameConverter());
-        register(new SqlAlterTableAddPartitionConverter());
-        register(new SqlAlterTableDropPartitionConverter());
         register(new SqlCreateTableAsConverter());
         register(new SqlCreateTableConverter());
         register(new SqlCreateTableLikeConverter());
@@ -117,9 +117,11 @@ public class SqlNodeConverters {
 
     private static void registerMaterializedTableConverters() {
         register(new SqlAlterMaterializedTableAddDistributionConverter());
+        register(new SqlAlterMaterializedTableAddSchemaConverter());
         register(new SqlAlterMaterializedTableAsQueryConverter());
         register(new SqlAlterMaterializedTableDropDistributionConverter());
         register(new SqlAlterMaterializedTableModifyDistributionConverter());
+        register(new SqlAlterMaterializedTableModifySchemaConverter());
         register(new SqlAlterMaterializedTableRefreshConverter());
         register(new SqlAlterMaterializedTableResumeConverter());
         register(new SqlAlterMaterializedTableSuspendConverter());
