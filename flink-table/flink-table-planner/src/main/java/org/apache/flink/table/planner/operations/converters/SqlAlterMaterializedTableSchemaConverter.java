@@ -22,6 +22,12 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
             T alterTableSchema, ResolvedCatalogMaterializedTable oldTable, ConvertContext context) {
         final SqlNode originalQuery =
                 context.getFlinkPlanner().parser().parse(oldTable.getOriginalQuery());
+        MergeTableAsUtil mergeTableAsUtil = new MergeTableAsUtil(context);
+        mergeTableAsUtil.mergeSchemas(
+                alterTableSchema.getColumnPositions(),
+                alterTableSchema.getWatermark().orElse(null),
+                alterTableSchema.getConstraints(),
+                oldTable.getResolvedSchema());
         final SqlNode validateQuery = context.getSqlValidator().validate(originalQuery);
         PlannerQueryOperation queryOperation =
                 new PlannerQueryOperation(

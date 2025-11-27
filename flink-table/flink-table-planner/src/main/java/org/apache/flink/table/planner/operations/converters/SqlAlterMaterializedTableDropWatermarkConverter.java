@@ -37,8 +37,7 @@ public class SqlAlterMaterializedTableDropWatermarkConverter
 
         CatalogMaterializedTable updatedTable =
                 buildUpdatedMaterializedTable(
-                        oldMaterializedTable,
-                        builder -> builder.schema(schemaBuilder.build()));
+                        oldMaterializedTable, builder -> builder.schema(schemaBuilder.build()));
 
         ObjectIdentifier identifier = resolveIdentifier(dropWatermark, context);
         return new AlterMaterializedTableChangeOperation(

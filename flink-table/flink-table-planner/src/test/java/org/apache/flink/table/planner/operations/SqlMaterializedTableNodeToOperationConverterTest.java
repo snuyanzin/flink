@@ -41,7 +41,6 @@ import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableAsQueryOperation;
-import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableRefreshOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableResumeOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableSuspendOperation;
@@ -51,6 +50,7 @@ import org.apache.flink.table.planner.utils.TableFunc0;
 
 import org.apache.flink.shaded.guava33.com.google.common.collect.ImmutableMap;
 
+import org.apache.calcite.runtime.CalciteContextException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -343,14 +343,6 @@ class SqlMaterializedTableNodeToOperationConverterTest
     void createMaterializedTableSuccessCase(String sql, ResolvedSchema expected) {
         CreateMaterializedTableOperation operation = (CreateMaterializedTableOperation) parse(sql);
         assertThat(operation.getCatalogMaterializedTable().getResolvedSchema()).isEqualTo(expected);
-    }
-
-    @Test
-    void createMaterializedTableSuccessCase2() {
-        AlterMaterializedTableChangeOperation operation =
-                (AlterMaterializedTableChangeOperation)
-                        parse("ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS `a` + 1");
-        System.out.println(operation.getCatalogMaterializedTable().getOriginalQuery());
     }
 
     @Test
@@ -710,12 +702,11 @@ class SqlMaterializedTableNodeToOperationConverterTest
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD WATERMARK for invalid_column as invalid_column",
                         ValidationException.class,
-                        "Invalid column name 'invalid_column' for rowtime attribute in watermark declaration. Available columns are: [a, b, c, d]"),
+                        "The rowtime attribute field 'invalid_column' is not defined in the table schema"),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl MODIFY WATERMARK for x as x",
                         ValidationException.class,
-                        "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
-                                + "The base materialized table does not define any watermark. You might want to add a new one."),
+                        "The rowtime attribute field 'x' is not defined in the table schema"),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `physical_not_used_in_query` BIGINT NOT NULL",
                         ValidationException.class,
@@ -728,13 +719,12 @@ class SqlMaterializedTableNodeToOperationConverterTest
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl MODIFY `a` DATE",
                         ValidationException.class,
-                        "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
-                                + "Try to add a column `a` which already exists in the table."),
+                        "Incompatible types for sink column 'a' at position 0. "
+                                + "The source column has type 'BIGINT NOT NULL', while the target column has type 'DATE'."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS `non_existing_column` + 2",
-                        ValidationException.class,
-                        "Failed to execute ALTER MATERIALIZED_TABLE statement.\n"
-                                + "Invalid expression for computed column 'q'."),
+                        CalciteContextException.class,
+                        "Unknown identifier 'non_existing_column'"),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl DROP WATERMARK",
                         ValidationException.class,
@@ -742,9 +732,8 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "The base materialized table does not define any watermark strategy."),
                 Arguments.of(
                         "ALTER MATERIALIZED TABLE base_mtbl DROP `c`",
-                        ValidationException.class,
-                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
-                                + "The base materialized table does not define any watermark strategy."));
+                        CalciteContextException.class,
+                        "Number of columns must match number of query columns"));
     }
 
     private static List<Arguments> createWithInvalidSchema() {

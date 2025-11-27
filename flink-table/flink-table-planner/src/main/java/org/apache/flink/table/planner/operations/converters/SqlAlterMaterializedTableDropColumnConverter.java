@@ -1,10 +1,6 @@
 package org.apache.flink.table.planner.operations.converters;
 
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableDropColumn;
-import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableDropWatermark;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogMaterializedTable;
@@ -16,7 +12,9 @@ import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 import org.apache.flink.table.planner.operations.converters.table.MergeTableAsUtil;
-import org.apache.flink.table.planner.utils.MaterializedTableUtils;
+
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +25,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SqlAlterMaterializedTableDropColumnConverter extends AbstractAlterMaterializedTableConverter<SqlAlterMaterializedTableDropColumn> {
+public class SqlAlterMaterializedTableDropColumnConverter
+        extends AbstractAlterMaterializedTableConverter<SqlAlterMaterializedTableDropColumn> {
     @Override
     protected Operation convertToOperation(
             SqlAlterMaterializedTableDropColumn sqlAlterMaterializedTableDropColumn,
@@ -55,7 +54,8 @@ public class SqlAlterMaterializedTableDropColumnConverter extends AbstractAlterM
                             }
                         });
 
-        SchemaReferencesManager referencesManager = SchemaReferencesManager.create(oldMaterializedTable);
+        SchemaReferencesManager referencesManager =
+                SchemaReferencesManager.create(oldMaterializedTable);
         // Sort by dependencies count from smallest to largest. For example, when dropping column a,
         // b(b as a+1), the order should be: [b, a] after sort.
         List<String> sortedColumnsToDrop =
@@ -75,11 +75,9 @@ public class SqlAlterMaterializedTableDropColumnConverter extends AbstractAlterM
 
         final Schema schema = getUpdatedSchema(oldMaterializedTable, columnsToDrop);
 
-
         CatalogMaterializedTable updatedTable =
                 buildUpdatedMaterializedTable(
-                        oldMaterializedTable,
-                        builder -> builder.schema(schema));
+                        oldMaterializedTable, builder -> builder.schema(schema));
 
         PlannerQueryOperation queryOperation2 =
                 new MergeTableAsUtil(context)
@@ -91,7 +89,8 @@ public class SqlAlterMaterializedTableDropColumnConverter extends AbstractAlterM
                                 context.getCatalogManager()
                                         .resolveCatalogMaterializedTable(updatedTable));
 
-        ObjectIdentifier identifier = resolveIdentifier(sqlAlterMaterializedTableDropColumn, context);
+        ObjectIdentifier identifier =
+                resolveIdentifier(sqlAlterMaterializedTableDropColumn, context);
         return new AlterMaterializedTableChangeOperation(
                 identifier, List.of(TableChange.dropColumn("a")), updatedTable);
     }
