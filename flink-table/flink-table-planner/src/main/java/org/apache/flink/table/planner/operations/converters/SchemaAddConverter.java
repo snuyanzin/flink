@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 /** Converter for ALTER [MATERIALIZED ]TABLE ADD ... schema operations. */
 public class SchemaAddConverter extends SchemaConverter {
 
-    public SchemaAddConverter(ResolvedCatalogBaseTable oldTable, ConvertContext context) {
+    public SchemaAddConverter(ResolvedCatalogBaseTable<?> oldTable, ConvertContext context) {
         super(oldTable, context);
     }
 
@@ -42,7 +42,7 @@ public class SchemaAddConverter extends SchemaConverter {
                     String.format(
                             "%sThe base table has already defined the primary key constraint %s. You might "
                                     + "want to drop it before adding a new one.",
-                            EX_MSG_PREFIX,
+                            exMsgPrefix,
                             primaryKey.getColumnNames().stream()
                                     .collect(Collectors.joining("`, `", "[`", "`]"))));
         }
@@ -58,7 +58,7 @@ public class SchemaAddConverter extends SchemaConverter {
                     String.format(
                             "%sThe base table has already defined the watermark strategy `%s` AS %s. You might "
                                     + "want to drop it before adding a new one.",
-                            EX_MSG_PREFIX,
+                            exMsgPrefix,
                             watermarkSpec.getColumnName(),
                             ((SqlCallExpression) watermarkSpec.getWatermarkExpression())
                                     .getSqlExpression()));
@@ -76,7 +76,7 @@ public class SchemaAddConverter extends SchemaConverter {
             throw new ValidationException(
                     String.format(
                             "%sTry to add a column `%s` which already exists in the table.",
-                            EX_MSG_PREFIX, columnName));
+                            exMsgPrefix, columnName));
         }
 
         if (columnPosition.isFirstColumn()) {

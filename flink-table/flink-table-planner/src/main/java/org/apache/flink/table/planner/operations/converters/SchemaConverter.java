@@ -25,6 +25,7 @@ import org.apache.flink.sql.parser.ddl.position.SqlTableColumnPosition;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.catalog.CatalogBaseTable.TableKind;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TableChange;
@@ -47,6 +48,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -58,7 +60,9 @@ import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDa
 
 /** Base class for schema conversion operations. */
 public abstract class SchemaConverter {
-    protected static final String EX_MSG_PREFIX = "Failed to execute ALTER TABLE statement.\n";
+    private static final String ERROR_TEMPLATE = "Failed to execute ALTER %s statement.\n";
+    protected final String exMsgPrefix;
+    protected final String tableKindStr;
     protected List<String> sortedColumnNames = new ArrayList<>();
     protected Set<String> alterColNames = new HashSet<>();
     protected Map<String, Schema.UnresolvedColumn> columns = new HashMap<>();
@@ -71,8 +75,11 @@ public abstract class SchemaConverter {
     protected List<TableChange> changesCollector;
     protected List<Function<ResolvedSchema, List<TableChange>>> changeBuilders = new ArrayList<>();
 
-    SchemaConverter(ResolvedCatalogBaseTable oldTable, ConvertContext context) {
+    SchemaConverter(ResolvedCatalogBaseTable<?> oldTable, ConvertContext context) {
         this.changesCollector = new ArrayList<>();
+        final TableKind tableKind = oldTable.getTableKind();
+        this.tableKindStr = tableKind.toString().toLowerCase(Locale.ROOT).replace('_', ' ');
+        this.exMsgPrefix = String.format(ERROR_TEMPLATE, tableKindStr.toUpperCase(Locale.ROOT));
         this.context = context;
         this.escapeExpressions =
                 sqlNode ->
@@ -167,7 +174,7 @@ public abstract class SchemaConverter {
             throw new ValidationException(
                     String.format(
                             "%sWatermark strategy on nested column is not supported yet.",
-                            EX_MSG_PREFIX));
+                            exMsgPrefix));
         }
         watermarkSpec =
                 new Schema.UnresolvedWatermarkSpec(
@@ -224,7 +231,7 @@ public abstract class SchemaConverter {
             if (!alterColNames.add(columnName)) {
                 throw new ValidationException(
                         String.format(
-                                "%sEncounter duplicate column `%s`.", EX_MSG_PREFIX, columnName));
+                                "%sEncounter duplicate column `%s`.", exMsgPrefix, columnName));
             }
             updatePositionAndCollectColumnChange(columnPosition, columnName);
         }
@@ -233,18 +240,17 @@ public abstract class SchemaConverter {
     protected String getReferencedColumn(SqlTableColumnPosition columnPosition) {
         SqlIdentifier referencedIdent = columnPosition.getAfterReferencedColumn();
         Preconditions.checkNotNull(
-                referencedIdent,
-                String.format("%sCould not refer to a null column", EX_MSG_PREFIX));
+                referencedIdent, String.format("%sCould not refer to a null column", exMsgPrefix));
         if (!referencedIdent.isSimple()) {
             throw new UnsupportedOperationException(
-                    String.format("%sAlter nested row type is not supported yet.", EX_MSG_PREFIX));
+                    String.format("%sAlter nested row type is not supported yet.", exMsgPrefix));
         }
         String referencedName = referencedIdent.getSimple();
         if (!sortedColumnNames.contains(referencedName)) {
             throw new ValidationException(
                     String.format(
                             "%sReferenced column `%s` by 'AFTER' does not exist in the table.",
-                            EX_MSG_PREFIX, referencedName));
+                            exMsgPrefix, referencedName));
         }
         return referencedName;
     }
@@ -282,7 +288,7 @@ public abstract class SchemaConverter {
                             .collect(Collectors.toList()));
             return updatedSchema;
         } catch (Exception e) {
-            throw new ValidationException(String.format("%s%s", EX_MSG_PREFIX, e.getMessage()), e);
+            throw new ValidationException(String.format("%s%s", exMsgPrefix, e.getMessage()), e);
         }
     }
 
@@ -293,12 +299,12 @@ public abstract class SchemaConverter {
 
     protected abstract void checkAndCollectWatermarkChange();
 
-    protected static String getColumnName(SqlIdentifier identifier) {
+    protected String getColumnName(SqlIdentifier identifier) {
         if (!identifier.isSimple()) {
             throw new UnsupportedOperationException(
                     String.format(
                             "%sAlter nested row type %s is not supported yet.",
-                            EX_MSG_PREFIX, identifier));
+                            exMsgPrefix, identifier));
         }
         return identifier.getSimple();
     }
