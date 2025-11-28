@@ -57,6 +57,7 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import javax.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,6 +66,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.apache.flink.table.types.logical.utils.LogicalTypeCasts.supportsImplicitCast;
 
@@ -434,13 +436,9 @@ public class MergeTableAsUtil {
         }
 
         private void setWatermark(SqlWatermark sqlWatermark) {
-            Map<String, RelDataType> accessibleFieldNamesToTypes =
-                    new LinkedHashMap() {
-                        {
-                            putAll(regularAndMetadataFieldNamesToTypes);
-                            putAll(computeFieldNamesToTypes);
-                        }
-                    };
+            final Map<String, RelDataType> accessibleFieldNamesToTypes =
+                    new LinkedHashMap<>(regularAndMetadataFieldNamesToTypes);
+            accessibleFieldNamesToTypes.putAll(computeFieldNamesToTypes);
 
             addWatermarks(
                     Collections.singletonList(sqlWatermark), accessibleFieldNamesToTypes, false);

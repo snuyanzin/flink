@@ -41,6 +41,7 @@ import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableAsQueryOperation;
+import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableRefreshOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableResumeOperation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableSuspendOperation;
@@ -50,7 +51,6 @@ import org.apache.flink.table.planner.utils.TableFunc0;
 
 import org.apache.flink.shaded.guava33.com.google.common.collect.ImmutableMap;
 
-import org.apache.calcite.runtime.CalciteContextException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -366,6 +366,12 @@ class SqlMaterializedTableNodeToOperationConverterTest
     void createMaterializedTableSuccessCase(String sql, ResolvedSchema expected) {
         CreateMaterializedTableOperation operation = (CreateMaterializedTableOperation) parse(sql);
         assertThat(operation.getCatalogMaterializedTable().getResolvedSchema()).isEqualTo(expected);
+    }
+
+    @Test
+    void createMaterializedTableSuccessCase1() {
+        AlterMaterializedTableChangeOperation operation = (AlterMaterializedTableChangeOperation) parse("ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS current_timestamp");
+        System.out.println(operation.getCatalogMaterializedTable());
     }
 
     @Test
@@ -719,7 +725,14 @@ class SqlMaterializedTableNodeToOperationConverterTest
         return List.of(
                 TestSpec.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD WATERMARK for invalid_column as invalid_column",
-                        "The rowtime attribute field 'invalid_column' is not defined in the table schema"),
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid column name 'invalid_column' for rowtime attribute in watermark declaration. "
+                                + "Available columns are: [a, b, c, d]"),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl_with_watermark ADD WATERMARK for t as current_timestamp - INTERVAL '2' SECOND",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "The base materialized table has already defined the watermark strategy "
+                                + "`t` AS CURRENT_TIMESTAMP - INTERVAL '5' SECOND. You might want to drop it before adding a new one."),
                 TestSpec.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `physical_not_used_in_query` BIGINT NOT NULL",
                         "Invalid as physical column 'physical_not_used_in_query' is defined in the DDL, but is not used in a query column."),
@@ -729,8 +742,13 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "Try to add a column `a` which already exists in the table."),
                 TestSpec.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS `non_existing_column` + 2",
-                        CalciteContextException.class,
-                        "Unknown identifier 'non_existing_column'"));
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid expression for computed column 'q'."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD PRIMARY KEY(c) NOT ENFORCED",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "The base table has already defined the primary key constraint [`a`]. "
+                                + "You might want to drop it before adding a new one."));
     }
 
     private static List<TestSpec> createWithInvalidSchema() {

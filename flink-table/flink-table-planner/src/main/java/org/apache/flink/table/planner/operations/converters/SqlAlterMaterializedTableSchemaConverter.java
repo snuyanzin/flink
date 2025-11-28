@@ -3,7 +3,9 @@ package org.apache.flink.table.planner.operations.converters;
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableSchema.SqlAlterMaterializedTableAddSchema;
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableSchema.SqlAlterMaterializedTableModifySchema;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogMaterializedTable;
 import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
 import org.apache.flink.table.operations.Operation;
@@ -22,12 +24,6 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
             T alterTableSchema, ResolvedCatalogMaterializedTable oldTable, ConvertContext context) {
         final SqlNode originalQuery =
                 context.getFlinkPlanner().parser().parse(oldTable.getOriginalQuery());
-        MergeTableAsUtil mergeTableAsUtil = new MergeTableAsUtil(context);
-        mergeTableAsUtil.mergeSchemas(
-                alterTableSchema.getColumnPositions(),
-                alterTableSchema.getWatermark().orElse(null),
-                alterTableSchema.getConstraints(),
-                oldTable.getResolvedSchema());
         final SqlNode validateQuery = context.getSqlValidator().validate(originalQuery);
         PlannerQueryOperation queryOperation =
                 new PlannerQueryOperation(
@@ -41,11 +37,11 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
         alterTableSchema.getWatermark().ifPresent(converter::updateWatermark);
         alterTableSchema.getFullConstraint().ifPresent(converter::updatePrimaryKey);
         Schema schema = converter.convert();
-        CatalogMaterializedTable updatedTable =
+        CatalogMaterializedTable mtWithUpdatedSchema =
                 buildUpdatedMaterializedTable(oldTable, builder -> builder.schema(schema));
 
-        // If needed, rewrite the query to include the new sink fields in the select list
-        PlannerQueryOperation queryOperation2 =
+        // If needed, rewrite the query to include the new fields in the select list
+        PlannerQueryOperation updatedQueryOperation =
                 new MergeTableAsUtil(context)
                         .maybeRewriteQuery(
                                 context.getCatalogManager(),
@@ -53,20 +49,17 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
                                 queryOperation,
                                 validateQuery,
                                 context.getCatalogManager()
-                                        .resolveCatalogMaterializedTable(updatedTable));
+                                        .resolveCatalogMaterializedTable(mtWithUpdatedSchema));
 
-        updatedTable =
+        CatalogMaterializedTable mtWithUpdatedSchemaAndQuery =
                 buildUpdatedMaterializedTable(
                         oldTable,
-                        builder -> {
-                            builder.expandedQuery(queryOperation2.asSummaryString());
-                            builder.originalQuery(queryOperation2.asSummaryString());
-                        });
+                        builder -> {builder.schema(schema); builder.expandedQuery(updatedQueryOperation.asSerializableString());});
 
         return new AlterMaterializedTableChangeOperation(
                 resolveIdentifier(alterTableSchema, context),
                 converter.changesCollector,
-                updatedTable);
+                mtWithUpdatedSchemaAndQuery);
     }
 
     protected abstract SchemaConverter createSchemaConverter(
