@@ -171,6 +171,18 @@ public class MaterializedTableUtils {
         }
     }
 
+    public static List<SqlTableColumn> getSqlTableColumns(SqlNodeList columnPositions) {
+        List<SqlTableColumn> list = new ArrayList<>();
+        for (SqlNode position: columnPositions) {
+            if (position instanceof SqlTableColumnPosition) {
+                list.add(((SqlTableColumnPosition) position).getColumn());
+            } else {
+                throw new ValidationException("Not a position");
+            }
+        }
+        return list;
+    }
+
     private static void throwIfPhysicalColumnNotUsedByQuery(
             SqlNode column, Set<String> querySchemaColumnNames) {
         if (column instanceof SqlTableColumn.SqlRegularColumn) {

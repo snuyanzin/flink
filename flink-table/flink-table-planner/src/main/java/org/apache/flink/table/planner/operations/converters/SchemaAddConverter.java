@@ -56,9 +56,10 @@ public class SchemaAddConverter extends SchemaConverter {
         if (watermarkSpec != null) {
             throw new ValidationException(
                     String.format(
-                            "%sThe base table has already defined the watermark strategy `%s` AS %s. You might "
+                            "%sThe base %s has already defined the watermark strategy `%s` AS %s. You might "
                                     + "want to drop it before adding a new one.",
                             exMsgPrefix,
+                            tableKindStr,
                             watermarkSpec.getColumnName(),
                             ((SqlCallExpression) watermarkSpec.getWatermarkExpression())
                                     .getSqlExpression()));
