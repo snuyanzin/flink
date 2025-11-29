@@ -173,7 +173,7 @@ public class MaterializedTableUtils {
 
     public static List<SqlTableColumn> getSqlTableColumns(SqlNodeList columnPositions) {
         List<SqlTableColumn> list = new ArrayList<>();
-        for (SqlNode position: columnPositions) {
+        for (SqlNode position : columnPositions) {
             if (position instanceof SqlTableColumnPosition) {
                 list.add(((SqlTableColumnPosition) position).getColumn());
             } else {

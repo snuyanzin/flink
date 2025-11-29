@@ -3,18 +3,20 @@ package org.apache.flink.table.planner.operations.converters;
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableSchema;
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableSchema.SqlAlterMaterializedTableAddSchema;
 import org.apache.flink.sql.parser.ddl.SqlAlterMaterializedTableSchema.SqlAlterMaterializedTableModifySchema;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.CatalogMaterializedTable;
 import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
+import org.apache.flink.table.planner.operations.converters.table.MergeMaterializedTableUtil;
 import org.apache.flink.table.planner.operations.converters.table.MergeTableAsUtil;
 import org.apache.flink.table.planner.utils.MaterializedTableUtils;
 
 import org.apache.calcite.sql.SqlNode;
+
+import java.util.List;
 
 public abstract class SqlAlterMaterializedTableSchemaConverter<
                 T extends SqlAlterMaterializedTableSchema>
@@ -32,17 +34,20 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
         MaterializedTableUtils.validatePhysicalColumnsUsedByQuery(
                 alterTableSchema.getColumnPositions(), queryOperation.getResolvedSchema());
 
+
         SchemaConverter converter = createSchemaConverter(oldTable, context);
         converter.updateColumn(alterTableSchema.getColumnPositions().getList());
         alterTableSchema.getWatermark().ifPresent(converter::updateWatermark);
         alterTableSchema.getFullConstraint().ifPresent(converter::updatePrimaryKey);
         Schema schema = converter.convert();
+       Schema newSchema =  new MergeMaterializedTableUtil(context).mergeSchemas(alterTableSchema.getColumnPositions(),
+                alterTableSchema.getWatermark().orElse(null), alterTableSchema.getConstraints(), queryOperation.getResolvedSchema());
         CatalogMaterializedTable mtWithUpdatedSchema =
-                buildUpdatedMaterializedTable(oldTable, builder -> builder.schema(schema));
+                buildUpdatedMaterializedTable(oldTable, builder -> builder.schema(newSchema));
 
         // If needed, rewrite the query to include the new fields in the select list
         PlannerQueryOperation updatedQueryOperation =
-                new MergeTableAsUtil(context)
+                new MergeMaterializedTableUtil(context)
                         .maybeRewriteQuery(
                                 context.getCatalogManager(),
                                 context.getFlinkPlanner(),
@@ -54,7 +59,10 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
         CatalogMaterializedTable mtWithUpdatedSchemaAndQuery =
                 buildUpdatedMaterializedTable(
                         oldTable,
-                        builder -> {builder.schema(schema); builder.expandedQuery(updatedQueryOperation.asSerializableString());});
+                        builder -> {
+                            builder.schema(newSchema);
+                            builder.expandedQuery(updatedQueryOperation.asSerializableString());
+                        });
 
         return new AlterMaterializedTableChangeOperation(
                 resolveIdentifier(alterTableSchema, context),

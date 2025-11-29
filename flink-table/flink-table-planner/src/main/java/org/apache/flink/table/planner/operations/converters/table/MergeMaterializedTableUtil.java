@@ -69,12 +69,12 @@ import java.util.stream.IntStream;
 import static org.apache.flink.table.types.logical.utils.LogicalTypeCasts.supportsImplicitCast;
 
 /** A utility class with logic for handling the {@code CREATE TABLE ... AS SELECT} clause. */
-public class MergeTableAsUtil {
+public class MergeMaterializedTableUtil {
     private final SqlValidator validator;
     private final Function<SqlNode, String> escapeExpression;
     private final DataTypeFactory dataTypeFactory;
 
-    public MergeTableAsUtil(
+    public MergeMaterializedTableUtil(
             SqlValidator validator,
             Function<SqlNode, String> escapeExpression,
             DataTypeFactory dataTypeFactory) {
@@ -83,7 +83,7 @@ public class MergeTableAsUtil {
         this.dataTypeFactory = dataTypeFactory;
     }
 
-    public MergeTableAsUtil(ConvertContext context) {
+    public MergeMaterializedTableUtil(ConvertContext context) {
         this(
                 context.getSqlValidator(),
                 context::toQuotedSqlString,
@@ -105,7 +105,7 @@ public class MergeTableAsUtil {
 
         // Only fields that may be persisted will be included in the select query
         RowType sinkRowType =
-                ((RowType) sinkTable.getResolvedSchema().toSinkRowDataType().getLogicalType());
+                ((RowType) sinkTable.getResolvedSchema().toSourceRowDataType().getLogicalType());
 
         Map<String, Integer> sourceFields =
                 IntStream.range(0, origQueryOperation.getResolvedSchema().getColumnNames().size())
@@ -129,20 +129,26 @@ public class MergeTableAsUtil {
             pos++;
 
             if (!sourceFields.containsKey(targetField.getName())) {
-                if (!targetField.getType().isNullable()) {
-                    throw new ValidationException(
-                            "Column '"
-                                    + targetField.getName()
-                                    + "' has no default value and does not allow NULLs.");
-                }
+                if (!sinkTable.getResolvedSchema().getColumn(targetField.getName()).get().isPhysical()) {
+                    assignedFields.put(
+                            pos,
+                            new SqlIdentifier(List.of(targetField.getName()), SqlParserPos.ZERO));
+                } else {
+                    if (!targetField.getType().isNullable()) {
+                        throw new ValidationException(
+                                "Column '"
+                                        + targetField.getName()
+                                        + "' has no default value and does not allow NULLs.");
+                    }
 
-                assignedFields.put(
-                        pos,
-                        rewriterUtils.maybeCast(
-                                SqlLiteral.createNull(SqlParserPos.ZERO),
-                                typeFactory.createUnknownType(),
-                                typeFactory.createFieldTypeFromLogicalType(targetField.getType()),
-                                typeFactory));
+                    assignedFields.put(
+                            pos,
+                            rewriterUtils.maybeCast(
+                                    SqlLiteral.createNull(SqlParserPos.ZERO),
+                                    typeFactory.createUnknownType(),
+                                    typeFactory.createFieldTypeFromLogicalType(targetField.getType()),
+                                    typeFactory));
+                }
             } else {
                 targetPositions.add(sourceFields.get(targetField.getName()));
             }

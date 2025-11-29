@@ -370,7 +370,9 @@ class SqlMaterializedTableNodeToOperationConverterTest
 
     @Test
     void createMaterializedTableSuccessCase1() {
-        AlterMaterializedTableChangeOperation operation = (AlterMaterializedTableChangeOperation) parse("ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS current_timestamp");
+        AlterMaterializedTableChangeOperation operation =
+                (AlterMaterializedTableChangeOperation)
+                        parse("ALTER MATERIALIZED TABLE base_mtbl ADD `q` AS current_timestamp");
         System.out.println(operation.getCatalogMaterializedTable());
     }
 
