@@ -214,15 +214,8 @@ object FlinkRexUtil {
       return expr
     }
 
-    val exprShuttle = new EquivalentExprShuttle(rexBuilder)
-    val equiExpr = expr.accept(exprShuttle)
-    val exprMerger = new SameExprMerger(rexBuilder)
-    val sameExprMerged = exprMerger.mergeSameExpr(equiExpr)
-    val binaryComparisonExprReduced =
-      sameExprMerged.accept(new BinaryComparisonExprReducer(rexBuilder))
-
     val rexSimplify = new RexSimplify(rexBuilder, RelOptPredicateList.EMPTY, executor)
-    rexSimplify.simplifyUnknownAs(binaryComparisonExprReduced, RexUnknownAs.falseIf(true))
+    rexSimplify.simplifyUnknownAs(expr, RexUnknownAs.falseIf(true))
   }
 
   val BINARY_COMPARISON: util.Set[SqlKind] = util.EnumSet.of(
@@ -411,37 +404,6 @@ object FlinkRexUtil {
         new RexInputRef(newIndex, inputRef.getType)
       }
     })
-
-  private class EquivalentExprShuttle(rexBuilder: RexBuilder) extends RexShuttle {
-    private val equiExprSet = mutable.HashSet[RexNode]()
-
-    override def visitCall(call: RexCall): RexNode = {
-      call.getOperator match {
-        case EQUALS | NOT_EQUALS | GREATER_THAN | LESS_THAN | GREATER_THAN_OR_EQUAL |
-            LESS_THAN_OR_EQUAL =>
-          if (equiExprSet.contains(call)) {
-            swapOperands(call)
-          } else {
-            equiExprSet.add(call)
-            call
-          }
-        case _ => super.visitCall(call)
-      }
-    }
-
-    private def swapOperands(call: RexCall): RexCall = {
-      val newOp = call.getOperator match {
-        case EQUALS | NOT_EQUALS => call.getOperator
-        case GREATER_THAN => LESS_THAN
-        case GREATER_THAN_OR_EQUAL => LESS_THAN_OR_EQUAL
-        case LESS_THAN => GREATER_THAN
-        case LESS_THAN_OR_EQUAL => GREATER_THAN_OR_EQUAL
-        case _ => throw new IllegalArgumentException(s"Unsupported operator: ${call.getOperator}")
-      }
-      val operands = call.getOperands
-      rexBuilder.makeCall(newOp, operands.last, operands.head).asInstanceOf[RexCall]
-    }
-  }
 
   def getExpressionString(expr: RexNode, inFields: Seq[String]): String = {
     getExpressionString(expr, inFields, ExpressionDetail.Digest)
