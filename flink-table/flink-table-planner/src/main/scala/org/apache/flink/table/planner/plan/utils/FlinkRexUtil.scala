@@ -37,7 +37,6 @@ import org.apache.calcite.rex._
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.{SqlAsOperator, SqlKind, SqlOperator}
 import org.apache.calcite.sql.fun.{SqlCastFunction, SqlStdOperatorTable}
-import org.apache.calcite.sql.fun.SqlStdOperatorTable._
 import org.apache.calcite.util._
 
 import java.lang.{Iterable => JIterable}
@@ -47,7 +46,6 @@ import java.util.Optional
 import java.util.function.Predicate
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 
 /** Utility methods concerning [[RexNode]]. */
 object FlinkRexUtil {
@@ -216,97 +214,6 @@ object FlinkRexUtil {
 
     val rexSimplify = new RexSimplify(rexBuilder, RelOptPredicateList.EMPTY, executor)
     rexSimplify.simplifyUnknownAs(expr, RexUnknownAs.falseIf(true))
-  }
-
-  val BINARY_COMPARISON: util.Set[SqlKind] = util.EnumSet.of(
-    SqlKind.EQUALS,
-    SqlKind.NOT_EQUALS,
-    SqlKind.GREATER_THAN,
-    SqlKind.GREATER_THAN_OR_EQUAL,
-    SqlKind.LESS_THAN,
-    SqlKind.LESS_THAN_OR_EQUAL)
-
-  private class BinaryComparisonExprReducer(rexBuilder: RexBuilder) extends RexShuttle {
-    override def visitCall(call: RexCall): RexNode = {
-      val kind = call.getOperator.getKind
-      if (!kind.belongsTo(BINARY_COMPARISON)) {
-        super.visitCall(call)
-      } else {
-        val operand0 = call.getOperands.get(0)
-        val operand1 = call.getOperands.get(1)
-        (operand0, operand1) match {
-          case (op0: RexInputRef, op1: RexInputRef) if op0.getIndex == op1.getIndex =>
-            kind match {
-              case SqlKind.EQUALS | SqlKind.LESS_THAN_OR_EQUAL | SqlKind.GREATER_THAN_OR_EQUAL =>
-                rexBuilder.makeLiteral(true)
-              case SqlKind.NOT_EQUALS | SqlKind.LESS_THAN | SqlKind.GREATER_THAN =>
-                rexBuilder.makeLiteral(false)
-              case _ => super.visitCall(call)
-            }
-          case _ => super.visitCall(call)
-        }
-      }
-    }
-  }
-
-  private class SameExprMerger(rexBuilder: RexBuilder) extends RexShuttle {
-    private val sameExprMap = mutable.HashMap[String, RexNode]()
-
-    private def mergeSameExpr(expr: RexNode, equiExpr: RexLiteral): RexNode = {
-      if (sameExprMap.contains(expr.toString)) {
-        equiExpr
-      } else {
-        sameExprMap.put(expr.toString, expr)
-        expr
-      }
-    }
-
-    def mergeSameExpr(expr: RexNode): RexNode = {
-      // merges same expressions in the operands of AND and OR
-      // e.g. a = b AND a = b -> a = b AND true
-      //      a = b OR a = b -> a = b OR false
-      val newExpr1 = expr.accept(this)
-
-      // merges same expressions in conjunctions
-      // e.g. (a > b AND c < 10) AND a > b -> a > b AND c < 10 AND true
-      sameExprMap.clear()
-      val newConjunctions = RelOptUtil.conjunctions(newExpr1).map {
-        ex => mergeSameExpr(ex, rexBuilder.makeLiteral(true))
-      }
-      val newExpr2 = newConjunctions.size match {
-        case 0 => newExpr1 // true AND true
-        case 1 => newConjunctions.head
-        case _ => rexBuilder.makeCall(AND, newConjunctions: _*)
-      }
-
-      // merges same expressions in disjunctions
-      // e.g. (a > b OR c < 10) OR a > b -> a > b OR c < 10 OR false
-      sameExprMap.clear()
-      val newDisjunctions = RelOptUtil.disjunctions(newExpr2).map {
-        ex => mergeSameExpr(ex, rexBuilder.makeLiteral(false))
-      }
-      val newExpr3 = newDisjunctions.size match {
-        case 0 => newExpr2 // false OR false
-        case 1 => newDisjunctions.head
-        case _ => rexBuilder.makeCall(OR, newDisjunctions: _*)
-      }
-      newExpr3
-    }
-
-    override def visitCall(call: RexCall): RexNode = {
-      val newCall = call.getOperator match {
-        case AND | OR =>
-          sameExprMap.clear()
-          val newOperands = call.getOperands.map {
-            op =>
-              val value = if (call.getOperator == AND) true else false
-              mergeSameExpr(op, rexBuilder.makeLiteral(value))
-          }
-          call.clone(call.getType, newOperands)
-        case _ => call
-      }
-      super.visitCall(newCall)
-    }
   }
 
   /**
