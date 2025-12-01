@@ -11,7 +11,7 @@ import org.apache.flink.table.catalog.ResolvedCatalogMaterializedTable;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
-import org.apache.flink.table.planner.operations.converters.table.MergeMaterializedTableUtil;
+import org.apache.flink.table.planner.operations.converters.table.MergeTableAsUtil;
 import org.apache.flink.table.planner.utils.MaterializedTableUtils;
 
 import org.apache.calcite.sql.SqlNode;
@@ -45,14 +45,15 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
 
         // If needed, rewrite the query to include the new fields in the select list
         PlannerQueryOperation updatedQueryOperation =
-                new MergeMaterializedTableUtil(context)
+                new MergeTableAsUtil(context)
                         .maybeRewriteQuery(
                                 context.getCatalogManager(),
                                 context.getFlinkPlanner(),
                                 validateQuery,
                                 context.getCatalogManager()
                                         .resolveCatalogMaterializedTable(mtWithUpdatedSchema),
-                                extractComputedColumn(alterTableSchema));
+                                extractComputedColumn(alterTableSchema),
+                                extractMetadataColumn(alterTableSchema));
 
         CatalogMaterializedTable mtWithUpdatedSchemaAndQuery =
                 buildUpdatedMaterializedTable(
@@ -81,6 +82,21 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
             }
         }
         return computedColumns;
+    }
+
+    private List<SqlTableColumn.SqlMetadataColumn> extractMetadataColumn(T alterTableSchema) {
+        List<SqlTableColumn.SqlMetadataColumn> metadataColumns = new ArrayList<>();
+        for (SqlNode node : alterTableSchema.getColumnPositions()) {
+            if (node instanceof SqlTableColumnPosition) {
+                if (((SqlTableColumnPosition) node).getColumn()
+                        instanceof SqlTableColumn.SqlMetadataColumn) {
+                    metadataColumns.add(
+                            (SqlTableColumn.SqlMetadataColumn)
+                                    ((SqlTableColumnPosition) node).getColumn());
+                }
+            }
+        }
+        return metadataColumns;
     }
 
     protected abstract SchemaConverter createSchemaConverter(

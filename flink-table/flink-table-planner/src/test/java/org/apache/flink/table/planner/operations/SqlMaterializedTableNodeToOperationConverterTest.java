@@ -142,6 +142,26 @@ class SqlMaterializedTableNodeToOperationConverterTest
                 (CreateMaterializedTableOperation) parse(sqlWithWatermark);
         catalog.createTable(
                 materializedTableWithWatermarkPath, operation1.getCatalogMaterializedTable(), true);
+
+        // create materialized table
+        final String sqlWithoutConstraint =
+                "CREATE MATERIALIZED TABLE base_mtbl_without_constraint "
+                        + "COMMENT 'materialized table comment'\n"
+                        + "PARTITIONED BY (a, d)\n"
+                        + "WITH (\n"
+                        + "  'connector' = 'filesystem', \n"
+                        + "  'format' = 'json'\n"
+                        + ")\n"
+                        + "FRESHNESS = INTERVAL '30' SECOND\n"
+                        + "REFRESH_MODE = FULL\n"
+                        + "AS SELECT t1.* FROM t1";
+        final ObjectPath materializedTableWithoutConstraint =
+                new ObjectPath(catalogManager.getCurrentDatabase(), "base_mtbl_without_constraint");
+
+        CreateMaterializedTableOperation operation2 =
+                (CreateMaterializedTableOperation) parse(sqlWithoutConstraint);
+        catalog.createTable(
+                materializedTableWithoutConstraint, operation2.getCatalogMaterializedTable(), true);
     }
 
     @Test
@@ -368,13 +388,15 @@ class SqlMaterializedTableNodeToOperationConverterTest
         assertThat(operation.getCatalogMaterializedTable().getResolvedSchema()).isEqualTo(expected);
     }
 
-    @Test
-    void createMaterializedTableSuccessCase1() {
+    @ParameterizedTest
+    @MethodSource("alterSuccessCase")
+    void createAlterTableSuccessCase(TestSpec testSpec) {
         AlterMaterializedTableChangeOperation operation =
-                (AlterMaterializedTableChangeOperation)
-                        parse(
-                                "ALTER MATERIALIZED TABLE base_mtbl ADD (`q` AS current_timestamp AFTER `b`, `w` AS current_time FIRST)");
-        System.out.println(operation.getCatalogMaterializedTable());
+                (AlterMaterializedTableChangeOperation) parse(testSpec.sql);
+        CatalogMaterializedTable catalogMaterializedTable = operation.getCatalogMaterializedTable();
+        assertThat(catalogMaterializedTable.getUnresolvedSchema())
+                .hasToString(testSpec.expectedSchema);
+        assertThat(catalogMaterializedTable.getExpandedQuery()).hasToString(testSpec.expandedQuery);
     }
 
     @Test
@@ -751,7 +773,11 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         "ALTER MATERIALIZED TABLE base_mtbl ADD PRIMARY KEY(c) NOT ENFORCED",
                         "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
                                 + "The base table has already defined the primary key constraint [`a`]. "
-                                + "You might want to drop it before adding a new one."));
+                                + "You might want to drop it before adding a new one."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD (`q` AS current_timestamp AFTER `q2`, `q2` AS current_timestamp AFTER `q`)",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Referenced column `q2` by 'AFTER' does not exist in the table."));
     }
 
     private static List<TestSpec> createWithInvalidSchema() {
@@ -902,6 +928,56 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         "Materialized table freshness only support SECOND, MINUTE, HOUR, DAY as the time unit."));
     }
 
+    private static Collection<TestSpec> alterSuccessCase() {
+        final Collection<TestSpec> list = new ArrayList<>();
+        list.add(
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD (`q` AS current_timestamp AFTER `b`, WATERMARK FOR `q` AS `q` - INTERVAL '1' SECOND)",
+                        "(\n"
+                                + "  `a` BIGINT NOT NULL,\n"
+                                + "  `b` STRING,\n"
+                                + "  `q` AS [CURRENT_TIMESTAMP],\n"
+                                + "  `c` INT,\n"
+                                + "  `d` STRING,\n"
+                                + "  WATERMARK FOR `q` AS [`q` - INTERVAL '1' SECOND],\n"
+                                + "  CONSTRAINT `ct1` PRIMARY KEY (`a`) NOT ENFORCED\n"
+                                + ")",
+                        "SELECT `t1`.`a`, `t1`.`b`, CURRENT_TIMESTAMP AS `q`, `t1`.`c`, `t1`.`d`\n"
+                                + "FROM `builtin`.`default`.`t1` AS `t1`"));
+        list.add(
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl ADD (`q` AS current_timestamp FIRST, `q2` AS current_time FIRST)",
+                        "(\n"
+                                + "  `q2` AS [CURRENT_TIME],\n"
+                                + "  `q` AS [CURRENT_TIMESTAMP],\n"
+                                + "  `a` BIGINT NOT NULL,\n"
+                                + "  `b` STRING,\n"
+                                + "  `c` INT,\n"
+                                + "  `d` STRING,\n"
+                                + "  CONSTRAINT `ct1` PRIMARY KEY (`a`) NOT ENFORCED\n"
+                                + ")",
+                        "SELECT CURRENT_TIME AS `q2`, CURRENT_TIMESTAMP AS `q`, `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
+                                + "FROM `builtin`.`default`.`t1` AS `t1`"));
+        list.add(
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl_without_constraint ADD ("
+                                + "    `c1` AS current_timestamp FIRST, "
+                                + "    WATERMARK FOR `c1` AS `c1` - INTERVAL '1' SECOND, "
+                                + "    PRIMARY KEY(`a`) NOT ENFORCED)",
+                        "(\n"
+                                + "  `c1` AS [CURRENT_TIMESTAMP],\n"
+                                + "  `a` BIGINT NOT NULL,\n"
+                                + "  `b` STRING,\n"
+                                + "  `c` INT,\n"
+                                + "  `d` STRING,\n"
+                                + "  WATERMARK FOR `c1` AS [`c1` - INTERVAL '1' SECOND],\n"
+                                + "  CONSTRAINT `PK_a` PRIMARY KEY (`a`) NOT ENFORCED\n"
+                                + ")",
+                        "SELECT CURRENT_TIMESTAMP AS `c1`, `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
+                                + "FROM `builtin`.`default`.`t1` AS `t1`"));
+        return list;
+    }
+
     private static Collection<Arguments> testDataWithDifferentSchemasSuccessCase() {
         final Collection<Arguments> list = new ArrayList<>();
         list.addAll(createOrAlter(CREATE_OPERATION));
@@ -994,11 +1070,23 @@ class SqlMaterializedTableNodeToOperationConverterTest
         private final String sql;
         private final Class<?> expectedException;
         private final String errMessage;
+        private final String expectedSchema;
+        private final String expandedQuery;
 
         private TestSpec(String sql, Class<?> expectedException, String errMessage) {
             this.sql = sql;
             this.expectedException = expectedException;
             this.errMessage = errMessage;
+            this.expectedSchema = null;
+            this.expandedQuery = null;
+        }
+
+        private TestSpec(String sql, String expectedSchema, String expandedQuery) {
+            this.sql = sql;
+            this.expectedException = null;
+            this.errMessage = null;
+            this.expectedSchema = expectedSchema;
+            this.expandedQuery = expandedQuery;
         }
 
         public static TestSpec of(String sql, Class<?> expectedException, String errMessage) {
@@ -1007,6 +1095,10 @@ class SqlMaterializedTableNodeToOperationConverterTest
 
         public static TestSpec of(String sql, String errMessage) {
             return of(sql, ValidationException.class, errMessage);
+        }
+
+        public static TestSpec of(String sql, String expectedSchema, String expandedQuery) {
+            return new TestSpec(sql, expectedSchema, expandedQuery);
         }
     }
 }
