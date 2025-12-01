@@ -120,6 +120,7 @@ public class SqlNodeConverters {
 
     private static void registerMaterializedTableConverters() {
         register(new SqlAlterMaterializedTableAddDistributionConverter());
+        register(new SqlAlterMaterializedTableAddSchemaConverter());
         register(new SqlAlterMaterializedTableAsQueryConverter());
         register(new SqlAlterMaterializedTableDropDistributionConverter());
         register(new SqlAlterMaterializedTableModifyDistributionConverter());

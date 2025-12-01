@@ -29,7 +29,7 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
             T alterTableSchema, ResolvedCatalogMaterializedTable oldTable, ConvertContext context) {
         final SqlNode originalQuery =
                 context.getFlinkPlanner().parser().parse(oldTable.getOriginalQuery());
-        final boolean isSimpleStarOnlySelect =isSimpleStarOnlySelect(originalQuery);
+        final boolean isSimpleStarOnlySelect = isSimpleStarOnlySelect(originalQuery);
         final SqlNode validateQuery = context.getSqlValidator().validate(originalQuery);
         PlannerQueryOperation queryOperation =
                 new PlannerQueryOperation(
@@ -82,10 +82,8 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
     private boolean isSimpleStarOnlySelect(SqlNode originalQuery) {
         return originalQuery instanceof SqlSelect
                 && ((SqlSelect) originalQuery).getSelectList().size() == 1
-                && ((SqlSelect) originalQuery).getSelectList().get(0)
-                instanceof SqlIdentifier
-                && ((SqlIdentifier) ((SqlSelect) originalQuery).getSelectList().get(0))
-                .isStar();
+                && ((SqlSelect) originalQuery).getSelectList().get(0) instanceof SqlIdentifier
+                && ((SqlIdentifier) ((SqlSelect) originalQuery).getSelectList().get(0)).isStar();
     }
 
     private List<SqlTableColumn.SqlComputedColumn> extractComputedColumn(T alterTableSchema) {
