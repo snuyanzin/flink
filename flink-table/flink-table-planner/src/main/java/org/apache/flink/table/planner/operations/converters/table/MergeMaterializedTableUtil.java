@@ -35,6 +35,7 @@ import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.catalog.ResolvedCatalogBaseTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
+import org.apache.flink.table.catalog.TableChange;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
@@ -48,9 +49,9 @@ import org.apache.flink.table.types.logical.RowType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
 
@@ -58,13 +59,12 @@ import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.apache.flink.table.types.logical.utils.LogicalTypeCasts.supportsImplicitCast;
 
@@ -96,9 +96,9 @@ public class MergeMaterializedTableUtil {
     public PlannerQueryOperation maybeRewriteQuery(
             CatalogManager catalogManager,
             FlinkPlannerImpl flinkPlanner,
-            PlannerQueryOperation origQueryOperation,
             SqlNode origQueryNode,
-            ResolvedCatalogBaseTable sinkTable) {
+            ResolvedCatalogBaseTable sinkTable,
+            List<SqlTableColumn.SqlComputedColumn> computedColumns) {
         FlinkCalciteSqlValidator sqlValidator = flinkPlanner.getOrCreateSqlValidator();
         SqlRewriterUtils rewriterUtils = new SqlRewriterUtils(sqlValidator);
         FlinkTypeFactory typeFactory = (FlinkTypeFactory) sqlValidator.getTypeFactory();
@@ -106,15 +106,6 @@ public class MergeMaterializedTableUtil {
         // Only fields that may be persisted will be included in the select query
         RowType sinkRowType =
                 ((RowType) sinkTable.getResolvedSchema().toSourceRowDataType().getLogicalType());
-
-        Map<String, Integer> sourceFields =
-                IntStream.range(0, origQueryOperation.getResolvedSchema().getColumnNames().size())
-                        .boxed()
-                        .collect(
-                                Collectors.toMap(
-                                        origQueryOperation.getResolvedSchema().getColumnNames()
-                                                ::get,
-                                        Function.identity()));
 
         // assignedFields contains the new sink fields that are not present in the source
         // and that will be included in the select query
@@ -124,33 +115,22 @@ public class MergeMaterializedTableUtil {
         // included in the select query
         List<Object> targetPositions = new ArrayList<>();
 
+        Map<String, SqlComputedColumn> nameToNewColumns = new HashMap<>();
+        for (SqlComputedColumn computedColumn : computedColumns) {
+            nameToNewColumns.put(computedColumn.getName().getSimple(), computedColumn);
+        }
+
         int pos = -1;
-        for (RowType.RowField targetField : sinkRowType.getFields()) {
-            pos++;
-
-            if (!sourceFields.containsKey(targetField.getName())) {
-                if (!sinkTable.getResolvedSchema().getColumn(targetField.getName()).get().isPhysical()) {
-                    assignedFields.put(
-                            pos,
-                            new SqlIdentifier(List.of(targetField.getName()), SqlParserPos.ZERO));
-                } else {
-                    if (!targetField.getType().isNullable()) {
-                        throw new ValidationException(
-                                "Column '"
-                                        + targetField.getName()
-                                        + "' has no default value and does not allow NULLs.");
-                    }
-
-                    assignedFields.put(
-                            pos,
-                            rewriterUtils.maybeCast(
-                                    SqlLiteral.createNull(SqlParserPos.ZERO),
-                                    typeFactory.createUnknownType(),
-                                    typeFactory.createFieldTypeFromLogicalType(targetField.getType()),
-                                    typeFactory));
-                }
+        for (String fieldName : sinkRowType.getFieldNames()) {
+            if (nameToNewColumns.containsKey(fieldName)) {
+                assignedFields.put(
+                        pos + 1,
+                        SqlStdOperatorTable.AS.createCall(
+                                SqlParserPos.ZERO,
+                                nameToNewColumns.get(fieldName).getExpr(),
+                                nameToNewColumns.get(fieldName).getName()));
             } else {
-                targetPositions.add(sourceFields.get(targetField.getName()));
+                targetPositions.add(++pos);
             }
         }
 
@@ -200,7 +180,8 @@ public class MergeMaterializedTableUtil {
             SqlNodeList sqlColumnList,
             @Nullable SqlWatermark sqlWatermark,
             List<SqlTableConstraint> sqlTableConstraints,
-            ResolvedSchema sourceSchema) {
+            ResolvedSchema sourceSchema,
+            List<TableChange> tableChanges) {
         SchemaBuilder schemaBuilder =
                 new SchemaBuilder(
                         (FlinkTypeFactory) validator.getTypeFactory(),
@@ -331,8 +312,8 @@ public class MergeMaterializedTableUtil {
             }
 
             columns.clear();
-            columns.putAll(sinkSchemaCols);
             columns.putAll(sourceSchemaCols);
+            columns.putAll(sinkSchemaCols);
         }
 
         private SqlTableColumn toSqlTableColumn(SqlNode sinkColumn) {
