@@ -113,7 +113,7 @@ public abstract class SqlAlterMaterializedTableSchema extends SqlAlterMaterializ
     /**
      * Example: DDL like the below for adding column(s)/constraint/watermark.
      *
-     * <p>Note: adding or altering physical columns is not supported, only computed or metadata
+     * <p>Note: adding or modifying physical columns is not supported, only computed or metadata
      *
      * <pre>{@code
      * -- add single column
@@ -142,6 +142,42 @@ public abstract class SqlAlterMaterializedTableSchema extends SqlAlterMaterializ
         @Override
         protected String getAlterOperation() {
             return "ADD";
+        }
+    }
+
+    /**
+     * Example: DDL like the below for altering column(s)/constraint/watermark.
+     *
+     * <p>Note: adding or modifying physical columns is not supported, only computed or metadata
+     *
+     * <pre>{@code
+     * -- modify single column
+     * ALTER MATERIALIZED TABLE myMaterializedTable MODIFY c1 AS current_timestamp COMMENT 'modified_column docs';
+     *
+     * -- modify multiple columns, constraint, and watermark
+     * ALTER MATERIALIZED TABLE myMaterializedTable MODIFY (
+     *     ts AS current_timestamp COMMENT 'modified comment' FIRST,
+     *     col_meta INT METADATA FROM 'mk1' VIRTUAL AFTER ts, -- reorder columns
+     *     PRIMARY KEY (id) NOT ENFORCED,
+     *     WATERMARK FOR ts AS ts - INTERVAL '5' SECOND -- modify watermark strategy
+     * );
+     *
+     * }</pre>
+     */
+    public static class SqlAlterMaterializedTableModifySchema
+            extends SqlAlterMaterializedTableSchema {
+        public SqlAlterMaterializedTableModifySchema(
+                SqlParserPos pos,
+                SqlIdentifier materializedTableName,
+                SqlNodeList columnList,
+                List<SqlTableConstraint> constraints,
+                @Nullable SqlWatermark sqlWatermark) {
+            super(pos, materializedTableName, columnList, constraints, sqlWatermark);
+        }
+
+        @Override
+        protected String getAlterOperation() {
+            return "MODIFY";
         }
     }
 }
