@@ -26,7 +26,6 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.TableChange;
 import org.apache.flink.table.operations.ddl.AlterTableChangeOperation;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
