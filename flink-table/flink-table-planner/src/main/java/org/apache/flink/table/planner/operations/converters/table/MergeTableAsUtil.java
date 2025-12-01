@@ -51,6 +51,7 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlValidator;
 
@@ -58,6 +59,7 @@ import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +90,80 @@ public class MergeTableAsUtil {
                 context.getSqlValidator(),
                 context::toQuotedSqlString,
                 context.getCatalogManager().getDataTypeFactory());
+    }
+
+    /**
+     * Rewrites the query operation to include only the fields that may be persisted in the sink.
+     */
+    public PlannerQueryOperation maybeRewriteQuery(
+            CatalogManager catalogManager,
+            FlinkPlannerImpl flinkPlanner,
+            SqlNode origQueryNode,
+            ResolvedCatalogBaseTable sinkTable,
+            List<SqlTableColumn.SqlComputedColumn> computedColumns,
+            List<SqlTableColumn.SqlMetadataColumn> metadataColumns) {
+        FlinkCalciteSqlValidator sqlValidator = flinkPlanner.getOrCreateSqlValidator();
+        SqlRewriterUtils rewriterUtils = new SqlRewriterUtils(sqlValidator);
+        FlinkTypeFactory typeFactory = (FlinkTypeFactory) sqlValidator.getTypeFactory();
+
+        // Only fields that may be persisted will be included in the select query
+        RowType sinkRowType =
+                ((RowType) sinkTable.getResolvedSchema().toSourceRowDataType().getLogicalType());
+
+        // assignedFields contains the new sink fields that are not present in the source
+        // and that will be included in the select query
+        LinkedHashMap<Integer, SqlNode> assignedFields = new LinkedHashMap<>();
+
+        // targetPositions contains the positions of the source fields that will be
+        // included in the select query
+        List<Object> targetPositions = new ArrayList<>();
+
+        Map<String, SqlComputedColumn> nameToNewColumns = new HashMap<>();
+        for (SqlComputedColumn computedColumn : computedColumns) {
+            nameToNewColumns.put(computedColumn.getName().getSimple(), computedColumn);
+        }
+
+        Map<String, SqlMetadataColumn> nameToNewColumns2 = new HashMap<>();
+        for (SqlMetadataColumn metadataColumn : metadataColumns) {
+            nameToNewColumns2.put(metadataColumn.getName().getSimple(), metadataColumn);
+        }
+
+        int pos = -1;
+        int target = 0;
+        for (String fieldName : sinkRowType.getFieldNames()) {
+            pos++;
+            if (nameToNewColumns.containsKey(fieldName)) {
+                assignedFields.put(
+                        pos,
+                        SqlStdOperatorTable.AS.createCall(
+                                SqlParserPos.ZERO,
+                                nameToNewColumns.get(fieldName).getExpr(),
+                                nameToNewColumns.get(fieldName).getName()));
+            } else if (nameToNewColumns2.containsKey(fieldName)) {
+                assignedFields.put(pos, nameToNewColumns2.get(fieldName).getName());
+            } else {
+                targetPositions.add(target++);
+            }
+        }
+
+        // rewrite query
+        SqlCall newSelect =
+                rewriterUtils.rewriteCall(
+                        rewriterUtils,
+                        sqlValidator,
+                        (SqlCall) origQueryNode,
+                        typeFactory.buildRelNodeRowType(sinkRowType),
+                        assignedFields,
+                        targetPositions,
+                        () -> "Unsupported node type " + origQueryNode.getKind());
+
+        return (PlannerQueryOperation)
+                SqlNodeToOperationConversion.convert(flinkPlanner, catalogManager, newSelect)
+                        .orElseThrow(
+                                () ->
+                                        new TableException(
+                                                "Unsupported node type "
+                                                        + newSelect.getClass().getSimpleName()));
     }
 
     /**

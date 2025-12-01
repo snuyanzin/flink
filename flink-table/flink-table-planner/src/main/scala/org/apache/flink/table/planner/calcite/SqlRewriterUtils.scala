@@ -270,8 +270,7 @@ object SqlRewriterUtils {
       idx =>
         if (assignedFields.containsKey(idx)) {
           fieldNodes.add(assignedFields.get(idx))
-        }
-        if (currentNodes.size() > 0) {
+        } else if (currentNodes.size() > 0) {
           fieldNodes.add(currentNodes.remove(0))
         }
     }
