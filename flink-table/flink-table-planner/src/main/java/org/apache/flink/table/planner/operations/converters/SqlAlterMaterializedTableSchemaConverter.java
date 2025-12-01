@@ -14,7 +14,9 @@ import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 import org.apache.flink.table.planner.operations.converters.table.MergeTableAsUtil;
 import org.apache.flink.table.planner.utils.MaterializedTableUtils;
 
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlSelect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,13 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
             T alterTableSchema, ResolvedCatalogMaterializedTable oldTable, ConvertContext context) {
         final SqlNode originalQuery =
                 context.getFlinkPlanner().parser().parse(oldTable.getOriginalQuery());
+        final boolean isStarSelect =
+                originalQuery instanceof SqlSelect
+                        && ((SqlSelect) originalQuery).getSelectList().size() == 1
+                        && ((SqlSelect) originalQuery).getSelectList().get(0)
+                                instanceof SqlIdentifier
+                        && ((SqlIdentifier) ((SqlSelect) originalQuery).getSelectList().get(0))
+                                .isStar();
         final SqlNode validateQuery = context.getSqlValidator().validate(originalQuery);
         PlannerQueryOperation queryOperation =
                 new PlannerQueryOperation(
@@ -43,24 +52,30 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
         CatalogMaterializedTable mtWithUpdatedSchema =
                 buildUpdatedMaterializedTable(oldTable, builder -> builder.schema(schema));
 
-        // If needed, rewrite the query to include the new fields in the select list
-        PlannerQueryOperation updatedQueryOperation =
-                new MergeTableAsUtil(context)
-                        .maybeRewriteQuery(
-                                context.getCatalogManager(),
-                                context.getFlinkPlanner(),
-                                validateQuery,
-                                context.getCatalogManager()
-                                        .resolveCatalogMaterializedTable(mtWithUpdatedSchema),
-                                extractComputedColumn(alterTableSchema),
-                                extractMetadataColumn(alterTableSchema));
+        final String expandedQuery;
+        if (isStarSelect) {
+            // If needed, rewrite the query to include the new fields in the select list
+            expandedQuery =
+                    new MergeTableAsUtil(context)
+                            .maybeRewriteQuery(
+                                    context.getCatalogManager(),
+                                    context.getFlinkPlanner(),
+                                    validateQuery,
+                                    context.getCatalogManager()
+                                            .resolveCatalogMaterializedTable(mtWithUpdatedSchema),
+                                    extractComputedColumn(alterTableSchema),
+                                    extractMetadataColumn(alterTableSchema))
+                            .asSerializableString();
+        } else {
+            expandedQuery = mtWithUpdatedSchema.getExpandedQuery();
+        }
 
         CatalogMaterializedTable mtWithUpdatedSchemaAndQuery =
                 buildUpdatedMaterializedTable(
                         oldTable,
                         builder -> {
                             builder.schema(schema);
-                            builder.expandedQuery(updatedQueryOperation.asSerializableString());
+                            builder.expandedQuery(expandedQuery);
                         });
 
         return new AlterMaterializedTableChangeOperation(
