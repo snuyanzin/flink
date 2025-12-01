@@ -29,13 +29,7 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
             T alterTableSchema, ResolvedCatalogMaterializedTable oldTable, ConvertContext context) {
         final SqlNode originalQuery =
                 context.getFlinkPlanner().parser().parse(oldTable.getOriginalQuery());
-        final boolean isStarSelect =
-                originalQuery instanceof SqlSelect
-                        && ((SqlSelect) originalQuery).getSelectList().size() == 1
-                        && ((SqlSelect) originalQuery).getSelectList().get(0)
-                                instanceof SqlIdentifier
-                        && ((SqlIdentifier) ((SqlSelect) originalQuery).getSelectList().get(0))
-                                .isStar();
+        final boolean isSimpleStarOnlySelect =isSimpleStarOnlySelect(originalQuery);
         final SqlNode validateQuery = context.getSqlValidator().validate(originalQuery);
         PlannerQueryOperation queryOperation =
                 new PlannerQueryOperation(
@@ -53,7 +47,8 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
                 buildUpdatedMaterializedTable(oldTable, builder -> builder.schema(schema));
 
         final String expandedQuery;
-        if (isStarSelect) {
+        if (isSimpleStarOnlySelect) {
+            // For
             // If needed, rewrite the query to include the new fields in the select list
             expandedQuery =
                     new MergeTableAsUtil(context)
@@ -82,6 +77,15 @@ public abstract class SqlAlterMaterializedTableSchemaConverter<
                 resolveIdentifier(alterTableSchema, context),
                 converter.changesCollector,
                 mtWithUpdatedSchemaAndQuery);
+    }
+
+    private boolean isSimpleStarOnlySelect(SqlNode originalQuery) {
+        return originalQuery instanceof SqlSelect
+                && ((SqlSelect) originalQuery).getSelectList().size() == 1
+                && ((SqlSelect) originalQuery).getSelectList().get(0)
+                instanceof SqlIdentifier
+                && ((SqlIdentifier) ((SqlSelect) originalQuery).getSelectList().get(0))
+                .isStar();
     }
 
     private List<SqlTableColumn.SqlComputedColumn> extractComputedColumn(T alterTableSchema) {
