@@ -54,9 +54,9 @@ import static java.util.Objects.requireNonNull;
  *     tstmp TIMESTAMP,
  *     PRIMARY KEY(id)
  * ) WITH (
- *     ‘connector’ = ‘kafka’,
- *     ‘connector.starting-offset’: ‘12345’,
- *     ‘format’ =  ‘json’
+ *     'connector' = 'kafka',
+ *     'connector.starting-offset': '12345',
+ *     'format' =  'json'
  * )
  *
  * CREATE TABLE derived_table

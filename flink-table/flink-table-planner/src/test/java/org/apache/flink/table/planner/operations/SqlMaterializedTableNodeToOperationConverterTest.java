@@ -685,7 +685,8 @@ class SqlMaterializedTableNodeToOperationConverterTest
         list.addAll(createWithInvalidSchema());
         list.addAll(createWithInvalidFreshness());
         list.addAll(createWithInvalidPartitions());
-        list.addAll(alterWithInvalidSchema());
+        list.addAll(alterAddWithInvalidSchema());
+        list.addAll(alterModifyWithInvalidSchema());
         list.addAll(alterQuery());
         return list;
     }
@@ -724,7 +725,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
                         "ALTER MATERIALIZED TABLE for a table is not allowed"));
     }
 
-    private static List<TestSpec> alterWithInvalidSchema() {
+    private static List<TestSpec> alterAddWithInvalidSchema() {
         return List.of(
                 TestSpec.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD WATERMARK for invalid_column as invalid_column",
@@ -761,6 +762,51 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + "Referenced column `q2` by 'AFTER' does not exist in the table."),
                 TestSpec.of(
                         "ALTER MATERIALIZED TABLE base_mtbl ADD `m1` INT METADATA",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid schema change. All persisted (physical and metadata) "
+                                + "columns in the schema part need to be present in the query part.\n"
+                                + "However, metadata persisted column `m1` could not be found in the query."));
+    }
+
+    private static List<TestSpec> alterModifyWithInvalidSchema() {
+        return List.of(
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY WATERMARK for invalid_column as invalid_column",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "The current materialized table does not define any watermark. You might want to add a new one."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl_with_watermark MODIFY WATERMARK for invalid_column as current_timestamp - INTERVAL '2' SECOND",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid column name 'invalid_column' for rowtime attribute in watermark declaration. Available columns are: [t, a, b, c, d]"),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY `physical_not_used_in_query` BIGINT NOT NULL",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid schema change. All persisted (physical and metadata) "
+                                + "columns in the schema part need to be present in the query part.\n"
+                                + "However, physical column `physical_not_used_in_query` could not be found in the query."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY `not_existed_column` BIGINT NOT NULL",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid schema change. All persisted (physical and metadata) columns in the schema part need to be present in the query part.\n"
+                                + "However, physical column `not_existed_column` could not be found in the query."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY `a` AS `non_existing_column` + 2",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid expression for computed column 'a'."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY `c` AS current_timestamp",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Changing of physical column 'c' to computed column is not supported"),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY PRIMARY KEY(not_existed) NOT ENFORCED",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Invalid primary key 'PK_not_existed'. Column 'not_existed' does not exist."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY (`a` AS current_timestamp AFTER `q2`, `q2` AS current_timestamp AFTER `q`)",
+                        "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
+                                + "Referenced column `q2` by 'AFTER' does not exist in the table."),
+                TestSpec.of(
+                        "ALTER MATERIALIZED TABLE base_mtbl MODIFY `m1` INT METADATA",
                         "Failed to execute ALTER MATERIALIZED TABLE statement.\n"
                                 + "Invalid schema change. All persisted (physical and metadata) "
                                 + "columns in the schema part need to be present in the query part.\n"
