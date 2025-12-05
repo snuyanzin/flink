@@ -18,6 +18,9 @@
 
 package org.apache.flink.sql.parser;
 
+import org.apache.calcite.runtime.CalciteContextException;
+import org.apache.calcite.tools.ValidationException;
+
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
 
 import org.apache.calcite.sql.SqlLiteral;
@@ -31,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -82,12 +86,18 @@ public class SqlParseUtils {
     }
 
     public static Map<String, String> extractMap(@Nullable SqlNodeList propList) {
-        if (propList == null) {
+        if (propList == null || propList.isEmpty()) {
             return Map.of();
         }
-        return propList.getList().stream()
-                .map(p -> (SqlTableOption) p)
-                .collect(Collectors.toMap(k -> k.getKeyString(), SqlTableOption::getValueString));
+        Map<String, String> options = new LinkedHashMap<>();
+        for (SqlNode node: propList) {
+            SqlTableOption sqlTableOption = (SqlTableOption) node;
+            if (options.put(sqlTableOption.getKeyString(), sqlTableOption.getValueString()) != null) {
+                throw new CalciteContextException(
+                        String.format("Table option with key %s must be unique", sqlTableOption.getKeyString()), null);
+            }
+        }
+        return options;
     }
 
     public static List<String> extractList(
