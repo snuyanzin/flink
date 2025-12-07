@@ -81,6 +81,7 @@ import org.apache.flink.table.resource.ResourceType;
 import org.apache.flink.table.resource.ResourceUri;
 import org.apache.flink.table.types.DataType;
 
+import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.SqlNode;
 import org.assertj.core.api.HamcrestCondition;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -92,6 +93,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import javax.annotation.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -117,10 +119,32 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** Test cases for the DDL statements for {@link SqlNodeToOperationConversion}. */
 class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBase {
 
+    @ParameterizedTest
+    @MethodSource("inputForTestFailCases")
+    void testFailCases(TestSpec testSpec) {
+        assertThatThrownBy(() -> parse(testSpec.sql))
+                .isInstanceOf(testSpec.expectedException)
+                .hasMessageContaining(testSpec.expectedErr);
+    }
+
+    private static Collection<TestSpec> inputForTestFailCases() {
+        return List.of(
+                TestSpec.of(
+                        "ALTER CATALOG cat2 RESET ('type')",
+                        "ALTER CATALOG RESET does not support changing 'type'"),
+                TestSpec.of(
+                        "ALTER CATALOG cat2 RESET ()",
+                        "ALTER CATALOG RESET does not support empty key"),
+                TestSpec.of(
+                        "ALTER CATALOG cat2 SET ('repeated_key' = 'value', 'key' ='value','repeated_key' = 'value2')",
+                        CalciteContextException.class,
+                        "Catalog option with key 'repeated_key' must be unique"));
+    }
+
     @Test
     void testAlterCatalog() {
         // test alter catalog options
-        final String sql1 = "ALTER CATALOG cat2 SET ('K1' = 'V1', 'k2' = 'v2', 'k2' = 'v2_new')";
+        final String sql1 = "ALTER CATALOG cat2 SET ('K1' = 'V1', 'k2' = 'v2_new')";
         final Map<String, String> expectedOptions = new HashMap<>();
         expectedOptions.put("K1", "V1");
         expectedOptions.put("k2", "v2_new");
@@ -2923,6 +2947,39 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
     }
 
     // ~ Inner Classes ----------------------------------------------------------
+
+    private static class TestSpec {
+        private final String sql;
+        private final String expectedErr;
+        private final Class<? extends Throwable> expectedException;
+
+        private TestSpec(
+                String sql, Class<? extends Throwable> expectedException, String expectedErr) {
+            this.sql = sql;
+            this.expectedException = expectedException;
+            this.expectedErr = expectedErr;
+        }
+
+        private TestSpec(String sql, String expectedSchema) {
+            this.sql = sql;
+            this.expectedException = null;
+            this.expectedErr = null;
+        }
+
+        public static TestSpec of(
+                String sql, Class<? extends Throwable> expectedException, String expectedErr) {
+            return new TestSpec(sql, expectedException, expectedErr);
+        }
+
+        public static TestSpec of(String sql, String expectedErr) {
+            return of(sql, ValidationException.class, expectedErr);
+        }
+
+        @Override
+        public String toString() {
+            return sql;
+        }
+    }
 
     private static class TestItem {
         private final String testExpr;

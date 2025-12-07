@@ -487,6 +487,25 @@ Calc(select=[a, c])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testOnlyProject2">
+    <Resource name="sql">
+      <![CDATA[SELECT LTRIM(q), RTRIM(q) FROM (SELECT TRIM(c) as q FROM MyTable) t]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(EXPR$0=[LTRIM($0)], EXPR$1=[RTRIM($0)])
++- LogicalProject(q=[TRIM(FLAG(BOTH), _UTF-16LE' ', $2)])
+   +- LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
+]]>
+    </Resource>
+    <Resource name="optimized exec plan">
+      <![CDATA[
+Calc(select=[LTRIM(q) AS EXPR$0, RTRIM(q) AS EXPR$1])
++- Calc(select=[TRIM(BOTH, ' ', c) AS q])
+   +- TableSourceScan(table=[[default_catalog, default_database, MyTable]], fields=[a, b, c])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testOrWithIsNullInIf">
     <Resource name="sql">
       <![CDATA[SELECT IF(c = '' OR c IS NULL, 'a', 'b') FROM MyTable]]>

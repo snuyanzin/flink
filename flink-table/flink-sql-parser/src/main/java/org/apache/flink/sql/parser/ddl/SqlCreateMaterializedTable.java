@@ -45,7 +45,6 @@ import static java.util.Objects.requireNonNull;
 
 /** CREATE MATERIALIZED TABLE DDL sql call. */
 public class SqlCreateMaterializedTable extends SqlCreateObject implements ExtendedSqlNode {
-
     public static final SqlSpecialOperator CREATE_OPERATOR =
             new SqlSpecialOperator("CREATE MATERIALIZED TABLE", SqlKind.CREATE_TABLE);
 

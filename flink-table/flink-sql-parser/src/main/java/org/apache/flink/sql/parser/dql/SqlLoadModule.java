@@ -73,7 +73,7 @@ public class SqlLoadModule extends SqlCall {
     }
 
     public Map<String, String> getProperties() {
-        return SqlParseUtils.extractMap(propertyList);
+        return SqlParseUtils.extractMap(propertyList, "Module");
     }
 
     public String moduleName() {

@@ -51,7 +51,7 @@ public class SqlAlterConnectionSet extends SqlAlterConnection {
     }
 
     public Map<String, String> getProperties() {
-        return SqlParseUtils.extractMap(connectionOptionList);
+        return SqlParseUtils.extractMap(connectionOptionList, "Connection");
     }
 
     @Override

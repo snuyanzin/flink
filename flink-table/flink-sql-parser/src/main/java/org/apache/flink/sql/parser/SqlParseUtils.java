@@ -18,14 +18,13 @@
 
 package org.apache.flink.sql.parser;
 
-import org.apache.calcite.runtime.CalciteContextException;
-import org.apache.calcite.tools.ValidationException;
-
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
 
+import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.validate.SqlValidatorException;
 import org.apache.calcite.util.NlsString;
 
 import javax.annotation.Nullable;
@@ -34,7 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -85,16 +83,19 @@ public class SqlParseUtils {
         return value instanceof NlsString ? ((NlsString) value).getValue() : value.toString();
     }
 
-    public static Map<String, String> extractMap(@Nullable SqlNodeList propList) {
+    public static Map<String, String> extractMap(@Nullable SqlNodeList propList, String scope) {
         if (propList == null || propList.isEmpty()) {
             return Map.of();
         }
         Map<String, String> options = new LinkedHashMap<>();
-        for (SqlNode node: propList) {
+        for (SqlNode node : propList) {
             SqlTableOption sqlTableOption = (SqlTableOption) node;
-            if (options.put(sqlTableOption.getKeyString(), sqlTableOption.getValueString()) != null) {
+            String key = sqlTableOption.getKeyString();
+            String value = sqlTableOption.getValueString();
+            if (options.put(key, value) != null) {
                 throw new CalciteContextException(
-                        String.format("Table option with key %s must be unique", sqlTableOption.getKeyString()), null);
+                        String.format("%s option with key '%s' must be unique", scope, key),
+                        new SqlValidatorException("", null));
             }
         }
         return options;

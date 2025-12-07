@@ -44,6 +44,11 @@ class CalcTest extends TableTestBase {
   }
 
   @Test
+  def testOnlyProject2(): Unit = {
+    util.verifyExecPlan("SELECT LTRIM(q), RTRIM(q) FROM (SELECT TRIM(c) as q FROM MyTable) t")
+  }
+
+  @Test
   def testProjectWithNaming(): Unit = {
     util.verifyExecPlan("SELECT `1-_./Ü`, b, c FROM (SELECT a as `1-_./Ü`, b, c FROM MyTable)")
   }

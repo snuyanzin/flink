@@ -25,9 +25,19 @@ import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.core.Calc;
 import org.apache.calcite.rel.core.RelFactories;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexLocalRef;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexProgram;
+import org.apache.calcite.rex.RexSlot;
+import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlKind;
 import org.immutables.value.Value;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This rule is copied from Calcite's {@link org.apache.calcite.rel.rules.CalcMergeRule}.
@@ -69,7 +79,49 @@ public class FlinkCalcMergeRule extends RelRule<FlinkCalcMergeRule.FlinkCalcMerg
             return false;
         }
 
+        if (skipMerge(topProgram, bottomCalc.getProgram())) {
+            return false;
+        }
         return FlinkRelUtil.isMergeable(topCalc, bottomCalc);
+    }
+
+    private boolean skipMerge(RexProgram topProgram, RexProgram bottomProgram) {
+        Set<Integer> indexSet = new HashSet<>();
+        List<RexLocalRef> bottomProjectList = bottomProgram.getProjectList();
+        for (int i = 0; i < bottomProjectList.size(); i++) {
+            int index = bottomProjectList.get(i).getIndex();
+            RexNode rexNode = bottomProgram.getExprList().get(index);
+            if (rexNode instanceof RexCall
+                    && SqlKind.FUNCTION.contains(((RexCall) rexNode).op.getKind())
+                    && ((RexCall) rexNode).op.isDeterministic()) {
+                indexSet.add(i);
+            }
+        }
+        if (indexSet.isEmpty()) {
+            return false;
+        }
+
+        Set<RexNode> rexNodes = new HashSet<>();
+        List<RexNode> topExprList = topProgram.getExprList();
+        for (RexNode rex : topExprList) {
+            if (!(rex instanceof RexCall)) {
+                continue;
+            }
+            RexCall rCall = (RexCall) rex;
+            if (!(rCall.op instanceof SqlFunction)) {
+                continue;
+            }
+            List<RexNode> operands = rCall.operands;
+            for (RexNode op : operands) {
+                if (op instanceof RexSlot) {
+                    if (indexSet.contains(((RexSlot) op).getIndex()) && !rexNodes.add(op)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     public void onMatch(RelOptRuleCall call) {

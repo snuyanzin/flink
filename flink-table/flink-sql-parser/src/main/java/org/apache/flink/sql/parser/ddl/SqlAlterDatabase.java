@@ -61,7 +61,7 @@ public class SqlAlterDatabase extends SqlAlterObject {
     }
 
     public Map<String, String> getProperties() {
-        return SqlParseUtils.extractMap(propertyList);
+        return SqlParseUtils.extractMap(propertyList, "Database");
     }
 
     @Override

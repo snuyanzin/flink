@@ -35,7 +35,6 @@ import static java.util.Objects.requireNonNull;
 
 /** CREATE CATALOG DDL sql call. */
 public class SqlCreateCatalog extends SqlCreateObject {
-
     private static final SqlSpecialOperator OPERATOR =
             new SqlSpecialOperator("CREATE CATALOG", SqlKind.OTHER_DDL);
 
