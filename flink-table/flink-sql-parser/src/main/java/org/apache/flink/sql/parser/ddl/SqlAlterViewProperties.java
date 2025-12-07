@@ -50,7 +50,7 @@ public class SqlAlterViewProperties extends SqlAlterView {
     }
 
     public Map<String, String> getProperties() {
-        return SqlParseUtils.extractMap(propertyList);
+        return SqlParseUtils.extractMap(propertyList, "View");
     }
 
     @Override

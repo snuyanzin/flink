@@ -74,7 +74,7 @@ public abstract class SqlCreateObject extends SqlCreate {
     }
 
     public Map<String, String> getProperties() {
-        return SqlParseUtils.extractMap(properties);
+        return SqlParseUtils.extractMap(properties, getScope());
     }
 
     public SqlIdentifier getName() {

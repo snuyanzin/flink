@@ -48,7 +48,7 @@ public class SqlAlterMaterializedTableResume extends SqlAlterMaterializedTable {
     }
 
     public Map<String, String> getProperties() {
-        return SqlParseUtils.extractMap(propertyList);
+        return SqlParseUtils.extractMap(propertyList, "Materialized table");
     }
 
     @Override

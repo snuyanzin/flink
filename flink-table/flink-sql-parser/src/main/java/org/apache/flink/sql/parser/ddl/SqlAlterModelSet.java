@@ -51,7 +51,7 @@ public class SqlAlterModelSet extends SqlAlterModel {
     }
 
     public Map<String, String> getProperties() {
-        return SqlParseUtils.extractMap(modelOptionList);
+        return SqlParseUtils.extractMap(modelOptionList, "Model");
     }
 
     @Override

@@ -20,9 +20,11 @@ package org.apache.flink.sql.parser;
 
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
 
+import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.validate.SqlValidatorException;
 import org.apache.calcite.util.NlsString;
 
 import javax.annotation.Nullable;
@@ -81,13 +83,22 @@ public class SqlParseUtils {
         return value instanceof NlsString ? ((NlsString) value).getValue() : value.toString();
     }
 
-    public static Map<String, String> extractMap(@Nullable SqlNodeList propList) {
+    public static Map<String, String> extractMap(@Nullable SqlNodeList propList, String scope) {
         if (propList == null) {
             return Map.of();
         }
-        return propList.getList().stream()
-                .map(p -> (SqlTableOption) p)
-                .collect(Collectors.toMap(k -> k.getKeyString(), SqlTableOption::getValueString));
+        Map<String, String> options = new LinkedHashMap<>();
+        for (SqlNode node : propList) {
+            SqlTableOption sqlTableOption = (SqlTableOption) node;
+            String key = sqlTableOption.getKeyString();
+            String value = sqlTableOption.getValueString();
+            if (options.put(key, value) != null) {
+                throw new CalciteContextException(
+                        String.format("%s option with key '%s' must be unique", scope, key),
+                        new SqlValidatorException("", null));
+            }
+        }
+        return options;
     }
 
     public static List<String> extractList(
