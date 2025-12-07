@@ -810,7 +810,7 @@ public class MaterializedTableManager {
             OperationExecutor operationExecutor,
             OperationHandle handle,
             AlterMaterializedTableChangeOperation op) {
-        ObjectIdentifier tableIdentifier = op.getTableIdentifier();
+        ObjectIdentifier tableIdentifier = op.getIdentifier();
         ResolvedCatalogMaterializedTable oldMaterializedTable =
                 getCatalogMaterializedTable(operationExecutor, tableIdentifier);
 
@@ -942,12 +942,12 @@ public class MaterializedTableManager {
                         String.format(
                                 "Failed to generate rollback changes for materialized table '%s'. "
                                         + "Unsupported table change detected: %s. ",
-                                op.getTableIdentifier(), tableChange));
+                                op.getIdentifier(), tableChange));
             }
         }
 
         return new AlterMaterializedTableChangeOperation(
-                op.getTableIdentifier(), rollbackChanges, oldMaterializedTable);
+                op.getIdentifier(), rollbackChanges, oldMaterializedTable);
     }
 
     private TableChange.ModifyRefreshHandler generateResetSavepointTableChange(

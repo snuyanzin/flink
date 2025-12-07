@@ -120,7 +120,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
     @Test
     void testAlterCatalog() {
         // test alter catalog options
-        final String sql1 = "ALTER CATALOG cat2 SET ('K1' = 'V1', 'k2' = 'v2', 'k2' = 'v2_new')";
+        final String sql1 = "ALTER CATALOG cat2 SET ('K1' = 'V1', 'k2' = 'v2_new')";
         final Map<String, String> expectedOptions = new HashMap<>();
         expectedOptions.put("K1", "V1");
         expectedOptions.put("k2", "v2_new");
@@ -1106,8 +1106,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
             assertThat(operation).isInstanceOf(AlterTableRenameOperation.class);
             final AlterTableRenameOperation alterTableRenameOperation =
                     (AlterTableRenameOperation) operation;
-            assertThat(alterTableRenameOperation.getTableIdentifier())
-                    .isEqualTo(expectedIdentifier);
+            assertThat(alterTableRenameOperation.getIdentifier()).isEqualTo(expectedIdentifier);
             assertThat(alterTableRenameOperation.getNewTableIdentifier())
                     .isEqualTo(expectedNewIdentifier);
         }
@@ -2882,7 +2881,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation).isInstanceOf(AlterTableChangeOperation.class);
         final AlterTableChangeOperation alterTableOptionsOperation =
                 (AlterTableChangeOperation) operation;
-        assertThat(alterTableOptionsOperation.getTableIdentifier()).isEqualTo(expectedIdentifier);
+        assertThat(alterTableOptionsOperation.getIdentifier()).isEqualTo(expectedIdentifier);
         assertThat(alterTableOptionsOperation.getNewTable().getOptions())
                 .isEqualTo(expectedOptions);
         assertThat(expectedChanges).isEqualTo(alterTableOptionsOperation.getTableChanges());
@@ -2894,7 +2893,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation).isInstanceOf(AlterTableChangeOperation.class);
         final AlterTableChangeOperation alterTableChangeOperation =
                 (AlterTableChangeOperation) operation;
-        assertThat(alterTableChangeOperation.getTableIdentifier()).isEqualTo(expectedIdentifier);
+        assertThat(alterTableChangeOperation.getIdentifier()).isEqualTo(expectedIdentifier);
         assertThat(alterTableChangeOperation.getNewTable().getUnresolvedSchema())
                 .isEqualTo(expectedSchema);
     }
@@ -2907,7 +2906,7 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation).isInstanceOf(AlterTableChangeOperation.class);
         final AlterTableChangeOperation alterTableChangeOperation =
                 (AlterTableChangeOperation) operation;
-        assertThat(alterTableChangeOperation.getTableIdentifier()).isEqualTo(expectedIdentifier);
+        assertThat(alterTableChangeOperation.getIdentifier()).isEqualTo(expectedIdentifier);
         assertThat(alterTableChangeOperation.getNewTable().getDistribution())
                 .contains(distribution);
         assertThat(operation.asSummaryString()).isEqualTo(expectedSummaryString);

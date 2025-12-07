@@ -24,19 +24,19 @@ import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.operations.OperationUtils;
+import org.apache.flink.table.operations.ddl.AlterObjectOperation;
 import org.apache.flink.table.operations.ddl.AlterTableChangeOperation;
-import org.apache.flink.table.operations.ddl.AlterTableOperation;
 
 import java.util.stream.Collectors;
 
 /**
- * Operation to describe a ALTER TABLE .. SET .. statement.
+ * Operation to describe a ALTER TABLE ... SET ... statement.
  *
  * @deprecated Please use {@link AlterTableChangeOperation} instead.
  */
 @Deprecated
 @Internal
-public class AlterTableOptionsOperation extends AlterTableOperation {
+public class AlterTableOptionsOperation extends AlterObjectOperation {
     private final CatalogTable catalogTable;
 
     public AlterTableOptionsOperation(
@@ -62,15 +62,12 @@ public class AlterTableOptionsOperation extends AlterTableOperation {
                         .collect(Collectors.joining(", "));
         return String.format(
                 "ALTER %sTABLE %s SET (%s)",
-                ignoreIfTableNotExists ? "IF EXISTS " : "",
-                tableIdentifier.asSummaryString(),
-                description);
+                ifExists ? "IF EXISTS " : "", identifier.asSummaryString(), description);
     }
 
     @Override
     public TableResultInternal execute(Context ctx) {
-        ctx.getCatalogManager()
-                .alterTable(getCatalogTable(), getTableIdentifier(), ignoreIfTableNotExists());
+        ctx.getCatalogManager().alterTable(getCatalogTable(), identifier, ifExists);
         return TableResultImpl.TABLE_RESULT_OK;
     }
 }

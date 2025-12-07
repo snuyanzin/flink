@@ -38,7 +38,6 @@ public class AlterMaterializedTableSuspendOperation extends AlterMaterializedTab
 
     @Override
     public String asSummaryString() {
-        return String.format(
-                "ALTER MATERIALIZED TABLE %s SUSPEND", tableIdentifier.asSummaryString());
+        return getOperationPrefix() + " SUSPEND";
     }
 }

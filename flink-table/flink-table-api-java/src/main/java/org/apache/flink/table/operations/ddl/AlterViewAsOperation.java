@@ -26,12 +26,12 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /** Operation to describe an ALTER VIEW ... AS ... statement. */
 @Internal
-public class AlterViewAsOperation extends AlterViewOperation {
+public class AlterViewAsOperation extends AlterObjectOperation {
 
     private final CatalogView newView;
 
     public AlterViewAsOperation(ObjectIdentifier viewIdentifier, CatalogView newView) {
-        super(viewIdentifier);
+        super(viewIdentifier, false);
         this.newView = newView;
     }
 
@@ -42,13 +42,12 @@ public class AlterViewAsOperation extends AlterViewOperation {
     @Override
     public String asSummaryString() {
         return String.format(
-                "ALTER VIEW %s AS %s",
-                viewIdentifier.asSummaryString(), newView.getOriginalQuery());
+                "ALTER VIEW %s AS %s", identifier.asSummaryString(), newView.getOriginalQuery());
     }
 
     @Override
     public TableResultInternal execute(Context ctx) {
-        ctx.getCatalogManager().alterTable(getNewView(), getViewIdentifier(), false);
+        ctx.getCatalogManager().alterTable(getNewView(), identifier, false);
         return TableResultImpl.TABLE_RESULT_OK;
     }
 }

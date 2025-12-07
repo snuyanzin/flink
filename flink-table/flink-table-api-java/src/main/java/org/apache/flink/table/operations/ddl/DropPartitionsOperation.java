@@ -32,7 +32,7 @@ import java.util.List;
 
 /** Operation to describe ALTER TABLE DROP PARTITION statement. */
 @Internal
-public class DropPartitionsOperation extends AlterTableOperation {
+public class DropPartitionsOperation extends AlterObjectOperation {
 
     private final boolean ignoreIfPartitionNotExists;
     private final List<CatalogPartitionSpec> partitionSpecs;
@@ -58,7 +58,7 @@ public class DropPartitionsOperation extends AlterTableOperation {
     public String asSummaryString() {
         StringBuilder builder =
                 new StringBuilder(
-                        String.format("ALTER TABLE %s DROP", tableIdentifier.asSummaryString()));
+                        String.format("ALTER TABLE %s DROP", identifier.asSummaryString()));
         if (ignoreIfPartitionNotExists) {
             builder.append(" IF EXISTS");
         }
@@ -71,10 +71,9 @@ public class DropPartitionsOperation extends AlterTableOperation {
 
     @Override
     public TableResultInternal execute(Context ctx) {
-        ObjectPath tablePath = getTableIdentifier().toObjectPath();
+        ObjectPath tablePath = identifier.toObjectPath();
         Catalog catalog =
-                ctx.getCatalogManager()
-                        .getCatalogOrThrowException(getTableIdentifier().getCatalogName());
+                ctx.getCatalogManager().getCatalogOrThrowException(identifier.getCatalogName());
         try {
             for (CatalogPartitionSpec spec : getPartitionSpecs()) {
                 catalog.dropPartition(tablePath, spec, ignoreIfPartitionNotExists());

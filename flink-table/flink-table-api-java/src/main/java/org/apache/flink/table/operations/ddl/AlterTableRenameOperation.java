@@ -27,9 +27,9 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 
-/** Operation to describe a ALTER TABLE .. RENAME to .. statement. */
+/** Operation to describe a ALTER TABLE ... RENAME to ... statement. */
 @Internal
-public class AlterTableRenameOperation extends AlterTableOperation {
+public class AlterTableRenameOperation extends AlterObjectOperation {
     private final ObjectIdentifier newTableIdentifier;
 
     public AlterTableRenameOperation(
@@ -48,21 +48,18 @@ public class AlterTableRenameOperation extends AlterTableOperation {
     public String asSummaryString() {
         return String.format(
                 "ALTER TABLE %s%s RENAME TO %s",
-                ignoreIfTableNotExists ? "IF EXISTS " : "",
-                tableIdentifier.asSummaryString(),
+                ifExists ? "IF EXISTS " : "",
+                identifier.asSummaryString(),
                 newTableIdentifier.asSummaryString());
     }
 
     @Override
     public TableResultInternal execute(Context ctx) {
         final Catalog catalog =
-                ctx.getCatalogManager()
-                        .getCatalogOrThrowException(getTableIdentifier().getCatalogName());
+                ctx.getCatalogManager().getCatalogOrThrowException(identifier.getCatalogName());
         try {
             catalog.renameTable(
-                    getTableIdentifier().toObjectPath(),
-                    getNewTableIdentifier().getObjectName(),
-                    ignoreIfTableNotExists());
+                    identifier.toObjectPath(), getNewTableIdentifier().getObjectName(), ifExists);
             return TableResultImpl.TABLE_RESULT_OK;
         } catch (TableAlreadyExistException | TableNotExistException e) {
             throw new ValidationException(

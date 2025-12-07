@@ -22,6 +22,7 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.operations.OperationUtils;
+import org.apache.flink.table.operations.ddl.AlterObjectOperation;
 
 import java.util.Map;
 
@@ -30,13 +31,14 @@ import java.util.Map;
  * REFRESH [PARTITION (key1=val1, key2=val2, ...)].
  */
 @Internal
-public class AlterMaterializedTableRefreshOperation extends AlterMaterializedTableOperation {
+public class AlterMaterializedTableRefreshOperation extends AlterObjectOperation {
 
+    private static final String OPERATION_PATTERN = "ALTER MATERIALIZED TABLE %s REFRESH";
     private final Map<String, String> partitionSpec;
 
     public AlterMaterializedTableRefreshOperation(
             ObjectIdentifier tableIdentifier, Map<String, String> partitionSpec) {
-        super(tableIdentifier);
+        super(tableIdentifier, false);
         this.partitionSpec = partitionSpec;
     }
 
@@ -54,13 +56,10 @@ public class AlterMaterializedTableRefreshOperation extends AlterMaterializedTab
 
     @Override
     public String asSummaryString() {
-        StringBuilder sb =
-                new StringBuilder(
-                        String.format("ALTER MATERIALIZED TABLE %s REFRESH", tableIdentifier));
+        StringBuilder sb = new StringBuilder(getPartitionSpec() + " REFRESH");
         if (!partitionSpec.isEmpty()) {
-            sb.append(
-                    String.format(
-                            " PARTITION (%s)", OperationUtils.formatPartitionSpec(partitionSpec)));
+            String formattedPartitionSpec = OperationUtils.formatPartitionSpec(partitionSpec);
+            sb.append(String.format(" PARTITION (%s)", formattedPartitionSpec));
         }
 
         return sb.toString();

@@ -49,11 +49,7 @@ public class AlterMaterializedTableResumeOperation extends AlterMaterializedTabl
 
     @Override
     public String asSummaryString() {
-        StringBuilder builder =
-                new StringBuilder(
-                        String.format(
-                                "ALTER MATERIALIZED TABLE %s RESUME",
-                                tableIdentifier.asSummaryString()));
+        StringBuilder builder = new StringBuilder(getOperationPrefix() + " RESUME");
         if (!dynamicOptions.isEmpty()) {
             builder.append(
                     String.format(" WITH (%s)", OperationUtils.formatProperties(dynamicOptions)));

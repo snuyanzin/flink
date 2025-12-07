@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 /** Alter table with new table definition and table changes represents the modification. */
 @Internal
-public class AlterTableChangeOperation extends AlterTableOperation {
+public class AlterTableChangeOperation extends AlterObjectOperation {
 
     private final List<TableChange> tableChanges;
     private final CatalogTable newTable;
@@ -63,9 +63,7 @@ public class AlterTableChangeOperation extends AlterTableOperation {
                         .collect(Collectors.joining(",\n"));
         return String.format(
                 "ALTER TABLE %s%s\n%s",
-                ignoreIfTableNotExists ? "IF EXISTS " : "",
-                tableIdentifier.asSummaryString(),
-                changes);
+                ifExists ? "IF EXISTS " : "", identifier.asSummaryString(), changes);
     }
 
     public static String toString(TableChange tableChange) {
@@ -156,12 +154,7 @@ public class AlterTableChangeOperation extends AlterTableOperation {
 
     @Override
     public TableResultInternal execute(Context ctx) {
-        ctx.getCatalogManager()
-                .alterTable(
-                        getNewTable(),
-                        getTableChanges(),
-                        getTableIdentifier(),
-                        ignoreIfTableNotExists());
+        ctx.getCatalogManager().alterTable(getNewTable(), getTableChanges(), identifier, ifExists);
         return TableResultImpl.TABLE_RESULT_OK;
     }
 }

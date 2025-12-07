@@ -20,23 +20,20 @@ package org.apache.flink.table.operations.materializedtable;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.catalog.ObjectIdentifier;
-import org.apache.flink.table.operations.ddl.AlterOperation;
+import org.apache.flink.table.operations.ddl.AlterObjectOperation;
 
 /**
  * Abstract Operation to describe all ALTER MATERIALIZED TABLE statements such as rename table /set
  * properties.
  */
 @Internal
-public abstract class AlterMaterializedTableOperation
-        implements AlterOperation, MaterializedTableOperation {
-
-    protected final ObjectIdentifier tableIdentifier;
+public abstract class AlterMaterializedTableOperation extends AlterObjectOperation {
 
     public AlterMaterializedTableOperation(ObjectIdentifier tableIdentifier) {
-        this.tableIdentifier = tableIdentifier;
+        super(tableIdentifier, false);
     }
 
-    public ObjectIdentifier getTableIdentifier() {
-        return tableIdentifier;
+    protected String getOperationPrefix() {
+        return "ALTER MATERIALIZED TABLE " + identifier.asSummaryString();
     }
 }

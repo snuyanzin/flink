@@ -58,11 +58,7 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
     @Override
     public TableResultInternal execute(Context ctx) {
         ctx.getCatalogManager()
-                .alterTable(
-                        getCatalogMaterializedTable(),
-                        getTableChanges(),
-                        getTableIdentifier(),
-                        false);
+                .alterTable(getCatalogMaterializedTable(), getTableChanges(), identifier, false);
         return TableResultImpl.TABLE_RESULT_OK;
     }
 
@@ -72,8 +68,7 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
                 tableChanges.stream()
                         .map(AlterMaterializedTableChangeOperation::toString)
                         .collect(Collectors.joining(",\n"));
-        return String.format(
-                "ALTER MATERIALIZED TABLE %s\n%s", tableIdentifier.asSummaryString(), changes);
+        return super.getOperationPrefix() + "\n" + changes;
     }
 
     private static String toString(TableChange tableChange) {

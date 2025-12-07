@@ -27,49 +27,38 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.exceptions.ModelAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.ModelNotExistException;
 
-/** Operation to describe a ALTER MODEL .. RENAME TO .. statement. */
+/** Operation to describe a ALTER MODEL ... RENAME TO ... statement. */
 @Internal
-public class AlterModelRenameOperation implements AlterOperation {
+public class AlterModelRenameOperation extends AlterObjectOperation {
 
-    private final ObjectIdentifier modelIdentifier;
     private final ObjectIdentifier newModelIdentifier;
-    private final boolean ignoreIfNotExists;
 
     /**
      * Creates a AlterModelRenameOperation.
      *
      * @param modelIdentifier The identifier of the model to rename.
      * @param newModelIdentifier The new identifier of the model.
-     * @param ignoreIfNotExists A flag that indicates if the operation should throw an exception if
-     *     model does not exist.
+     * @param ifExists A flag that indicates if the operation should throw an exception if model
+     *     does not exist.
      */
     public AlterModelRenameOperation(
             ObjectIdentifier modelIdentifier,
             ObjectIdentifier newModelIdentifier,
-            boolean ignoreIfNotExists) {
-        this.modelIdentifier = modelIdentifier;
+            boolean ifExists) {
+        super(modelIdentifier, ifExists);
         this.newModelIdentifier = newModelIdentifier;
-        this.ignoreIfNotExists = ignoreIfNotExists;
-    }
-
-    public ObjectIdentifier getModelIdentifier() {
-        return modelIdentifier;
     }
 
     public ObjectIdentifier getNewModelIdentifier() {
         return newModelIdentifier;
     }
 
-    public boolean ignoreIfNotExists() {
-        return ignoreIfNotExists;
-    }
-
     @Override
     public String asSummaryString() {
         return String.format(
                 "ALTER MODEL %s%s RENAME TO %s",
-                ignoreIfNotExists ? "IF EXISTS " : "",
-                modelIdentifier.asSummaryString(),
+                ifExists ? "IF EXISTS " : "",
+                identifier.asSummaryString(),
                 newModelIdentifier.asSummaryString());
     }
 
@@ -77,13 +66,10 @@ public class AlterModelRenameOperation implements AlterOperation {
     public TableResultInternal execute(Context ctx) {
         try {
             final Catalog catalog =
-                    ctx.getCatalogManager()
-                            .getCatalogOrThrowException(getModelIdentifier().getCatalogName());
+                    ctx.getCatalogManager().getCatalogOrThrowException(identifier.getCatalogName());
 
             catalog.renameModel(
-                    getModelIdentifier().toObjectPath(),
-                    getNewModelIdentifier().getObjectName(),
-                    ignoreIfNotExists());
+                    identifier.toObjectPath(), getNewModelIdentifier().getObjectName(), ifExists);
             return TableResultImpl.TABLE_RESULT_OK;
         } catch (ModelAlreadyExistException | ModelNotExistException e) {
             throw new ValidationException(

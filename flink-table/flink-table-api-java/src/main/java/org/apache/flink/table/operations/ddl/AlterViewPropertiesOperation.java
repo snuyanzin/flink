@@ -27,14 +27,14 @@ import org.apache.flink.table.operations.OperationUtils;
 
 import java.util.stream.Collectors;
 
-/** Operation to describe a ALTER VIEW .. SET .. statement. */
+/** Operation to describe a ALTER VIEW ... SET ... statement. */
 @Internal
-public class AlterViewPropertiesOperation extends AlterViewOperation {
+public class AlterViewPropertiesOperation extends AlterObjectOperation {
 
     private final CatalogView catalogView;
 
     public AlterViewPropertiesOperation(ObjectIdentifier viewIdentifier, CatalogView catalogView) {
-        super(viewIdentifier);
+        super(viewIdentifier, false);
         this.catalogView = catalogView;
     }
 
@@ -51,13 +51,12 @@ public class AlterViewPropertiesOperation extends AlterViewOperation {
                                         OperationUtils.formatParameter(
                                                 entry.getKey(), entry.getValue()))
                         .collect(Collectors.joining(", "));
-        return String.format(
-                "ALTER VIEW %s SET (%s)", viewIdentifier.asSummaryString(), description);
+        return String.format("ALTER VIEW %s SET (%s)", identifier.asSummaryString(), description);
     }
 
     @Override
     public TableResultInternal execute(Context ctx) {
-        ctx.getCatalogManager().alterTable(getCatalogView(), getViewIdentifier(), false);
+        ctx.getCatalogManager().alterTable(getCatalogView(), identifier, false);
         return TableResultImpl.TABLE_RESULT_OK;
     }
 }

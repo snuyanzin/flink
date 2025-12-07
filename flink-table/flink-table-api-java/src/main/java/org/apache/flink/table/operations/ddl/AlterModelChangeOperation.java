@@ -31,17 +31,30 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Operation to describe a ALTER MODEL .. SET .. statement. */
+/** Operation to describe a ALTER MODEL ... SET ... statement. */
 @Internal
-public class AlterModelChangeOperation implements AlterOperation {
+public class AlterModelChangeOperation extends AlterObjectOperation {
 
-    private final ObjectIdentifier modelIdentifier;
     private final List<ModelChange> modelChanges;
     private final CatalogModel catalogModel;
-    private final boolean ignoreIfNotExists;
 
-    public ObjectIdentifier getModelIdentifier() {
-        return modelIdentifier;
+    /**
+     * Creates an ALTER MODEL CHANGE statement.
+     *
+     * @param modelIdentifier The identifier of the model to be altered.
+     * @param modelChanges The list of changes to be applied to the model.
+     * @param catalogModel The resolved model after applying the changes. If null, existing model
+     *     doesn't exist and ignoreIfNotExists is true.
+     * @param ifExists Flag to specify behavior when the model doesn't exist.
+     */
+    public AlterModelChangeOperation(
+            ObjectIdentifier modelIdentifier,
+            List<ModelChange> modelChanges,
+            @Nullable CatalogModel catalogModel,
+            boolean ifExists) {
+        super(modelIdentifier, ifExists);
+        this.modelChanges = modelChanges;
+        this.catalogModel = catalogModel;
     }
 
     public List<ModelChange> getModelChanges() {
@@ -53,30 +66,6 @@ public class AlterModelChangeOperation implements AlterOperation {
         return catalogModel;
     }
 
-    public boolean ignoreIfNotExists() {
-        return ignoreIfNotExists;
-    }
-
-    /**
-     * Creates an ALTER MODEL CHANGE statement.
-     *
-     * @param modelIdentifier The identifier of the model to be altered.
-     * @param modelChanges The list of changes to be applied to the model.
-     * @param catalogModel The resolved model after applying the changes. If null, existing model
-     *     doesn't exist and ignoreIfNotExists is true.
-     * @param ignoreIfNotExists Flag to specify behavior when the model doesn't exist.
-     */
-    public AlterModelChangeOperation(
-            ObjectIdentifier modelIdentifier,
-            List<ModelChange> modelChanges,
-            @Nullable CatalogModel catalogModel,
-            boolean ignoreIfNotExists) {
-        this.modelIdentifier = modelIdentifier;
-        this.modelChanges = modelChanges;
-        this.catalogModel = catalogModel;
-        this.ignoreIfNotExists = ignoreIfNotExists;
-    }
-
     @Override
     public String asSummaryString() {
         String changes =
@@ -85,18 +74,16 @@ public class AlterModelChangeOperation implements AlterOperation {
                         .collect(Collectors.joining(",\n"));
         return String.format(
                 "ALTER MODEL %s%s\n%s",
-                ignoreIfNotExists ? "IF EXISTS " : "", modelIdentifier.asSummaryString(), changes);
+                ifExists ? "IF EXISTS " : "", identifier.asSummaryString(), changes);
     }
 
     @Override
     public TableResultInternal execute(Context ctx) {
-        if (getCatalogModel() == null && ignoreIfNotExists()) {
-            return TableResultImpl.TABLE_RESULT_OK;
+        if (getCatalogModel() != null || !ifExists) {
+            ctx.getCatalogManager()
+                    .alterModel(getCatalogModel(), modelChanges, identifier, ifExists);
         }
 
-        ctx.getCatalogManager()
-                .alterModel(
-                        getCatalogModel(), modelChanges, getModelIdentifier(), ignoreIfNotExists());
         return TableResultImpl.TABLE_RESULT_OK;
     }
 

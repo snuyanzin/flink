@@ -18,28 +18,22 @@
 
 package org.apache.flink.table.operations.ddl;
 
-import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
-/**
- * Abstract Operation to describe all ALTER TABLE statements such as rename table /set properties.
- */
-@Internal
-public abstract class AlterTableOperation implements AlterOperation {
+public abstract class AlterObjectOperation implements AlterOperation {
+    protected final ObjectIdentifier identifier;
+    protected final boolean ifExists;
 
-    protected final ObjectIdentifier tableIdentifier;
-    protected final boolean ignoreIfTableNotExists;
-
-    public AlterTableOperation(ObjectIdentifier tableIdentifier, boolean ignoreIfTableNotExists) {
-        this.tableIdentifier = tableIdentifier;
-        this.ignoreIfTableNotExists = ignoreIfTableNotExists;
+    public AlterObjectOperation(ObjectIdentifier identifier, boolean ifExists) {
+        this.identifier = identifier;
+        this.ifExists = ifExists;
     }
 
-    public ObjectIdentifier getTableIdentifier() {
-        return tableIdentifier;
+    public ObjectIdentifier getIdentifier() {
+        return identifier;
     }
 
-    public boolean ignoreIfTableNotExists() {
-        return ignoreIfTableNotExists;
+    public boolean isIfExists() {
+        return ifExists;
     }
 }

@@ -225,8 +225,7 @@ class SqlModelOperationConverterTest extends SqlNodeToOperationConversionTestBas
             assertThat(operation).isInstanceOf(AlterModelRenameOperation.class);
             final AlterModelRenameOperation alterModelRenameOperation =
                     (AlterModelRenameOperation) operation;
-            assertThat(alterModelRenameOperation.getModelIdentifier())
-                    .isEqualTo(expectedIdentifier);
+            assertThat(alterModelRenameOperation.getIdentifier()).isEqualTo(expectedIdentifier);
             assertThat(alterModelRenameOperation.getNewModelIdentifier())
                     .isEqualTo(expectedNewIdentifier);
         }
@@ -237,8 +236,7 @@ class SqlModelOperationConverterTest extends SqlNodeToOperationConversionTestBas
         assertThat(operation).isInstanceOf(AlterModelChangeOperation.class);
         AlterModelChangeOperation alterModelPropertiesOperation =
                 (AlterModelChangeOperation) operation;
-        assertThat(alterModelPropertiesOperation.getModelIdentifier())
-                .isEqualTo(expectedIdentifier);
+        assertThat(alterModelPropertiesOperation.getIdentifier()).isEqualTo(expectedIdentifier);
         List<ModelChange> expectedModelChanges = new ArrayList<>();
         expectedModelChanges.add(ModelChange.set("k1", "v1_altered"));
         expectedModelChanges.add(ModelChange.set("K2", "V2"));
@@ -251,8 +249,7 @@ class SqlModelOperationConverterTest extends SqlNodeToOperationConversionTestBas
 
         assertThat(operation).isInstanceOf(AlterModelChangeOperation.class);
         alterModelPropertiesOperation = (AlterModelChangeOperation) operation;
-        assertThat(alterModelPropertiesOperation.getModelIdentifier())
-                .isEqualTo(expectedIdentifier);
+        assertThat(alterModelPropertiesOperation.getIdentifier()).isEqualTo(expectedIdentifier);
         assertThat(alterModelPropertiesOperation.getModelChanges()).isEqualTo(expectedModelChanges);
 
         // test alter model properties empty option not supported
@@ -264,8 +261,7 @@ class SqlModelOperationConverterTest extends SqlNodeToOperationConversionTestBas
         operation = parse("ALTER MODEL IF EXISTS cat1.db1.m1 RESET('k1')");
         assertThat(operation).isInstanceOf(AlterModelChangeOperation.class);
         alterModelPropertiesOperation = (AlterModelChangeOperation) operation;
-        assertThat(alterModelPropertiesOperation.getModelIdentifier())
-                .isEqualTo(expectedIdentifier);
+        assertThat(alterModelPropertiesOperation.getIdentifier()).isEqualTo(expectedIdentifier);
         expectedModelChanges.clear();
         expectedModelChanges.add(ModelChange.reset("k1"));
         assertThat(alterModelPropertiesOperation.getModelChanges()).isEqualTo(expectedModelChanges);

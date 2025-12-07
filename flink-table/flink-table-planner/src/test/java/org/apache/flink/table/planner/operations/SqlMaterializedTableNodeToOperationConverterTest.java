@@ -431,8 +431,9 @@ class SqlMaterializedTableNodeToOperationConverterTest
 
         AlterMaterializedTableRefreshOperation op =
                 (AlterMaterializedTableRefreshOperation) operation;
-        assertThat(op.getTableIdentifier().toString()).isEqualTo("`builtin`.`default`.`mtbl1`");
-        assertThat(op.getPartitionSpec()).isEqualTo(ImmutableMap.of("ds1", "1", "ds2", "2"));
+        assertThat(op.getIdentifier()).hasToString("`builtin`.`default`.`mtbl1`");
+        assertThat(op.getPartitionSpec())
+                .containsExactlyInAnyOrderEntriesOf(ImmutableMap.of("ds1", "1", "ds2", "2"));
     }
 
     @Test
@@ -444,7 +445,7 @@ class SqlMaterializedTableNodeToOperationConverterTest
 
         AlterMaterializedTableRefreshOperation op =
                 (AlterMaterializedTableRefreshOperation) operation;
-        assertThat(op.getTableIdentifier().toString()).isEqualTo("`builtin`.`default`.`mtbl1`");
+        assertThat(op.getIdentifier()).hasToString("`builtin`.`default`.`mtbl1`");
         assertThat(op.getPartitionSpec()).isEmpty();
     }
 

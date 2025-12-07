@@ -45,9 +45,6 @@ public class AlterMaterializedTableAsQueryOperation extends AlterMaterializedTab
 
     @Override
     public String asSummaryString() {
-        return String.format(
-                "ALTER MATERIALIZED TABLE %s AS %s",
-                tableIdentifier.asSummaryString(),
-                getCatalogMaterializedTable().getExpandedQuery());
+        return getOperationPrefix() + " AS " + getCatalogMaterializedTable().getExpandedQuery();
     }
 }

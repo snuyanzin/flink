@@ -52,20 +52,16 @@ public class AlterPartitionPropertiesOperation extends AlterPartitionOperation {
         String properties = OperationUtils.formatProperties(catalogPartition.getProperties());
         return String.format(
                 "ALTER TABLE %s PARTITION (%s) SET (%s)",
-                tableIdentifier.asSummaryString(), spec, properties);
+                identifier.asSummaryString(), spec, properties);
     }
 
     @Override
     public TableResultInternal execute(Context ctx) {
         Catalog catalog =
-                ctx.getCatalogManager()
-                        .getCatalogOrThrowException(getTableIdentifier().getCatalogName());
+                ctx.getCatalogManager().getCatalogOrThrowException(identifier.getCatalogName());
         try {
             catalog.alterPartition(
-                    getTableIdentifier().toObjectPath(),
-                    getPartitionSpec(),
-                    getCatalogPartition(),
-                    ignoreIfTableNotExists());
+                    identifier.toObjectPath(), getPartitionSpec(), getCatalogPartition(), ifExists);
             return TableResultImpl.TABLE_RESULT_OK;
         } catch (Exception e) {
             throw new TableException(String.format("Could not execute %s", asSummaryString()), e);

@@ -28,15 +28,15 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 
-/** Operation to describe a ALTER VIEW .. RENAME to .. statement. */
+/** Operation to describe a ALTER VIEW ... RENAME to ... statement. */
 @Internal
-public class AlterViewRenameOperation extends AlterViewOperation {
+public class AlterViewRenameOperation extends AlterObjectOperation {
 
     private final ObjectIdentifier newViewIdentifier;
 
     public AlterViewRenameOperation(
             ObjectIdentifier viewIdentifier, ObjectIdentifier newViewIdentifier) {
-        super(viewIdentifier);
+        super(viewIdentifier, false);
         this.newViewIdentifier = newViewIdentifier;
     }
 
@@ -48,19 +48,16 @@ public class AlterViewRenameOperation extends AlterViewOperation {
     public String asSummaryString() {
         return String.format(
                 "ALTER VIEW %s RENAME TO %s",
-                viewIdentifier.asSummaryString(), newViewIdentifier.asSummaryString());
+                identifier.asSummaryString(), newViewIdentifier.asSummaryString());
     }
 
     @Override
     public TableResultInternal execute(Context ctx) {
         Catalog catalog =
-                ctx.getCatalogManager()
-                        .getCatalogOrThrowException(getViewIdentifier().getCatalogName());
+                ctx.getCatalogManager().getCatalogOrThrowException(identifier.getCatalogName());
         try {
             catalog.renameTable(
-                    getViewIdentifier().toObjectPath(),
-                    getNewViewIdentifier().getObjectName(),
-                    false);
+                    identifier.toObjectPath(), getNewViewIdentifier().getObjectName(), false);
             return TableResultImpl.TABLE_RESULT_OK;
         } catch (TableAlreadyExistException | TableNotExistException e) {
             throw new ValidationException(

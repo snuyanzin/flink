@@ -26,7 +26,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
  * Abstract Operation to describe all ALTER TABLE statements that should be applied to partitions.
  */
 @Internal
-public abstract class AlterPartitionOperation extends AlterTableOperation {
+public abstract class AlterPartitionOperation extends AlterObjectOperation {
 
     protected final CatalogPartitionSpec partitionSpec;
 

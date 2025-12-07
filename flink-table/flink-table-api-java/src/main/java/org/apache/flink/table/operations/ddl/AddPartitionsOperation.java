@@ -35,7 +35,7 @@ import java.util.Map;
 
 /** Operation to describe ALTER TABLE ADD PARTITION statement. */
 @Internal
-public class AddPartitionsOperation extends AlterTableOperation {
+public class AddPartitionsOperation extends AlterObjectOperation {
 
     private final boolean ignoreIfPartitionExists;
     private final List<CatalogPartitionSpec> partitionSpecs;
@@ -68,7 +68,7 @@ public class AddPartitionsOperation extends AlterTableOperation {
     public String asSummaryString() {
         StringBuilder builder =
                 new StringBuilder(
-                        String.format("ALTER TABLE %s ADD", tableIdentifier.asSummaryString()));
+                        String.format("ALTER TABLE %s ADD", identifier.asSummaryString()));
         if (ignoreIfPartitionExists) {
             builder.append(" IF NOT EXISTS");
         }
@@ -88,11 +88,11 @@ public class AddPartitionsOperation extends AlterTableOperation {
     public TableResultInternal execute(Context ctx) {
         List<CatalogPartitionSpec> specs = getPartitionSpecs();
         List<CatalogPartition> partitions = getCatalogPartitions();
-        ObjectPath tablePath = getTableIdentifier().toObjectPath();
+        ObjectPath tablePath = identifier.toObjectPath();
         try {
             for (int i = 0; i < specs.size(); i++) {
                 ctx.getCatalogManager()
-                        .getCatalogOrThrowException(getTableIdentifier().getCatalogName())
+                        .getCatalogOrThrowException(identifier.getCatalogName())
                         .createPartition(
                                 tablePath,
                                 specs.get(i),
