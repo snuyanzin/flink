@@ -24,6 +24,7 @@ import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
@@ -31,12 +32,16 @@ import org.apache.calcite.rex.RexProgramBuilder;
 import org.apache.calcite.rex.RexSlot;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexVisitorImpl;
+import org.apache.calcite.sql.SqlFunction;
+import org.apache.calcite.sql.SqlKind;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Utilities for {@link RelNode}. */
@@ -93,6 +98,9 @@ public class FlinkRelUtil {
         final int[] topInputRefCounter =
                 initializeArray(topProject.getInput().getRowType().getFieldCount(), 0);
 
+        if (functionResultShouldBeReused(topProject.getProjects(), bottomProject.getProjects())) {
+            return false;
+        }
         return mergeable(topInputRefCounter, topProject.getProjects(), bottomProject.getProjects());
     }
 
@@ -104,6 +112,11 @@ public class FlinkRelUtil {
     public static boolean isMergeable(Calc topCalc, Calc bottomCalc) {
         final RexProgram topProgram = topCalc.getProgram();
         final RexProgram bottomProgram = bottomCalc.getProgram();
+        if (functionResultShouldBeReused(
+                topProgram.getProjectList(), bottomProgram.getProjectList())) {
+            return false;
+        }
+
         final int[] topInputRefCounter =
                 initializeArray(topCalc.getInput().getRowType().getFieldCount(), 0);
 
@@ -120,6 +133,43 @@ public class FlinkRelUtil {
         }
 
         return mergeable(topInputRefCounter, topInputRefs, bottomProjects);
+    }
+
+    private static boolean functionResultShouldBeReused(
+            List<? extends RexNode> topProjectList, List<? extends RexNode> bottomProjectList) {
+        Set<Integer> indexSet = new HashSet<>();
+        for (int i = 0; i < bottomProjectList.size(); i++) {
+            RexNode project = bottomProjectList.get(i);
+            if (project instanceof RexCall
+                    && SqlKind.FUNCTION.contains(((RexCall) project).op.getKind())
+                    && ((RexCall) project).op.isDeterministic()) {
+                indexSet.add(i);
+            }
+        }
+        if (indexSet.isEmpty()) {
+            return false;
+        }
+
+        Set<RexNode> rexNodes = new HashSet<>();
+        for (RexNode rex : topProjectList) {
+            if (!(rex instanceof RexCall)) {
+                continue;
+            }
+            RexCall rCall = (RexCall) rex;
+            if (!(rCall.op instanceof SqlFunction)) {
+                continue;
+            }
+            List<RexNode> operands = rCall.operands;
+            for (RexNode op : operands) {
+                if (op instanceof RexSlot) {
+                    if (indexSet.contains(((RexSlot) op).getIndex()) && !rexNodes.add(op)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

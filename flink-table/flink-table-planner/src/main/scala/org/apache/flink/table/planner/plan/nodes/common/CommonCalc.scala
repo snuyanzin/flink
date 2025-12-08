@@ -17,6 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.common
 
+import org.apache.flink.table.planner.functions.sql.BuiltInSqlFunction
 import org.apache.flink.table.planner.plan.nodes.FlinkRelNode
 import org.apache.flink.table.planner.plan.utils.ExpressionFormat
 import org.apache.flink.table.planner.plan.utils.ExpressionFormat.ExpressionFormat
@@ -27,9 +28,10 @@ import org.apache.calcite.rel.{RelNode, RelWriter}
 import org.apache.calcite.rel.core.Calc
 import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rel.metadata.RelMetadataQuery
-import org.apache.calcite.rex.{RexCall, RexInputRef, RexLiteral, RexProgram}
-import org.apache.calcite.sql.SqlExplainLevel
+import org.apache.calcite.rex.{RexCall, RexInputRef, RexLiteral, RexLocalRef, RexNode, RexProgram, RexShuttle}
+import org.apache.calcite.sql.{SqlExplainLevel, SqlKind}
 
+import java.util
 import java.util.Collections
 
 import scala.collection.JavaConversions._
@@ -56,6 +58,9 @@ abstract class CommonCalc(
       case _ => true
     }
     val newRowCnt = mq.getRowCount(this)
+    // System.out.println(
+    // compCnt + " = " + compCnt1 + " - " + offset + " + " + map
+    // .size() + ": " + calcProgram.getProjectList + " " + calcProgram.getExprList)
     // TODO use inputRowCnt to compute cpu cost
     planner.getCostFactory.makeCost(newRowCnt, newRowCnt * compCnt, 0)
   }
@@ -100,6 +105,23 @@ abstract class CommonCalc(
           }
       }
       .mkString(", ")
+  }
+
+  class ExpansionShuttle2(
+      private val exprs: util.List[RexNode],
+      val map: util.Map[RexNode, Integer])
+    extends RexShuttle {
+    override def visitLocalRef(localRef: RexLocalRef): RexNode = {
+      val tree: RexNode = this.exprs.get(localRef.getIndex).asInstanceOf[RexNode]
+      if (
+        SqlKind.FUNCTION.contains(tree.getKind)
+        && tree.isInstanceOf[RexCall]
+        && tree.asInstanceOf[RexCall].op.isDeterministic
+      ) {
+        map.merge(tree, 1, (x, y) => x + y)
+      }
+      tree.accept(this)
+    }
   }
 
 }
