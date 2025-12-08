@@ -17,7 +17,6 @@
  */
 package org.apache.flink.table.planner.plan.nodes.common
 
-import org.apache.flink.table.planner.functions.sql.BuiltInSqlFunction
 import org.apache.flink.table.planner.plan.nodes.FlinkRelNode
 import org.apache.flink.table.planner.plan.utils.ExpressionFormat
 import org.apache.flink.table.planner.plan.utils.ExpressionFormat.ExpressionFormat
@@ -28,10 +27,9 @@ import org.apache.calcite.rel.{RelNode, RelWriter}
 import org.apache.calcite.rel.core.Calc
 import org.apache.calcite.rel.hint.RelHint
 import org.apache.calcite.rel.metadata.RelMetadataQuery
-import org.apache.calcite.rex.{RexCall, RexInputRef, RexLiteral, RexLocalRef, RexNode, RexProgram, RexShuttle}
-import org.apache.calcite.sql.{SqlExplainLevel, SqlKind}
+import org.apache.calcite.rex.{RexCall, RexInputRef, RexLiteral, RexProgram}
+import org.apache.calcite.sql.SqlExplainLevel
 
-import java.util
 import java.util.Collections
 
 import scala.collection.JavaConversions._
