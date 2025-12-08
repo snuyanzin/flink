@@ -50,12 +50,12 @@ class StreamPhysicalCalc(
   }
 
   override def translateToExecNode(): ExecNode[_] = {
-    val map = new util.HashMap[RexNode, Integer]()
-    val shuttle = new ExpansionShuttle2(calcProgram.getExprList, map)
+    val funtionToCountMap = new util.HashMap[RexNode, Integer]()
+    val shuttle = new FunctionRefCounter(calcProgram.getExprList, funtionToCountMap)
 
     calcProgram.getProjectList.map(ref => ref.accept(shuttle))
     val projection = calcProgram.getProjectList.map(
-      ref => ref.accept(new ExpansionShuttle(calcProgram.getExprList, map)))
+      ref => ref.accept(new ExpansionShuttle(calcProgram.getExprList, funtionToCountMap)))
     val condition = if (calcProgram.getCondition != null) {
       calcProgram.expandLocalRef(calcProgram.getCondition)
     } else {
@@ -71,15 +71,25 @@ class StreamPhysicalCalc(
       getRelDetailedDescription)
   }
 
-  class ExpansionShuttle(private val exprs: util.List[RexNode], val map: util.Map[RexNode, Integer])
+  private def isDeterministicFunction(rexNode: RexNode): Boolean = {
+    SqlKind.FUNCTION.contains(rexNode.getKind) && rexNode.isInstanceOf[RexCall] && rexNode
+      .asInstanceOf[RexCall]
+      .op
+      .isInstanceOf[SqlFunction] && rexNode
+      .asInstanceOf[RexCall]
+      .op
+      .asInstanceOf[SqlFunction]
+      .isDeterministic
+  }
+
+  private class ExpansionShuttle(
+      private val exprs: util.List[RexNode],
+      val map: util.Map[RexNode, Integer])
     extends RexShuttle {
     override def visitLocalRef(localRef: RexLocalRef): RexNode = {
-      val tree: RexNode = this.exprs.get(localRef.getIndex).asInstanceOf[RexNode]
+      val tree: RexNode = this.exprs.get(localRef.getIndex)
       if (
-        SqlKind.FUNCTION.contains(tree.getKind)
-        && tree.isInstanceOf[RexCall]
-        && tree.asInstanceOf[RexCall].op.isInstanceOf[SqlFunction]
-        && tree.asInstanceOf[RexCall].op.asInstanceOf[SqlFunction].isDeterministic && map
+        isDeterministicFunction(tree) && map
           .get(tree) > 1
       ) {
         for (op <- tree.asInstanceOf[RexCall].operands) {
@@ -93,4 +103,16 @@ class StreamPhysicalCalc(
     }
   }
 
+  private class FunctionRefCounter(
+      private val exprs: util.List[RexNode],
+      val map: util.Map[RexNode, Integer])
+    extends RexShuttle {
+    override def visitLocalRef(localRef: RexLocalRef): RexNode = {
+      val tree: RexNode = this.exprs.get(localRef.getIndex)
+      if (isDeterministicFunction(tree)) {
+        map.merge(tree, 1, (x, y) => x + y)
+      }
+      tree.accept(this)
+    }
+  }
 }

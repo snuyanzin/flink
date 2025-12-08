@@ -58,9 +58,6 @@ abstract class CommonCalc(
       case _ => true
     }
     val newRowCnt = mq.getRowCount(this)
-    // System.out.println(
-    // compCnt + " = " + compCnt1 + " - " + offset + " + " + map
-    // .size() + ": " + calcProgram.getProjectList + " " + calcProgram.getExprList)
     // TODO use inputRowCnt to compute cpu cost
     planner.getCostFactory.makeCost(newRowCnt, newRowCnt * compCnt, 0)
   }
@@ -106,22 +103,4 @@ abstract class CommonCalc(
       }
       .mkString(", ")
   }
-
-  class ExpansionShuttle2(
-      private val exprs: util.List[RexNode],
-      val map: util.Map[RexNode, Integer])
-    extends RexShuttle {
-    override def visitLocalRef(localRef: RexLocalRef): RexNode = {
-      val tree: RexNode = this.exprs.get(localRef.getIndex).asInstanceOf[RexNode]
-      if (
-        SqlKind.FUNCTION.contains(tree.getKind)
-        && tree.isInstanceOf[RexCall]
-        && tree.asInstanceOf[RexCall].op.isDeterministic
-      ) {
-        map.merge(tree, 1, (x, y) => x + y)
-      }
-      tree.accept(this)
-    }
-  }
-
 }
