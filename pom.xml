@@ -1804,10 +1804,6 @@ under the License.
 					<forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
 					<reuseForks>${flink.reuseForks}</reuseForks>
 					<trimStackTrace>false</trimStackTrace>
-					<environmentVariables>
-						<!-- Force docker-java to use API version 1.41 for compatibility with CI environment -->
-						<DOCKER_API_VERSION>1.41</DOCKER_API_VERSION>
-					</environmentVariables>
 					<systemPropertyVariables combine.children="append">
 						<forkNumber>0${surefire.forkNumber}</forkNumber>
 						<!-- $$ ensures that surefire resolves this to the current forkNumber,
