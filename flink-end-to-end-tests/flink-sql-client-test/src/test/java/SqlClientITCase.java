@@ -46,7 +46,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.kafka.ConfluentKafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.File;
@@ -79,8 +79,8 @@ public class SqlClientITCase {
     public static final Network NETWORK = Network.newNetwork();
 
     @Container
-    public static final KafkaContainer KAFKA =
-            new KafkaContainer(
+    public static final ConfluentKafkaContainer KAFKA =
+            new ConfluentKafkaContainer(
                             DockerImageName.parse(DockerImageVersions.KAFKA)
                                     .asCompatibleSubstituteFor("apache/kafka"))
                     .withNetwork(NETWORK)
