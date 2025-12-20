@@ -33,6 +33,7 @@ import org.apache.flink.table.types.logical.LogicalTypeRoot._
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks
 
 import org.apache.calcite.rex.{RexCall, RexNode}
+import org.apache.calcite.sql.SqlOperator
 
 import java.time.format.DateTimeFormatter
 
@@ -51,7 +52,7 @@ object JsonGenerateUtils {
       ctx: CodeGeneratorContext,
       expression: GeneratedExpression,
       operand: RexNode): String = {
-    if (isJsonObjectOrArrayOperand(operand) || isJsonFunctionOperand(operand)) {
+    if (isSqlOperator(operand, JSON_ARRAY, JSON_OBJECT) || isJsonFunctionOperand(operand)) {
       createRawNodeTerm(expression)
     } else {
       createNodeTerm(ctx, expression)
@@ -173,41 +174,16 @@ object JsonGenerateUtils {
     }
   }
 
-  /** Determines whether the given operand is a call to a JSON_OBJECT */
-  def isJsonObjectOperand(operand: RexNode): Boolean = {
+  /** Determines whether the given operand is a call to one of the expected operands. */
+  private def isSqlOperator(operand: RexNode, expectedSqlOperators: SqlOperator*): Boolean = {
     operand match {
       case rexCall: RexCall =>
-        rexCall.getOperator match {
-          case JSON_OBJECT => true
-          case _ => false
+        for (op <- expectedSqlOperators) {
+          if (rexCall.getOperator.equals(op)) {
+            return true
+          }
         }
-      case _ => false
-    }
-  }
-
-  /** Determines whether the given operand is a call to a JSON_ARRAY */
-  def isJsonArrayOperand(operand: RexNode): Boolean = {
-    operand match {
-      case rexCall: RexCall =>
-        rexCall.getOperator match {
-          case JSON_ARRAY => true
-          case _ => false
-        }
-      case _ => false
-    }
-  }
-
-  /**
-   * Determines whether the given operand is a call to a JSON_OBJECT or JSON_ARRAY whose result
-   * should be inserted as a raw value instead of as a character string.
-   */
-  def isJsonObjectOrArrayOperand(operand: RexNode): Boolean = {
-    operand match {
-      case rexCall: RexCall =>
-        rexCall.getOperator match {
-          case JSON_OBJECT | JSON_ARRAY => true
-          case _ => false
-        }
+        false
       case _ => false
     }
   }
@@ -235,7 +211,7 @@ object JsonGenerateUtils {
    */
   def isSupportedJsonOperand(operand: RexNode, call: RexNode, i: Int): Boolean = {
     isJsonFunctionOperand(operand) &&
-    (isJsonArrayOperand(call) || isJsonObjectOperand(call) && (i % 2) == 0)
+    (isSqlOperator(call, JSON_ARRAY) || isSqlOperator(call, JSON_OBJECT) && (i % 2) == 0)
   }
 
   /** Generates a method to convert arrays into [[ArrayNode]]. */
