@@ -17,30 +17,24 @@
  */
 package org.apache.flink.table.planner.calcite
 
-import org.apache.flink.sql.parser.`type`.SqlMapTypeNameSpec
 import org.apache.flink.sql.parser.SqlProperty
 import org.apache.flink.sql.parser.dml.RichSqlInsert
 import org.apache.flink.sql.parser.dql.SqlRichExplain
 import org.apache.flink.table.api.ValidationException
 import org.apache.flink.table.planner.calcite.PreValidateReWriter.{appendPartitionAndNullsProjects, notSupported}
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
 import org.apache.flink.table.planner.plan.schema.{CatalogSourceTable, FlinkPreparingTableBase, LegacyCatalogSourceTable}
-import org.apache.flink.util.Preconditions.checkArgument
 
 import org.apache.calcite.plan.RelOptTable
 import org.apache.calcite.prepare.CalciteCatalogReader
 import org.apache.calcite.rel.`type`.{RelDataType, RelDataTypeFactory, RelDataTypeField}
 import org.apache.calcite.runtime.{CalciteContextException, Resources}
-import org.apache.calcite.sql.`type`.SqlTypeUtil
-import org.apache.calcite.sql.{SqlCall, SqlDataTypeSpec, SqlIdentifier, SqlKind, SqlLiteral, SqlNode, SqlNodeList, SqlOrderBy, SqlSelect, SqlTableRef, SqlUtil}
-import org.apache.calcite.sql.fun.SqlStdOperatorTable
+import org.apache.calcite.sql.{SqlCall, SqlIdentifier, SqlLiteral, SqlNode, SqlNodeList, SqlTableRef, SqlUtil}
 import org.apache.calcite.sql.parser.SqlParserPos
 import org.apache.calcite.sql.util.SqlBasicVisitor
 import org.apache.calcite.sql.validate.{SqlValidatorException, SqlValidatorTable, SqlValidatorUtil}
 import org.apache.calcite.util.Static.RESOURCE
 
 import java.util
-import java.util.Collections
 
 import scala.collection.JavaConversions._
 
@@ -131,7 +125,6 @@ object PreValidateReWriter {
       return source
     }
 
-    val rewriterUtils = new SqlRewriterUtils(validator)
     val targetRowType = createTargetRowType(typeFactory, table)
     // validate partition fields first.
     val assignedFields = new util.LinkedHashMap[Integer, SqlNode]
@@ -153,7 +146,7 @@ object PreValidateReWriter {
       val value = sqlProperty.getValue.asInstanceOf[SqlLiteral]
       assignedFields.put(
         targetField.getIndex,
-        rewriterUtils.maybeCast(
+        SqlRewriterUtils.maybeCast(
           value,
           value.createSqlType(typeFactory),
           targetField.getType,
@@ -163,7 +156,7 @@ object PreValidateReWriter {
     // validate partial insert columns.
 
     // the columnList may reorder fields (compare with fields of sink)
-    val targetPosition = new util.ArrayList[Int]()
+    val targetPosition = new util.ArrayList[Integer]()
 
     if (sqlInsert.getTargetColumnList != null) {
       val targetFields = new util.HashSet[Integer]
@@ -205,7 +198,7 @@ object PreValidateReWriter {
             validateField(idx => !assignedFields.contains(idx), id, targetField)
             assignedFields.put(
               targetField.getIndex,
-              rewriterUtils.maybeCast(
+              SqlRewriterUtils.maybeCast(
                 SqlLiteral.createNull(SqlParserPos.ZERO),
                 typeFactory.createUnknownType(),
                 targetField.getType,
@@ -220,8 +213,7 @@ object PreValidateReWriter {
       }
     }
 
-    rewriterUtils.rewriteCall(
-      rewriterUtils,
+    SqlRewriterUtils.rewriteCall(
       validator,
       source,
       targetRowType,
