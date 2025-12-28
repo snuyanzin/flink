@@ -18,7 +18,6 @@
 
 package org.apache.flink.table.planner.calcite;
 
-import org.apache.flink.sql.parser.type.SqlMapTypeNameSpec;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator.ExplicitTableSqlSelect;
 
@@ -27,7 +26,6 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
@@ -102,32 +100,10 @@ public class SqlRewriterUtils {
             RelDataType currentType,
             RelDataType desiredType,
             RelDataTypeFactory typeFactory) {
-        if (currentType == desiredType
-                || (currentType.isNullable() != desiredType.isNullable()
-                        && typeFactory.createTypeWithNullability(
-                                        currentType, desiredType.isNullable())
-                                == desiredType)) {
-            return node;
-        } else {
-            // See FLINK-26460 for more details
-            final SqlDataTypeSpec sqlDataTypeSpec;
-            if (SqlTypeUtil.isNull(currentType) && SqlTypeUtil.isMap(desiredType)) {
-                final RelDataType keyType = desiredType.getKeyType();
-                final RelDataType valueType = desiredType.getValueType();
-                sqlDataTypeSpec =
-                        new SqlDataTypeSpec(
-                                new SqlMapTypeNameSpec(
-                                        SqlTypeUtil.convertTypeToSpec(keyType)
-                                                .withNullable(keyType.isNullable()),
-                                        SqlTypeUtil.convertTypeToSpec(valueType)
-                                                .withNullable(valueType.isNullable()),
-                                        SqlParserPos.ZERO),
-                                SqlParserPos.ZERO);
-            } else {
-                sqlDataTypeSpec = SqlTypeUtil.convertTypeToSpec(desiredType);
-            }
-            return SqlStdOperatorTable.CAST.createCall(SqlParserPos.ZERO, node, sqlDataTypeSpec);
-        }
+        return SqlTypeUtil.equalSansNullability(typeFactory, currentType, desiredType)
+                ? node
+                : SqlStdOperatorTable.CAST.createCall(
+                        SqlParserPos.ZERO, node, SqlTypeUtil.convertTypeToSpec(desiredType));
     }
 
     public static SqlCall rewriteSqlCall(
