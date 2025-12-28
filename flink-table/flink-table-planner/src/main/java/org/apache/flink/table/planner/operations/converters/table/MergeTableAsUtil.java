@@ -97,7 +97,6 @@ public class MergeTableAsUtil {
             SqlNode origQueryNode,
             ResolvedCatalogBaseTable<?> sinkTable) {
         FlinkCalciteSqlValidator sqlValidator = flinkPlanner.getOrCreateSqlValidator();
-        SqlRewriterUtils rewriterUtils = new SqlRewriterUtils(sqlValidator);
         FlinkTypeFactory typeFactory = (FlinkTypeFactory) sqlValidator.getTypeFactory();
 
         // Only fields that may be persisted will be included in the select query
@@ -119,7 +118,7 @@ public class MergeTableAsUtil {
 
         // targetPositions contains the positions of the source fields that will be
         // included in the select query
-        List<Object> targetPositions = new ArrayList<>();
+        List<Integer> targetPositions = new ArrayList<>();
 
         int pos = -1;
         for (RowType.RowField targetField : sinkRowType.getFields()) {
@@ -135,7 +134,7 @@ public class MergeTableAsUtil {
 
                 assignedFields.put(
                         pos,
-                        rewriterUtils.maybeCast(
+                        SqlRewriterUtils.maybeCast(
                                 SqlLiteral.createNull(SqlParserPos.ZERO),
                                 typeFactory.createUnknownType(),
                                 typeFactory.createFieldTypeFromLogicalType(targetField.getType()),
@@ -147,8 +146,7 @@ public class MergeTableAsUtil {
 
         // rewrite query
         SqlCall newSelect =
-                rewriterUtils.rewriteCall(
-                        rewriterUtils,
+                SqlRewriterUtils.rewriteCall(
                         sqlValidator,
                         (SqlCall) origQueryNode,
                         typeFactory.buildRelNodeRowType(sinkRowType),
