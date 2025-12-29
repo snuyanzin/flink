@@ -75,7 +75,7 @@ public class SqlRewriterUtils {
             Supplier<String> unsupportedErrorMessage) {
         switch (call.getKind()) {
             case SELECT:
-                SqlSelect sqlSelect = (SqlSelect) call;
+                final SqlSelect sqlSelect = (SqlSelect) call;
                 return rewriteSqlSelect(
                         validator, sqlSelect, targetRowType, assignedFields, targetPositions, true);
             case EXPLICIT_TABLE:
@@ -237,8 +237,6 @@ public class SqlRewriterUtils {
             LinkedHashMap<Integer, SqlNode> assignedFields,
             List<Integer> targetPositions,
             boolean validate) {
-        // Expands the select list first in case there is a star(*).
-        // Validates the select first to register the where scope.
         if (validate) {
             // In case of CTE there is just one validate call before multiple calls here
             validator.validate(select);
