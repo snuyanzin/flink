@@ -18,7 +18,6 @@
 
 package org.apache.flink.table.planner.calcite;
 
-import org.apache.flink.sql.parser.type.SqlMapTypeNameSpec;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator.ExplicitTableSqlSelect;
 
@@ -27,7 +26,6 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.runtime.Resources;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
@@ -39,6 +37,7 @@ import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeUtil;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorException;
 
 import java.util.ArrayList;
@@ -53,48 +52,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 /** Utils around sql rewrite. */
 public class SqlRewriterUtils {
 
-    public static SqlCall rewriteSelect(
-            FlinkCalciteSqlValidator validator,
-            SqlSelect select,
-            RelDataType targetRowType,
-            LinkedHashMap<Integer, SqlNode> assignedFields,
-            List<Integer> targetPosition) {
-        return rewriteSqlSelect(validator, select, targetRowType, assignedFields, targetPosition);
-    }
-
-    public static SqlCall rewriteValues(
-            FlinkCalciteSqlValidator validator,
-            SqlCall sValues,
-            RelDataType targetRowType,
-            LinkedHashMap<Integer, SqlNode> assignedFields,
-            List<Integer> targetPosition) {
-        return rewriteSqlValues(sValues, targetRowType, assignedFields, targetPosition);
-    }
-
-    public SqlCall rewriteWith(
-            FlinkCalciteSqlValidator validator,
-            SqlWith sqlWith,
-            RelDataType targetRowType,
-            LinkedHashMap<Integer, SqlNode> assignedFields,
-            List<Integer> targetPositions) {
-        return rewriteSqlWith(validator, sqlWith, targetRowType, assignedFields, targetPositions);
-    }
-
-    public static SqlCall rewriteCall(
-            FlinkCalciteSqlValidator validator,
-            SqlCall call,
-            RelDataType targetRowType,
-            LinkedHashMap<Integer, SqlNode> assignedFields,
-            List<Integer> targetPositions,
-            Supplier<String> unsupportedErrorMessage) {
-        return rewriteSqlCall(
-                validator,
-                call,
-                targetRowType,
-                assignedFields,
-                targetPositions,
-                unsupportedErrorMessage);
-    }
+    private SqlRewriterUtils() {}
 
     // This code snippet is copied from the SqlValidatorImpl.
     public static SqlNode maybeCast(
@@ -102,36 +60,14 @@ public class SqlRewriterUtils {
             RelDataType currentType,
             RelDataType desiredType,
             RelDataTypeFactory typeFactory) {
-        if (currentType == desiredType
-                || (currentType.isNullable() != desiredType.isNullable()
-                        && typeFactory.createTypeWithNullability(
-                                        currentType, desiredType.isNullable())
-                                == desiredType)) {
-            return node;
-        } else {
-            // See FLINK-26460 for more details
-            final SqlDataTypeSpec sqlDataTypeSpec;
-            if (SqlTypeUtil.isNull(currentType) && SqlTypeUtil.isMap(desiredType)) {
-                final RelDataType keyType = desiredType.getKeyType();
-                final RelDataType valueType = desiredType.getValueType();
-                sqlDataTypeSpec =
-                        new SqlDataTypeSpec(
-                                new SqlMapTypeNameSpec(
-                                        SqlTypeUtil.convertTypeToSpec(keyType)
-                                                .withNullable(keyType.isNullable()),
-                                        SqlTypeUtil.convertTypeToSpec(valueType)
-                                                .withNullable(valueType.isNullable()),
-                                        SqlParserPos.ZERO),
-                                SqlParserPos.ZERO);
-            } else {
-                sqlDataTypeSpec = SqlTypeUtil.convertTypeToSpec(desiredType);
-            }
-            return SqlStdOperatorTable.CAST.createCall(SqlParserPos.ZERO, node, sqlDataTypeSpec);
-        }
+        return SqlTypeUtil.equalSansNullability(typeFactory, currentType, desiredType)
+                ? node
+                : SqlStdOperatorTable.CAST.createCall(
+                        SqlParserPos.ZERO, node, SqlTypeUtil.convertTypeToSpec(desiredType));
     }
 
     public static SqlCall rewriteSqlCall(
-            FlinkCalciteSqlValidator validator,
+            SqlValidator validator,
             SqlCall call,
             RelDataType targetRowType,
             LinkedHashMap<Integer, SqlNode> assignedFields,
@@ -140,68 +76,35 @@ public class SqlRewriterUtils {
         switch (call.getKind()) {
             case SELECT:
                 SqlSelect sqlSelect = (SqlSelect) call;
-                if (!targetPositions.isEmpty()
-                        && sqlSelect.getSelectList().size() != targetPositions.size()
-                        && sqlSelect.getSelectList().stream()
-                                .noneMatch(
-                                        s ->
-                                                s instanceof SqlIdentifier
-                                                        && ((SqlIdentifier) s).isStar())) {
-                    throw newValidationError(call, RESOURCE.columnCountMismatch());
-                }
-                return rewriteSelect(
-                        validator, sqlSelect, targetRowType, assignedFields, targetPositions);
-            case VALUES:
-                final List<SqlNode> valuesOperandList = call.getOperandList();
-                for (SqlNode sqlNode : valuesOperandList) {
-                    if (sqlNode instanceof SqlCall) {
-                        if (!targetPositions.isEmpty()
-                                && ((SqlCall) sqlNode).getOperandList().size()
-                                        != targetPositions.size()) {
-                            throw newValidationError(call, RESOURCE.columnCountMismatch());
-                        }
-                    }
-                }
-                return rewriteValues(
-                        validator, call, targetRowType, assignedFields, targetPositions);
-            case UNION:
-            case INTERSECT:
-            case EXCEPT:
-                final List<SqlNode> operandList = call.getOperandList();
-                for (int i = 0; i < operandList.size(); i++) {
-                    SqlNode node = operandList.get(i);
-                    checkArgument(node instanceof SqlCall, node);
-                    call.setOperand(
-                            i,
-                            rewriteSqlCall(
-                                    validator,
-                                    (SqlCall) node,
-                                    targetRowType,
-                                    assignedFields,
-                                    targetPositions,
-                                    unsupportedErrorMessage));
-                }
-                return call;
-            case ORDER_BY:
-                final List<SqlNode> orderByOperands = call.getOperandList();
-                return new SqlOrderBy(
-                        call.getParserPosition(),
-                        rewriteSqlCall(
-                                validator,
-                                (SqlCall) orderByOperands.get(0),
-                                targetRowType,
-                                assignedFields,
-                                targetPositions,
-                                unsupportedErrorMessage),
-                        (SqlNodeList) orderByOperands.get(1),
-                        orderByOperands.get(2),
-                        orderByOperands.get(3));
+                return rewriteSqlSelect(
+                        validator, sqlSelect, targetRowType, assignedFields, targetPositions, true);
             case EXPLICIT_TABLE:
                 final List<SqlNode> tableOperands = call.getOperandList();
-                ExplicitTableSqlSelect expTable =
+                final ExplicitTableSqlSelect expTable =
                         new ExplicitTableSqlSelect((SqlIdentifier) tableOperands.get(0), List.of());
-                return rewriteSelect(
-                        validator, expTable, targetRowType, assignedFields, targetPositions);
+                return rewriteSqlSelect(
+                        validator, expTable, targetRowType, assignedFields, targetPositions, true);
+            case VALUES:
+                return validateAndRewriteSqlValues(
+                        validator, call, targetRowType, assignedFields, targetPositions);
+            case EXCEPT:
+            case INTERSECT:
+            case UNION:
+                return rewriteSqlSetOp(
+                        validator,
+                        call,
+                        targetRowType,
+                        assignedFields,
+                        targetPositions,
+                        unsupportedErrorMessage);
+            case ORDER_BY:
+                return rewriteSqlOrderBy(
+                        validator,
+                        call,
+                        targetRowType,
+                        assignedFields,
+                        targetPositions,
+                        unsupportedErrorMessage);
             case WITH:
                 return rewriteSqlWith(
                         validator, (SqlWith) call, targetRowType, assignedFields, targetPositions);
@@ -210,41 +113,8 @@ public class SqlRewriterUtils {
         }
     }
 
-    public static SqlCall rewriteSqlSelect(
-            FlinkCalciteSqlValidator validator,
-            SqlSelect select,
-            RelDataType targetRowType,
-            LinkedHashMap<Integer, SqlNode> assignedFields,
-            List<Integer> targetPosition) {
-        // Expands the select list first in case there is a star(*).
-        // Validates the select first to register the where scope.
-        validator.validate(select);
-        reorderAndValidateForSelect(
-                validator, select, targetRowType, assignedFields, targetPosition);
-        return select;
-    }
-
-    public static SqlCall rewriteSqlValues(
-            SqlCall values,
-            RelDataType targetRowType,
-            LinkedHashMap<Integer, SqlNode> assignedFields,
-            List<Integer> targetPosition) {
-        List<SqlNode> fixedNodes = new ArrayList<>();
-        List<SqlNode> operandList = values.getOperandList();
-        for (final SqlNode value : operandList) {
-            final List<SqlNode> valueAsList =
-                    value.getKind() == SqlKind.ROW
-                            ? ((SqlCall) value).getOperandList()
-                            : List.of(value);
-            List<SqlNode> nodes =
-                    getReorderedNodes(targetRowType, assignedFields, targetPosition, valueAsList);
-            fixedNodes.add(SqlStdOperatorTable.ROW.createCall(value.getParserPosition(), nodes));
-        }
-        return SqlStdOperatorTable.VALUES.createCall(values.getParserPosition(), fixedNodes);
-    }
-
     public static SqlCall rewriteSqlWith(
-            FlinkCalciteSqlValidator validator,
+            SqlValidator validator,
             SqlWith cte,
             RelDataType targetRowType,
             LinkedHashMap<Integer, SqlNode> assignedFields,
@@ -256,8 +126,8 @@ public class SqlRewriterUtils {
         extractSelectsFromCte((SqlCall) cte.body, selects);
 
         for (SqlSelect select : selects) {
-            reorderAndValidateForSelect(
-                    validator, select, targetRowType, assignedFields, targetPositions);
+            rewriteSqlSelect(
+                    validator, select, targetRowType, assignedFields, targetPositions, false);
         }
         return cte;
     }
@@ -273,24 +143,6 @@ public class SqlRewriterUtils {
                 extractSelectsFromCte((SqlCall) sqlNode, selects);
             }
         }
-    }
-
-    private static void reorderAndValidateForSelect(
-            FlinkCalciteSqlValidator validator,
-            SqlSelect select,
-            RelDataType targetRowType,
-            LinkedHashMap<Integer, SqlNode> assignedFields,
-            List<Integer> targetPositions) {
-        List<SqlNode> sourceList =
-                validator.expandStar(select.getSelectList(), select, false).getList();
-
-        if (!targetPositions.isEmpty() && sourceList.size() != targetPositions.size()) {
-            throw newValidationError(select, RESOURCE.columnCountMismatch());
-        }
-
-        List<SqlNode> nodes =
-                getReorderedNodes(targetRowType, assignedFields, targetPositions, sourceList);
-        select.setSelectList(new SqlNodeList(nodes, select.getSelectList().getParserPosition()));
     }
 
     private static CalciteContextException newValidationError(
@@ -338,5 +190,116 @@ public class SqlRewriterUtils {
      */
     private static List<SqlNode> reorder(List<SqlNode> sourceList, List<Integer> targetPositions) {
         return targetPositions.stream().map(sourceList::get).collect(Collectors.toList());
+    }
+
+    private static SqlCall validateAndRewriteSqlValues(
+            SqlValidator validator,
+            SqlCall sValues,
+            RelDataType targetRowType,
+            LinkedHashMap<Integer, SqlNode> assignedFields,
+            List<Integer> targetPositions) {
+        final List<SqlNode> valuesOperandList = sValues.getOperandList();
+        for (SqlNode sqlNode : valuesOperandList) {
+            if (sqlNode instanceof SqlCall) {
+                if (!targetPositions.isEmpty()
+                        && ((SqlCall) sqlNode).getOperandList().size() != targetPositions.size()) {
+                    throw newValidationError(sValues, RESOURCE.columnCountMismatch());
+                }
+            }
+        }
+        validator.validate(sValues);
+        return rewriteSqlValues(sValues, targetRowType, assignedFields, targetPositions);
+    }
+
+    private static SqlCall rewriteSqlValues(
+            SqlCall values,
+            RelDataType targetRowType,
+            LinkedHashMap<Integer, SqlNode> assignedFields,
+            List<Integer> targetPosition) {
+        List<SqlNode> fixedNodes = new ArrayList<>();
+        List<SqlNode> operandList = values.getOperandList();
+        for (final SqlNode value : operandList) {
+            final List<SqlNode> valueAsList =
+                    value.getKind() == SqlKind.ROW
+                            ? ((SqlCall) value).getOperandList()
+                            : List.of(value);
+            final List<SqlNode> nodes =
+                    getReorderedNodes(targetRowType, assignedFields, targetPosition, valueAsList);
+            fixedNodes.add(SqlStdOperatorTable.ROW.createCall(value.getParserPosition(), nodes));
+        }
+        return SqlStdOperatorTable.VALUES.createCall(values.getParserPosition(), fixedNodes);
+    }
+
+    private static SqlCall rewriteSqlSelect(
+            SqlValidator validator,
+            SqlSelect select,
+            RelDataType targetRowType,
+            LinkedHashMap<Integer, SqlNode> assignedFields,
+            List<Integer> targetPositions,
+            boolean validate) {
+        // Expands the select list first in case there is a star(*).
+        // Validates the select first to register the where scope.
+        if (validate) {
+            // In case of CTE there is just one validate call before multiple calls here
+            validator.validate(select);
+        }
+        List<SqlNode> sourceList =
+                validator.expandStar(select.getSelectList(), select, false).getList();
+
+        if (!targetPositions.isEmpty() && sourceList.size() != targetPositions.size()) {
+            throw newValidationError(select, RESOURCE.columnCountMismatch());
+        }
+
+        List<SqlNode> nodes =
+                getReorderedNodes(targetRowType, assignedFields, targetPositions, sourceList);
+        select.setSelectList(new SqlNodeList(nodes, select.getSelectList().getParserPosition()));
+        return select;
+    }
+
+    private static SqlCall rewriteSqlSetOp(
+            SqlValidator validator,
+            SqlCall sqlSetOp,
+            RelDataType targetRowType,
+            LinkedHashMap<Integer, SqlNode> assignedFields,
+            List<Integer> targetPositions,
+            Supplier<String> unsupportedErrorMessage) {
+        // No need for validation since it will be called further in rewriteSqlCall
+        final List<SqlNode> operandList = sqlSetOp.getOperandList();
+        for (int i = 0; i < operandList.size(); i++) {
+            SqlNode node = operandList.get(i);
+            checkArgument(node instanceof SqlCall, node);
+            sqlSetOp.setOperand(
+                    i,
+                    rewriteSqlCall(
+                            validator,
+                            (SqlCall) node,
+                            targetRowType,
+                            assignedFields,
+                            targetPositions,
+                            unsupportedErrorMessage));
+        }
+        return sqlSetOp;
+    }
+
+    private static SqlCall rewriteSqlOrderBy(
+            SqlValidator validator,
+            SqlCall sqlOrderBy,
+            RelDataType targetRowType,
+            LinkedHashMap<Integer, SqlNode> assignedFields,
+            List<Integer> targetPositions,
+            Supplier<String> unsupportedErrorMessage) {
+        final List<SqlNode> orderByOperands = sqlOrderBy.getOperandList();
+        return new SqlOrderBy(
+                sqlOrderBy.getParserPosition(),
+                rewriteSqlCall(
+                        validator,
+                        (SqlCall) orderByOperands.get(0),
+                        targetRowType,
+                        assignedFields,
+                        targetPositions,
+                        unsupportedErrorMessage),
+                (SqlNodeList) orderByOperands.get(1),
+                orderByOperands.get(2),
+                orderByOperands.get(3));
     }
 }
