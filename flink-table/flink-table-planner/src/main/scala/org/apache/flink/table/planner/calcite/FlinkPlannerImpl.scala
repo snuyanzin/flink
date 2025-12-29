@@ -119,7 +119,7 @@ class FlinkPlannerImpl(
     validate(sqlNode, validator)
   }
 
-  private def validate(sqlNode: SqlNode, validator: FlinkCalciteSqlValidator): SqlNode = {
+  private def validate(sqlNode: SqlNode, validator: SqlValidator): SqlNode = {
     try {
       sqlNode.accept(new PreValidateReWriter(validator, typeFactory))
       // do extended validation.
