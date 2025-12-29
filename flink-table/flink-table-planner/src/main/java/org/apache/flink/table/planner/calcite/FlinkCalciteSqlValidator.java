@@ -456,6 +456,7 @@ public final class FlinkCalciteSqlValidator extends FlinkSqlParsingValidator {
                     null,
                     null,
                     null,
+                    null,
                     null);
             this.descriptors = descriptors;
         }
