@@ -146,7 +146,7 @@ public class MergeTableAsUtil {
 
         // rewrite query
         SqlCall newSelect =
-                SqlRewriterUtils.rewriteCall(
+                SqlRewriterUtils.rewriteSqlCall(
                         sqlValidator,
                         (SqlCall) origQueryNode,
                         typeFactory.buildRelNodeRowType(sinkRowType),

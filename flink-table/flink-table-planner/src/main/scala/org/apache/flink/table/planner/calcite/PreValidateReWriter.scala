@@ -213,7 +213,7 @@ object PreValidateReWriter {
       }
     }
 
-    SqlRewriterUtils.rewriteCall(
+    SqlRewriterUtils.rewriteSqlCall(
       validator,
       source,
       targetRowType,
