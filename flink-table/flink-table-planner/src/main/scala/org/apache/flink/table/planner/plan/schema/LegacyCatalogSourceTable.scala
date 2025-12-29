@@ -26,7 +26,7 @@ import org.apache.flink.table.factories.TableFactoryUtil
 import org.apache.flink.table.legacy.api.TableColumn.ComputedColumn
 import org.apache.flink.table.legacy.sources.TableSource
 import org.apache.flink.table.planner.JMap
-import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkTypeFactory}
+import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.catalog.CatalogSchemaTable
 import org.apache.flink.table.planner.hint.FlinkHints
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext
@@ -238,7 +238,7 @@ class LegacyCatalogSourceTable[T](
     ) {
       relDataType
     } else {
-      val logicalRowType = FlinkTypeFactory.toLogicalRowType(relDataType)
+      val logicalRowType = FlinkTypeFactory2.toLogicalRowType(relDataType)
       val fieldNames = logicalRowType.getFieldNames
       val fieldTypes = logicalRowType.getFields.map {
         f =>

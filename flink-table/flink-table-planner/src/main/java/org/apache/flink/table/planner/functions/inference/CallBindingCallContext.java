@@ -25,7 +25,7 @@ import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ModelSemantics;
 import org.apache.flink.table.functions.TableSemantics;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.inference.StaticArgument;
@@ -84,7 +84,7 @@ public final class CallBindingCallContext extends AbstractSqlCallContext {
                     @Override
                     public DataType get(int pos) {
                         final LogicalType logicalType =
-                                FlinkTypeFactory.toLogicalType(binding.getOperandType(pos));
+                                FlinkTypeFactory2.toLogicalType(binding.getOperandType(pos));
                         return TypeConversions.fromLogicalToDataType(logicalType);
                     }
 
@@ -104,7 +104,7 @@ public final class CallBindingCallContext extends AbstractSqlCallContext {
                     }
                     RelDataType type =
                             ((SqlModelCall) sqlNode).getInputType(binding.getValidator());
-                    final LogicalType logicalType = FlinkTypeFactory.toLogicalType(type);
+                    final LogicalType logicalType = FlinkTypeFactory2.toLogicalType(type);
                     return TypeConversions.fromLogicalToDataType(logicalType);
                 };
         this.outputType = convertOutputType(binding, outputType);
@@ -338,7 +338,7 @@ public final class CallBindingCallContext extends AbstractSqlCallContext {
                 || returnType.getSqlTypeName() == SqlTypeName.ANY) {
             return null;
         } else {
-            final LogicalType logicalType = FlinkTypeFactory.toLogicalType(returnType);
+            final LogicalType logicalType = FlinkTypeFactory2.toLogicalType(returnType);
             return TypeConversions.fromLogicalToDataType(logicalType);
         }
     }

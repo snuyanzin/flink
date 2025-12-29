@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.nodes.exec.batch;
 
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNodeBase;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNodeContext;
@@ -94,7 +94,7 @@ public abstract class BatchExecOverAggregateBase extends ExecNodeBase<RowData>
                 new ArrayList<>(inputRowType.getFieldNames());
         for (int i = 0; i < overSpec.getConstants().size(); ++i) {
             inputTypesWithConstants.add(
-                    FlinkTypeFactory.toLogicalType(overSpec.getConstants().get(i).getType()));
+                    FlinkTypeFactory2.toLogicalType(overSpec.getConstants().get(i).getType()));
             inputTypeNamesWithConstants.add("TMP" + i);
         }
         return RowType.of(

@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.rules.physical.batch;
 
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.abilities.SupportsAggregatePushDown;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.plan.abilities.source.AggregatePushDownSpec;
 import org.apache.flink.table.planner.plan.abilities.source.ProjectPushDownSpec;
 import org.apache.flink.table.planner.plan.abilities.source.SourceAbilityContext;
@@ -119,7 +119,7 @@ public abstract class PushLocalAggIntoScanRuleBase extends RelOptRule {
             BatchPhysicalGroupAggregateBase localAgg,
             BatchPhysicalTableSourceScan oldScan,
             @Nullable BatchPhysicalCalc calc) {
-        RowType inputType = FlinkTypeFactory.toLogicalRowType(oldScan.getRowType());
+        RowType inputType = FlinkTypeFactory2.toLogicalRowType(oldScan.getRowType());
         List<int[]> groupingSets =
                 Collections.singletonList(
                         ArrayUtils.addAll(localAgg.grouping(), localAgg.auxGrouping()));
@@ -137,7 +137,7 @@ public abstract class PushLocalAggIntoScanRuleBase extends RelOptRule {
             aggCallList = translateAggCallArgIndex(aggCallList, calcRefFields);
         }
 
-        RowType producedType = FlinkTypeFactory.toLogicalRowType(localAgg.getRowType());
+        RowType producedType = FlinkTypeFactory2.toLogicalRowType(localAgg.getRowType());
 
         TableSourceTable oldTableSourceTable = oldScan.tableSourceTable();
         DynamicTableSource newTableSource = oldScan.tableSource().copy();

@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
 import org.apache.flink.table.functions.UserDefinedFunction
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.logical.LogicalWindow
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecSortWindowAggregate
@@ -93,12 +93,12 @@ class BatchPhysicalSortWindowAggregate(
       inputTimeFieldIndex,
       inputTimeIsDate,
       namedWindowProperties.toArray,
-      FlinkTypeFactory.toLogicalRowType(aggInputRowType),
+      FlinkTypeFactory2.toLogicalRowType(aggInputRowType),
       enableAssignPane,
       isMerge,
       true, // isFinal is always true
       InputProperty.builder().requiredDistribution(requiredDistribution).build(),
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

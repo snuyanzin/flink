@@ -27,7 +27,7 @@ import org.apache.flink.streaming.api.transformations.OneInputTransformation;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.data.conversion.DataStructureConverter;
 import org.apache.flink.table.data.conversion.DataStructureConverters;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.codegen.AsyncCorrelateCodeGenerator;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecEdge;
@@ -122,7 +122,7 @@ public class CommonExecAsyncCorrelate extends ExecNodeBase<RowData>
     private OneInputStreamOperatorFactory<RowData, RowData> getAsyncFunctionOperator(
             ExecNodeConfig config, ClassLoader classLoader, RowType inputRowType) {
 
-        RowType resultTypeInfo = (RowType) FlinkTypeFactory.toLogicalType(invocation.getType());
+        RowType resultTypeInfo = (RowType) FlinkTypeFactory2.toLogicalType(invocation.getType());
 
         GeneratedFunction<AsyncFunction<RowData, Object>> generatedFunction =
                 AsyncCorrelateCodeGenerator.generateFunction(
@@ -136,7 +136,7 @@ public class CommonExecAsyncCorrelate extends ExecNodeBase<RowData>
                 cast(
                         DataStructureConverters.getConverter(
                                 TypeConversions.fromLogicalToDataType(
-                                        FlinkTypeFactory.toLogicalType(invocation.getType()))));
+                                        FlinkTypeFactory2.toLogicalType(invocation.getType()))));
         AsyncCorrelateRunner func = new AsyncCorrelateRunner(generatedFunction, fetcherConverter);
         FunctionCallUtil.AsyncOptions options = AsyncTableUtil.getAsyncOptions(config);
         return new AsyncWaitOperatorFactory<>(

@@ -59,6 +59,7 @@ import org.apache.flink.table.operations.SinkModifyOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.abilities.sink.BucketingSpec;
 import org.apache.flink.table.planner.plan.abilities.sink.OverwriteSpec;
@@ -392,7 +393,7 @@ public final class DynamicSinkUtils {
      */
     private static RelNode validateSchemaAndApplyImplicitCast(
             RelNode query, RowType sinkType, String tableDebugName, FlinkTypeFactory typeFactory) {
-        final RowType queryType = FlinkTypeFactory.toLogicalRowType(query.getRowType());
+        final RowType queryType = FlinkTypeFactory2.toLogicalRowType(query.getRowType());
         final List<RowField> queryFields = queryType.getFields();
         final List<RowField> sinkFields = sinkType.getFields();
 

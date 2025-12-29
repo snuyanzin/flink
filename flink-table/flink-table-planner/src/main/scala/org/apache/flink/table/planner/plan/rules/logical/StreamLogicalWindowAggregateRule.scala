@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.rules.logical
 import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.expressions.FieldReferenceExpression
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory.toLogicalType
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2.toLogicalType
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromLogicalTypeToDataType
 
 import _root_.java.math.{BigDecimal => JBigDecimal}

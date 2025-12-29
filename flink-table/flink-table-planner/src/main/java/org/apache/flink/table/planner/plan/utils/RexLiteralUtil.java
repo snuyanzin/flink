@@ -24,6 +24,7 @@ import org.apache.flink.table.data.DecimalData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.data.binary.BinaryStringData;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.codegen.CodeGenException;
 import org.apache.flink.table.types.logical.DistinctType;
 import org.apache.flink.table.types.logical.LogicalType;
@@ -51,7 +52,7 @@ public class RexLiteralUtil {
 
     /** See {@link #toFlinkInternalValue(Comparable, LogicalType)}. */
     public static Tuple2<Object, LogicalType> toFlinkInternalValue(RexLiteral literal) {
-        LogicalType targetType = FlinkTypeFactory.toLogicalType(literal.getType());
+        LogicalType targetType = FlinkTypeFactory2.toLogicalType(literal.getType());
         return Tuple2.of(
                 toFlinkInternalValue(literal.getValueAs(Comparable.class), targetType), targetType);
     }

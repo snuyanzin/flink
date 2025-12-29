@@ -28,7 +28,7 @@ import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.functions._
 import org.apache.flink.table.functions.SpecializedFunction.{ExpressionEvaluator, ExpressionEvaluatorFactory}
 import org.apache.flink.table.functions.UserDefinedFunctionHelper.{validateClassForRuntime, ASYNC_SCALAR_EVAL, ASYNC_TABLE_EVAL, SCALAR_EVAL, TABLE_EVAL}
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, RexFactory}
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2, RexFactory}
 import org.apache.flink.table.planner.codegen._
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
 import org.apache.flink.table.planner.codegen.GeneratedExpression.{NEVER_NULL, NO_CODE}
@@ -636,7 +636,7 @@ object BridgingFunctionGenUtil {
 
       // expression
       val rexNode = rexFactory.convertExpressionToRex(argFields.asJava, expression, outputType)
-      val rexNodeType = FlinkTypeFactory.toLogicalType(rexNode.getType)
+      val rexNodeType = FlinkTypeFactory2.toLogicalType(rexNode.getType)
       if (!supportsAvoidingCast(rexNodeType, outputType)) {
         throw new CodeGenException(
           s"Mismatch between expression type '$rexNodeType' and expected type '$outputType'.")

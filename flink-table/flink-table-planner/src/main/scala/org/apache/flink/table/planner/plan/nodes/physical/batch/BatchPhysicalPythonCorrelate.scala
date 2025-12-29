@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
 import org.apache.flink.table.api.TableException
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecPythonCorrelate
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalTableFunctionScan
@@ -75,7 +75,7 @@ class BatchPhysicalPythonCorrelate(
       JoinTypeUtil.getFlinkJoinType(joinType),
       scan.getCall.asInstanceOf[RexCall],
       InputProperty.DEFAULT,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

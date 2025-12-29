@@ -23,7 +23,7 @@ import org.apache.flink.table.api.config.AggregatePhaseStrategy
 import org.apache.flink.table.data.binary.BinaryRowData
 import org.apache.flink.table.functions.{AggregateFunction, DeclarativeAggregateFunction, UserDefinedFunction}
 import org.apache.flink.table.planner.JArrayList
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.functions.utils.UserDefinedFunctionUtils._
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalGroupAggregateBase, BatchPhysicalLocalHashAggregate, BatchPhysicalLocalSortAggregate}
 import org.apache.flink.table.planner.plan.utils.{AggregateUtil, FlinkRelOptUtil}
@@ -165,7 +165,7 @@ trait BatchPhysicalAggRuleBase {
     val (_, aggCallsWithoutAuxGroupCalls) = AggregateUtil.checkAndSplitAggCalls(agg)
     val (_, aggBufferTypes, _) = AggregateUtil.transformToBatchAggregateFunctions(
       ShortcutUtils.unwrapTypeFactory(agg),
-      FlinkTypeFactory.toLogicalRowType(agg.getInput.getRowType),
+      FlinkTypeFactory2.toLogicalRowType(agg.getInput.getRowType),
       aggCallsWithoutAuxGroupCalls)
 
     isAggBufferFixedLength(aggBufferTypes.map(_.map(fromDataTypeToLogicalType)))

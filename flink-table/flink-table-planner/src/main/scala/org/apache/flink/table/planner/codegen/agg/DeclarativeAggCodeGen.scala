@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.codegen.agg
 import org.apache.flink.table.expressions._
 import org.apache.flink.table.expressions.ApiExpressionUtils.localRef
 import org.apache.flink.table.functions.DeclarativeAggregateFunction
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, ExprCodeGenerator, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.agg.AggsHandlerCodeGenerator.DISTINCT_KEY_TERM
 import org.apache.flink.table.planner.expressions.{DeclarativeExpressionResolver, RexNodeExpression}
@@ -98,7 +98,7 @@ class DeclarativeAggCodeGen(
 
   private val argIndexes = aggInfo.argIndexes
   private val argTypes = {
-    val types = inputTypes ++ constants.map(t => FlinkTypeFactory.toLogicalType(t.getType))
+    val types = inputTypes ++ constants.map(t => FlinkTypeFactory2.toLogicalType(t.getType))
     argIndexes.map(types(_))
   }
 
@@ -259,7 +259,7 @@ class DeclarativeAggCodeGen(
         val constant = constants(constantIndex)
         new RexNodeExpression(
           constant,
-          fromLogicalTypeToDataType(FlinkTypeFactory.toLogicalType(constant.getType)),
+          fromLogicalTypeToDataType(FlinkTypeFactory2.toLogicalType(constant.getType)),
           null,
           null)
       } else { // it is a input field

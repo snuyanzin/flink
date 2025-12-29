@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.rules.physical.batch
 
 import org.apache.flink.table.api.TableException
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.physical.batch._
@@ -72,7 +72,7 @@ abstract class EnforceLocalAggRuleBase(operand: RelOptRuleOperand, description: 
 
     val (_, aggBufferTypes, _) = AggregateUtil.transformToBatchAggregateFunctions(
       unwrapTypeFactory(input),
-      FlinkTypeFactory.toLogicalRowType(inputRowType),
+      FlinkTypeFactory2.toLogicalRowType(inputRowType),
       aggCalls)
 
     val traitSet = cluster.getPlanner.emptyTraitSet

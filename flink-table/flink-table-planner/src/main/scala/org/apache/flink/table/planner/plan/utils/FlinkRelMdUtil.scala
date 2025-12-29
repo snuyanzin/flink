@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.plan.utils
 
 import org.apache.flink.table.data.binary.BinaryRowData
 import org.apache.flink.table.planner.JDouble
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.nodes.calcite.{Expand, Rank, WindowAggregate}
 import org.apache.flink.table.planner.plan.nodes.physical.batch.{BatchPhysicalGroupAggregateBase, BatchPhysicalLocalHashWindowAggregate, BatchPhysicalLocalSortWindowAggregate, BatchPhysicalWindowAggregateBase}
 import org.apache.flink.table.runtime.groupwindow.NamedWindowProperty
@@ -591,7 +591,7 @@ object FlinkRelMdUtil {
   }
 
   def binaryRowAverageSize(rel: RelNode): JDouble = {
-    val binaryType = FlinkTypeFactory.toLogicalRowType(rel.getRowType)
+    val binaryType = FlinkTypeFactory2.toLogicalRowType(rel.getRowType)
     // TODO reuse FlinkRelMetadataQuery here
     val mq = rel.getCluster.getMetadataQuery
     val columnSizes = mq.getAverageColumnSizes(rel)

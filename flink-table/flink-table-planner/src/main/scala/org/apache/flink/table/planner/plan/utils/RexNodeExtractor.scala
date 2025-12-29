@@ -26,7 +26,7 @@ import org.apache.flink.table.expressions._
 import org.apache.flink.table.expressions.ApiExpressionUtils._
 import org.apache.flink.table.functions.{BuiltInFunctionDefinition, FunctionIdentifier}
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions.{AND, CAST, OR, TRY_CAST}
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
 import org.apache.flink.table.planner.utils.Logging
 import org.apache.flink.table.planner.utils.TimestampStringUtils.toLocalDateTime
@@ -214,7 +214,7 @@ object RexNodeExtractor extends Logging {
     val visitor = new RexVisitorImpl[Boolean](true) {
       override def visitInputRef(inputRef: RexInputRef): Boolean = {
         val fieldName = inputFieldNames.apply(inputRef.getIndex)
-        val typeRoot = FlinkTypeFactory.toLogicalType(inputRef.getType).getTypeRoot
+        val typeRoot = FlinkTypeFactory2.toLogicalType(inputRef.getType).getTypeRoot
         if (
           !partitionFieldNames.contains(fieldName) ||
           !PartitionPruner.supportedPartitionFieldTypes.contains(typeRoot)
@@ -402,7 +402,7 @@ class RexNodeToExpressionConverter(
     Some(
       new FieldReferenceExpression(
         inputNames(inputRef.getIndex),
-        fromLogicalTypeToDataType(FlinkTypeFactory.toLogicalType(inputRef.getType)),
+        fromLogicalTypeToDataType(FlinkTypeFactory2.toLogicalType(inputRef.getType)),
         0,
         inputRef.getIndex
       ))
@@ -422,7 +422,7 @@ class RexNodeToExpressionConverter(
       case _ => // do nothing
     }
 
-    val literalType = FlinkTypeFactory.toLogicalType(literal.getType)
+    val literalType = FlinkTypeFactory2.toLogicalType(literal.getType)
 
     val literalValue = literalType.getTypeRoot match {
 
@@ -507,7 +507,7 @@ class RexNodeToExpressionConverter(
     val rexCall = FlinkRexUtil.expandSearch(rexBuilder, oriRexCall).asInstanceOf[RexCall]
     val operands = rexCall.getOperands.map(operand => operand.accept(this).orNull)
 
-    val outputType = fromLogicalTypeToDataType(FlinkTypeFactory.toLogicalType(rexCall.getType))
+    val outputType = fromLogicalTypeToDataType(FlinkTypeFactory2.toLogicalType(rexCall.getType))
 
     // return null if we cannot translate all the operands of the call
     if (operands.contains(null)) {
@@ -566,7 +566,7 @@ class RexNodeToExpressionConverter(
             fieldNames.toArray,
             fieldIndices(0),
             TypeConversions.fromLogicalToDataType(
-              FlinkTypeFactory.toLogicalType(fieldAccess.getType))))
+              FlinkTypeFactory2.toLogicalType(fieldAccess.getType))))
     }
   }
   override def visitCorrelVariable(correlVariable: RexCorrelVariable): Option[ResolvedExpression] =

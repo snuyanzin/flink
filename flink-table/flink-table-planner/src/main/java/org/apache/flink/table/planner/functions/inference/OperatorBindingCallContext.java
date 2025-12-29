@@ -24,7 +24,7 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.TableSemantics;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.calcite.RexTableArgCall;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.types.DataType;
@@ -92,7 +92,7 @@ public final class OperatorBindingCallContext extends AbstractSqlCallContext {
                     @Override
                     public DataType get(int pos) {
                         LogicalType logicalType =
-                                FlinkTypeFactory.toLogicalType(binding.getOperandType(pos));
+                                FlinkTypeFactory2.toLogicalType(binding.getOperandType(pos));
                         return fromLogicalToDataType(logicalType);
                     }
 

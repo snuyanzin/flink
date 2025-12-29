@@ -18,7 +18,7 @@
 
 package org.apache.flink.table.planner.plan.nodes.physical.batch.runtimefilter;
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.InputProperty;
 import org.apache.flink.table.planner.plan.nodes.exec.batch.runtimefilter.BatchExecGlobalRuntimeFilterBuilder;
@@ -94,7 +94,7 @@ public class BatchPhysicalGlobalRuntimeFilterBuilder extends SingleRel implement
         return new BatchExecGlobalRuntimeFilterBuilder(
                 unwrapTableConfig(this),
                 Collections.singletonList(inputProperty),
-                FlinkTypeFactory.toLogicalRowType(getRowType()),
+                FlinkTypeFactory2.toLogicalRowType(getRowType()),
                 getRelDetailedDescription(),
                 maxRowCount);
     }

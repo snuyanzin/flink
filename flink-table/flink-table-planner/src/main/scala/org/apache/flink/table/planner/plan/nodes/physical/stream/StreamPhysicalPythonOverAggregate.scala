@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecPythonOverAggregate
 import org.apache.flink.table.planner.plan.utils.OverAggregateUtil
@@ -53,7 +53,7 @@ class StreamPhysicalPythonOverAggregate(
       unwrapTableConfig(this),
       OverAggregateUtil.createOverSpec(logicWindow),
       InputProperty.DEFAULT,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 

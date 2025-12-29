@@ -25,6 +25,7 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.module.ModuleManager;
 import org.apache.flink.table.planner.calcite.FlinkContext;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.calcite.RexFactory;
 import org.apache.flink.table.planner.utils.ShortcutUtils;
 import org.apache.flink.table.types.logical.RowType;
@@ -113,6 +114,6 @@ public class SourceAbilityContext implements FlinkContext {
         return new SourceAbilityContext(
                 ShortcutUtils.unwrapContext(scan),
                 ShortcutUtils.unwrapTypeFactory(scan),
-                FlinkTypeFactory.toLogicalRowType(scan.getRowType()));
+                FlinkTypeFactory2.toLogicalRowType(scan.getRowType()));
     }
 }

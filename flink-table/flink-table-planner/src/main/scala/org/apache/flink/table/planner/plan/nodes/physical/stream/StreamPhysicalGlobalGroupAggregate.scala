@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
 import org.apache.flink.table.planner.JList
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.hint.StateTtlHint
 import org.apache.flink.table.planner.plan.PartialFinalType
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
@@ -26,13 +26,12 @@ import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecGlobalGro
 import org.apache.flink.table.planner.plan.utils._
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
 
+import _root_.java.util.Collections
 import org.apache.calcite.plan.{RelOptCluster, RelTraitSet}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelNode, RelWriter}
 import org.apache.calcite.rel.core.AggregateCall
 import org.apache.calcite.rel.hint.RelHint
-
-import java.util.Collections
 
 /**
  * Stream physical RelNode for unbounded global group aggregate.
@@ -60,7 +59,7 @@ class StreamPhysicalGlobalGroupAggregate(
 
   lazy val localAggInfoList: AggregateInfoList = AggregateUtil.transformToStreamAggregateInfoList(
     unwrapTypeFactory(inputRel),
-    FlinkTypeFactory.toLogicalRowType(localAggInputRowType),
+    FlinkTypeFactory2.toLogicalRowType(localAggInputRowType),
     aggCalls,
     aggCallNeedRetractions,
     needRetraction,
@@ -71,7 +70,7 @@ class StreamPhysicalGlobalGroupAggregate(
 
   lazy val globalAggInfoList: AggregateInfoList = AggregateUtil.transformToStreamAggregateInfoList(
     unwrapTypeFactory(inputRel),
-    FlinkTypeFactory.toLogicalRowType(localAggInputRowType),
+    FlinkTypeFactory2.toLogicalRowType(localAggInputRowType),
     aggCalls,
     aggCallNeedRetractions,
     needRetraction,
@@ -126,13 +125,13 @@ class StreamPhysicalGlobalGroupAggregate(
       grouping,
       aggCalls.toArray,
       aggCallNeedRetractions,
-      FlinkTypeFactory.toLogicalRowType(localAggInputRowType),
+      FlinkTypeFactory2.toLogicalRowType(localAggInputRowType),
       generateUpdateBefore,
       needRetraction,
       indexOfCountStar.map(Integer.valueOf).orNull,
       StateTtlHint.getStateTtlFromHintOnSingleRel(hints),
       InputProperty.DEFAULT,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

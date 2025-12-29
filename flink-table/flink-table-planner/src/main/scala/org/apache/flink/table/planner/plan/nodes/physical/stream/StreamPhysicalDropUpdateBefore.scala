@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecDropUpdateBefore
 import org.apache.flink.table.planner.plan.utils.ChangelogPlanUtils
@@ -57,7 +57,7 @@ class StreamPhysicalDropUpdateBefore(cluster: RelOptCluster, traitSet: RelTraitS
     new StreamExecDropUpdateBefore(
       unwrapTableConfig(this),
       InputProperty.DEFAULT,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

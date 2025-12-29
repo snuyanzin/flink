@@ -21,7 +21,7 @@ import org.apache.flink.api.common.eventtime.WatermarkGeneratorSupplier
 import org.apache.flink.api.common.functions.OpenContext
 import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.functions.{FunctionContext, UserDefinedFunction}
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.{newName, ROW_DATA}
 import org.apache.flink.table.planner.codegen.Indenter.toISC
 import org.apache.flink.table.runtime.generated.{GeneratedWatermarkGenerator, WatermarkGenerator, WatermarkGeneratorCodeGeneratorFunctionContextWrapper}
@@ -45,7 +45,7 @@ object WatermarkGeneratorCodeGenerator {
       rowtimeExpr: Option[RexNode] = None,
       contextTerm: Option[String] = None): GeneratedWatermarkGenerator = {
     // validation
-    val watermarkOutputType = FlinkTypeFactory.toLogicalType(watermarkExpr.getType)
+    val watermarkOutputType = FlinkTypeFactory2.toLogicalType(watermarkExpr.getType)
     if (
       !(watermarkOutputType.getTypeRoot == LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE ||
         watermarkOutputType.getTypeRoot == LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE)

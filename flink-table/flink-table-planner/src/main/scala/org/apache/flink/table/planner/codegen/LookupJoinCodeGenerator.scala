@@ -25,7 +25,7 @@ import org.apache.flink.table.catalog.DataTypeFactory
 import org.apache.flink.table.connector.source.{LookupTableSource, ScanTableSource}
 import org.apache.flink.table.data.{GenericRowData, RowData}
 import org.apache.flink.table.functions._
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
 import org.apache.flink.table.planner.codegen.FunctionCallCodeGenerator.GeneratedTableFunctionWithDataType
 import org.apache.flink.table.planner.codegen.Indenter.toISC
@@ -360,7 +360,7 @@ object LookupJoinCodeGenerator {
       classLoader,
       projection,
       condition,
-      FlinkTypeFactory.toLogicalRowType(outputType),
+      FlinkTypeFactory2.toLogicalRowType(outputType),
       tableSourceRowType
     )
   }

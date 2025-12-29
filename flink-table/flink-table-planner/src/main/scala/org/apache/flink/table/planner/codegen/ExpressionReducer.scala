@@ -23,7 +23,7 @@ import org.apache.flink.table.api.{TableConfig, TableException}
 import org.apache.flink.table.data.{DecimalData, GenericRowData, TimestampData}
 import org.apache.flink.table.data.binary.{BinaryStringData, BinaryStringDataUtil}
 import org.apache.flink.table.functions.{FunctionContext, UserDefinedFunction}
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.codegen.FunctionCodeGenerator.generateFunction
 import org.apache.flink.table.planner.codegen.JsonGenerateUtils.isJsonFunctionOperand
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable.{JSON_ARRAY, JSON_OBJECT}
@@ -71,7 +71,7 @@ class ExpressionReducer(
 
     val literals = skipAndValidateExprs(rexBuilder, constExprs, nonReducibleExprs)
 
-    val literalTypes = literals.map(e => FlinkTypeFactory.toLogicalType(e.getType))
+    val literalTypes = literals.map(e => FlinkTypeFactory2.toLogicalType(e.getType))
     val resultType = RowType.of(literalTypes: _*)
 
     // generate MapFunction

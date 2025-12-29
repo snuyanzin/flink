@@ -21,7 +21,7 @@ package org.apache.flink.table.planner.plan.rules.logical;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.config.OptimizerConfigOptions;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.hint.FlinkHints;
 import org.apache.flink.table.planner.hint.JoinStrategy;
 import org.apache.flink.table.planner.hint.StateTtlHint;
@@ -491,7 +491,7 @@ public class JoinToMultiJoinRule extends RelRule<JoinToMultiJoinRule.Config>
 
         final List<RowType> combinedInputTypes =
                 combinedJoinInputs.stream()
-                        .map(i -> FlinkTypeFactory.toLogicalRowType(i.getRowType()))
+                        .map(i -> FlinkTypeFactory2.toLogicalRowType(i.getRowType()))
                         .collect(Collectors.toUnmodifiableList());
 
         final List<RexNode> combinedJoinConditions =

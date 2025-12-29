@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.nodes.calcite.Rank
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.spec.PartitionSpec
@@ -26,12 +26,11 @@ import org.apache.flink.table.planner.plan.utils._
 import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapTableConfig
 import org.apache.flink.table.runtime.operators.rank._
 
+import _root_.java.util
 import org.apache.calcite.plan.{RelOptCluster, RelTraitSet}
 import org.apache.calcite.rel._
 import org.apache.calcite.rel.`type`.RelDataTypeField
 import org.apache.calcite.util.ImmutableBitSet
-
-import java.util
 
 import scala.collection.JavaConversions._
 
@@ -135,7 +134,7 @@ class StreamPhysicalRank(
         outputInsertOnly,
         generateUpdateBefore,
         InputProperty.DEFAULT,
-        FlinkTypeFactory.toLogicalRowType(getRowType),
+        FlinkTypeFactory2.toLogicalRowType(getRowType),
         getDeduplicateDescription(sortOnRowTime, keepLastRow, outputInsertOnly))
     } else {
       new StreamExecRank(
@@ -148,7 +147,7 @@ class StreamPhysicalRank(
         outputRankNumber,
         generateUpdateBefore,
         InputProperty.DEFAULT,
-        FlinkTypeFactory.toLogicalRowType(getRowType),
+        FlinkTypeFactory2.toLogicalRowType(getRowType),
         getRelDetailedDescription
       )
     }

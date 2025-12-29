@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.utils
 
 import org.apache.flink.table.api.ValidationException
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory.{isProctimeIndicatorType, isRowtimeIndicatorType}
 import org.apache.flink.table.planner.plan.nodes.exec.spec.JoinSpec
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalJoin
@@ -451,8 +451,8 @@ object TemporalJoinUtil {
           val outputType = call.getType
           val inputType = call.getOperands.get(0).getType
           val isCompatible = PlannerTypeUtils.isInteroperable(
-            FlinkTypeFactory.toLogicalType(outputType),
-            FlinkTypeFactory.toLogicalType(inputType))
+            FlinkTypeFactory2.toLogicalType(outputType),
+            FlinkTypeFactory2.toLogicalType(inputType))
           expr = if (isCompatible) call.getOperands.get(0) else expr
         case _ =>
       }

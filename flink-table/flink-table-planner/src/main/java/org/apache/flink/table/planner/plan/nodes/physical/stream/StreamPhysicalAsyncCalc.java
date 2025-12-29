@@ -18,7 +18,7 @@
 
 package org.apache.flink.table.planner.plan.nodes.physical.stream;
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.InputProperty;
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecAsyncCalc;
@@ -79,7 +79,7 @@ public class StreamPhysicalAsyncCalc extends StreamPhysicalCalcBase {
                 unwrapTableConfig(this),
                 projection,
                 InputProperty.DEFAULT,
-                FlinkTypeFactory.toLogicalRowType(getRowType()),
+                FlinkTypeFactory2.toLogicalRowType(getRowType()),
                 getRelDetailedDescription());
     }
 }

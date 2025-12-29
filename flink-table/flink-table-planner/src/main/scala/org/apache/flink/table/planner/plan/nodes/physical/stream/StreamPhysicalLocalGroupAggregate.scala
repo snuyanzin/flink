@@ -17,19 +17,18 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.PartialFinalType
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecLocalGroupAggregate
 import org.apache.flink.table.planner.plan.utils._
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
 
+import _root_.java.util
 import org.apache.calcite.plan.{RelOptCluster, RelTraitSet}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelNode, RelWriter}
 import org.apache.calcite.rel.core.AggregateCall
-
-import java.util
 
 /**
  * Stream physical RelNode for unbounded local group aggregate.
@@ -50,7 +49,7 @@ class StreamPhysicalLocalGroupAggregate(
 
   private lazy val aggInfoList = AggregateUtil.transformToStreamAggregateInfoList(
     unwrapTypeFactory(inputRel),
-    FlinkTypeFactory.toLogicalRowType(inputRel.getRowType),
+    FlinkTypeFactory2.toLogicalRowType(inputRel.getRowType),
     aggCalls,
     aggCallNeedRetractions,
     needRetraction,
@@ -103,7 +102,7 @@ class StreamPhysicalLocalGroupAggregate(
       aggCallNeedRetractions,
       needRetraction,
       InputProperty.DEFAULT,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

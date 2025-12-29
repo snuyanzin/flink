@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
 import org.apache.flink.table.planner.JList
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.hint.StateTtlHint
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecJoin
@@ -98,7 +98,7 @@ class StreamPhysicalJoin(
         "leftInputSpec",
         JoinUtil.analyzeJoinInput(
           unwrapClassLoader(left),
-          InternalTypeInfo.of(FlinkTypeFactory.toLogicalRowType(left.getRowType)),
+          InternalTypeInfo.of(FlinkTypeFactory2.toLogicalRowType(left.getRowType)),
           joinSpec.getLeftKeys,
           getUpsertKeys(left, joinSpec.getLeftKeys)
         )
@@ -107,7 +107,7 @@ class StreamPhysicalJoin(
         "rightInputSpec",
         JoinUtil.analyzeJoinInput(
           unwrapClassLoader(right),
-          InternalTypeInfo.of(FlinkTypeFactory.toLogicalRowType(right.getRowType)),
+          InternalTypeInfo.of(FlinkTypeFactory2.toLogicalRowType(right.getRowType)),
           joinSpec.getRightKeys,
           getUpsertKeys(right, joinSpec.getRightKeys)
         )
@@ -129,7 +129,7 @@ class StreamPhysicalJoin(
       InputProperty.DEFAULT,
       InputProperty.DEFAULT,
       StateTtlHint.getStateTtlFromHintOnBiRel(getHints),
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

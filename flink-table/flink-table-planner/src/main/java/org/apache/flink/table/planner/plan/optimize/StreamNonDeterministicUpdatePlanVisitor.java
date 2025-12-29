@@ -25,7 +25,7 @@ import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.source.abilities.SupportsReadingMetadata;
 import org.apache.flink.table.legacy.api.TableSchema;
 import org.apache.flink.table.legacy.api.constraints.UniqueConstraint;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.connectors.DynamicSourceUtils;
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery;
 import org.apache.flink.table.planner.plan.nodes.exec.spec.OverSpec;
@@ -909,7 +909,7 @@ public class StreamNonDeterministicUpdatePlanVisitor {
         JoinInputSideSpec joinInputSideSpec =
                 JoinUtil.analyzeJoinInput(
                         ShortcutUtils.unwrapClassLoader(rel),
-                        InternalTypeInfo.of(FlinkTypeFactory.toLogicalRowType(rel.getRowType())),
+                        InternalTypeInfo.of(FlinkTypeFactory2.toLogicalRowType(rel.getRowType())),
                         joinKeys,
                         inputUniqueKeys);
         ImmutableBitSet inputRequireDeterminism;

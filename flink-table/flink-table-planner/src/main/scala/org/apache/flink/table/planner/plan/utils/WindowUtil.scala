@@ -21,7 +21,7 @@ import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.api.{DataTypes, TableConfig, TableException, ValidationException}
 import org.apache.flink.table.api.config.ExecutionConfigOptions
 import org.apache.flink.table.planner.JBigDecimal
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, RexTableArgCall}
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2, RexTableArgCall}
 import org.apache.flink.table.planner.functions.sql.{FlinkSqlOperatorTable, SqlWindowTableFunction}
 import org.apache.flink.table.planner.plan.`trait`.RelWindowProperties
 import org.apache.flink.table.planner.plan.logical._
@@ -201,11 +201,11 @@ object WindowUtil {
     val inputRowType = scanInput.getRowType
     val timeIndex = getTimeAttributeIndex(windowCall)
     val fieldType = inputRowType.getFieldList.get(timeIndex).getType
-    val timeAttributeType = FlinkTypeFactory.toLogicalType(fieldType)
+    val timeAttributeType = FlinkTypeFactory2.toLogicalType(fieldType)
     if (!canBeTimeAttributeType(timeAttributeType)) {
       throw new ValidationException(
         "The supported time indicator type are TIMESTAMP" +
-          " and TIMESTAMP_LTZ, but is " + FlinkTypeFactory.toLogicalType(fieldType) + "")
+          " and TIMESTAMP_LTZ, but is " + FlinkTypeFactory2.toLogicalType(fieldType) + "")
     }
 
     val windowFunction = windowCall.getOperator.asInstanceOf[SqlWindowTableFunction]
@@ -342,7 +342,7 @@ object WindowUtil {
     val accTypes = aggInfoList.getAccTypes
     val groupingTypes = grouping
       .map(inputRowType.getFieldList.get(_).getType)
-      .map(FlinkTypeFactory.toLogicalType)
+      .map(FlinkTypeFactory2.toLogicalType)
     val sliceEndType = Array(DataTypes.BIGINT().getLogicalType)
 
     val groupingNames = grouping.map(inputRowType.getFieldNames.get(_))

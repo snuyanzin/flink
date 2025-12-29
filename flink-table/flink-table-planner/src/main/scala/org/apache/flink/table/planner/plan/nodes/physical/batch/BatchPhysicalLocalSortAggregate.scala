@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
 import org.apache.flink.table.functions.UserDefinedFunction
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.`trait`.{FlinkRelDistribution, FlinkRelDistributionTraitDef}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecSortAggregate
@@ -138,11 +138,11 @@ class BatchPhysicalLocalSortAggregate(
       grouping,
       auxGrouping,
       getAggCallList.toArray,
-      FlinkTypeFactory.toLogicalRowType(inputRowType),
+      FlinkTypeFactory2.toLogicalRowType(inputRowType),
       false, // isMerge is always false
       false, // isFinal is always false
       getInputProperty,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 

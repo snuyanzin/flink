@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.nodes.physical.common
 import org.apache.flink.table.api.{TableConfig, TableException}
 import org.apache.flink.table.catalog.{ObjectIdentifier, UniqueConstraint}
 import org.apache.flink.table.connector.ChangelogMode
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.nodes.FlinkRelNode
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalRel
 import org.apache.flink.table.planner.plan.schema.{IntermediateRelTable, LegacyTableSourceTable, TableSourceTable}
@@ -425,7 +425,7 @@ abstract class CommonPhysicalLookupJoin(
         case (ref: RexInputRef, literal: RexLiteral) => (ref, literal)
         case _ => return // non-constant condition
       }
-      val dataType = FlinkTypeFactory.toLogicalType(inputRef.getType)
+      val dataType = FlinkTypeFactory2.toLogicalType(inputRef.getType)
       constantFieldMap.put(inputRef.getIndex, new Constant(dataType, literal))
     case _ => // ignore
   }

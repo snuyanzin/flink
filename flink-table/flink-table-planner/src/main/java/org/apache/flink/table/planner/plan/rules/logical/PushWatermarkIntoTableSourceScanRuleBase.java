@@ -32,7 +32,7 @@ import org.apache.flink.table.connector.source.abilities.SupportsWatermarkPushDo
 import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.hint.FlinkHints;
 import org.apache.flink.table.planner.plan.abilities.source.SourceAbilityContext;
 import org.apache.flink.table.planner.plan.abilities.source.SourceAbilitySpec;
@@ -112,7 +112,7 @@ public abstract class PushWatermarkIntoTableSourceScanRuleBase extends RelOptRul
             newType = scan.getRowType();
         }
 
-        final RowType producedType = (RowType) FlinkTypeFactory.toLogicalType(newType);
+        final RowType producedType = (RowType) FlinkTypeFactory2.toLogicalType(newType);
         final SourceAbilityContext abilityContext = SourceAbilityContext.from(scan);
 
         final SourceAbilitySpec abilitySpec;

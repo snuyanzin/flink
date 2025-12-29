@@ -28,7 +28,7 @@ import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.functions.ProcessTableFunction;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.calcite.RexTableArgCall;
 import org.apache.flink.table.planner.codegen.CodeGeneratorContext;
 import org.apache.flink.table.planner.codegen.EqualiserCodeGenerator;
@@ -272,7 +272,7 @@ public class StreamExecProcessTableFunction extends ExecNodeBase<RowData>
         if (tableArg.getDataType().isPresent()) {
             dataType = tableArg.getDataType().get();
         } else {
-            dataType = DataTypes.of(FlinkTypeFactory.toLogicalRowType(tableArgCall.type));
+            dataType = DataTypes.of(FlinkTypeFactory2.toLogicalRowType(tableArgCall.type));
         }
 
         final int timeColumn = inputTimeColumns.get(tableArgCall.getInputIndex());

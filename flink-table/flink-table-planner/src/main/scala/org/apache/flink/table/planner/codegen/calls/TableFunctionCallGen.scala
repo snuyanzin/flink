@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.codegen.calls
 
 import org.apache.flink.table.data.GenericRowData
 import org.apache.flink.table.functions.TableFunction
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.codegen._
 import org.apache.flink.table.planner.codegen.CodeGenUtils.newName
 import org.apache.flink.table.planner.codegen.GeneratedExpression.NEVER_NULL
@@ -90,14 +90,14 @@ class TableFunctionCallGen(rexCall: RexCall, tableFunction: TableFunction[_])
     val arguments = UserDefinedFunctionUtils.transformRexNodes(rexCall.operands)
     val operandTypes = rexCall.operands
       .map(_.getType)
-      .map(FlinkTypeFactory.toLogicalType)
+      .map(FlinkTypeFactory2.toLogicalType)
       .toArray
     val func = sqlFunction.makeFunction(arguments, operandTypes)
     val argTypes = getEvalMethodSignature(
       func,
       rexCall.operands
         .map(_.getType)
-        .map(FlinkTypeFactory.toLogicalType)
+        .map(FlinkTypeFactory2.toLogicalType)
         .toArray)
     sqlFunction.getFunction
       .asInstanceOf[FlinkTableFunction]

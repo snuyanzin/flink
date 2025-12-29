@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistributionTraitDef
 import org.apache.flink.table.planner.plan.cost.{FlinkCost, FlinkCostFactory}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
@@ -175,8 +175,8 @@ class BatchPhysicalSortMergeJoin(
   override def translateToExecNode(): ExecNode[_] = {
     JoinUtil.validateJoinSpec(
       joinSpec,
-      FlinkTypeFactory.toLogicalRowType(left.getRowType),
-      FlinkTypeFactory.toLogicalRowType(right.getRowType))
+      FlinkTypeFactory2.toLogicalRowType(left.getRowType),
+      FlinkTypeFactory2.toLogicalRowType(right.getRowType))
 
     val (leftRowSize, leftRowCount, rightRowSize, rightRowCount) =
       JoinUtil.getEstimatedRowStats(this)
@@ -202,7 +202,7 @@ class BatchPhysicalSortMergeJoin(
         .requiredDistribution(InputProperty.hashDistribution(joinSpec.getRightKeys))
         .damBehavior(InputProperty.DamBehavior.END_INPUT)
         .build(),
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       withJobStrategyHint,
       getRelDetailedDescription)
   }

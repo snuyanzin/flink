@@ -23,7 +23,7 @@ import org.apache.flink.table.catalog.exceptions.PartitionNotExistException
 import org.apache.flink.table.expressions.Expression
 import org.apache.flink.table.legacy.sources.PartitionableTableSource
 import org.apache.flink.table.plan.stats.TableStats
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.plan.schema.LegacyTableSourceTable
 import org.apache.flink.table.planner.plan.stats.FlinkStatistic
 import org.apache.flink.table.planner.plan.utils.{PartitionPruner, RexNodeExtractor, RexNodeToExpressionConverter}
@@ -107,7 +107,7 @@ class PushPartitionIntoLegacyTableSourceScanRule
             s"$name is not found in ${inputFieldType.getFieldNames.mkString(", ")}")
           inputFieldType.getFieldList.get(index).getType
       }
-      .map(FlinkTypeFactory.toLogicalType)
+      .map(FlinkTypeFactory2.toLogicalType)
 
     val partitionsFromSource =
       try {

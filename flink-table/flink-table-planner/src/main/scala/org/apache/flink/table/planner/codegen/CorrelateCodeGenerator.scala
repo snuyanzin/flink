@@ -24,7 +24,7 @@ import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.data.RowData
 import org.apache.flink.table.data.utils.JoinedRowData
 import org.apache.flink.table.functions.FunctionKind
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction
 import org.apache.flink.table.planner.functions.utils.TableSqlFunction
@@ -105,7 +105,7 @@ object CorrelateCodeGenerator {
       ruleDescription: String,
       retainHeader: Boolean = true): CodeGenOperatorFactory[RowData] = {
 
-    val functionResultType = FlinkTypeFactory.toLogicalRowType(rexCall.getType)
+    val functionResultType = FlinkTypeFactory2.toLogicalRowType(rexCall.getType)
 
     // 1. prepare collectors
 

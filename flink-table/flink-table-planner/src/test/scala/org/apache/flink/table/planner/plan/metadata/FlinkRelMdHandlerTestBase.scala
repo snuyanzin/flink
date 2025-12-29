@@ -24,7 +24,7 @@ import org.apache.flink.table.expressions._
 import org.apache.flink.table.expressions.ApiExpressionUtils.intervalOfMillis
 import org.apache.flink.table.functions.{FunctionIdentifier, UserDefinedFunctionHelper}
 import org.apache.flink.table.operations.TableSourceQueryOperation
-import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkTypeFactory, RexTableArgCall}
+import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkTypeFactory, FlinkTypeFactory2, RexTableArgCall}
 import org.apache.flink.table.planner.delegation.PlannerContext
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
@@ -51,6 +51,10 @@ import org.apache.flink.table.types.AtomicDataType
 import org.apache.flink.table.types.logical._
 import org.apache.flink.table.types.utils.TypeConversions
 
+import _root_.java.math.BigDecimal
+import _root_.java.time.Duration
+import _root_.java.util
+import _root_.java.util.Collections
 import com.google.common.collect.{ImmutableList, Lists}
 import org.apache.calcite.avatica.util.TimeUnit
 import org.apache.calcite.jdbc.CalciteSchema
@@ -71,11 +75,6 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable._
 import org.apache.calcite.sql.parser.SqlParserPos
 import org.apache.calcite.util._
 import org.junit.jupiter.api.{BeforeAll, BeforeEach}
-
-import java.math.BigDecimal
-import java.time.Duration
-import java.util
-import java.util.Collections
 
 import scala.collection.JavaConversions._
 
@@ -1163,7 +1162,7 @@ class FlinkRelMdHandlerTestBase {
 
     val aggCalls = logicalAgg.getAggCallList
     val aggFunctionFactory = new AggFunctionFactory(
-      FlinkTypeFactory.toLogicalRowType(studentBatchScan.getRowType),
+      FlinkTypeFactory2.toLogicalRowType(studentBatchScan.getRowType),
       Array.empty[Int],
       Array.fill(aggCalls.size())(false),
       false)
@@ -1407,7 +1406,7 @@ class FlinkRelMdHandlerTestBase {
 
     val aggCalls = logicalAggWithFilter.getAggCallList
     val aggFunctionFactory = new AggFunctionFactory(
-      FlinkTypeFactory.toLogicalRowType(calcOnStudentScan.getRowType),
+      FlinkTypeFactory2.toLogicalRowType(calcOnStudentScan.getRowType),
       Array.empty[Int],
       Array.fill(aggCalls.size())(false),
       false)
@@ -1594,7 +1593,7 @@ class FlinkRelMdHandlerTestBase {
       call => call.getAggregation != FlinkSqlOperatorTable.AUXILIARY_GROUP
     }
     val aggFunctionFactory = new AggFunctionFactory(
-      FlinkTypeFactory.toLogicalRowType(studentBatchScan.getRowType),
+      FlinkTypeFactory2.toLogicalRowType(studentBatchScan.getRowType),
       Array.empty[Int],
       Array.fill(aggCalls.size())(false),
       false)
@@ -1770,7 +1769,7 @@ class FlinkRelMdHandlerTestBase {
     val (_, _, aggregates) =
       AggregateUtil.transformToBatchAggregateFunctions(
         typeFactory,
-        FlinkTypeFactory.toLogicalRowType(batchExchange1.getRowType),
+        FlinkTypeFactory2.toLogicalRowType(batchExchange1.getRowType),
         flinkLogicalWindowAgg.getAggCallList)
     val aggCallToAggFunction = flinkLogicalWindowAgg.getAggCallList.zip(aggregates)
 
@@ -1940,7 +1939,7 @@ class FlinkRelMdHandlerTestBase {
     val (_, _, aggregates) =
       AggregateUtil.transformToBatchAggregateFunctions(
         typeFactory,
-        FlinkTypeFactory.toLogicalRowType(batchExchange1.getRowType),
+        FlinkTypeFactory2.toLogicalRowType(batchExchange1.getRowType),
         flinkLogicalWindowAgg.getAggCallList)
     val aggCallToAggFunction = flinkLogicalWindowAgg.getAggCallList.zip(aggregates)
 
@@ -2124,7 +2123,7 @@ class FlinkRelMdHandlerTestBase {
     val (_, _, aggregates) =
       AggregateUtil.transformToBatchAggregateFunctions(
         typeFactory,
-        FlinkTypeFactory.toLogicalRowType(batchExchange1.getRowType),
+        FlinkTypeFactory2.toLogicalRowType(batchExchange1.getRowType),
         aggCallsWithoutAuxGroup)
     val aggCallToAggFunction = aggCallsWithoutAuxGroup.zip(aggregates)
 

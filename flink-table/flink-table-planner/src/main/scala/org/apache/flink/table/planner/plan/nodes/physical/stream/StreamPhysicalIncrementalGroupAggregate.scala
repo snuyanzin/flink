@@ -18,21 +18,20 @@
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
 import org.apache.flink.table.planner.JList
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
 import org.apache.flink.table.planner.hint.StateTtlHint
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecIncrementalGroupAggregate
 import org.apache.flink.table.planner.plan.utils._
 import org.apache.flink.table.planner.utils.ShortcutUtils.{unwrapTableConfig, unwrapTypeFactory}
 
+import _root_.java.util
+import _root_.java.util.Collections
 import org.apache.calcite.plan.{RelOptCluster, RelTraitSet}
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.rel.{RelNode, RelWriter}
 import org.apache.calcite.rel.core.AggregateCall
 import org.apache.calcite.rel.hint.RelHint
-
-import java.util
-import java.util.Collections
 
 /**
  * Stream physical RelNode for unbounded incremental group aggregate.
@@ -84,7 +83,7 @@ class StreamPhysicalIncrementalGroupAggregate(
 
   private lazy val incrementalAggInfo = AggregateUtil.createIncrementalAggInfoList(
     unwrapTypeFactory(inputRel),
-    FlinkTypeFactory.toLogicalRowType(partialLocalAggInputRowType),
+    FlinkTypeFactory2.toLogicalRowType(partialLocalAggInputRowType),
     partialOriginalAggCalls,
     partialAggCallNeedRetractions,
     partialAggNeedRetraction
@@ -142,11 +141,11 @@ class StreamPhysicalIncrementalGroupAggregate(
       finalAggGrouping,
       partialOriginalAggCalls,
       partialAggCallNeedRetractions,
-      FlinkTypeFactory.toLogicalRowType(partialLocalAggInputRowType),
+      FlinkTypeFactory2.toLogicalRowType(partialLocalAggInputRowType),
       partialAggNeedRetraction,
       StateTtlHint.getStateTtlFromHintOnSingleRel(hints),
       InputProperty.DEFAULT,
-      FlinkTypeFactory.toLogicalRowType(getRowType),
+      FlinkTypeFactory2.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

@@ -21,7 +21,7 @@ package org.apache.flink.table.planner.plan.nodes.physical.stream;
 import org.apache.flink.streaming.api.datastream.AsyncDataStream;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.InputProperty;
@@ -115,7 +115,7 @@ public class StreamPhysicalDeltaJoin extends Join implements StreamPhysicalRel {
                 lookupLeftTableJoinSpec,
                 InputProperty.DEFAULT,
                 InputProperty.DEFAULT,
-                FlinkTypeFactory.toLogicalRowType(rowType),
+                FlinkTypeFactory2.toLogicalRowType(rowType),
                 getRelDetailedDescription(),
                 asyncLookupOptions);
     }

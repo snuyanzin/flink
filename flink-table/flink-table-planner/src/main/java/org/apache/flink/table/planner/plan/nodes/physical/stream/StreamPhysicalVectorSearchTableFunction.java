@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.nodes.physical.stream;
 
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.connector.ChangelogMode;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.InputProperty;
 import org.apache.flink.table.planner.plan.nodes.exec.spec.VectorSearchSpec;
@@ -113,7 +113,7 @@ public class StreamPhysicalVectorSearchTableFunction extends CommonPhysicalVecto
                                 getInputChangelogMode())
                         : null,
                 InputProperty.DEFAULT,
-                FlinkTypeFactory.toLogicalRowType(outputRowType),
+                FlinkTypeFactory2.toLogicalRowType(outputRowType),
                 getRelDetailedDescription());
     }
 
