@@ -101,8 +101,8 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  * Calcite's [[RelDataType]].
  */
 public class FlinkTypeFactory extends JavaTypeFactoryImpl implements ExtendedRelTypeFactory {
-    final ClassLoader classLoader;
-    final Map<LogicalType, RelDataType> seenTypes = new HashMap<>();
+    private final ClassLoader classLoader;
+    private final Map<LogicalType, RelDataType> seenTypes = new HashMap<>();
 
     public FlinkTypeFactory(ClassLoader classLoader, RelDataTypeSystem typeSystem) {
         super(typeSystem);
@@ -166,16 +166,6 @@ public class FlinkTypeFactory extends JavaTypeFactoryImpl implements ExtendedRel
                 fields.stream().map(RowType.RowField::getName).collect(Collectors.toList()),
                 fields.stream().map(RowType.RowField::getType).collect(Collectors.toList()),
                 StructKind.FULLY_QUALIFIED);
-    }
-
-    /**
-     * Creates a struct type with the physical columns using FlinkTypeFactory.
-     *
-     * @param tableSchema schema to convert to Calcite's specific one
-     * @return a struct type with the input fieldNames, input fieldTypes.
-     */
-    public RelDataType buildPhysicalRelNodeRowType(TableSchema tableSchema) {
-        return buildRelNodeRowType(TableSchemaUtils.getPhysicalSchema(tableSchema));
     }
 
     /**
