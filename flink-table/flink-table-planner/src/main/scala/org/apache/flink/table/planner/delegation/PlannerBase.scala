@@ -318,7 +318,7 @@ abstract class PlannerBase(
             }
 
             // check the logical field type and physical field type are compatible
-            val queryLogicalType = FlinkTypeFactory2.toLogicalRowType(input.getRowType)
+            val queryLogicalType = FlinkTypeFactory.toLogicalRowType(input.getRowType)
             // validate logical schema and physical schema are compatible
             validateLogicalPhysicalTypesCompatible(table, sink, queryLogicalType)
             // validate TableSink
@@ -364,7 +364,7 @@ abstract class PlannerBase(
           case UpdateMode.UPSERT => (false, true)
         }
         val typeInfo = LegacyTypeInfoDataTypeConverter.toLegacyTypeInfo(outputConversion.getType)
-        val inputLogicalType = FlinkTypeFactory2.toLogicalRowType(input.getRowType)
+        val inputLogicalType = FlinkTypeFactory.toLogicalRowType(input.getRowType)
         val sinkPhysicalSchema =
           inferSinkPhysicalSchema(outputConversion.getType, inputLogicalType, withChangeFlag)
         // validate query schema and sink schema, and apply cast if possible

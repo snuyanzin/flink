@@ -26,7 +26,6 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.functions.ProcessTableFunction;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.calcite.RexTableArgCall;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.functions.inference.OperatorBindingCallContext;
@@ -174,7 +173,7 @@ public class StreamPhysicalProcessTableFunction extends AbstractRelNode
         return new StreamExecProcessTableFunction(
                 unwrapTableConfig(this),
                 getInputs().stream().map(i -> InputProperty.DEFAULT).collect(Collectors.toList()),
-                FlinkTypeFactory2.toLogicalRowType(rowType),
+                FlinkTypeFactory.toLogicalRowType(rowType),
                 getRelDetailedDescription(),
                 uid,
                 call,

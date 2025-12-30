@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.calcite.Expand
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecExpand
@@ -54,7 +54,7 @@ class BatchPhysicalExpand(
       unwrapTableConfig(this),
       projects,
       InputProperty.DEFAULT,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

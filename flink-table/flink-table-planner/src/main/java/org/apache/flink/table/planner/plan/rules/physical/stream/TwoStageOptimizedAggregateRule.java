@@ -21,7 +21,7 @@ package org.apache.flink.table.planner.plan.rules.physical.stream;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.config.AggregatePhaseStrategy;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery;
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions;
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalExchange;
@@ -105,7 +105,7 @@ public class TwoStageOptimizedAggregateRule
         AggregateInfoList aggInfoList =
                 AggregateUtil.transformToStreamAggregateInfoList(
                         unwrapTypeFactory(agg),
-                        FlinkTypeFactory2.toLogicalRowType(agg.getInput().getRowType()),
+                        FlinkTypeFactory.toLogicalRowType(agg.getInput().getRowType()),
                         agg.aggCalls(),
                         needRetractionArray,
                         needRetraction,

@@ -24,7 +24,7 @@ import org.apache.flink.table.expressions._
 import org.apache.flink.table.expressions.ApiExpressionUtils.intervalOfMillis
 import org.apache.flink.table.functions.{FunctionIdentifier, UserDefinedFunctionHelper}
 import org.apache.flink.table.operations.TableSourceQueryOperation
-import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkTypeFactory, FlinkTypeFactory2, RexTableArgCall}
+import org.apache.flink.table.planner.calcite.{FlinkRelBuilder, FlinkTypeFactory, RexTableArgCall}
 import org.apache.flink.table.planner.delegation.PlannerContext
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable
@@ -1162,7 +1162,7 @@ class FlinkRelMdHandlerTestBase {
 
     val aggCalls = logicalAgg.getAggCallList
     val aggFunctionFactory = new AggFunctionFactory(
-      FlinkTypeFactory2.toLogicalRowType(studentBatchScan.getRowType),
+      FlinkTypeFactory.toLogicalRowType(studentBatchScan.getRowType),
       Array.empty[Int],
       Array.fill(aggCalls.size())(false),
       false)
@@ -1406,7 +1406,7 @@ class FlinkRelMdHandlerTestBase {
 
     val aggCalls = logicalAggWithFilter.getAggCallList
     val aggFunctionFactory = new AggFunctionFactory(
-      FlinkTypeFactory2.toLogicalRowType(calcOnStudentScan.getRowType),
+      FlinkTypeFactory.toLogicalRowType(calcOnStudentScan.getRowType),
       Array.empty[Int],
       Array.fill(aggCalls.size())(false),
       false)
@@ -1593,7 +1593,7 @@ class FlinkRelMdHandlerTestBase {
       call => call.getAggregation != FlinkSqlOperatorTable.AUXILIARY_GROUP
     }
     val aggFunctionFactory = new AggFunctionFactory(
-      FlinkTypeFactory2.toLogicalRowType(studentBatchScan.getRowType),
+      FlinkTypeFactory.toLogicalRowType(studentBatchScan.getRowType),
       Array.empty[Int],
       Array.fill(aggCalls.size())(false),
       false)
@@ -1769,7 +1769,7 @@ class FlinkRelMdHandlerTestBase {
     val (_, _, aggregates) =
       AggregateUtil.transformToBatchAggregateFunctions(
         typeFactory,
-        FlinkTypeFactory2.toLogicalRowType(batchExchange1.getRowType),
+        FlinkTypeFactory.toLogicalRowType(batchExchange1.getRowType),
         flinkLogicalWindowAgg.getAggCallList)
     val aggCallToAggFunction = flinkLogicalWindowAgg.getAggCallList.zip(aggregates)
 
@@ -1939,7 +1939,7 @@ class FlinkRelMdHandlerTestBase {
     val (_, _, aggregates) =
       AggregateUtil.transformToBatchAggregateFunctions(
         typeFactory,
-        FlinkTypeFactory2.toLogicalRowType(batchExchange1.getRowType),
+        FlinkTypeFactory.toLogicalRowType(batchExchange1.getRowType),
         flinkLogicalWindowAgg.getAggCallList)
     val aggCallToAggFunction = flinkLogicalWindowAgg.getAggCallList.zip(aggregates)
 
@@ -2123,7 +2123,7 @@ class FlinkRelMdHandlerTestBase {
     val (_, _, aggregates) =
       AggregateUtil.transformToBatchAggregateFunctions(
         typeFactory,
-        FlinkTypeFactory2.toLogicalRowType(batchExchange1.getRowType),
+        FlinkTypeFactory.toLogicalRowType(batchExchange1.getRowType),
         aggCallsWithoutAuxGroup)
     val aggCallToAggFunction = aggCallsWithoutAuxGroup.zip(aggregates)
 
@@ -3317,7 +3317,7 @@ class FlinkRelMdHandlerTestBase {
         ImmutableList.of(),
         tableFunctionCall,
         null,
-        typeFactory.buildRelNodeRowType(Array("EXPR$0"), Array(new VarCharType)),
+        typeFactory.buildRelNodeRowType(Array("EXPR$0").toList, Array(new VarCharType).toList),
         null
       )
     }
@@ -3379,12 +3379,12 @@ class FlinkRelMdHandlerTestBase {
             rexBuilder.makeCast(stringType, relBuilder.field(6)),
             rexBuilder.makeCast(stringType, relBuilder.field(5))),
           typeFactory.buildRelNodeRowType(
-            Array("b", "my_window_end", "window_start"),
+            Array("b", "my_window_end", "window_start").toList,
             Array(
               VarCharType.STRING_TYPE,
               VarCharType.STRING_TYPE,
               VarCharType.STRING_TYPE
-            )
+            ).toList
           ))
       }
     }

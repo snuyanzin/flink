@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.cost.{FlinkCost, FlinkCostFactory}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecNestedLoopJoin
@@ -121,7 +121,7 @@ class BatchPhysicalNestedLoopJoin(
       singleRowJoin,
       leftInputProperty,
       rightInputProperty,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 

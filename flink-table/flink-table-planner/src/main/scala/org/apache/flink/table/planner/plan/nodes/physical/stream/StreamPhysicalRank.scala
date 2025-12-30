@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.calcite.Rank
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.spec.PartitionSpec
@@ -134,7 +134,7 @@ class StreamPhysicalRank(
         outputInsertOnly,
         generateUpdateBefore,
         InputProperty.DEFAULT,
-        FlinkTypeFactory2.toLogicalRowType(getRowType),
+        FlinkTypeFactory.toLogicalRowType(getRowType),
         getDeduplicateDescription(sortOnRowTime, keepLastRow, outputInsertOnly))
     } else {
       new StreamExecRank(
@@ -147,7 +147,7 @@ class StreamPhysicalRank(
         outputRankNumber,
         generateUpdateBefore,
         InputProperty.DEFAULT,
-        FlinkTypeFactory2.toLogicalRowType(getRowType),
+        FlinkTypeFactory.toLogicalRowType(getRowType),
         getRelDetailedDescription
       )
     }

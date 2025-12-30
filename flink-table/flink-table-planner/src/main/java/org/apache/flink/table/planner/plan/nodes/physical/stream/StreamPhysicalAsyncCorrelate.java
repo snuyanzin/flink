@@ -19,7 +19,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.stream;
 
 import org.apache.flink.table.api.TableException;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.InputProperty;
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecAsyncCorrelate;
@@ -89,7 +89,7 @@ public class StreamPhysicalAsyncCorrelate extends StreamPhysicalCorrelateBase {
                 JoinTypeUtil.getFlinkJoinType(joinType),
                 (RexCall) scan.getCall(),
                 InputProperty.DEFAULT,
-                FlinkTypeFactory2.toLogicalRowType(getRowType()),
+                FlinkTypeFactory.toLogicalRowType(getRowType()),
                 getRelDetailedDescription());
     }
 }

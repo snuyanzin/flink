@@ -18,7 +18,7 @@
 
 package org.apache.flink.table.planner.plan.rules.physical.stream;
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions;
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalMultiJoin;
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalMultiJoin;
@@ -60,7 +60,7 @@ public class StreamPhysicalMultiJoinRule extends ConverterRule {
                 createJoinAttributeMap(multiJoin.getInputs(), multiJoin.getJoinConditions());
         final List<RowType> inputRowTypes =
                 multiJoin.getInputs().stream()
-                        .map(i -> FlinkTypeFactory2.toLogicalRowType(i.getRowType()))
+                        .map(i -> FlinkTypeFactory.toLogicalRowType(i.getRowType()))
                         .collect(Collectors.toList());
         final JoinKeyExtractor keyExtractor =
                 new AttributeBasedJoinKeyExtractor(joinAttributeMap, inputRowTypes);

@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.rules.physical.stream
 
 import org.apache.flink.table.api.config.OptimizerConfigOptions
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.PartialFinalType
 import org.apache.flink.table.planner.plan.nodes.physical.stream.{StreamPhysicalExchange, StreamPhysicalGlobalGroupAggregate, StreamPhysicalIncrementalGroupAggregate, StreamPhysicalLocalGroupAggregate}
 import org.apache.flink.table.planner.plan.utils.AggregateUtil
@@ -109,7 +109,7 @@ class IncrementalAggregateRule
       val localAggInfoList = AggregateUtil.transformToStreamAggregateInfoList(
         unwrapTypeFactory(finalGlobalAgg),
         // the final agg input is partial agg
-        FlinkTypeFactory2.toLogicalRowType(partialGlobalAgg.getRowType),
+        FlinkTypeFactory.toLogicalRowType(partialGlobalAgg.getRowType),
         finalRealAggCalls,
         // use partial global agg's aggCallNeedRetractions
         partialGlobalAgg.aggCallNeedRetractions,

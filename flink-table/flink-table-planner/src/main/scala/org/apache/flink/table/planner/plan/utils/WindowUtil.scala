@@ -21,7 +21,7 @@ import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.api.{DataTypes, TableConfig, TableException, ValidationException}
 import org.apache.flink.table.api.config.ExecutionConfigOptions
 import org.apache.flink.table.planner.JBigDecimal
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2, RexTableArgCall}
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, RexTableArgCall}
 import org.apache.flink.table.planner.functions.sql.{FlinkSqlOperatorTable, SqlWindowTableFunction}
 import org.apache.flink.table.planner.plan.`trait`.RelWindowProperties
 import org.apache.flink.table.planner.plan.logical._
@@ -43,7 +43,6 @@ import org.apache.calcite.rel.{BiRel, RelNode, RelVisitor}
 import org.apache.calcite.rel.core._
 import org.apache.calcite.rex._
 import org.apache.calcite.sql.`type`.SqlTypeFamily
-import org.apache.calcite.sql.{SqlKind, SqlUtil}
 import org.apache.calcite.util.{ImmutableBitSet, Util}
 
 import java.time.Duration
@@ -201,11 +200,11 @@ object WindowUtil {
     val inputRowType = scanInput.getRowType
     val timeIndex = getTimeAttributeIndex(windowCall)
     val fieldType = inputRowType.getFieldList.get(timeIndex).getType
-    val timeAttributeType = FlinkTypeFactory2.toLogicalType(fieldType)
+    val timeAttributeType = FlinkTypeFactory.toLogicalType(fieldType)
     if (!canBeTimeAttributeType(timeAttributeType)) {
       throw new ValidationException(
         "The supported time indicator type are TIMESTAMP" +
-          " and TIMESTAMP_LTZ, but is " + FlinkTypeFactory2.toLogicalType(fieldType) + "")
+          " and TIMESTAMP_LTZ, but is " + FlinkTypeFactory.toLogicalType(fieldType) + "")
     }
 
     val windowFunction = windowCall.getOperator.asInstanceOf[SqlWindowTableFunction]
@@ -342,7 +341,7 @@ object WindowUtil {
     val accTypes = aggInfoList.getAccTypes
     val groupingTypes = grouping
       .map(inputRowType.getFieldList.get(_).getType)
-      .map(FlinkTypeFactory2.toLogicalType)
+      .map(FlinkTypeFactory.toLogicalType)
     val sliceEndType = Array(DataTypes.BIGINT().getLogicalType)
 
     val groupingNames = grouping.map(inputRowType.getFieldNames.get(_))
@@ -350,8 +349,8 @@ object WindowUtil {
     val sliceEndName = Array(s"$$$endPropertyName")
 
     typeFactory.buildRelNodeRowType(
-      groupingNames ++ accFieldNames ++ sliceEndName,
-      groupingTypes ++ accTypes.map(fromDataTypeToLogicalType) ++ sliceEndType)
+      (groupingNames ++ accFieldNames ++ sliceEndName).toList,
+      (groupingTypes ++ accTypes.map(fromDataTypeToLogicalType) ++ sliceEndType).toList)
   }
 
   /**

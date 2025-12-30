@@ -162,7 +162,7 @@ object TableSourceUtil {
           fieldTypes = fieldTypes.patch(idx, Seq(proctimeType), 1)
       }
     }
-    typeFactory.buildRelNodeRowType(fieldNames, fieldTypes)
+    typeFactory.buildRelNodeRowType(fieldNames.toList, fieldTypes.toList)
   }
 
   /**
@@ -196,7 +196,7 @@ object TableSourceUtil {
       getSourceRowTypeFromSource(typeFactory, tableSource.get, streaming)
     } else {
       val fieldTypes = fieldDataTypes.map(fromDataTypeToLogicalType)
-      typeFactory.buildRelNodeRowType(fieldNames, fieldTypes)
+      typeFactory.buildRelNodeRowType(fieldNames.toList, fieldTypes.toList)
     }
   }
 

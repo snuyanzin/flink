@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.rules.logical
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.types.logical.LogicalTypeRoot
 
 import org.apache.calcite.plan.{RelOptRule, RelOptRuleCall, RelOptUtil}
@@ -180,7 +180,7 @@ class ConvertToNotInOrInRule
 
   private def needConvert(rexNodes: List[RexCall]): Boolean = {
     val inputRef = rexNodes.head.getOperands.head
-    FlinkTypeFactory2.toLogicalType(inputRef.getType).getTypeRoot match {
+    FlinkTypeFactory.toLogicalType(inputRef.getType).getTypeRoot match {
       case LogicalTypeRoot.FLOAT | LogicalTypeRoot.DOUBLE => rexNodes.size >= FRACTIONAL_THRESHOLD
       case _ => rexNodes.size >= THRESHOLD
     }

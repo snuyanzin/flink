@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.nodes.physical.batch;
 
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.connector.ChangelogMode;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.InputProperty;
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecVectorSearchTableFunction;
@@ -105,7 +105,7 @@ public class BatchPhysicalVectorSearchTableFunction extends CommonPhysicalVector
                                 ChangelogMode.insertOnly())
                         : null,
                 InputProperty.DEFAULT,
-                FlinkTypeFactory2.toLogicalRowType(outputRowType),
+                FlinkTypeFactory.toLogicalRowType(outputRowType),
                 getRelDetailedDescription());
     }
 }

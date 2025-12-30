@@ -47,7 +47,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.legacy.connector.source.AsyncTableFunctionProvider;
 import org.apache.flink.table.legacy.connector.source.TableFunctionProvider;
 import org.apache.flink.table.legacy.sources.LookupableTableSource;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.plan.nodes.exec.utils.ExecNodeUtil;
 import org.apache.flink.table.planner.plan.nodes.exec.utils.TransformationMetadata;
@@ -444,7 +444,7 @@ public final class LookupJoinUtil extends FunctionCallUtil {
                     FullCachingLookupProvider fullCachingLookupProvider =
                             (FullCachingLookupProvider) provider;
                     RowType tableSourceRowType =
-                            FlinkTypeFactory2.toLogicalRowType(temporalTable.getRowType());
+                            FlinkTypeFactory.toLogicalRowType(temporalTable.getRowType());
                     LookupFullCache fullCache =
                             createFullCache(
                                     fullCachingLookupProvider,

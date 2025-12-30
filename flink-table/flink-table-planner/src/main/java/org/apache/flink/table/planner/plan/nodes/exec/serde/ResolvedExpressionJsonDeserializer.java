@@ -22,7 +22,7 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.expressions.ResolvedExpression;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonParser;
@@ -80,7 +80,7 @@ final class ResolvedExpressionJsonDeserializer extends StdDeserializer<ResolvedE
         String serializableString = jsonNode.get(SERIALIZABLE_STRING).asText();
         return new RexNodeExpression(
                 node,
-                DataTypes.of(FlinkTypeFactory2.toLogicalType(node.getType())),
+                DataTypes.of(FlinkTypeFactory.toLogicalType(node.getType())),
                 node.toString(),
                 serializableString);
     }

@@ -26,7 +26,7 @@ import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.OperationUtils;
 import org.apache.flink.table.operations.QueryOperation;
 import org.apache.flink.table.operations.QueryOperationVisitor;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter;
 import org.apache.flink.table.types.DataType;
 
@@ -57,7 +57,7 @@ public class PlannerQueryOperation implements QueryOperation {
                         .map(
                                 field ->
                                         LogicalTypeDataTypeConverter.fromLogicalTypeToDataType(
-                                                FlinkTypeFactory2.toLogicalType(field.getType())))
+                                                FlinkTypeFactory.toLogicalType(field.getType())))
                         .toArray(DataType[]::new);
 
         this.resolvedSchema = ResolvedSchema.physical(fieldNames, fieldTypes);

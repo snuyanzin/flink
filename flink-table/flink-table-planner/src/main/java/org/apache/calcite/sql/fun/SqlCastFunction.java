@@ -16,7 +16,7 @@
  */
 package org.apache.calcite.sql.fun;
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
 
 import com.google.common.collect.ImmutableSetMultimap;
@@ -272,8 +272,8 @@ public class SqlCastFunction extends SqlFunction {
                 //  as the differences with calcite casting checker logic generates issues
                 //  later in the calcite stack.
                 return LogicalTypeCasts.supportsExplicitCast(
-                        FlinkTypeFactory2.toLogicalType(fromType),
-                        FlinkTypeFactory2.toLogicalType(toType));
+                        FlinkTypeFactory.toLogicalType(fromType),
+                        FlinkTypeFactory.toLogicalType(toType));
             default:
                 return SqlTypeUtil.canCastFrom(
                         toType, fromType, FlinkSqlTypeMappingRule.instance());

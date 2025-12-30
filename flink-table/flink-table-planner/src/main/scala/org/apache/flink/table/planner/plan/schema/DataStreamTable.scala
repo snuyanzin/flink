@@ -30,6 +30,7 @@ import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo
 import org.apache.calcite.plan.RelOptSchema
 import org.apache.calcite.rel.`type`.RelDataType
 
+import java.util
 import java.util.{List => JList}
 
 /** The class that wraps [[DataStream]] as a Calcite Table. */

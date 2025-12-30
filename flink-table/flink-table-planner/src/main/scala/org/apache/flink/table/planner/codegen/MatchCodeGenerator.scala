@@ -23,7 +23,7 @@ import org.apache.flink.cep.pattern.conditions.{IterativeCondition, RichIterativ
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.data.{GenericRowData, RowData}
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
 import org.apache.flink.table.planner.codegen.GeneratedExpression.{NEVER_NULL, NO_CODE}
 import org.apache.flink.table.planner.codegen.GenerateUtils.{generateNullLiteral, generateRowtimeAccess}
@@ -631,7 +631,7 @@ class MatchCodeGenerator(
     private def generateAggAccess(aggCall: RexCall): GeneratedExpression = {
       val singleAggResultTerm = newName(ctx, "result")
       val singleAggNullTerm = newName(ctx, "nullTerm")
-      val singleAggResultType = FlinkTypeFactory2.toLogicalType(aggCall.`type`)
+      val singleAggResultType = FlinkTypeFactory.toLogicalType(aggCall.`type`)
       val primitiveSingleAggResultTypeTerm = primitiveTypeTermForType(singleAggResultType)
       val boxedSingleAggResultTypeTerm = boxedTypeTermForType(singleAggResultType)
 
@@ -692,7 +692,7 @@ class MatchCodeGenerator(
 
       val aggInfoList = AggregateUtil.transformToStreamAggregateInfoList(
         unwrapTypeFactory(relBuilder),
-        FlinkTypeFactory2.toLogicalRowType(inputRelType),
+        FlinkTypeFactory.toLogicalRowType(inputRelType),
         aggCalls,
         needRetraction,
         needInputCount = false,
@@ -701,7 +701,7 @@ class MatchCodeGenerator(
       )
 
       val inputFieldTypes = matchAgg.inputExprs
-        .map(expr => FlinkTypeFactory2.toLogicalType(expr.getType))
+        .map(expr => FlinkTypeFactory.toLogicalType(expr.getType))
 
       val aggsHandlerCodeGenerator = new AggsHandlerCodeGenerator(
         new CodeGeneratorContext(new Configuration, ctx.classLoader),

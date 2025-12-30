@@ -20,7 +20,6 @@ package org.apache.flink.table.planner.plan.rules.logical;
 
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.utils.ShortcutUtils;
 import org.apache.flink.table.runtime.functions.table.UnnestRowsFunctionBase;
@@ -129,7 +128,7 @@ public class LogicalUnnestRule extends RelRule<LogicalUnnestRule.LogicalUnnestRu
                     (RelDataType)
                             ((Map.Entry) uncollect.getInput().getRowType().getFieldList().get(0))
                                     .getValue();
-            LogicalType logicalType = FlinkTypeFactory2.toLogicalType(relDataType);
+            LogicalType logicalType = FlinkTypeFactory.toLogicalType(relDataType);
 
             BridgingSqlFunction sqlFunction =
                     BridgingSqlFunction.of(

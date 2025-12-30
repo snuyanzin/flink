@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
 import org.apache.flink.legacy.table.sources.StreamTableSource
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecLegacyTableSourceScan
 import org.apache.flink.table.planner.plan.nodes.physical.common.CommonPhysicalLegacyTableSourceScan
@@ -60,7 +60,7 @@ class StreamPhysicalLegacyTableSourceScan(
       unwrapTableConfig(this),
       tableSource,
       getTable.getQualifiedName,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

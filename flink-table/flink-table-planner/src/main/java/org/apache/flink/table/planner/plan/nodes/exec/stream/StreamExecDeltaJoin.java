@@ -33,7 +33,7 @@ import org.apache.flink.table.data.conversion.DataStructureConverter;
 import org.apache.flink.table.data.conversion.DataStructureConverters;
 import org.apache.flink.table.functions.AsyncTableFunction;
 import org.apache.flink.table.functions.UserDefinedFunctionHelper;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.codegen.FunctionCallCodeGenerator;
 import org.apache.flink.table.planner.codegen.LookupJoinCodeGenerator;
 import org.apache.flink.table.planner.delegation.PlannerBase;
@@ -398,7 +398,7 @@ public class StreamExecDeltaJoin extends ExecNodeBase<RowData>
         UserDefinedFunctionHelper.prepareInstance(config, lookupSideAsyncTableFunction);
 
         RowType lookupTableSourceRowType =
-                FlinkTypeFactory2.toLogicalRowType(lookupTable.getRowType());
+                FlinkTypeFactory.toLogicalRowType(lookupTable.getRowType());
 
         RowType resultRowType = (RowType) getOutputType();
 

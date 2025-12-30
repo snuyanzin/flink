@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
 import org.apache.flink.table.functions.UserDefinedFunction
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.logical.LogicalWindow
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecHashWindowAggregate
@@ -88,12 +88,12 @@ class BatchPhysicalLocalHashWindowAggregate(
       inputTimeFieldIndex,
       inputTimeIsDate,
       namedWindowProperties.toArray,
-      FlinkTypeFactory2.toLogicalRowType(inputRowType),
+      FlinkTypeFactory.toLogicalRowType(inputRowType),
       enableAssignPane,
       false, // isMerge is always false
       false, // isFinal is always false
       InputProperty.DEFAULT,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

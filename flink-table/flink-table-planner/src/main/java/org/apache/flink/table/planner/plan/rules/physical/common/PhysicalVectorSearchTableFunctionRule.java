@@ -19,7 +19,7 @@
 package org.apache.flink.table.planner.plan.rules.physical.common;
 
 import org.apache.flink.table.api.TableException;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.functions.sql.ml.SqlVectorSearchTableFunction;
 import org.apache.flink.table.planner.plan.nodes.FlinkConvention;
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions;
@@ -210,8 +210,7 @@ public class PhysicalVectorSearchTableFunctionRule
         // TOP_K
         RexLiteral topK = (RexLiteral) functionCall.getOperands().get(3);
         FunctionCallUtil.Constant topKParam =
-                new FunctionCallUtil.Constant(
-                        FlinkTypeFactory2.toLogicalType(topK.getType()), topK);
+                new FunctionCallUtil.Constant(FlinkTypeFactory.toLogicalType(topK.getType()), topK);
 
         // Runtime Config
         Map<String, String> runtimeConfig =
@@ -224,7 +223,7 @@ public class PhysicalVectorSearchTableFunctionRule
                 searchColumns,
                 topKParam,
                 runtimeConfig,
-                FlinkTypeFactory2.toLogicalRowType(scan.getRowType()));
+                FlinkTypeFactory.toLogicalRowType(scan.getRowType()));
     }
 
     private FunctionCallUtil.FunctionParam getQueryColumnParam(

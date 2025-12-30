@@ -32,7 +32,7 @@ import org.apache.flink.table.api.Schema.UnresolvedWatermarkSpec;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.expressions.SqlCallExpression;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.types.logical.LogicalType;
 
 import org.apache.calcite.rel.type.RelDataType;
@@ -182,7 +182,7 @@ public class SchemaBuilderUtil {
                                     fullRowtimeExpression,
                                     eventTimeColumnName.getComponent(i).getParserPosition(),
                                     components.get(i),
-                                    FlinkTypeFactory2.toLogicalType(
+                                    FlinkTypeFactory.toLogicalType(
                                             allFieldsTypes.get(components.get(0)))));
                 }
                 componentType = field.getType();

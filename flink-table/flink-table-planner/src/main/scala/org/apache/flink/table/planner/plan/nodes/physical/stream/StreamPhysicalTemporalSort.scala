@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecTemporalSort
 import org.apache.flink.table.planner.plan.utils.{RelExplainUtil, SortUtil}
@@ -67,7 +67,7 @@ class StreamPhysicalTemporalSort(
       unwrapTableConfig(this),
       SortUtil.getSortSpec(sortCollation.getFieldCollations),
       InputProperty.DEFAULT,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

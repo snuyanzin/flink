@@ -98,21 +98,21 @@ class FlinkTypeFactoryTest {
                         Thread.currentThread().getContextClassLoader(), FlinkTypeSystem.INSTANCE);
 
         assertThat(
-                        FlinkTypeFactory2.toLogicalType(
+                        FlinkTypeFactory.toLogicalType(
                                 typeFactory.createFieldTypeFromLogicalType(logicalType.copy(true))))
                 .isEqualTo(logicalType.copy(true));
         assertThat(
-                        FlinkTypeFactory2.toLogicalType(
+                        FlinkTypeFactory.toLogicalType(
                                 typeFactory.createFieldTypeFromLogicalType(
                                         logicalType.copy(false))))
                 .isEqualTo(logicalType.copy(false));
         // twice for cache.
         assertThat(
-                        FlinkTypeFactory2.toLogicalType(
+                        FlinkTypeFactory.toLogicalType(
                                 typeFactory.createFieldTypeFromLogicalType(logicalType.copy(true))))
                 .isEqualTo(logicalType.copy(true));
         assertThat(
-                        FlinkTypeFactory2.toLogicalType(
+                        FlinkTypeFactory.toLogicalType(
                                 typeFactory.createFieldTypeFromLogicalType(
                                         logicalType.copy(false))))
                 .isEqualTo(logicalType.copy(false));
@@ -127,12 +127,12 @@ class FlinkTypeFactoryTest {
         LogicalType logicalType = new NullType();
 
         assertThat(
-                        FlinkTypeFactory2.toLogicalType(
+                        FlinkTypeFactory.toLogicalType(
                                 typeFactory.createFieldTypeFromLogicalType(logicalType.copy(true))))
                 .isEqualTo(logicalType.copy(true));
 
         assertThat(
-                        FlinkTypeFactory2.toLogicalType(
+                        FlinkTypeFactory.toLogicalType(
                                 typeFactory.createFieldTypeFromLogicalType(logicalType.copy(true))))
                 .isEqualTo(logicalType.copy(true));
     }

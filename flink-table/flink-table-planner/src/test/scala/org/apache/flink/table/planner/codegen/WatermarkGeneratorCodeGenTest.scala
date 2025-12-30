@@ -24,7 +24,7 @@ import org.apache.flink.metrics.MetricGroup
 import org.apache.flink.streaming.util.MockStreamingRuntimeContext
 import org.apache.flink.table.catalog.{ObjectIdentifier, UnresolvedIdentifier}
 import org.apache.flink.table.data.{GenericRowData, TimestampData}
-import org.apache.flink.table.planner.calcite.{FlinkContext, FlinkPlannerImpl, FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.{FlinkContext, FlinkTypeFactory}
 import org.apache.flink.table.planner.runtime.utils.JavaUserDefinedScalarFunctions.JavaFunc5
 import org.apache.flink.table.planner.utils.PlannerMocks
 import org.apache.flink.table.runtime.generated.WatermarkGenerator
@@ -158,12 +158,12 @@ class WatermarkGeneratorCodeGenTest(useDefinedConstructor: Boolean) {
       rowtimeExpr: String,
       useDefinedConstructor: Boolean): WatermarkGenerator = {
     val tableRowType = plannerMocks.getPlannerContext.getTypeFactory.buildRelNodeRowType(
-      Seq("ts", "offset"),
-      Seq(
+      util.List.of("ts", "offset"),
+      util.List.of(
         new TimestampType(3),
         new IntType()
       ))
-    val rowType = FlinkTypeFactory2.toLogicalRowType(tableRowType)
+    val rowType = FlinkTypeFactory.toLogicalRowType(tableRowType)
     val converter = plannerMocks.getPlanner
       .createToRelContext()
       .getCluster

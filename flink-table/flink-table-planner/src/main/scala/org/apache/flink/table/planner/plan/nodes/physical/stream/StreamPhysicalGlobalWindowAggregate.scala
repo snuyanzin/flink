@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.logical.{SliceAttachedWindowingStrategy, WindowAttachedWindowingStrategy, WindowingStrategy}
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecGlobalWindowAggregate
@@ -73,7 +73,7 @@ class StreamPhysicalGlobalWindowAggregate(
 
   private lazy val aggInfoList = AggregateUtil.deriveStreamWindowAggregateInfoList(
     unwrapTypeFactory(inputRel),
-    FlinkTypeFactory2.toLogicalRowType(inputRowTypeOfLocalAgg),
+    FlinkTypeFactory.toLogicalRowType(inputRowTypeOfLocalAgg),
     aggCalls,
     AggregateUtil.needRetraction(this),
     windowing.getWindow,
@@ -147,8 +147,8 @@ class StreamPhysicalGlobalWindowAggregate(
       namedWindowProperties.toArray,
       AggregateUtil.needRetraction(this),
       InputProperty.DEFAULT,
-      FlinkTypeFactory2.toLogicalRowType(inputRowTypeOfLocalAgg),
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(inputRowTypeOfLocalAgg),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 

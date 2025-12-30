@@ -24,7 +24,7 @@ import org.apache.flink.table.expressions._
 import org.apache.flink.table.expressions.ExpressionUtils.extractValue
 import org.apache.flink.table.functions._
 import org.apache.flink.table.planner.JLong
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.delegation.PlannerBase
 import org.apache.flink.table.planner.functions.aggfunctions.{AvgAggFunction, CountAggFunction, Sum0AggFunction}
 import org.apache.flink.table.planner.functions.aggfunctions.AvgAggFunction._
@@ -167,7 +167,7 @@ object AggregateUtil extends Enumeration {
       orderKeyIndexes: Array[Int] = null): util.Map[Integer, Integer] = {
     val aggInfos = transformToAggregateInfoList(
       typeFactory,
-      FlinkTypeFactory2.toLogicalRowType(inputType),
+      FlinkTypeFactory.toLogicalRowType(inputType),
       aggregateCalls,
       Array.fill(aggregateCalls.size)(false),
       orderKeyIndexes,
@@ -265,7 +265,7 @@ object AggregateUtil extends Enumeration {
     val needInputCount = needRetraction(agg)
     transformToStreamAggregateInfoList(
       unwrapTypeFactory(agg),
-      FlinkTypeFactory2.toLogicalRowType(input.getRowType),
+      FlinkTypeFactory.toLogicalRowType(input.getRowType),
       aggCalls,
       aggCallNeedRetractions,
       needInputCount,
@@ -985,13 +985,13 @@ object AggregateUtil extends Enumeration {
     val accTypes = aggInfoList.getAccTypes
     val groupingTypes = groupSet
       .map(inputType.getFieldList.get(_).getType)
-      .map(FlinkTypeFactory2.toLogicalType)
+      .map(FlinkTypeFactory.toLogicalType)
     val groupingNames = groupSet.map(inputType.getFieldNames.get(_))
     val accFieldNames = inferStreamAggAccumulatorNames(aggInfoList)
 
     typeFactory.buildRelNodeRowType(
-      groupingNames ++ accFieldNames,
-      groupingTypes ++ accTypes.map(fromDataTypeToLogicalType))
+      (groupingNames ++ accFieldNames).toList,
+      ((groupingTypes ++ accTypes.map(fromDataTypeToLogicalType)).toList))
   }
 
   /** Derives accumulators names from stream aggregate */
@@ -1089,13 +1089,13 @@ object AggregateUtil extends Enumeration {
     val accTypes = aggInfoList.getAccTypes
     val groupingTypes = groupSet
       .map(inputRowType.getFieldList.get(_).getType)
-      .map(FlinkTypeFactory2.toLogicalType)
+      .map(FlinkTypeFactory.toLogicalType)
     val groupingNames = groupSet.map(inputRowType.getFieldNames.get(_))
     val accFieldNames = inferAggAccumulatorNames(aggInfoList)
 
     typeFactory.buildRelNodeRowType(
-      groupingNames ++ accFieldNames,
-      groupingTypes ++ accTypes.map(fromDataTypeToLogicalType))
+      (groupingNames ++ accFieldNames).toList,
+      (groupingTypes ++ accTypes.map(fromDataTypeToLogicalType)).toList)
   }
 
   /** Derives accumulators names from aggregate */

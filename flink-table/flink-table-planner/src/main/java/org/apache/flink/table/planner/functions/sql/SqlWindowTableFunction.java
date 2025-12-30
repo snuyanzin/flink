@@ -19,7 +19,6 @@ package org.apache.flink.table.planner.functions.sql;
 
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.util.Preconditions;
 
@@ -215,7 +214,7 @@ public class SqlWindowTableFunction extends org.apache.calcite.sql.SqlWindowTabl
                     if (FlinkTypeFactory.isTimeIndicatorType(fieldType)) {
                         return Optional.empty();
                     } else {
-                        LogicalType timeAttributeType = FlinkTypeFactory2.toLogicalType(fieldType);
+                        LogicalType timeAttributeType = FlinkTypeFactory.toLogicalType(fieldType);
                         if (!canBeTimeAttributeType(timeAttributeType)) {
                             ValidationException exception =
                                     new ValidationException(

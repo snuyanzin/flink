@@ -18,7 +18,7 @@
 
 package org.apache.flink.table.planner.plan.nodes.physical.batch.runtimefilter;
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 import org.apache.flink.table.planner.plan.nodes.exec.InputProperty;
 import org.apache.flink.table.planner.plan.nodes.exec.batch.runtimefilter.BatchExecRuntimeFilter;
@@ -101,7 +101,7 @@ public class BatchPhysicalRuntimeFilter extends BiRel implements BatchPhysicalRe
         return new BatchExecRuntimeFilter(
                 unwrapTableConfig(this),
                 getInputProperties(),
-                FlinkTypeFactory2.toLogicalRowType(getRowType()),
+                FlinkTypeFactory.toLogicalRowType(getRowType()),
                 getRelDetailedDescription(),
                 probeIndices);
     }

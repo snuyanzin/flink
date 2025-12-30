@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.plan.rules.physical.batch
 
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.functions.python.PythonFunctionKind
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
 import org.apache.flink.table.planner.plan.nodes.logical.FlinkLogicalOverAggregate
@@ -99,7 +99,7 @@ class BatchPhysicalOverAggregateRule
           val aggregateCalls = group.getAggregateCalls(logicWindow)
           val (_, _, aggregates) = AggregateUtil.transformToBatchAggregateFunctions(
             ShortcutUtils.unwrapTypeFactory(input),
-            FlinkTypeFactory2.toLogicalRowType(generateInputTypeWithConstants()),
+            FlinkTypeFactory.toLogicalRowType(generateInputTypeWithConstants()),
             aggregateCalls,
             sortSpec.getFieldIndices)
           val aggCallToAggFunction = aggregateCalls.zip(aggregates)
@@ -155,11 +155,11 @@ class BatchPhysicalOverAggregateRule
     }
 
     def generateInputTypeWithConstants(): RelDataType = {
-      val constantTypes = constants.map(c => FlinkTypeFactory2.toLogicalType(c.getType))
+      val constantTypes = constants.map(c => FlinkTypeFactory.toLogicalType(c.getType))
       val inputNamesWithConstants = inputRowType.getFieldNames ++
         constants.indices.map(i => s"TMP$i")
       val inputTypesWithConstants = inputRowType.getFieldList
-        .map(i => FlinkTypeFactory2.toLogicalType(i.getType)) ++ constantTypes
+        .map(i => FlinkTypeFactory.toLogicalType(i.getType)) ++ constantTypes
       typeFactory.buildRelNodeRowType(inputNamesWithConstants, inputTypesWithConstants)
     }
 

@@ -28,7 +28,6 @@ import org.apache.calcite.rex.{RexNode, RexSimplify}
 import org.apache.calcite.sql.`type`.SqlTypeName
 
 import java.util
-import java.util.ArrayList
 
 import scala.collection.JavaConversions._
 

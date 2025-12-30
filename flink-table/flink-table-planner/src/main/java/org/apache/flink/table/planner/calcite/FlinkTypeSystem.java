@@ -111,14 +111,14 @@ public class FlinkTypeSystem extends RelDataTypeSystemImpl {
     @Override
     public RelDataType deriveAvgAggType(
             RelDataTypeFactory typeFactory, RelDataType argRelDataType) {
-        LogicalType argType = FlinkTypeFactory2.toLogicalType(argRelDataType);
+        LogicalType argType = FlinkTypeFactory.toLogicalType(argRelDataType);
         LogicalType resultType = LogicalTypeMerging.findAvgAggType(argType);
         return unwrapTypeFactory(typeFactory).createFieldTypeFromLogicalType(resultType);
     }
 
     @Override
     public RelDataType deriveSumType(RelDataTypeFactory typeFactory, RelDataType argRelDataType) {
-        LogicalType argType = FlinkTypeFactory2.toLogicalType(argRelDataType);
+        LogicalType argType = FlinkTypeFactory.toLogicalType(argRelDataType);
         LogicalType resultType = LogicalTypeMerging.findSumAggType(argType);
         return unwrapTypeFactory(typeFactory).createFieldTypeFromLogicalType(resultType);
     }

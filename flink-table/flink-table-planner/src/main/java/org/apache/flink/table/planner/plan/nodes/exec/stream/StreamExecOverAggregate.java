@@ -28,7 +28,6 @@ import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
 import org.apache.flink.table.planner.codegen.CodeGeneratorContext;
 import org.apache.flink.table.planner.codegen.EqualiserCodeGenerator;
 import org.apache.flink.table.planner.codegen.agg.AggsHandlerCodeGenerator;
@@ -208,7 +207,7 @@ public class StreamExecOverAggregate extends ExecNodeBase<RowData>
         IntStream.range(0, constants.size()).forEach(i -> fieldNames.add("TMP" + i));
         for (int i = 0; i < constants.size(); ++i) {
             fieldNames.add("TMP" + i);
-            fieldTypes.add(FlinkTypeFactory2.toLogicalType(constants.get(i).getType()));
+            fieldTypes.add(FlinkTypeFactory.toLogicalType(constants.get(i).getType()));
         }
 
         final RowType aggInputRowType =

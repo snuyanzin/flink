@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode
 import org.apache.flink.table.planner.plan.nodes.exec.stream.StreamExecDataStreamScan
 import org.apache.flink.table.planner.plan.schema.DataStreamTable
@@ -79,7 +79,7 @@ class StreamPhysicalDataStreamScan(
       dataStreamTable.fieldIndexes,
       dataStreamTable.fieldNames,
       getTable.getQualifiedName,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.rules.physical.batch
 import org.apache.flink.table.api.TableException
 import org.apache.flink.table.api.config.OptimizerConfigOptions
 import org.apache.flink.table.functions.{AggregateFunction, DeclarativeAggregateFunction, UserDefinedFunction}
-import org.apache.flink.table.planner.calcite.{FlinkRelFactories, FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.{FlinkRelFactories, FlinkTypeFactory}
 import org.apache.flink.table.planner.plan.`trait`.FlinkRelDistribution
 import org.apache.flink.table.planner.plan.logical.{LogicalWindow, SlidingGroupWindow, TumblingGroupWindow}
 import org.apache.flink.table.planner.plan.nodes.FlinkConventions
@@ -100,7 +100,7 @@ class BatchPhysicalWindowAggregateRule
 
     val (_, aggBufferTypes, aggregates) = AggregateUtil.transformToBatchAggregateFunctions(
       unwrapTypeFactory(input),
-      FlinkTypeFactory2.toLogicalRowType(input.getRowType),
+      FlinkTypeFactory.toLogicalRowType(input.getRowType),
       aggCallsWithoutAuxGroupCalls)
     val aggCallToAggFunction = aggCallsWithoutAuxGroupCalls.zip(aggregates)
     val internalAggBufferTypes = aggBufferTypes.map(_.map(fromDataTypeToLogicalType))

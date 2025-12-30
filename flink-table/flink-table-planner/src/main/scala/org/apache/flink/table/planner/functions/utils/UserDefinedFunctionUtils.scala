@@ -24,7 +24,6 @@ import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.data.{DecimalData, RowData, StringData, TimestampData}
 import org.apache.flink.table.functions._
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2
 import org.apache.flink.table.planner.plan.schema.DeferredTypeFlinkTableFunction
 import org.apache.flink.table.runtime.types.ClassDataTypeConverter.fromClassToDataType
 import org.apache.flink.table.runtime.types.ClassLogicalTypeConverter.getDefaultExternalClassForType
@@ -809,7 +808,7 @@ object UserDefinedFunctionUtils {
         if (operandType.getSqlTypeName == SqlTypeName.NULL) {
           null
         } else {
-          FlinkTypeFactory2.toLogicalType(operandType)
+          FlinkTypeFactory.toLogicalType(operandType)
         }
     }
   }

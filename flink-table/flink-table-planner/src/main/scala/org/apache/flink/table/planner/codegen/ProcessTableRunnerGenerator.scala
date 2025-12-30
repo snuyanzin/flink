@@ -26,7 +26,7 @@ import org.apache.flink.table.data.RowData
 import org.apache.flink.table.data.conversion.RowRowConverter
 import org.apache.flink.table.functions.{FunctionDefinition, ProcessTableFunction, UserDefinedFunction, UserDefinedFunctionHelper}
 import org.apache.flink.table.functions.UserDefinedFunctionHelper.{validateClassForRuntime, PROCESS_TABLE_EVAL, PROCESS_TABLE_ON_TIMER}
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2, RexTableArgCall}
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, RexTableArgCall}
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
 import org.apache.flink.table.planner.codegen.GeneratedExpression.{NEVER_NULL, NO_CODE}
 import org.apache.flink.table.planner.codegen.Indenter.toISC
@@ -72,7 +72,7 @@ object ProcessTableRunnerGenerator {
     val dataTypeFactory = function.getDataTypeFactory
     val rexFactory = function.getRexFactory
     val functionName = function.getName
-    val returnType = FlinkTypeFactory2.toLogicalType(udfCall.getType)
+    val returnType = FlinkTypeFactory.toLogicalType(udfCall.getType)
 
     // For specialized functions, this call context is able to provide the final changelog modes.
     // Thus, functions can reconfigure themselves for the exact use case.
@@ -328,7 +328,7 @@ object ProcessTableRunnerGenerator {
       .map {
         case tableArgCall: RexTableArgCall =>
           val inputIndex = tableArgCall.getInputIndex
-          val tableType = FlinkTypeFactory2.toLogicalType(call.getType).copy(true)
+          val tableType = FlinkTypeFactory.toLogicalType(call.getType).copy(true)
           GeneratedExpression(
             s"$inputRowTerm",
             s"$inputIndexTerm != $inputIndex",

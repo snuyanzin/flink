@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.plan.nodes.physical.stream
 
 import org.apache.flink.table.planner.JList
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.hint.StateTtlHint
 import org.apache.flink.table.planner.plan.PartialFinalType
 import org.apache.flink.table.planner.plan.nodes.exec.{ExecNode, InputProperty}
@@ -59,7 +59,7 @@ class StreamPhysicalGlobalGroupAggregate(
 
   lazy val localAggInfoList: AggregateInfoList = AggregateUtil.transformToStreamAggregateInfoList(
     unwrapTypeFactory(inputRel),
-    FlinkTypeFactory2.toLogicalRowType(localAggInputRowType),
+    FlinkTypeFactory.toLogicalRowType(localAggInputRowType),
     aggCalls,
     aggCallNeedRetractions,
     needRetraction,
@@ -70,7 +70,7 @@ class StreamPhysicalGlobalGroupAggregate(
 
   lazy val globalAggInfoList: AggregateInfoList = AggregateUtil.transformToStreamAggregateInfoList(
     unwrapTypeFactory(inputRel),
-    FlinkTypeFactory2.toLogicalRowType(localAggInputRowType),
+    FlinkTypeFactory.toLogicalRowType(localAggInputRowType),
     aggCalls,
     aggCallNeedRetractions,
     needRetraction,
@@ -125,13 +125,13 @@ class StreamPhysicalGlobalGroupAggregate(
       grouping,
       aggCalls.toArray,
       aggCallNeedRetractions,
-      FlinkTypeFactory2.toLogicalRowType(localAggInputRowType),
+      FlinkTypeFactory.toLogicalRowType(localAggInputRowType),
       generateUpdateBefore,
       needRetraction,
       indexOfCountStar.map(Integer.valueOf).orNull,
       StateTtlHint.getStateTtlFromHintOnSingleRel(hints),
       InputProperty.DEFAULT,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }

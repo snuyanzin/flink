@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.codegen.calls
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenException, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.newNames
 import org.apache.flink.table.planner.codegen.GenerateUtils.generateLiteral
@@ -56,7 +56,7 @@ object SearchOperatorGen {
       sargLiteral: RexLiteral): GeneratedExpression = {
     val sarg: Sarg[Nothing] = sargLiteral.getValueAs(classOf[Sarg[Nothing]])
     val targetType = target.resultType
-    val sargType = FlinkTypeFactory2.toLogicalType(sargLiteral.getType)
+    val sargType = FlinkTypeFactory.toLogicalType(sargLiteral.getType)
 
     val commonType: LogicalType = findCommonType(asList(targetType, sargType))
       .orElseThrow(

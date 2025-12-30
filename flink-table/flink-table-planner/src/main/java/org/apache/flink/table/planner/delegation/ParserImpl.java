@@ -26,7 +26,7 @@ import org.apache.flink.table.delegation.Parser;
 import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.RexFactory;
 import org.apache.flink.table.planner.calcite.SqlToRexConverter;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
@@ -121,7 +121,7 @@ public class ParserImpl implements Parser {
             final SqlToRexConverter sqlToRexConverter =
                     rexFactory.createSqlToRexConverter(inputRowType, outputType);
             final RexNode rexNode = sqlToRexConverter.convertToRexNode(sqlExpression);
-            final LogicalType logicalType = FlinkTypeFactory2.toLogicalType(rexNode.getType());
+            final LogicalType logicalType = FlinkTypeFactory.toLogicalType(rexNode.getType());
             // expand expression for serializable expression strings similar to views
             final String sqlExpressionExpanded = sqlToRexConverter.expand(sqlExpression);
             return new RexNodeExpression(

@@ -43,7 +43,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.functions.UserDefinedFunctionHelper;
 import org.apache.flink.table.legacy.sources.LookupableTableSource;
 import org.apache.flink.table.legacy.sources.TableSource;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.codegen.CodeGeneratorContext;
 import org.apache.flink.table.planner.codegen.FilterCodeGenerator;
 import org.apache.flink.table.planner.codegen.FunctionCallCodeGenerator;
@@ -263,7 +263,7 @@ public abstract class CommonExecLookupJoin extends ExecNodeBase<RowData> {
         validate(temporalTable);
         final ExecEdge inputEdge = getInputEdges().get(0);
         RowType inputRowType = (RowType) inputEdge.getOutputType();
-        RowType tableSourceRowType = FlinkTypeFactory2.toLogicalRowType(temporalTable.getRowType());
+        RowType tableSourceRowType = FlinkTypeFactory.toLogicalRowType(temporalTable.getRowType());
         RowType resultRowType = (RowType) getOutputType();
         validateLookupKeyType(lookupKeys, inputRowType, tableSourceRowType);
         boolean isAsyncEnabled = null != asyncLookupOptions;

@@ -30,7 +30,7 @@ import org.apache.flink.table.connector.Projection;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.functions.python.PythonFunctionInfo;
 import org.apache.flink.table.functions.python.PythonFunctionKind;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.codegen.CodeGeneratorContext;
 import org.apache.flink.table.planner.codegen.ProjectionCodeGenerator;
 import org.apache.flink.table.planner.delegation.PlannerBase;
@@ -159,7 +159,7 @@ public abstract class CommonExecPythonCalc extends ExecNodeBase<RowData>
                         .collect(Collectors.toList());
         List<LogicalType> pythonCallLogicalTypes =
                 pythonRexCalls.stream()
-                        .map(node -> FlinkTypeFactory2.toLogicalType(node.getType()))
+                        .map(node -> FlinkTypeFactory.toLogicalType(node.getType()))
                         .collect(Collectors.toList());
         List<LogicalType> fieldsLogicalTypes = new ArrayList<>();
         fieldsLogicalTypes.addAll(forwardedFieldsLogicalTypes);

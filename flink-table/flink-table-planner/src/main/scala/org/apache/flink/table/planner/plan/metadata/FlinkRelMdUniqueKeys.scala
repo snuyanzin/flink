@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.metadata
 import org.apache.flink.table.catalog.{CatalogTable, ResolvedCatalogBaseTable}
 import org.apache.flink.table.connector.ChangelogMode
 import org.apache.flink.table.planner._
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.calcite.{Expand, Rank, WatermarkAssigner, WindowAggregate}
 import org.apache.flink.table.planner.plan.nodes.physical.batch._
 import org.apache.flink.table.planner.plan.nodes.physical.common.CommonPhysicalLookupJoin
@@ -219,8 +219,8 @@ class FlinkRelMdUniqueKeys private extends MetadataHandler[BuiltInMetadata.Uniqu
     if (call.getKind != SqlKind.CAST) {
       return false
     }
-    val originalType = FlinkTypeFactory2.toLogicalType(call.getOperands.get(0).getType)
-    val newType = FlinkTypeFactory2.toLogicalType(call.getType)
+    val originalType = FlinkTypeFactory.toLogicalType(call.getOperands.get(0).getType)
+    val newType = FlinkTypeFactory.toLogicalType(call.getType)
     LogicalTypeCasts.supportsImplicitCast(originalType, newType)
   }
 

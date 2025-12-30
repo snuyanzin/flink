@@ -18,7 +18,7 @@
 
 package org.apache.flink.table.planner.plan.nodes.physical.stream;
 
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.hint.StateTtlHint;
 import org.apache.flink.table.planner.plan.metadata.FlinkRelMetadataQuery;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
@@ -199,7 +199,7 @@ public class StreamPhysicalMultiJoin extends AbstractRelNode implements StreamPh
                 localInputUniqueKeys,
                 StateTtlHint.getStateTtlFromHintOnMultiRel(this.hints),
                 inputProperties,
-                FlinkTypeFactory2.toLogicalRowType(getRowType()),
+                FlinkTypeFactory.toLogicalRowType(getRowType()),
                 getRelDetailedDescription());
     }
 

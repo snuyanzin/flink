@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.runtime.utils
 import org.apache.flink.table.api.{Schema, Table, TableDescriptor, TableEnvironment}
 import org.apache.flink.table.connector.ChangelogMode
 import org.apache.flink.table.data.GenericRowData
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.runtime.utils.JavaPojos.Pojo1
 import org.apache.flink.table.planner.utils.TableTestUtil
 import org.apache.flink.table.types.DataType
@@ -45,7 +45,7 @@ object TestSinkUtil {
     val rowType = TableTestUtil.toRelNode(table).getRowType
     val fieldNames = rowType.getFieldNames.asScala.toList
     val fieldTypes = rowType.getFieldList.asScala
-      .map(field => FlinkTypeFactory2.toLogicalType(field.getType))
+      .map(field => FlinkTypeFactory.toLogicalType(field.getType))
       .map(TypeConversions.fromLogicalToDataType)
       .toList
 

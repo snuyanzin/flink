@@ -25,7 +25,7 @@ import org.apache.flink.streaming.api.operators.OneInputStreamOperatorFactory;
 import org.apache.flink.streaming.api.operators.async.AsyncWaitOperatorFactory;
 import org.apache.flink.streaming.api.transformations.OneInputTransformation;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory2;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.codegen.AsyncCodeGenerator;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecEdge;
@@ -116,7 +116,7 @@ public abstract class CommonExecAsyncCalc extends ExecNodeBase<RowData>
                         .collect(Collectors.toList());
         List<LogicalType> asyncCallLogicalTypes =
                 asyncRexCalls.stream()
-                        .map(node -> FlinkTypeFactory2.toLogicalType(node.getType()))
+                        .map(node -> FlinkTypeFactory.toLogicalType(node.getType()))
                         .collect(Collectors.toList());
         List<LogicalType> fieldsLogicalTypes = new ArrayList<>();
         fieldsLogicalTypes.addAll(forwardedFieldsLogicalTypes);
@@ -140,7 +140,7 @@ public abstract class CommonExecAsyncCalc extends ExecNodeBase<RowData>
         RowType resultTypeInfo =
                 RowType.of(
                         projection.stream()
-                                .map(node -> FlinkTypeFactory2.toLogicalType(node.getType()))
+                                .map(node -> FlinkTypeFactory.toLogicalType(node.getType()))
                                 .toArray(LogicalType[]::new));
 
         GeneratedFunction<AsyncFunction<RowData, RowData>> generatedFunction =

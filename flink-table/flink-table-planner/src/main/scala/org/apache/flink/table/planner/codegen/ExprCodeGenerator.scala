@@ -25,7 +25,7 @@ import org.apache.flink.table.data.binary.BinaryRowData
 import org.apache.flink.table.data.util.DataFormatConverters.{getConverterForDataType, DataFormatConverter}
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions
 import org.apache.flink.table.legacy.types.logical.TypeInformationRawType
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2, RexDistinctKeyVariable, RexFieldVariable}
+import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, RexDistinctKeyVariable, RexFieldVariable}
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
 import org.apache.flink.table.planner.codegen.GeneratedExpression.{NEVER_NULL, NO_CODE}
 import org.apache.flink.table.planner.codegen.GenerateUtils._
@@ -350,7 +350,7 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
         inputRef.getName,
         inputRef.getName + "IsNull",
         NO_CODE,
-        FlinkTypeFactory2.toLogicalType(inputRef.getType))
+        FlinkTypeFactory.toLogicalType(inputRef.getType))
     }
     // for the general cases with a previous call to bindInput()
     val input1Arity = input1Type match {
@@ -420,7 +420,7 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
     throw new CodeGenException("RexLocalRef are not supported yet.")
 
   def visitRexFieldVariable(variable: RexFieldVariable): GeneratedExpression = {
-    val internalType = FlinkTypeFactory2.toLogicalType(variable.dataType)
+    val internalType = FlinkTypeFactory.toLogicalType(variable.dataType)
     val nullTerm = variable.fieldTerm + "IsNull" // not use newName, keep isNull unique.
     ctx.addReusableMember(s"${primitiveTypeTermForType(internalType)} ${variable.fieldTerm};")
     ctx.addReusableMember(s"boolean $nullTerm;")
@@ -459,7 +459,7 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
     throw new CodeGenException("Dynamic parameter references are not supported yet.")
 
   override def visitCall(call: RexCall): GeneratedExpression = {
-    val resultType = FlinkTypeFactory2.toLogicalType(call.getType)
+    val resultType = FlinkTypeFactory.toLogicalType(call.getType)
 
     // throw exception if json function is called outside JSON_OBJECT or JSON_ARRAY function
     if (isJsonFunctionOperand(call)) {
@@ -840,7 +840,7 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
             generateBinaryArithmeticOperator(ctx, "-", resultType, left, right)
 
           case BuiltInFunctionDefinitions.JSON =>
-            new JsonCallGen().generate(ctx, operands, FlinkTypeFactory2.toLogicalType(call.getType))
+            new JsonCallGen().generate(ctx, operands, FlinkTypeFactory.toLogicalType(call.getType))
 
           case _ =>
             new BridgingSqlFunctionCallGen(call).generate(ctx, operands, resultType)
@@ -877,7 +877,7 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
       ctx,
       jsonCall,
       jsonOperands,
-      FlinkTypeFactory2.toLogicalType(jsonCall.getType))
+      FlinkTypeFactory.toLogicalType(jsonCall.getType))
   }
 
   def getOperandLiterals(operands: Seq[GeneratedExpression]): Array[AnyRef] = {

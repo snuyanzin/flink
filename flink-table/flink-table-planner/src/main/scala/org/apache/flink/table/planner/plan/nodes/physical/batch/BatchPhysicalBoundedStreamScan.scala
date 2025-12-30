@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.plan.nodes.physical.batch
 
-import org.apache.flink.table.planner.calcite.{FlinkTypeFactory, FlinkTypeFactory2}
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode
 import org.apache.flink.table.planner.plan.nodes.exec.batch.BatchExecBoundedStreamScan
 import org.apache.flink.table.planner.plan.schema.DataStreamTable
@@ -76,7 +76,7 @@ class BatchPhysicalBoundedStreamScan(
       boundedStreamTable.dataType,
       boundedStreamTable.fieldIndexes,
       getTable.getQualifiedName,
-      FlinkTypeFactory2.toLogicalRowType(getRowType),
+      FlinkTypeFactory.toLogicalRowType(getRowType),
       getRelDetailedDescription)
   }
 }
