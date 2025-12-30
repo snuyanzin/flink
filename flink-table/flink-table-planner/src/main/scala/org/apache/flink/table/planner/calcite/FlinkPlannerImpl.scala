@@ -58,16 +58,11 @@ import scala.collection.JavaConverters._
  * parser. The main difference is that we do not create a new RelOptPlanner in the ready() method.
  */
 class FlinkPlannerImpl(
-    val config: FrameworkConfig,
+    config: FrameworkConfig,
     catalogReaderSupplier: JFunction[JBoolean, CalciteCatalogReader],
     typeFactory: FlinkTypeFactory,
-    val cluster: RelOptCluster) {
-
-  val operatorTable: SqlOperatorTable = config.getOperatorTable
-  val parser: CalciteParser = new CalciteParser(config.getParserConfig)
-  val convertletTable: SqlRexConvertletTable = config.getConvertletTable
-  val sqlToRelConverterConfig: SqlToRelConverter.Config =
-    config.getSqlToRelConverterConfig.withAddJsonTypeOperatorEnabled(false)
+    cluster: RelOptCluster)
+  extends FlinkPlannerImpl2(config, catalogReaderSupplier, typeFactory, cluster) {
 
   var validator: FlinkCalciteSqlValidator = _
 
