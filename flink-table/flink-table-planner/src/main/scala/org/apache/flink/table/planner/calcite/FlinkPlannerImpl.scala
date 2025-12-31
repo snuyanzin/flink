@@ -17,15 +17,6 @@
  */
 package org.apache.flink.table.planner.calcite
 
-import org.apache.calcite.plan._
-import org.apache.calcite.prepare.CalciteCatalogReader
-import org.apache.calcite.rel.RelRoot
-import org.apache.calcite.sql.advise.SqlAdvisorValidator
-import org.apache.calcite.sql.util.SqlShuttle
-import org.apache.calcite.sql.validate.SqlValidator
-import org.apache.calcite.sql.{SqlBasicCall, SqlCall, SqlHint, SqlKind, SqlNode, SqlNodeList, SqlSelect, SqlTableRef}
-import org.apache.calcite.sql2rel.SqlToRelConverter
-import org.apache.calcite.tools.{FrameworkConfig, RelConversionException}
 import org.apache.flink.sql.parser.ExtendedSqlNode
 import org.apache.flink.sql.parser.ddl.{SqlCompilePlan, SqlReset, SqlSet, SqlUseModules}
 import org.apache.flink.sql.parser.dml._
@@ -34,10 +25,21 @@ import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.planner.hint.FlinkHints
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil
 
+import org.apache.calcite.plan._
+import org.apache.calcite.prepare.CalciteCatalogReader
+import org.apache.calcite.rel.RelRoot
+import org.apache.calcite.sql.{SqlBasicCall, SqlCall, SqlHint, SqlKind, SqlNode, SqlNodeList, SqlSelect, SqlTableRef}
+import org.apache.calcite.sql.advise.SqlAdvisorValidator
+import org.apache.calcite.sql.util.SqlShuttle
+import org.apache.calcite.sql.validate.SqlValidator
+import org.apache.calcite.sql2rel.SqlToRelConverter
+import org.apache.calcite.tools.{FrameworkConfig, RelConversionException}
+
 import java.lang.{Boolean => JBoolean}
 import java.util
 import java.util.Locale
 import java.util.function.{Function => JFunction}
+
 import scala.collection.JavaConverters._
 
 /**
@@ -51,15 +53,6 @@ class FlinkPlannerImpl(
     typeFactory: FlinkTypeFactory,
     cluster: RelOptCluster)
   extends FlinkPlannerImpl2(config, catalogReaderSupplier, typeFactory, cluster) {
-
-  def getSqlAdvisorValidator(): SqlAdvisorValidator = {
-    new SqlAdvisorValidator(
-      operatorTable,
-      catalogReaderSupplier.apply(true), // ignore cases for lenient completion
-      typeFactory,
-      SqlValidator.Config.DEFAULT
-        .withConformance(config.getParserConfig.conformance()))
-  }
 
   protected def validate(sqlNode: SqlNode, validator: FlinkCalciteSqlValidator): SqlNode = {
     try {
@@ -219,18 +212,5 @@ class FlinkPlannerImpl(
       }
       false
     }
-  }
-
-  private def validateRichSqlInsert(insert: RichSqlInsert): SqlNode = {
-    // We don't support UPSERT INTO semantics (see FLINK-24225).
-    if (insert.isUpsert) {
-      throw new ValidationException(
-        "UPSERT INTO statement is not supported. Please use INSERT INTO instead.")
-    }
-    // only validate source here.
-    // ignore row type which will be verified in table environment.
-    val validatedSource = validate(insert.getSource)
-    insert.setOperand(2, validatedSource)
-    insert
   }
 }

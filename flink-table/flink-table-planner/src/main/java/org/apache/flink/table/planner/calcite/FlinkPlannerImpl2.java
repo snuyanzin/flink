@@ -18,7 +18,9 @@
 
 package org.apache.flink.table.planner.calcite;
 
+import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
+import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.planner.parse.CalciteParser;
 import org.apache.flink.table.planner.plan.FlinkCalciteCatalogReader;
 
@@ -37,6 +39,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
+import org.apache.calcite.sql.advise.SqlAdvisorValidator;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql2rel.SqlRexConvertletTable;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -130,6 +133,15 @@ public abstract class FlinkPlannerImpl2 {
         return validate(sqlNode, validator);
     }
 
+    public SqlAdvisorValidator getSqlAdvisorValidator() {
+        return new SqlAdvisorValidator(
+                operatorTable,
+                catalogReaderSupplier.apply(true), // ignore cases for lenient completion
+                typeFactory,
+                SqlValidator.Config.DEFAULT.withConformance(
+                        config.getParserConfig().conformance()));
+    }
+
     protected abstract RelRoot rel(SqlNode validatedSqlNode, FlinkCalciteSqlValidator sqlValidator);
 
     /**
@@ -221,6 +233,19 @@ public abstract class FlinkPlannerImpl2 {
                                         f -> RexInputRef.of(f.getIndex(), inputRowType)));
 
         return sqlToRelConverter.convertExpression(validatedSqlNode, nameToNodeMap);
+    }
+
+    protected SqlNode validateRichSqlInsert(RichSqlInsert insert) {
+        // We don't support UPSERT INTO semantics (see FLINK-24225).
+        if (insert.isUpsert()) {
+            throw new ValidationException(
+                    "UPSERT INTO statement is not supported. Please use INSERT INTO instead.");
+        }
+        // only validate source here.
+        // ignore row type which will be verified in table environment.
+        final SqlNode validatedSource = validate(insert.getSource());
+        insert.setOperand(2, validatedSource);
+        return insert;
     }
 
     /** Creates a new instance of [[RelOptTable.ToRelContext]] for [[RelOptTable]]. */
