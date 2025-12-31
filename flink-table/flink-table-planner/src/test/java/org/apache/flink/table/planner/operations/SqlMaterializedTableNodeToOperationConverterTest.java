@@ -18,7 +18,6 @@
 
 package org.apache.flink.table.planner.operations;
 
-import org.apache.flink.sql.parser.error.SqlValidateException;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.FunctionDescriptor;
 import org.apache.flink.table.api.Schema;
@@ -905,7 +904,6 @@ class SqlMaterializedTableNodeToOperationConverterTest
                                 + ")\n"
                                 + "FRESHNESS = INTERVAL '30' SECOND\n"
                                 + "AS SELECT * FROM t1",
-                        SqlValidateException.class,
                         "UNIQUE constraint is not supported yet"),
                 // test primary key not defined in source table
                 TestSpec.of(

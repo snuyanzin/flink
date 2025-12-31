@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.plan.utils
 
 import org.apache.flink.table.planner.JBoolean
 import org.apache.flink.table.planner.analyze.PlanAdvice
-import org.apache.flink.table.planner.calcite.{FlinkPlannerImpl2, FlinkTypeFactory}
+import org.apache.flink.table.planner.calcite.{FlinkPlannerImpl, FlinkTypeFactory}
 import org.apache.flink.table.planner.hint.FlinkHints
 import org.apache.flink.table.planner.plan.`trait`.{MiniBatchInterval, MiniBatchMode}
 
@@ -219,7 +219,7 @@ object FlinkRelOptUtil {
    *   default null direction
    */
   def defaultNullDirection(direction: Direction): NullDirection = {
-    FlinkPlannerImpl2.DEFAULT_NULL_COLLATION match {
+    FlinkPlannerImpl.DEFAULT_NULL_COLLATION match {
       case NullCollation.FIRST => NullDirection.FIRST
       case NullCollation.LAST => NullDirection.LAST
       case NullCollation.LOW =>
@@ -248,8 +248,8 @@ object FlinkRelOptUtil {
   def ofRelFieldCollation(fieldIndex: Int): RelFieldCollation = {
     new RelFieldCollation(
       fieldIndex,
-      FlinkPlannerImpl2.DEFAULT_COLLATION_DIRECTION,
-      defaultNullDirection(FlinkPlannerImpl2.DEFAULT_COLLATION_DIRECTION))
+      FlinkPlannerImpl.DEFAULT_COLLATION_DIRECTION,
+      defaultNullDirection(FlinkPlannerImpl.DEFAULT_COLLATION_DIRECTION))
   }
 
   /**

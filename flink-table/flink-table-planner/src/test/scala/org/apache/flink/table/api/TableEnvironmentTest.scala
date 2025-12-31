@@ -112,7 +112,7 @@ class TableEnvironmentTest {
   @Test
   def testCreateTableWithEnforcedMode(): Unit = {
     // check column constraint
-    assertThatExceptionOfType(classOf[SqlValidateException])
+    assertThatExceptionOfType(classOf[ValidationException])
       .isThrownBy(() => tableEnv.executeSql("""
                                               |CREATE TABLE MyTable (
                                               |  a bigint primary key,
@@ -126,7 +126,7 @@ class TableEnvironmentTest {
       .withMessageContaining("Flink doesn't support ENFORCED mode for PRIMARY KEY constraint.")
 
     // check table constraint
-    assertThatExceptionOfType(classOf[SqlValidateException])
+    assertThatExceptionOfType(classOf[ValidationException])
       .isThrownBy(() => tableEnv.executeSql("""
                                               |CREATE TABLE MyTable (
                                               |  a bigint,
@@ -555,7 +555,7 @@ class TableEnvironmentTest {
       """.stripMargin
     tableEnv.executeSql(statement)
 
-    assertThatExceptionOfType(classOf[SqlValidateException])
+    assertThatExceptionOfType(classOf[ValidationException])
       .isThrownBy(() => tableEnv.executeSql("""
                                               |ALTER TABLE MyTable ADD (
                                               |  f STRING PRIMARY KEY NOT ENFORCED,
@@ -2783,7 +2783,7 @@ class TableEnvironmentTest {
         |  'openai.endpoint' = 'some-endpoint'
         |)
       """.stripMargin
-    assertThatExceptionOfType(classOf[SqlValidateException])
+    assertThatExceptionOfType(classOf[ValidationException])
       .isThrownBy(() => tableEnv.executeSql(sourceDDL))
       .withMessageContaining(
         "Input column list can not be empty with non-empty output column list.")
@@ -2837,7 +2837,7 @@ class TableEnvironmentTest {
         |  'openai.endpoint' = 'some-endpoint'
         |)
       """.stripMargin
-    assertThatExceptionOfType(classOf[SqlValidateException])
+    assertThatExceptionOfType(classOf[ValidationException])
       .isThrownBy(() => tableEnv.executeSql(sourceDDL))
       .withMessageContaining("")
   }
@@ -2851,7 +2851,7 @@ class TableEnvironmentTest {
         |  OUTPUT(f2 string)
         |with ()
       """.stripMargin
-    assertThatExceptionOfType(classOf[SqlValidateException])
+    assertThatExceptionOfType(classOf[ValidationException])
       .isThrownBy(() => tableEnv.executeSql(sourceDDL))
       .withMessageContaining("Model property list can not be empty.")
   }

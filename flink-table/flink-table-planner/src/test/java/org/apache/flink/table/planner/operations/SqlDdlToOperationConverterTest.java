@@ -1836,12 +1836,12 @@ class SqlDdlToOperationConverterTest extends SqlNodeToOperationConversionTestBas
 
         // add unique constraint
         assertThatThrownBy(() -> parse("alter table tb3 add unique(b)"))
-                .isInstanceOf(SqlValidateException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("UNIQUE constraint is not supported yet");
 
         // lack NOT ENFORCED
         assertThatThrownBy(() -> parse("alter table tb3 add primary key(b)"))
-                .isInstanceOf(SqlValidateException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining(
                         "Flink doesn't support ENFORCED mode for PRIMARY KEY constraint");
 

@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.utils
 import org.apache.flink.api.common.operators.Order
 import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.api.TableException
-import org.apache.flink.table.planner.calcite.FlinkPlannerImpl2._
+import org.apache.flink.table.planner.calcite.FlinkPlannerImpl._
 import org.apache.flink.table.planner.codegen.sort.SortCodeGenerator
 import org.apache.flink.table.planner.plan.nodes.exec.spec.SortSpec
 import org.apache.flink.table.types.logical.RowType
