@@ -20,7 +20,7 @@ package org.apache.flink.table.planner.plan.utils
 import org.apache.flink.api.common.operators.Order
 import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.api.TableException
-import org.apache.flink.table.planner.calcite.FlinkPlannerImpl
+import org.apache.flink.table.planner.calcite.FlinkPlannerImpl2._
 import org.apache.flink.table.planner.codegen.sort.SortCodeGenerator
 import org.apache.flink.table.planner.plan.nodes.exec.spec.SortSpec
 import org.apache.flink.table.types.logical.RowType
@@ -76,12 +76,12 @@ object SortUtil {
 
   /** Returns the default null direction if not specified. */
   def getNullDefaultOrders(ascendings: Array[Boolean]): Array[Boolean] = {
-    ascendings.map(asc => FlinkPlannerImpl.defaultNullCollation.last(!asc))
+    ascendings.map(asc => DEFAULT_NULL_COLLATION.last(!asc))
   }
 
   /** Returns the default null direction if not specified. */
   def getNullDefaultOrder(ascending: Boolean): Boolean = {
-    FlinkPlannerImpl.defaultNullCollation.last(!ascending)
+    DEFAULT_NULL_COLLATION.last(!ascending)
   }
 
   def getSortSpec(fieldCollations: Seq[RelFieldCollation]): SortSpec = {

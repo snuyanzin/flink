@@ -26,7 +26,7 @@ import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.table.expressions.ValueLiteralExpression;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.FunctionDefinition;
-import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
+import org.apache.flink.table.planner.calcite.FlinkPlannerImpl2;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.expressions.SqlAggFunctionVisitor;
 import org.apache.flink.table.types.logical.DecimalType;
@@ -182,8 +182,8 @@ public class OverConvertRule implements CallExpressionConvertRule {
                 if (nullDirection == null) {
                     // Set the null direction if not specified.
                     // Consistent with HIVE/SPARK/MYSQL
-                    if (FlinkPlannerImpl.defaultNullCollation()
-                            .last(direction.equals(RelFieldCollation.Direction.DESCENDING))) {
+                    if (FlinkPlannerImpl2.DEFAULT_NULL_COLLATION.last(
+                            direction.equals(RelFieldCollation.Direction.DESCENDING))) {
                         kinds.add(SqlKind.NULLS_LAST);
                     } else {
                         kinds.add(SqlKind.NULLS_FIRST);
