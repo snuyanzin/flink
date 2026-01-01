@@ -128,7 +128,7 @@ under the License.
 		<flink.reuseForks>true</flink.reuseForks>
 		<flink.surefire.baseArgLine>-XX:+UseG1GC -Xms256m -XX:+IgnoreUnrecognizedVMOptions ${surefire.module.config}</flink.surefire.baseArgLine>
 		<flink.shaded.version>20.0</flink.shaded.version>
-		<flink.shaded.jackson.version>2.20.1</flink.shaded.jackson.version>
+		<flink.shaded.jackson.version>2.18.2</flink.shaded.jackson.version>
 		<flink.shaded.jsonpath.version>2.9.0</flink.shaded.jsonpath.version>
 		<flink.markBundledAsOptional>true</flink.markBundledAsOptional>
 		<source.java.version>11</source.java.version>
@@ -151,7 +151,7 @@ under the License.
 		<avro.version>1.11.4</avro.version>
 		<!-- Version for transitive Jackson dependencies that are not used within Flink itself.-->
 		<jackson.mapper.asl.version>1.9.14.jdk17-redhat-00001</jackson.mapper.asl.version>
-		<jackson-bom.version>2.18.2</jackson-bom.version>
+		<jackson-bom.version>2.20.1</jackson-bom.version>
 		<javax.activation.api.version>1.2.0</javax.activation.api.version>
 		<jaxb.api.version>2.3.1</jaxb.api.version>
 		<junit4.version>4.13.2</junit4.version>
