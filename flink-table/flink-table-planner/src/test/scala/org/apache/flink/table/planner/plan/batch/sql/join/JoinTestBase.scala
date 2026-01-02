@@ -253,10 +253,10 @@ abstract class JoinTestBase extends TableTestBase {
   def testInnerJoinWithJoinConditionPushDown(): Unit = {
     util.verifyExecPlan("""
                           |SELECT * FROM
-                          |   (select a, count(b) as b from MyTable1 group by a)
+                          |   (select a, count(b) as b, c from MyTable1 group by a, c)
                           |   join
-                          |   (select d, count(e) as e from MyTable2 group by d)
-                          |   on a = d and b = e and d = 2 and b = 1
+                          |   (select d, count(e) as e, g from MyTable2 group by d, g)
+                          |   on a = d and b = e and d = 2 and b = 1 and c = g
                           |""".stripMargin)
   }
 
