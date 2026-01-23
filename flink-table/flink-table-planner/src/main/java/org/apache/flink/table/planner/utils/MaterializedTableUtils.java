@@ -146,7 +146,7 @@ public class MaterializedTableUtils {
 
         final List<Column> newAddedColumns = new ArrayList<>();
         for (int i = oldColumns.size(); i < newColumns.size(); i++) {
-            Column newColumn = newSchema.getColumns().get(i);
+            Column newColumn = newColumns.get(i);
             newAddedColumns.add(newColumn.copy(newColumn.getDataType().nullable()));
         }
 
