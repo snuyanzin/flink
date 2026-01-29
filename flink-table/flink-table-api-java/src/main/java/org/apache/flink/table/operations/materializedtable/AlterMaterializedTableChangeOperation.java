@@ -116,21 +116,24 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
         MTContext mtContext = new MTContext(oldTable);
         mtContext.applyTableChanges(tableChanges);
 
-        return CatalogMaterializedTable.newBuilder()
-                .schema(mtContext.retrieveSchema())
-                .comment(oldTable.getComment())
-                .partitionKeys(oldTable.getPartitionKeys())
-                .options(oldTable.getOptions())
-                .originalQuery(mtContext.originalQuery)
-                .expandedQuery(mtContext.expandedQuery)
-                .distribution(mtContext.distribution)
-                .freshness(oldTable.getDefinitionFreshness())
-                .logicalRefreshMode(oldTable.getLogicalRefreshMode())
-                .refreshMode(oldTable.getRefreshMode())
-                .refreshStatus(mtContext.refreshStatus)
-                .refreshHandlerDescription(mtContext.refreshHandlerDesc)
-                .serializedRefreshHandler(mtContext.refreshHandlerBytes)
-                .build();
+        materializedTableWithAppliedChanges =
+                CatalogMaterializedTable.newBuilder()
+                        .schema(mtContext.retrieveSchema())
+                        .comment(oldTable.getComment())
+                        .partitionKeys(oldTable.getPartitionKeys())
+                        .options(oldTable.getOptions())
+                        .originalQuery(mtContext.originalQuery)
+                        .expandedQuery(mtContext.expandedQuery)
+                        .distribution(mtContext.distribution)
+                        .freshness(oldTable.getDefinitionFreshness())
+                        .logicalRefreshMode(oldTable.getLogicalRefreshMode())
+                        .refreshMode(oldTable.getRefreshMode())
+                        .refreshStatus(mtContext.refreshStatus)
+                        .refreshHandlerDescription(mtContext.refreshHandlerDesc)
+                        .serializedRefreshHandler(mtContext.refreshHandlerBytes)
+                        .build();
+
+        return materializedTableWithAppliedChanges;
     }
 
     @Override
