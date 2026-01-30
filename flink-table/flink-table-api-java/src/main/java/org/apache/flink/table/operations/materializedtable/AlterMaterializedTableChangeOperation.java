@@ -187,7 +187,8 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
     }
 
     private static class ChangeContext {
-        private static final Map<Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>>
+        private static final Map<
+                        Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>>
                 HANDLERS_MAP = getHandlersMap();
 
         private final List<UnresolvedColumn> columns;
@@ -222,18 +223,51 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
             this.oldTable = oldTable;
         }
 
-        private static <T extends TableChange> Map<Class<T>, BiConsumer<ChangeContext, T>>
+        @SuppressWarnings("unchecked")
+        private static Map<Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>>
                 getHandlersMap() {
-            final Map<Class<T>, BiConsumer<ChangeContext, T>> map =
+            final Map<Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>> map =
                     new IdentityHashMap<>();
 
-            // Column
+            // Column operations
             register(map, AddColumn.class, ChangeContext::addColumn);
+            register(map, ModifyColumn.class, ChangeContext::modifyColumn);
+            register(map, DropColumn.class, ChangeContext::dropColumn);
+            register(map, ModifyPhysicalColumnType.class, ChangeContext::modifyPhysicalColumnType);
+            register(map, ModifyColumnComment.class, ChangeContext::modifyColumnComment);
+            register(map, ModifyColumnPosition.class, ChangeContext::modifyColumnPosition);
+
+            // Query operations
+            register(map, ModifyDefinitionQuery.class, ChangeContext::modifyDefinitionQuery);
+
+            // Constraint operations
+            register(map, AddUniqueConstraint.class, ChangeContext::addUniqueConstraint);
+            register(map, ModifyUniqueConstraint.class, ChangeContext::modifyUniqueConstraint);
+            register(map, DropConstraint.class, ChangeContext::dropConstraint);
+
+            // Watermark operations
+            register(map, AddWatermark.class, ChangeContext::addWatermark);
+            register(map, ModifyWatermark.class, ChangeContext::modifyWatermark);
+            register(map, DropWatermark.class, ChangeContext::dropWatermark);
+
+            // Refresh operations
+            register(map, ModifyRefreshHandler.class, ChangeContext::modifyRefreshHandler);
+            register(map, ModifyRefreshStatus.class, ChangeContext::modifyRefreshStatus);
+
+            // Distribution operations
+            register(map, AddDistribution.class, ChangeContext::addDistribution);
+            register(map, ModifyDistribution.class, ChangeContext::modifyDistribution);
+            register(map, DropDistribution.class, ChangeContext::dropDistribution);
+
             return Collections.unmodifiableMap(map);
         }
 
-        private static <T extends TableChange> void register(Map<Class<T>, BiConsumer<ChangeContext, T>> map, Class<T> type, BiConsumer<ChangeContext, T> biConsumer) {
-            map.put(type, biConsumer);
+        @SuppressWarnings("unchecked")
+        private static <T extends TableChange> void register(
+                Map<Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>> map,
+                Class<T> type,
+                BiConsumer<ChangeContext, T> handler) {
+            map.put(type, (BiConsumer<ChangeContext, TableChange>) handler);
         }
 
         private void applyTableChanges(List<TableChange> tableChanges) {
@@ -245,7 +279,8 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
 
             for (TableChange tableChange : tableChanges) {
                 BiConsumer<ChangeContext, TableChange> handler =
-                        HANDLERS_MAP.get(tableChange.getClass());
+                        (BiConsumer<ChangeContext, TableChange>)
+                                HANDLERS_MAP.get(tableChange.getClass());
                 if (handler == null) {
                     throw new ValidationException("Unknown table change " + tableChange.getClass());
                 } else {
