@@ -187,8 +187,7 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
     }
 
     private static class ChangeContext {
-        private static final Map<
-                        Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>>
+        private static final Map<Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>>
                 HANDLERS_MAP = getHandlersMap();
 
         private final List<UnresolvedColumn> columns;
@@ -223,61 +222,18 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
             this.oldTable = oldTable;
         }
 
-        private static Map<Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>>
+        private static <T extends TableChange> Map<Class<T>, BiConsumer<ChangeContext, T>>
                 getHandlersMap() {
-            final Map<Class<? extends TableChange>, BiConsumer<ChangeContext, TableChange>> map =
+            final Map<Class<T>, BiConsumer<ChangeContext, T>> map =
                     new IdentityHashMap<>();
 
             // Column
-            map.put(AddColumn.class, (c, t) -> c.addColumn((AddColumn) t));
-            map.put(ModifyColumn.class, (c, t) -> c.modifyColumn((ModifyColumn) t));
-            map.put(
-                    ModifyColumnPosition.class,
-                    (c, t) -> c.modifyColumnPosition((ModifyColumnPosition) t));
-            map.put(
-                    ModifyPhysicalColumnType.class,
-                    (c, t) -> c.modifyPhysicalColumnType((ModifyPhysicalColumnType) t));
-            map.put(
-                    ModifyColumnComment.class,
-                    (c, t) -> c.modifyColumnComment((ModifyColumnComment) t));
-            map.put(DropColumn.class, (c, t) -> c.dropColumn((DropColumn) t));
-
-            // Watermark
-            map.put(AddWatermark.class, (c, t) -> c.addWatermark((AddWatermark) t));
-            map.put(ModifyWatermark.class, (c, t) -> c.modifyWatermark((ModifyWatermark) t));
-            map.put(DropWatermark.class, (c, t) -> c.dropWatermark((DropWatermark) t));
-
-            // Constraint
-            map.put(
-                    AddUniqueConstraint.class,
-                    (c, t) -> c.addUniqueConstraint((AddUniqueConstraint) t));
-            map.put(
-                    ModifyUniqueConstraint.class,
-                    (c, t) -> c.modifyUniqueConstraint((ModifyUniqueConstraint) t));
-            map.put(DropConstraint.class, (c, t) -> c.dropConstraint((DropConstraint) t));
-
-            // Distribution
-            map.put(AddDistribution.class, (c, t) -> c.addDistribution((AddDistribution) t));
-            map.put(
-                    ModifyDistribution.class,
-                    (c, t) -> c.modifyDistribution((ModifyDistribution) t));
-            map.put(DropDistribution.class, (c, t) -> c.dropDistribution((DropDistribution) t));
-
-            // RefreshStatus
-            map.put(
-                    ModifyRefreshStatus.class,
-                    (c, t) -> c.modifyRefreshStatus((ModifyRefreshStatus) t));
-
-            // RefreshHandler
-            map.put(
-                    ModifyRefreshHandler.class,
-                    (c, t) -> c.modifyRefreshHandler((ModifyRefreshHandler) t));
-
-            // DefinitionQuery
-            map.put(
-                    ModifyDefinitionQuery.class,
-                    (c, t) -> c.modifyDefinitionQuery((ModifyDefinitionQuery) t));
+            register(map, AddColumn.class, ChangeContext::addColumn);
             return Collections.unmodifiableMap(map);
+        }
+
+        private static <T extends TableChange> void register(Map<Class<T>, BiConsumer<ChangeContext, T>> map, Class<T> type, BiConsumer<ChangeContext, T> biConsumer) {
+            map.put(type, biConsumer);
         }
 
         private void applyTableChanges(List<TableChange> tableChanges) {
