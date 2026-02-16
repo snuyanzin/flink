@@ -58,6 +58,9 @@ function setup_kubernetes_for_linux {
       chmod +x "minikube-linux-$arch" && sudo mv "minikube-linux-$arch" /usr/bin/minikube
     fi
 
+    sudo chown -R root $TEST_ROOT/.minikube
+    chmod -R u+wrx $TEST_ROOT/.minikube
+
     # conntrack is required for minikube 1.9 and later
     sudo apt-get install conntrack
     # crictl is required for cri-dockerd
