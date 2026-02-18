@@ -846,8 +846,7 @@ public class MaterializedTableManager {
                 executeContinuousRefreshJob(
                         operationExecutor,
                         handle,
-                        alterMaterializedTableChangeOperation
-                                .getNewTable(),
+                        alterMaterializedTableChangeOperation.getNewTable(),
                         tableIdentifier,
                         Collections.emptyMap(),
                         Optional.empty());
@@ -880,8 +879,7 @@ public class MaterializedTableManager {
                 throw new SqlExecutionException(
                         String.format(
                                 "Failed to start the continuous refresh job using new query %s when altering materialized table %s select query.",
-                                op.getNewTable().getExpandedQuery(),
-                                tableIdentifier),
+                                op.getNewTable().getExpandedQuery(), tableIdentifier),
                         e);
             }
         } else if (RefreshStatus.SUSPENDED == oldMaterializedTable.getRefreshStatus()) {

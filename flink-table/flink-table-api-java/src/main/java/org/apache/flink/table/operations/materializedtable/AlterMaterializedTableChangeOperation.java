@@ -77,11 +77,7 @@ public class AlterMaterializedTableChangeOperation extends AlterMaterializedTabl
     @Override
     public TableResultInternal execute(Context ctx) {
         ctx.getCatalogManager()
-                .alterTable(
-                        getNewTable(),
-                        getTableChanges(),
-                        getTableIdentifier(),
-                        false);
+                .alterTable(getNewTable(), getTableChanges(), getTableIdentifier(), false);
         return TableResultImpl.TABLE_RESULT_OK;
     }
 

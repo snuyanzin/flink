@@ -55,7 +55,6 @@ public class AlterMaterializedTableAsQueryOperation extends AlterMaterializedTab
     public String asSummaryString() {
         return String.format(
                 "ALTER MATERIALIZED TABLE %s AS %s",
-                tableIdentifier.asSummaryString(),
-                getNewTable().getExpandedQuery());
+                tableIdentifier.asSummaryString(), getNewTable().getExpandedQuery());
     }
 }
