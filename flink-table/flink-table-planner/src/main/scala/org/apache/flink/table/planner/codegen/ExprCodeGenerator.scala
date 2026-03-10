@@ -764,6 +764,9 @@ class ExprCodeGenerator(
       case CASE =>
         generateIfElse(ctx, operands, resultType)
 
+      case COALESCE =>
+        generateCoalesce(ctx, operands, resultType)
+
       case IS_TRUE =>
         val operand = operands.head
         requireBoolean(operand)
@@ -943,6 +946,9 @@ class ExprCodeGenerator(
 
           case BuiltInFunctionDefinitions.REGEXP_EXTRACT =>
             StringCallGen.generateRegexpExtract(ctx, operands, resultType)
+
+          case BuiltInFunctionDefinitions.COALESCE =>
+            generateCoalesce(ctx, operands, resultType)
 
           case _ =>
             new BridgingSqlFunctionCallGen(call, rexProgram).generate(ctx, operands, resultType)
