@@ -76,16 +76,6 @@ object FlinkBatchRuleSets {
     CoreRules.JOIN_REDUCE_EXPRESSIONS
   )
 
-  /** RuleSet to simplify coalesce invocations */
-  private val SIMPLIFY_COALESCE_RULES: RuleSet = RuleSets.ofList(
-    RemoveUnreachableCoalesceArgumentsRule.PROJECT_INSTANCE,
-    RemoveUnreachableCoalesceArgumentsRule.FILTER_INSTANCE,
-    RemoveUnreachableCoalesceArgumentsRule.JOIN_INSTANCE,
-    RemoveUnreachableCoalesceArgumentsRule.CALC_INSTANCE,
-    SimplifyCoalesceWithEquiJoinConditionRule.PROJECT_INSTANCE,
-    SimplifyCoalesceWithEquiJoinConditionRule.CALC_INSTANCE
-  )
-
   private val LIMIT_RULES: RuleSet = RuleSets.ofList(
     // push down localLimit
     PushLimitIntoTableSourceScanRule.INSTANCE,
@@ -102,7 +92,6 @@ object FlinkBatchRuleSets {
   /** RuleSet to normalize plans for batch */
   val DEFAULT_REWRITE_RULES: RuleSet = RuleSets.ofList(
     (PREDICATE_SIMPLIFY_EXPRESSION_RULES.asScala ++
-      SIMPLIFY_COALESCE_RULES.asScala ++
       REDUCE_EXPRESSION_RULES.asScala ++
       List(
         // Transform window to LogicalWindowAggregate

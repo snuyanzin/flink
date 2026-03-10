@@ -27,6 +27,7 @@ import org.apache.flink.table.catalog.FunctionCatalog;
 import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.functions.AggregateFunctionDefinition;
 import org.apache.flink.table.functions.BuiltInFunctionDefinition;
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.functions.FunctionKind;
@@ -159,12 +160,23 @@ public class FunctionCatalogOperatorTable implements SqlOperatorTable {
                             resolvedFunction,
                             typeInference);
         } else {
+            final SqlKind kind;
+            if (definition instanceof BuiltInFunctionDefinition
+                    && ((BuiltInFunctionDefinition) definition).getRuntimeClass().isPresent()
+                    && ((BuiltInFunctionDefinition) definition)
+                            .getRuntimeClass()
+                            .get()
+                            .equals(BuiltInFunctionDefinitions.COALESCE.getRuntimeClass().get())) {
+                kind = SqlKind.COALESCE;
+            } else {
+                kind = SqlKind.OTHER_FUNCTION;
+            }
             function =
                     BridgingSqlFunction.of(
                             dataTypeFactory,
                             typeFactory,
                             rexFactory,
-                            SqlKind.OTHER_FUNCTION,
+                            kind,
                             resolvedFunction,
                             typeInference);
         }
