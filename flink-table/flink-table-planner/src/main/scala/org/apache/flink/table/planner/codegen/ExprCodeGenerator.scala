@@ -671,6 +671,9 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
       case CASE =>
         generateIfElse(ctx, operands, resultType)
 
+      case COALESCE =>
+        generateCoalesce(ctx, operands, resultType)
+
       case IS_TRUE =>
         val operand = operands.head
         requireBoolean(operand)
@@ -845,6 +848,9 @@ class ExprCodeGenerator(ctx: CodeGeneratorContext, nullableInput: Boolean)
 
           case BuiltInFunctionDefinitions.JSON =>
             new JsonCallGen().generate(ctx, operands, FlinkTypeFactory.toLogicalType(call.getType))
+
+          case BuiltInFunctionDefinitions.COALESCE =>
+            generateCoalesce(ctx, operands, resultType)
 
           case _ =>
             new BridgingSqlFunctionCallGen(call).generate(ctx, operands, resultType)
