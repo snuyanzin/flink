@@ -1034,6 +1034,39 @@ object ScalarOperatorGens {
     }
   }
 
+  def generateCoalesce(
+      ctx: CodeGeneratorContext,
+      operands: Seq[GeneratedExpression],
+      resultType: LogicalType,
+      checkPosition: Int = 1): GeneratedExpression = {
+    if (operands.size == checkPosition) {
+      generateCast(ctx, operands.head, resultType, nullOnFailure = false)
+    } else {
+      val Seq(resultTerm, nullTerm) = newNames(ctx, "result", "isNull")
+      val resultTypeTerm = boxedTypeTermForType(resultType)
+      val primitiveType = primitiveTypeTermForType(resultType)
+      val falseAction = generateCoalesce(ctx, operands, resultType, checkPosition + 1)
+
+      val condition = operands.get(checkPosition)
+      val operatorCode =
+        s"""
+           |$resultTypeTerm $resultTerm = null;
+           |// coalesce
+           |${condition.code}
+           |boolean $nullTerm = ${condition.nullTerm};
+           |if (!$nullTerm) {
+           |   $resultTerm = ($primitiveType)${condition.resultTerm};
+           |} else {
+           |  ${falseAction.code}
+           |  $resultTerm = ${falseAction.resultTerm};
+           |}
+           |// end coalesce
+           |""".stripMargin.trim
+
+      GeneratedExpression(resultTerm, nullTerm, operatorCode, resultType)
+    }
+  }
+
   def generateIfElse(
       ctx: CodeGeneratorContext,
       operands: Seq[GeneratedExpression],
