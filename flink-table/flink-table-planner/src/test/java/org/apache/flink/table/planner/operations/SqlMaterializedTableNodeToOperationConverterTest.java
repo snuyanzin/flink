@@ -693,6 +693,46 @@ class SqlMaterializedTableNodeToOperationConverterTest
         assertThat(materializedTable.getOrigin()).isEqualTo(expected);
     }
 
+    @Test
+    void test() throws TableAlreadyExistException, DatabaseNotExistException {
+        final ObjectPath path3 = new ObjectPath(catalogManager.getCurrentDatabase(), "myTable");
+        final ResolvedSchema t3TableSchema =
+                ResolvedSchema.of(
+                        Column.physical("col1", DataTypes.INT().notNull()),
+                        Column.physical("col2", DataTypes.INT()),
+                        Column.physical("col3", DataTypes.INT().notNull()));
+
+        final Schema tableSchema = Schema.newBuilder().fromResolvedSchema(t3TableSchema).build();
+        Map<String, String> options = new HashMap<>();
+        options.put("connector", "COLLECTION");
+        final CatalogTable catalogTable =
+                CatalogTable.newBuilder().schema(tableSchema).comment("").options(options).build();
+        catalog.createTable(path3, catalogTable, true);
+        createMaterializedTableInCatalog(
+                "CREATE MATERIALIZED TABLE mt1 (col1 INT, col2 INT) AS SELECT col1, col2 FROM myTable",
+                "mt1");
+        Operation operation =
+                parse(
+                        "CREATE OR ALTER MATERIALIZED TABLE mt1 (col1 INT, col2 INT, col3 INT) AS SELECT col1, col2, col3 FROM myTable");
+        assertThat(operation).isInstanceOf(FullAlterMaterializedTableOperation.class);
+
+        FullAlterMaterializedTableOperation op = (FullAlterMaterializedTableOperation) operation;
+        op.getTableChanges();
+    }
+
+    @ParameterizedTest
+    @MethodSource("createOrAlterForExistingMaterializedTableFailedCaseSpecs")
+    void createOrAlterForExistingMaterializedTableFailedCase(TestSpec spec) {
+        Operation operation = parse(spec.sql);
+        assertThat(operation).isInstanceOf(FullAlterMaterializedTableOperation.class);
+
+        FullAlterMaterializedTableOperation op = (FullAlterMaterializedTableOperation) operation;
+        // Will be invoked while operation#execute
+        assertThatThrownBy(op::getTableChanges)
+                .isInstanceOf(spec.expectedException)
+                .hasMessage(spec.errMessage);
+    }
+
     private static Collection<TestSpec> createOrAlterForExistingMaterializedTableFailedCaseSpecs() {
         return List.of(
                 TestSpec.of(
