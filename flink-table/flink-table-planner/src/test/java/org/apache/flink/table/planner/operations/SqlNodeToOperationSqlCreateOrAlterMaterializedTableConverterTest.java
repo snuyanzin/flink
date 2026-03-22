@@ -269,6 +269,34 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
     }
 
     @Test
+    void testCreateOrAlterMaterializedTableWithChangedComment2() throws TableAlreadyExistException, DatabaseNotExistException {
+        final String prepSql =
+                "CREATE MATERIALIZED TABLE mt1 (\n"
+                        + "   id INT, name CHAR(1)"
+                        + ")\n"
+                        + "AS SELECT 1 as id, 'a' as name";
+        createMaterializedTableInCatalog(prepSql, "mt1");
+
+        final String sql =
+                "CREATE OR ALTER MATERIALIZED TABLE mt1\n"
+                        + "AS SELECT 1 id, 'a123' name";
+        Operation operation = parse(sql);
+
+        assertThat(operation).isInstanceOf(FullAlterMaterializedTableOperation.class);
+
+        FullAlterMaterializedTableOperation op = (FullAlterMaterializedTableOperation) operation;
+        assertThat(op.getTableChanges())
+                .containsExactly(
+                        TableChange.modifyDefinitionQuery(
+                                "SELECT 1 AS `id`, 'a123' AS `name`",
+                                "SELECT 1 AS `id`, 'a123' AS `name`"));
+        assertThat(operation.asSummaryString())
+                .isEqualTo(
+                        "CREATE OR ALTER MATERIALIZED TABLE builtin.default.mt1\n"
+                                + " MODIFY DEFINITION QUERY TO 'SELECT 1 AS `id`, 'a123' AS `name`'");
+    }
+
+    @Test
     void testCreateOrAlterMaterializedTableWithDroppedConstraint() {
         final String sql =
                 "CREATE OR ALTER MATERIALIZED TABLE mt \n"

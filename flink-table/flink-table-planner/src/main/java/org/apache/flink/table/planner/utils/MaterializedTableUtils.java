@@ -45,6 +45,8 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 
+import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -278,7 +280,7 @@ public class MaterializedTableUtils {
         }
     }
 
-    public static List<Column> validateAndExtractNewColumns(
+    public static List<TableChange> validateAndExtractColumnChanges(
             ResolvedSchema oldSchema, ResolvedSchema newSchema, boolean schemaDefinedInQuery) {
         final List<Column> newColumns = getPersistedColumns(newSchema);
         final List<Column> oldColumns = getPersistedColumns(oldSchema);
@@ -294,29 +296,36 @@ public class MaterializedTableUtils {
                             originalColumnSize, newColumnSize));
         }
 
+        final List<TableChange> columnChanges = new ArrayList<>();
         for (int i = 0; i < oldColumns.size(); i++) {
             Column oldColumn = oldColumns.get(i);
-            Column newColumn = newColumns.get(i);
+            Column newColumn = schemaDefinedInQuery ? newColumns.get(i) : newColumns.get(i).copy(newColumns.get(i).getDataType()
+                    .nullable());
             if (!oldColumn.equals(newColumn)) {
-                throw new ValidationException(
-                        String.format(
-                                "When modifying the query of a materialized table, "
-                                        + "currently only support appending columns at the end of original schema, dropping, renaming, and reordering columns are not supported.\n"
-                                        + "Column mismatch at position %d: Original column is [%s], but new column is [%s].",
-                                i, oldColumn, newColumn));
+                if (!oldColumn.getName().equals(newColumn.getName())
+                        || !LogicalTypeCasts.supportsImplicitCast(oldColumn.getDataType().getLogicalType(), newColumn.getDataType().getLogicalType())) {
+                    throw new ValidationException(
+                            String.format(
+                                    "When modifying the query of a materialized table, "
+                                            + "currently only support appending columns at the end of original schema, dropping, renaming, and reordering columns are not supported.\n"
+                                            + "Column mismatch at position %d: Original column is [%s], but new column is [%s].",
+                                    i + 1, oldColumn, newColumn));
+                }
+                if (!Objects.equals(oldColumn.getComment(), newColumn.getComment())) {
+                    columnChanges.add(TableChange.modifyColumnComment(oldColumn, newColumn.getComment().orElse(null)));
+                }
             }
         }
 
-        final List<Column> newAddedColumns = new ArrayList<>();
         for (int i = oldColumns.size(); i < newColumns.size(); i++) {
             Column newColumn = newColumns.get(i);
-            newAddedColumns.add(
+            columnChanges.add(TableChange.add(
                     schemaDefinedInQuery
                             ? newColumn
-                            : newColumn.copy(newColumn.getDataType().nullable()));
+                            : newColumn.copy(newColumn.getDataType().nullable())));
         }
 
-        return newAddedColumns;
+        return columnChanges;
     }
 
     public static ResolvedSchema getQueryOperationResolvedSchema(
