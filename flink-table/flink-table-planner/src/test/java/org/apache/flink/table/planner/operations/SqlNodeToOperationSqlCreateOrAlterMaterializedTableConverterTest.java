@@ -68,6 +68,7 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
                         // If NOT NULL is defined in schema, it should stay
                         TableChange.add(Column.physical("a1", DataTypes.BIGINT().notNull())),
                         TableChange.add(Column.physical("f", DataTypes.INT())),
+                        TableChange.dropConstraint("ct1"),
                         TableChange.modifyDefinitionQuery(
                                 "SELECT `a`, `b`, `c`, `d`, `a` AS `a1`, 3 AS `f`\nFROM `t1`",
                                 "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`, `t1`.`a` AS `a1`, 3 AS `f`\n"
@@ -88,6 +89,7 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
                 .containsExactly(
                         // No explicit schema, so nullable will be used
                         TableChange.add(Column.physical("a1", DataTypes.BIGINT())),
+                        TableChange.dropConstraint("ct1"),
                         TableChange.modifyDefinitionQuery(
                                 "SELECT `a`, `b`, `c`, `d`, `a` AS `a1`\nFROM `t1`",
                                 "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`, `t1`.`a` AS `a1`\n"
