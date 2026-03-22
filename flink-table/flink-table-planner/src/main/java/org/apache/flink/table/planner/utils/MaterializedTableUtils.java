@@ -38,14 +38,13 @@ import org.apache.flink.table.catalog.TableChange;
 import org.apache.flink.table.catalog.TableChange.ColumnPosition;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 import org.apache.flink.table.planner.operations.converters.SqlNodeConverter.ConvertContext;
+import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
 
 import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlIntervalLiteral.IntervalValue;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.type.SqlTypeFamily;
-
-import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -299,11 +298,15 @@ public class MaterializedTableUtils {
         final List<TableChange> columnChanges = new ArrayList<>();
         for (int i = 0; i < oldColumns.size(); i++) {
             Column oldColumn = oldColumns.get(i);
-            Column newColumn = schemaDefinedInQuery ? newColumns.get(i) : newColumns.get(i).copy(newColumns.get(i).getDataType()
-                    .nullable());
+            Column newColumn =
+                    schemaDefinedInQuery
+                            ? newColumns.get(i)
+                            : newColumns.get(i).copy(newColumns.get(i).getDataType().nullable());
             if (!oldColumn.equals(newColumn)) {
                 if (!oldColumn.getName().equals(newColumn.getName())
-                        || !LogicalTypeCasts.supportsImplicitCast(oldColumn.getDataType().getLogicalType(), newColumn.getDataType().getLogicalType())) {
+                        || !LogicalTypeCasts.supportsImplicitCast(
+                                oldColumn.getDataType().getLogicalType(),
+                                newColumn.getDataType().getLogicalType())) {
                     throw new ValidationException(
                             String.format(
                                     "When modifying the query of a materialized table, "
@@ -312,17 +315,20 @@ public class MaterializedTableUtils {
                                     i + 1, oldColumn, newColumn));
                 }
                 if (!Objects.equals(oldColumn.getComment(), newColumn.getComment())) {
-                    columnChanges.add(TableChange.modifyColumnComment(oldColumn, newColumn.getComment().orElse(null)));
+                    columnChanges.add(
+                            TableChange.modifyColumnComment(
+                                    oldColumn, newColumn.getComment().orElse(null)));
                 }
             }
         }
 
         for (int i = oldColumns.size(); i < newColumns.size(); i++) {
             Column newColumn = newColumns.get(i);
-            columnChanges.add(TableChange.add(
-                    schemaDefinedInQuery
-                            ? newColumn
-                            : newColumn.copy(newColumn.getDataType().nullable())));
+            columnChanges.add(
+                    TableChange.add(
+                            schemaDefinedInQuery
+                                    ? newColumn
+                                    : newColumn.copy(newColumn.getDataType().nullable())));
         }
 
         return columnChanges;
