@@ -10,6 +10,7 @@ import org.apache.flink.table.catalog.ObjectPath;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.TableChange;
 import org.apache.flink.table.catalog.TableDistribution;
+import org.apache.flink.table.catalog.UniqueConstraint;
 import org.apache.flink.table.catalog.exceptions.DatabaseNotExistException;
 import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
@@ -263,6 +264,72 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
                                 + " MODIFY DEFINITION QUERY TO 'SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
                                 + "FROM `builtin`.`default`.`t1` AS `t1`',\n"
                                 + "  MODIFY DISTRIBUTED BY HASH(`b`) INTO 4 BUCKETS");
+    }
+
+    @Test
+    void testCreateOrAlterMaterializedTableWithDroppedConstraint() {
+        final String sql =
+                "CREATE OR ALTER MATERIALIZED TABLE mt \n"
+                        + "COMMENT 'New materialized table comment'\n"
+                        + "PARTITIONED BY (a, d)\n"
+                        + "WITH (\n"
+                        + "  'connector' = 'filesystem', \n"
+                        + "  'format' = 'json'\n"
+                        + ")\n"
+                        + "REFRESH_MODE = FULL\n"
+                        + "AS SELECT * FROM t1";
+        Operation operation = parse(sql);
+
+        assertThat(operation).isInstanceOf(FullAlterMaterializedTableOperation.class);
+
+        FullAlterMaterializedTableOperation op = (FullAlterMaterializedTableOperation) operation;
+        assertThat(op.getTableChanges())
+                .containsExactly(
+                        TableChange.dropConstraint("ct1"),
+                        TableChange.modifyDefinitionQuery(
+                                "SELECT *\n" + "FROM `t1`",
+                                "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
+                                        + "FROM `builtin`.`default`.`t1` AS `t1`"));
+        assertThat(operation.asSummaryString())
+                .isEqualTo(
+                        "CREATE OR ALTER MATERIALIZED TABLE builtin.default.mt\n"
+                                + "  DROP CONSTRAINT ct1,\n"
+                                + " MODIFY DEFINITION QUERY TO 'SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
+                                + "FROM `builtin`.`default`.`t1` AS `t1`'");
+    }
+
+    @Test
+    void testCreateOrAlterMaterializedTableWithChangedConstraint() {
+        final String sql =
+                "CREATE OR ALTER MATERIALIZED TABLE mt (\n"
+                        + "   CONSTRAINT new_constraint PRIMARY KEY(a) NOT ENFORCED"
+                        + ")\n"
+                        + "COMMENT 'New materialized table comment'\n"
+                        + "PARTITIONED BY (a, d)\n"
+                        + "WITH (\n"
+                        + "  'connector' = 'filesystem', \n"
+                        + "  'format' = 'json'\n"
+                        + ")\n"
+                        + "REFRESH_MODE = FULL\n"
+                        + "AS SELECT * FROM t1";
+        Operation operation = parse(sql);
+
+        assertThat(operation).isInstanceOf(FullAlterMaterializedTableOperation.class);
+
+        FullAlterMaterializedTableOperation op = (FullAlterMaterializedTableOperation) operation;
+        assertThat(op.getTableChanges())
+                .containsExactly(
+                        TableChange.modify(UniqueConstraint.primaryKey("new_constraint", List.of("a"))),
+                        TableChange.modifyDefinitionQuery(
+                                "SELECT *\n" + "FROM `t1`",
+                                "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
+                                        + "FROM `builtin`.`default`.`t1` AS `t1`"));
+        assertThat(operation.asSummaryString())
+                .isEqualTo(
+                        "CREATE OR ALTER MATERIALIZED TABLE builtin.default.mt\n"
+                                + "  MODIFY CONSTRAINT `new_constraint` PRIMARY KEY (`a`) NOT ENFORCED,\n"
+                                + " MODIFY DEFINITION QUERY TO 'SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
+                                + "FROM `builtin`.`default`.`t1` AS `t1`'");
     }
 
     private void createMaterializedTableInCatalog(String sql, String materializedTableName)
