@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.flink.table.planner.operations;
 
 import org.apache.flink.table.api.DataTypes;
@@ -15,7 +33,6 @@ import org.apache.flink.table.catalog.exceptions.DatabaseNotExistException;
 import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.operations.Operation;
-import org.apache.flink.table.operations.materializedtable.AlterMaterializedTableChangeOperation;
 import org.apache.flink.table.operations.materializedtable.CreateMaterializedTableOperation;
 import org.apache.flink.table.operations.materializedtable.FullAlterMaterializedTableOperation;
 
@@ -24,7 +41,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -34,19 +50,21 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  extends SqlNodeToOperationConversionTestBase {
-    private static final String DEFAULT_MATERIALIZED_TABLE = "CREATE MATERIALIZED TABLE mt (\n"
-            + "   CONSTRAINT ct1 PRIMARY KEY(a) NOT ENFORCED"
-            + ")\n"
-            + "COMMENT 'materialized table comment'\n"
-            + "PARTITIONED BY (a, d)\n"
-            + "WITH (\n"
-            + "  'connector' = 'filesystem', \n"
-            + "  'format' = 'json'\n"
-            + ")\n"
-            + "FRESHNESS = INTERVAL '30' SECOND\n"
-            + "REFRESH_MODE = FULL\n"
-            + "AS SELECT * FROM t1";
+public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest
+        extends SqlNodeToOperationConversionTestBase {
+    private static final String DEFAULT_MATERIALIZED_TABLE =
+            "CREATE MATERIALIZED TABLE mt (\n"
+                    + "   CONSTRAINT ct1 PRIMARY KEY(a) NOT ENFORCED"
+                    + ")\n"
+                    + "COMMENT 'materialized table comment'\n"
+                    + "PARTITIONED BY (a, d)\n"
+                    + "WITH (\n"
+                    + "  'connector' = 'filesystem', \n"
+                    + "  'format' = 'json'\n"
+                    + ")\n"
+                    + "FRESHNESS = INTERVAL '30' SECOND\n"
+                    + "REFRESH_MODE = FULL\n"
+                    + "AS SELECT * FROM t1";
 
     @BeforeEach
     void before() throws TableAlreadyExistException, DatabaseNotExistException {
@@ -127,8 +145,7 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
 
     @ParameterizedTest
     @MethodSource("createOrAlterForExistingMaterializedTableFailedCaseSpecs")
-    void createOrAlterForExistingMaterializedTableFailedCase(
-            TestSpec spec) {
+    void createOrAlterForExistingMaterializedTableFailedCase(TestSpec spec) {
         Operation operation = parse(spec.sql);
         assertThat(operation).isInstanceOf(FullAlterMaterializedTableOperation.class);
 
@@ -188,7 +205,9 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
                                         + "FROM `builtin`.`default`.`t1` AS `t1`"),
                         TableChange.set("format", "json2"),
                         TableChange.reset("connector"),
-                        TableChange.add(TableDistribution.of(TableDistribution.Kind.HASH, 7, List.of("b"))));
+                        TableChange.add(
+                                TableDistribution.of(
+                                        TableDistribution.Kind.HASH, 7, List.of("b"))));
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "CREATE OR ALTER MATERIALIZED TABLE builtin.default.mt\n"
@@ -203,8 +222,7 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
         // new table only difference schema & definition query with old table.
         CatalogMaterializedTable oldTable =
                 (CatalogMaterializedTable)
-                        catalog.getTable(
-                                new ObjectPath(catalogManager.getCurrentDatabase(), "mt"));
+                        catalog.getTable(new ObjectPath(catalogManager.getCurrentDatabase(), "mt"));
         CatalogMaterializedTable newTable = op.getNewTable();
 
         assertThat(newTable.getOptions()).containsExactly(Map.entry("format", "json2"));
@@ -232,12 +250,15 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
         // added column should be a nullable column.
         assertThat(addedColumn)
                 .containsExactly(
-                        new Schema.UnresolvedPhysicalColumn("e", DataTypes.VARCHAR(Integer.MAX_VALUE)),
-                        new Schema.UnresolvedPhysicalColumn("f", DataTypes.VARCHAR(Integer.MAX_VALUE)));
+                        new Schema.UnresolvedPhysicalColumn(
+                                "e", DataTypes.VARCHAR(Integer.MAX_VALUE)),
+                        new Schema.UnresolvedPhysicalColumn(
+                                "f", DataTypes.VARCHAR(Integer.MAX_VALUE)));
     }
 
     @Test
-    void testCreateOrAlterMaterializedTableWithDistributionForExistingTable() throws TableAlreadyExistException, DatabaseNotExistException {
+    void testCreateOrAlterMaterializedTableWithDistributionForExistingTable()
+            throws TableAlreadyExistException, DatabaseNotExistException {
         final String prepSql =
                 "CREATE MATERIALIZED TABLE mt2\n"
                         + "DISTRIBUTED BY HASH (a) INTO 5 BUCKETS\n"
@@ -259,7 +280,9 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
                                 "SELECT `t1`.*\n" + "FROM `t1`",
                                 "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
                                         + "FROM `builtin`.`default`.`t1` AS `t1`"),
-                        TableChange.modify(TableDistribution.of(TableDistribution.Kind.HASH, 4, List.of("b"))));
+                        TableChange.modify(
+                                TableDistribution.of(
+                                        TableDistribution.Kind.HASH, 4, List.of("b"))));
         assertThat(operation.asSummaryString())
                 .isEqualTo(
                         "CREATE OR ALTER MATERIALIZED TABLE builtin.default.mt2\n"
@@ -269,7 +292,8 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
     }
 
     @Test
-    void testCreateOrAlterMaterializedTableWithChangedComment2() throws TableAlreadyExistException, DatabaseNotExistException {
+    void testCreateOrAlterMaterializedTableWithChangedComment2()
+            throws TableAlreadyExistException, DatabaseNotExistException {
         final String prepSql =
                 "CREATE MATERIALIZED TABLE mt1 (\n"
                         + "   id INT, name CHAR(1)"
@@ -278,8 +302,7 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
         createMaterializedTableInCatalog(prepSql, "mt1");
 
         final String sql =
-                "CREATE OR ALTER MATERIALIZED TABLE mt1\n"
-                        + "AS SELECT 1 id, 'a123' name";
+                "CREATE OR ALTER MATERIALIZED TABLE mt1\n" + "AS SELECT 1 id, 'a123' name";
         Operation operation = parse(sql);
 
         assertThat(operation).isInstanceOf(FullAlterMaterializedTableOperation.class);
@@ -349,7 +372,8 @@ public class SqlNodeToOperationSqlCreateOrAlterMaterializedTableConverterTest  e
         FullAlterMaterializedTableOperation op = (FullAlterMaterializedTableOperation) operation;
         assertThat(op.getTableChanges())
                 .containsExactly(
-                        TableChange.modify(UniqueConstraint.primaryKey("new_constraint", List.of("a"))),
+                        TableChange.modify(
+                                UniqueConstraint.primaryKey("new_constraint", List.of("a"))),
                         TableChange.modifyDefinitionQuery(
                                 "SELECT *\n" + "FROM `t1`",
                                 "SELECT `t1`.`a`, `t1`.`b`, `t1`.`c`, `t1`.`d`\n"
