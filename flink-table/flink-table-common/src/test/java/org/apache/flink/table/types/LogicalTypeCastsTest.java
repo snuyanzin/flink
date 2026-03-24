@@ -85,7 +85,8 @@ class LogicalTypeCastsTest {
                         new SmallIntType(),
                         false,
                         false),
-                Arguments.of(new IntType(), new DecimalType(5, 5), true, true),
+                Arguments.of(new IntType(), new DecimalType(5, 5), false, true),
+                Arguments.of(new IntType(), new DecimalType(10, 5), false, true),
 
                 // loss of precision
                 Arguments.of(new FloatType(), new IntType(), false, true),
@@ -175,6 +176,10 @@ class LogicalTypeCastsTest {
                         new LocalZonedTimestampType(false, 3), new TimestampType(6), true, true),
                 Arguments.of(new TimestampType(6), new LocalZonedTimestampType(3), true, true),
                 Arguments.of(new LocalZonedTimestampType(6), new TimestampType(3), true, true),
+                Arguments.of(new CharType(6), new CharType(3), false, true),
+                Arguments.of(new CharType(3), new CharType(6), true, true),
+                Arguments.of(new VarCharType(6), new VarCharType(3), false, true),
+                Arguments.of(new VarCharType(3), new VarCharType(6), true, true),
 
                 // row and structured type
                 Arguments.of(

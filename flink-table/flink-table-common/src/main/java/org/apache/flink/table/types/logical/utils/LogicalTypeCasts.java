@@ -19,9 +19,13 @@
 package org.apache.flink.table.types.logical.utils;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.table.types.logical.BigIntType;
+import org.apache.flink.table.types.logical.CharType;
 import org.apache.flink.table.types.logical.DateType;
 import org.apache.flink.table.types.logical.DayTimeIntervalType;
+import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.DistinctType;
+import org.apache.flink.table.types.logical.IntType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
@@ -33,6 +37,7 @@ import org.apache.flink.table.types.logical.YearMonthIntervalType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -111,7 +116,7 @@ import static org.apache.flink.table.types.logical.utils.LogicalTypeChecks.isSin
 @Internal
 public final class LogicalTypeCasts {
 
-    private static final Map<LogicalTypeRoot, Set<LogicalTypeRoot>> implicitCastingRules;
+    private static final Map<LogicalTypeRoot, List<InjectiveRule>> implicitCastingRules;
 
     private static final Map<LogicalTypeRoot, Set<LogicalTypeRoot>> explicitCastingRules;
 
@@ -144,13 +149,13 @@ public final class LogicalTypeCasts {
 
     /** Injective when source and target share identical precision. */
     private static final BiPredicate<LogicalType, LogicalType> WHEN_PRECISION_MATCHES =
-            (source, target) -> getPrecision(source) == getPrecision(target);
+            (source, target) -> getPrecision(source) <= getPrecision(target);
 
     /** Injective when source and target share identical precision and scale (DECIMAL). */
     private static final BiPredicate<LogicalType, LogicalType> WHEN_PRECISION_AND_SCALE_MATCH =
             (source, target) ->
-                    getPrecision(source) == getPrecision(target)
-                            && getScale(source) == getScale(target);
+                    getPrecision(source) <= getPrecision(target)
+                            && getScale(source) <= getScale(target);
 
     /**
      * Injective when the target binary length can hold worst-case UTF-8 encoding (4 bytes/char).
@@ -174,7 +179,7 @@ public final class LogicalTypeCasts {
         // Identity casts: all types can be implicitly cast to themselves.
         // Injective identity for parameterized types is declared per-type with conditions.
         for (LogicalTypeRoot typeRoot : allTypes()) {
-            castTo(typeRoot).implicitFrom(typeRoot).build();
+            castTo(typeRoot).implicitFrom((x, y) -> true, typeRoot).build();
         }
 
         // -----------------------------------------------------------------------------------------
@@ -182,7 +187,8 @@ public final class LogicalTypeCasts {
         // -----------------------------------------------------------------------------------------
 
         castTo(CHAR)
-                .implicitFrom(CHAR)
+                .implicitFrom(WHEN_LENGTH_FITS, CHAR)
+                .implicitFrom(WHEN_MAX_CHAR_LENGTH_FITS, STRING_INJECTIVE_SOURCES)
                 .explicitFromFamily(PREDEFINED, CONSTRUCTED)
                 .explicitFrom(RAW, NULL, STRUCTURED_TYPE)
                 .injectiveFrom(WHEN_LENGTH_FITS, CHAR)
@@ -190,7 +196,7 @@ public final class LogicalTypeCasts {
                 .build();
 
         castTo(VARCHAR)
-                .implicitFromFamily(CHARACTER_STRING)
+                .implicitFromFamily(WHEN_LENGTH_FITS, CHARACTER_STRING)
                 .explicitFromFamily(PREDEFINED, CONSTRUCTED)
                 .explicitFrom(RAW, NULL, STRUCTURED_TYPE)
                 .injectiveFrom(WHEN_LENGTH_FITS, CHAR, VARCHAR)
@@ -202,7 +208,7 @@ public final class LogicalTypeCasts {
         // -----------------------------------------------------------------------------------------
 
         castTo(BINARY)
-                .implicitFrom(BINARY)
+                .implicitFrom(WHEN_LENGTH_FITS, BINARY)
                 .explicitFromFamily(CHARACTER_STRING)
                 .explicitFrom(VARBINARY, RAW)
                 .injectiveFrom(WHEN_LENGTH_FITS, BINARY)
@@ -210,7 +216,7 @@ public final class LogicalTypeCasts {
                 .build();
 
         castTo(VARBINARY)
-                .implicitFromFamily(BINARY_STRING)
+                .implicitFromFamily(WHEN_LENGTH_FITS, BINARY_STRING)
                 .explicitFromFamily(CHARACTER_STRING)
                 .explicitFrom(BINARY, RAW)
                 .injectiveFrom(WHEN_LENGTH_FITS, BINARY, VARBINARY)
@@ -222,35 +228,35 @@ public final class LogicalTypeCasts {
         // -----------------------------------------------------------------------------------------
 
         castTo(TINYINT)
-                .implicitFrom(TINYINT)
+                .implicitFrom((x, y) -> true, TINYINT)
                 .explicitFromFamily(NUMERIC, CHARACTER_STRING, INTERVAL)
                 .explicitFrom(BOOLEAN, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .injectiveFrom(TINYINT)
                 .build();
 
         castTo(SMALLINT)
-                .implicitFrom(TINYINT, SMALLINT)
+                .implicitFrom((x, y) -> true, TINYINT, SMALLINT)
                 .explicitFromFamily(NUMERIC, CHARACTER_STRING, INTERVAL)
                 .explicitFrom(BOOLEAN, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .injectiveFrom(TINYINT, SMALLINT)
                 .build();
 
         castTo(INTEGER)
-                .implicitFrom(TINYINT, SMALLINT, INTEGER)
+                .implicitFrom((x, y) -> true, TINYINT, SMALLINT, INTEGER)
                 .explicitFromFamily(NUMERIC, CHARACTER_STRING, INTERVAL)
                 .explicitFrom(BOOLEAN, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .injectiveFrom(TINYINT, SMALLINT, INTEGER)
                 .build();
 
         castTo(BIGINT)
-                .implicitFrom(TINYINT, SMALLINT, INTEGER, BIGINT)
+                .implicitFrom((x, y) -> true, TINYINT, SMALLINT, INTEGER, BIGINT)
                 .explicitFromFamily(NUMERIC, CHARACTER_STRING, INTERVAL)
                 .explicitFrom(BOOLEAN, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .injectiveFrom(TINYINT, SMALLINT, INTEGER, BIGINT)
                 .build();
 
         castTo(DECIMAL)
-                .implicitFromFamily(NUMERIC)
+                .implicitFromFamily(WHEN_PRECISION_AND_SCALE_MATCH, NUMERIC)
                 .explicitFromFamily(CHARACTER_STRING, INTERVAL)
                 .explicitFrom(BOOLEAN, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .injectiveFrom(WHEN_PRECISION_AND_SCALE_MATCH, DECIMAL)
@@ -261,14 +267,14 @@ public final class LogicalTypeCasts {
         // -----------------------------------------------------------------------------------------
 
         castTo(FLOAT)
-                .implicitFrom(TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, DECIMAL)
+                .implicitFrom((x, y) -> true, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, DECIMAL)
                 .explicitFromFamily(NUMERIC, CHARACTER_STRING)
                 .explicitFrom(BOOLEAN, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .injectiveFrom(FLOAT)
                 .build();
 
         castTo(DOUBLE)
-                .implicitFromFamily(NUMERIC)
+                .implicitFromFamily((x, y) -> true, NUMERIC)
                 .explicitFromFamily(CHARACTER_STRING)
                 .explicitFrom(BOOLEAN, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .injectiveFrom(DOUBLE)
@@ -279,7 +285,7 @@ public final class LogicalTypeCasts {
         // -----------------------------------------------------------------------------------------
 
         castTo(BOOLEAN)
-                .implicitFrom(BOOLEAN)
+                .implicitFrom((x, y) -> true, BOOLEAN)
                 .explicitFromFamily(CHARACTER_STRING, INTEGER_NUMERIC)
                 .injectiveFrom(BOOLEAN)
                 .build();
@@ -289,19 +295,19 @@ public final class LogicalTypeCasts {
         // -----------------------------------------------------------------------------------------
 
         castTo(DATE)
-                .implicitFrom(DATE, TIMESTAMP_WITHOUT_TIME_ZONE)
+                .implicitFrom((x, y) -> true, DATE, TIMESTAMP_WITHOUT_TIME_ZONE)
                 .explicitFromFamily(TIMESTAMP, CHARACTER_STRING)
                 .injectiveFrom(DATE)
                 .build();
 
         castTo(TIME_WITHOUT_TIME_ZONE)
-                .implicitFrom(TIME_WITHOUT_TIME_ZONE, TIMESTAMP_WITHOUT_TIME_ZONE)
+                .implicitFrom(WHEN_PRECISION_MATCHES, TIME_WITHOUT_TIME_ZONE, TIMESTAMP_WITHOUT_TIME_ZONE)
                 .explicitFromFamily(TIME, TIMESTAMP, CHARACTER_STRING)
                 .injectiveFrom(WHEN_PRECISION_MATCHES, TIME_WITHOUT_TIME_ZONE)
                 .build();
 
         castTo(TIMESTAMP_WITHOUT_TIME_ZONE)
-                .implicitFrom(TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
+                .implicitFrom(WHEN_PRECISION_MATCHES, TIMESTAMP_WITHOUT_TIME_ZONE, TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 .explicitFromFamily(DATETIME, CHARACTER_STRING, NUMERIC)
                 .injectiveFrom(
                         WHEN_PRECISION_MATCHES,
@@ -310,13 +316,13 @@ public final class LogicalTypeCasts {
                 .build();
 
         castTo(TIMESTAMP_WITH_TIME_ZONE)
-                .implicitFrom(TIMESTAMP_WITH_TIME_ZONE)
+                .implicitFrom(WHEN_PRECISION_MATCHES, TIMESTAMP_WITH_TIME_ZONE)
                 .explicitFromFamily(DATETIME, CHARACTER_STRING)
                 .injectiveFrom(WHEN_PRECISION_MATCHES, TIMESTAMP_WITH_TIME_ZONE)
                 .build();
 
         castTo(TIMESTAMP_WITH_LOCAL_TIME_ZONE)
-                .implicitFrom(TIMESTAMP_WITH_LOCAL_TIME_ZONE, TIMESTAMP_WITHOUT_TIME_ZONE)
+                .implicitFrom(WHEN_PRECISION_MATCHES, TIMESTAMP_WITH_LOCAL_TIME_ZONE, TIMESTAMP_WITHOUT_TIME_ZONE)
                 .explicitFromFamily(DATETIME, CHARACTER_STRING, NUMERIC)
                 .injectiveFrom(
                         WHEN_PRECISION_MATCHES,
@@ -329,12 +335,12 @@ public final class LogicalTypeCasts {
         // -----------------------------------------------------------------------------------------
 
         castTo(INTERVAL_YEAR_MONTH)
-                .implicitFrom(INTERVAL_YEAR_MONTH)
+                .implicitFrom((c, y) -> true, INTERVAL_YEAR_MONTH)
                 .explicitFromFamily(EXACT_NUMERIC, CHARACTER_STRING)
                 .build();
 
         castTo(INTERVAL_DAY_TIME)
-                .implicitFrom(INTERVAL_DAY_TIME)
+                .implicitFrom((x, y) -> true, INTERVAL_DAY_TIME)
                 .explicitFromFamily(EXACT_NUMERIC, CHARACTER_STRING)
                 .build();
     }
@@ -446,9 +452,6 @@ public final class LogicalTypeCasts {
 
         // Check declarative injective rules
         final List<InjectiveRule> rules = injectiveRules.get(targetRoot);
-        if (rules == null) {
-            return false;
-        }
         for (final InjectiveRule rule : rules) {
             if (rule.test(sourceType, targetType)) {
                 return true;
@@ -618,11 +621,44 @@ public final class LogicalTypeCasts {
             return false;
         }
 
-        if (implicitCastingRules.get(targetRoot).contains(sourceRoot)) {
+        List<InjectiveRule> rules = implicitCastingRules.get(targetRoot);
+        boolean pass = false;
+        for (InjectiveRule rule: rules) {
+            if (!pass && rule.test(sourceType, targetType)) {
+                pass = true;
+            }
+        }
+        if (pass) {
             return true;
         }
         if (allowExplicit) {
             return explicitCastingRules.get(targetRoot).contains(sourceRoot);
+        }
+        return false;
+    }
+
+    private static boolean implicitCastAllowed(LogicalType sourceType, LogicalTypeRoot sourceRoot, LogicalType targetType, LogicalTypeRoot targetRoot ) {
+        if (implicitCastingRules.get(targetRoot).contains(sourceRoot)) {
+            switch (targetRoot) {
+                case CHAR: {
+                    final CharType source = (CharType) sourceType;
+                    final CharType target = (CharType) targetType;
+                    return source.getLength() <= target.getLength();
+                }
+                case VARCHAR: {
+                    final VarCharType source = (VarCharType) sourceType;
+                    final VarCharType target = (VarCharType) targetType;
+                    return source.getLength() <= target.getLength();
+                }
+                case DECIMAL: {
+                    final DecimalType source = (DecimalType) sourceType;
+                    final DecimalType target = (DecimalType) targetType;
+              //      return source.getPrecision() <= target.getPrecision()
+                //            && source.getScale() <= target.getScale();
+                }
+                default:
+                    return true;
+            }
         }
         return false;
     }
@@ -725,24 +761,28 @@ public final class LogicalTypeCasts {
     private static class CastingRuleBuilder {
 
         private final LogicalTypeRoot targetType;
-        private final Set<LogicalTypeRoot> implicitSourceTypes = new HashSet<>();
-        private final Set<LogicalTypeRoot> explicitSourceTypes = new HashSet<>();
+        private final List<InjectiveRule> implicitSourceTypes = new ArrayList<>();
+        private final Set<LogicalTypeRoot> explicitSourceTypes = EnumSet.noneOf(LogicalTypeRoot.class);
         private final List<InjectiveRule> injectiveRuleList = new ArrayList<>();
 
         CastingRuleBuilder(LogicalTypeRoot targetType) {
             this.targetType = targetType;
         }
 
-        CastingRuleBuilder implicitFrom(LogicalTypeRoot... sourceTypes) {
-            this.implicitSourceTypes.addAll(Arrays.asList(sourceTypes));
+        CastingRuleBuilder implicitFrom(
+                BiPredicate<LogicalType, LogicalType> condition, LogicalTypeRoot... sourceTypes) {
+            this.implicitSourceTypes.add(
+                    new InjectiveRule(Set.of(sourceTypes), condition));
+            this.explicitSourceTypes.addAll(Set.of(sourceTypes));
             return this;
         }
 
-        CastingRuleBuilder implicitFromFamily(LogicalTypeFamily... sourceFamilies) {
+        CastingRuleBuilder implicitFromFamily(BiPredicate<LogicalType, LogicalType> condition,LogicalTypeFamily... sourceFamilies) {
             for (LogicalTypeFamily family : sourceFamilies) {
                 for (LogicalTypeRoot root : LogicalTypeRoot.values()) {
                     if (root.getFamilies().contains(family)) {
-                        this.implicitSourceTypes.add(root);
+                        this.implicitSourceTypes.add(new InjectiveRule(Set.of(root), condition));
+                        this.explicitSourceTypes.add(root);
                     }
                 }
             }
@@ -750,7 +790,7 @@ public final class LogicalTypeCasts {
         }
 
         CastingRuleBuilder explicitFrom(LogicalTypeRoot... sourceTypes) {
-            this.explicitSourceTypes.addAll(Arrays.asList(sourceTypes));
+            this.explicitSourceTypes.addAll(List.of(sourceTypes));
             return this;
         }
 
@@ -772,7 +812,7 @@ public final class LogicalTypeCasts {
         CastingRuleBuilder injectiveFrom(
                 BiPredicate<LogicalType, LogicalType> condition, LogicalTypeRoot... sourceTypes) {
             injectiveRuleList.add(
-                    new InjectiveRule(new HashSet<>(Arrays.asList(sourceTypes)), condition));
+                    new InjectiveRule(Set.of(sourceTypes), condition));
             return this;
         }
 
