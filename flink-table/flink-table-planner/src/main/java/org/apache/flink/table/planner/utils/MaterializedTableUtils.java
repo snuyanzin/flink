@@ -41,6 +41,7 @@ import org.apache.flink.table.catalog.TableChange.ColumnPosition;
 import org.apache.flink.table.planner.operations.PlannerQueryOperation;
 import org.apache.flink.table.planner.operations.converters.SqlNodeConverter.ConvertContext;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.utils.DateTimeUtils;
 
 import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlIntervalLiteral.IntervalValue;
@@ -59,6 +60,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+
 /** The utils for materialized table. */
 @Internal
 public class MaterializedTableUtils {
@@ -71,7 +74,7 @@ public class MaterializedTableUtils {
 
     public static IntervalFreshness getMaterializedTableFreshness(
             SqlIntervalLiteral sqlIntervalLiteral) {
-        return new IntervalFreshness(getFreshnessInterval(sqlIntervalLiteral));
+        return IntervalFreshness.of(getFreshnessInterval(sqlIntervalLiteral));
     }
 
     private static Interval getFreshnessInterval(SqlIntervalLiteral sqlIntervalLiteral) {
@@ -137,11 +140,13 @@ public class MaterializedTableUtils {
             case INTERVAL_MONTH:
                 if (intervalValue.getIntervalQualifier().timeUnitRange.startUnit
                         == org.apache.calcite.avatica.util.TimeUnit.QUARTER) {
-                    return Interval.of(intervalInt / 3, TimeUnit.QUARTER);
+                    return Interval.of(
+                            intervalInt / DateTimeUtils.MONTHS_PER_QUARTER, TimeUnit.QUARTER);
                 }
                 return Interval.of(intervalInt, TimeUnit.MONTH);
             case INTERVAL_YEAR:
-                return Interval.of(intervalInt / 12, TimeUnit.YEAR);
+                return Interval.of(
+                        (int) (intervalInt / MONTH_OF_YEAR.range().getMaximum()), TimeUnit.YEAR);
             default:
                 throw new ValidationException(
                         String.format(
@@ -155,21 +160,23 @@ public class MaterializedTableUtils {
             final SqlTypeName typeName,
             final BigDecimal interval,
             final String intervalDescription) {
-        final int intervalInt = (int) (interval.longValue() / 1000);
+        final long millis = interval.longValue();
         switch (typeName) {
             case INTERVAL_DAY:
-                final int amountOfDays = intervalInt / 60 / 60 / 24;
+                final int amountOfDays = (int) (millis / DateTimeUtils.MILLIS_PER_DAY);
                 if (intervalValue.getIntervalQualifier().timeUnitRange.startUnit
                         == org.apache.calcite.avatica.util.TimeUnit.WEEK) {
-                    return Interval.of(amountOfDays / 7, TimeUnit.WEEK);
+                    return Interval.of(amountOfDays / DateTimeUtils.DAYS_PER_WEEK, TimeUnit.WEEK);
                 }
                 return Interval.of(amountOfDays, TimeUnit.DAY);
             case INTERVAL_HOUR:
-                return Interval.of(intervalInt / 60 / 60, TimeUnit.HOUR);
+                return Interval.of((int) (millis / DateTimeUtils.MILLIS_PER_HOUR), TimeUnit.HOUR);
             case INTERVAL_MINUTE:
-                return Interval.of(intervalInt / 60, TimeUnit.MINUTE);
+                return Interval.of(
+                        (int) (millis / DateTimeUtils.MILLIS_PER_MINUTE), TimeUnit.MINUTE);
             case INTERVAL_SECOND:
-                return Interval.of(intervalInt, TimeUnit.SECOND);
+                return Interval.of(
+                        (int) (millis / DateTimeUtils.MILLIS_PER_SECOND), TimeUnit.SECOND);
             default:
                 throw new ValidationException(
                         String.format(

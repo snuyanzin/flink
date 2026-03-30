@@ -45,27 +45,31 @@ public class IntervalFreshness {
 
     private final Interval interval;
 
-    public IntervalFreshness(Interval interval) {
+    private IntervalFreshness(Interval interval) {
         this.interval = interval;
     }
 
+    public static IntervalFreshness of(Interval interval) {
+        return new IntervalFreshness(interval);
+    }
+
     public static IntervalFreshness of(String interval, TimeUnit timeUnit) {
-        final int validateIntervalInput = validateIntervalStringInput(interval);
+        final int validateIntervalInput = validateIntervalValue(interval);
         return new IntervalFreshness(Interval.of(validateIntervalInput, timeUnit));
     }
 
     public static IntervalFreshness of(int intervalDuration, TimeUnit timeUnit) {
-        validateIntervalIntInput(intervalDuration);
+        validateIntervalPositiveValue(intervalDuration);
         return new IntervalFreshness(Interval.of(intervalDuration, timeUnit));
     }
 
     public static IntervalFreshness of(Duration duration, TimeUnit timeUnit) {
         // just check it is positive
-        validateIntervalIntInput((int) duration.toSeconds());
+        validateIntervalPositiveValue((int) duration.toSeconds());
         return new IntervalFreshness(Interval.of(duration, timeUnit));
     }
 
-    private static int validateIntervalStringInput(final String interval) {
+    private static int validateIntervalValue(final String interval) {
         final int parsedInt;
         try {
             parsedInt = Integer.parseInt(interval);
@@ -76,11 +80,11 @@ public class IntervalFreshness {
                             interval);
             throw new ValidationException(errorMessage, e);
         }
-        validateIntervalIntInput(parsedInt);
+        validateIntervalPositiveValue(parsedInt);
         return parsedInt;
     }
 
-    private static void validateIntervalIntInput(final int interval) {
+    private static void validateIntervalPositiveValue(final int interval) {
         if (interval <= 0) {
             throw new ValidationException(
                     String.format(

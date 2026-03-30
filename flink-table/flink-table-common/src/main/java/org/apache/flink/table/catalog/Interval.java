@@ -20,12 +20,18 @@ package org.apache.flink.table.catalog;
 
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.utils.DateTimeUtils;
 
 import java.time.Duration;
 import java.time.Period;
 import java.util.Objects;
 
-/** A class representing day-time and year month intervals. */
+/**
+ * A class representing day-time and year-month intervals.
+ *
+ * <p>Depending on the time unit, the interval is backed day-time or year-month. See {@link
+ * TimeUnit} for more details.
+ */
 @PublicEvolving
 public class Interval {
     private final Duration duration;
@@ -77,11 +83,11 @@ public class Interval {
             case DAY:
                 return (int) duration.toDays();
             case WEEK:
-                return (int) (duration.toDays() / 7);
+                return (int) (duration.toDays() / DateTimeUtils.DAYS_PER_WEEK);
             case MONTH:
                 return period.getMonths();
             case QUARTER:
-                return period.getMonths() / 3;
+                return period.getMonths() / DateTimeUtils.MONTHS_PER_QUARTER;
             case YEAR:
                 return period.getYears();
             default:
@@ -102,7 +108,7 @@ public class Interval {
             case DAY:
                 return Duration.ofDays(interval);
             case WEEK:
-                return Duration.ofDays(interval * 7L);
+                return Duration.ofDays((long) interval * DateTimeUtils.DAYS_PER_WEEK);
             default:
                 throw new IllegalArgumentException("Unsupported time unit: " + timeUnit);
         }
@@ -113,7 +119,7 @@ public class Interval {
             case MONTH:
                 return Period.ofMonths(interval);
             case QUARTER:
-                return Period.ofMonths(interval * 3);
+                return Period.ofMonths(interval * DateTimeUtils.MONTHS_PER_QUARTER);
             case YEAR:
                 return Period.ofYears(interval);
             default:
@@ -146,7 +152,7 @@ public class Interval {
     // TimeUnit enums
     // --------------------------------------------------------------------------------------------
 
-    /** An enumeration of time unit representing the unit of interval freshness. */
+    /** An enumeration of time unit representing the unit of interval. */
     @PublicEvolving
     public enum TimeUnit {
         SECOND(true),
