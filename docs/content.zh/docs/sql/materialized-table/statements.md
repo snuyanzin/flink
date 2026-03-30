@@ -395,8 +395,8 @@ CREATE OR ALTER MATERIALIZED TABLE my_materialized_table
 ALTER MATERIALIZED TABLE [catalog_name.][db_name.]table_name
     ADD { <schema_component> | (<schema_component> [, ...]) | <distribution> }
     | MODIFY { <schema_component> | (<schema_component> [, ...]) | <distribution> }
-    | DROP {column_name | (column_name, column_name, ....) | PRIMARY KEY | CONSTRAINT constraint_name | WATERMARK | DISTRIBUTION }
-    | SUSPEND | RESUME [WITH (key1=val1, key2=val2, ...)] |
+    | DROP {column_name | (column_name, column_name, ...) | PRIMARY KEY | CONSTRAINT constraint_name | WATERMARK | DISTRIBUTION }
+    | SUSPEND | RESUME [WITH (key1=val1, key2=val2, ...)]
     | REFRESH [PARTITION partition_spec] |
     | AS <select_statement>
 <schema_component>:
@@ -425,8 +425,8 @@ ALTER MATERIALIZED TABLE [catalog_name.][db_name.]table_name
   
 <distribution>:
 {
-    DISTRIBUTION BY [ { HASH | RANGE } ] (bucket_column_name1, bucket_column_name2, ...) ] [INTO n BUCKETS]
-  | DISTRIBUTION INTO n BUCKETS
+    DISTRIBUTED BY [ { HASH | RANGE } ] (bucket_column_name1, bucket_column_name2, ...) [INTO n BUCKETS]
+  | DISTRIBUTED INTO n BUCKETS
 } 
 ```
 
@@ -441,10 +441,10 @@ The following examples illustrate the usage of the `ADD` statements.
 
 ```sql
 -- add a new column 
-ALTER MATERIALIZED TABLE MyMateralizedTable ADD category_id STRING METADATA VIRTUAL;
+ALTER MATERIALIZED TABLE MyMaterializedTable ADD category_id STRING METADATA VIRTUAL;
 
 -- add columns, constraint, and watermark
-ALTER MATERIALIZED TABLE MyMateralizedTable ADD (
+ALTER MATERIALIZED TABLE MyMaterializedTable ADD (
     log_ts STRING METADATA VIRTUAL FIRST,
     ts AS TO_TIMESTAMP(log_ts) AFTER log_ts,
     PRIMARY KEY (id) NOT ENFORCED,
@@ -452,16 +452,16 @@ ALTER MATERIALIZED TABLE MyMateralizedTable ADD (
 );
 
 -- add new distribution using a hash on uid into 4 buckets
-ALTER MATERIALIZED TABLE MyMateralizedTable ADD DISTRIBUTION BY HASH(uid) INTO 4 BUCKETS;
+ALTER MATERIALIZED TABLE MyMaterializedTable ADD DISTRIBUTION BY HASH(uid) INTO 4 BUCKETS;
 
 -- add new distribution on uid into 4 buckets
-ALTER MATERIALIZED TABLE MyMateralizedTable ADD DISTRIBUTION BY (uid) INTO 4 BUCKETS;
+ALTER MATERIALIZED TABLE MyMaterializedTable ADD DISTRIBUTION BY (uid) INTO 4 BUCKETS;
 
 -- add new distribution on uid.
-ALTER MATERIALIZED TABLE MyMateralizedTable ADD DISTRIBUTION BY (uid);
+ALTER MATERIALIZED TABLE MyMaterializedTable ADD DISTRIBUTION BY (uid);
 
 -- add new distribution into 4 buckets
-ALTER MATERIALIZED TABLE MyMateralizedTable ADD DISTRIBUTION INTO 4 BUCKETS;
+ALTER MATERIALIZED TABLE MyMaterializedTable ADD DISTRIBUTION INTO 4 BUCKETS;
 ```
 <span class="label label-danger">Note</span> Add a column to be primary key will change the column's nullability to false implicitly.
 
@@ -474,10 +474,10 @@ The following examples illustrate the usage of the `MODIFY` statements.
 
 ```sql
 -- modify a column type, comment and position
-ALTER MATERIALIZED TABLE MyMateralizedTable MODIFY measurement double METADATA COMMENT 'unit is bytes per second' AFTER `id`;
+ALTER MATERIALIZED TABLE MyMaterializedTable MODIFY measurement double METADATA COMMENT 'unit is bytes per second' AFTER `id`;
 
 -- modify definition of column log_ts and ts, primary key, watermark. They must exist in table schema
-ALTER MATERIALIZED TABLE MyMateralizedTable MODIFY (
+ALTER MATERIALIZED TABLE MyMaterializedTable MODIFY (
     log_ts STRING METADATA COMMENT 'log timestamp string' AFTER `id`,  -- reorder columns
     ts AS TO_TIMESTAMP(log_ts) AFTER log_ts,
     PRIMARY KEY (id) NOT ENFORCED,
@@ -494,19 +494,19 @@ The following examples illustrate the usage of the `DROP` statements.
 
 ```sql
 -- drop a column
-ALTER MATERIALIZED TABLE MyMateralizedTable DROP measurement;
+ALTER MATERIALIZED TABLE MyMaterializedTable DROP measurement;
 
 -- drop columns
-ALTER MATERIALIZED TABLE MyMateralizedTable DROP (col1, col2, col3);
+ALTER MATERIALIZED TABLE MyMaterializedTable DROP (col1, col2, col3);
 
 -- drop primary key
-ALTER MATERIALIZED TABLE MyMateralizedTable DROP PRIMARY KEY;
+ALTER MATERIALIZED TABLE MyMaterializedTable DROP PRIMARY KEY;
 
 -- drop a watermark
-ALTER MATERIALIZED TABLE MyMateralizedTable DROP WATERMARK;
+ALTER MATERIALIZED TABLE MyMaterializedTable DROP WATERMARK;
 
 -- drop distribution
-ALTER MATERIALIZED TABLE MyMateralizedTable DROP DISTRIBUTION;
+ALTER MATERIALIZED TABLE MyMaterializedTable DROP DISTRIBUTION;
 ```
 
 ## SUSPEND
