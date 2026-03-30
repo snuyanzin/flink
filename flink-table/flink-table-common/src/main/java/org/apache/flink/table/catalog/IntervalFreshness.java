@@ -69,30 +69,6 @@ public class IntervalFreshness {
         return new IntervalFreshness(Interval.of(duration, timeUnit));
     }
 
-    private static int validateIntervalValue(final String interval) {
-        final int parsedInt;
-        try {
-            parsedInt = Integer.parseInt(interval);
-        } catch (Exception e) {
-            final String errorMessage =
-                    String.format(
-                            "The freshness interval currently only supports positive integer type values. But was: %s",
-                            interval);
-            throw new ValidationException(errorMessage, e);
-        }
-        validateIntervalPositiveValue(parsedInt);
-        return parsedInt;
-    }
-
-    private static void validateIntervalPositiveValue(final int interval) {
-        if (interval <= 0) {
-            throw new ValidationException(
-                    String.format(
-                            "The freshness interval currently only supports positive integer type values. But was: %d",
-                            interval));
-        }
-    }
-
     @Deprecated
     public static IntervalFreshness ofSecond(String interval) {
         return IntervalFreshness.of(interval, TimeUnit.SECOND);
@@ -190,37 +166,6 @@ public class IntervalFreshness {
         }
     }
 
-    private static void validateCronConstraints(
-            IntervalFreshness intervalFreshness, long cronUpperBound) {
-        int interval = intervalFreshness.getIntervalInt();
-        TimeUnit timeUnit = intervalFreshness.getTimeUnit();
-        // Freshness must be less than cronUpperBound for corresponding time unit when convert it
-        // to cron expression
-        if (interval >= cronUpperBound) {
-            throw new ValidationException(
-                    String.format(
-                            "In full refresh mode, freshness must be less than %s when the time unit is %s.",
-                            cronUpperBound, timeUnit));
-        }
-        // Freshness must be factors of cronUpperBound for corresponding time unit
-        if (cronUpperBound % interval != 0) {
-            throw new ValidationException(
-                    String.format(
-                            "In full refresh mode, only freshness that are factors of %s are currently supported when the time unit is %s.",
-                            cronUpperBound, timeUnit));
-        }
-    }
-
-    private static void validateDayConstraints(IntervalFreshness intervalFreshness) {
-        // Since the number of days in each month is different, only one day of freshness is
-        // currently supported when the time unit is DAY
-        int interval = intervalFreshness.getIntervalInt();
-        if (interval > 1) {
-            throw new ValidationException(
-                    "In full refresh mode, freshness must be 1 when the time unit is DAY.");
-        }
-    }
-
     /**
      * Creates an IntervalFreshness from a Duration, choosing the most appropriate time unit.
      * Prefers larger units when possible (e.g., 60 seconds → 1 minute).
@@ -276,5 +221,60 @@ public class IntervalFreshness {
     @Override
     public String toString() {
         return interval.toString();
+    }
+
+    private static int validateIntervalValue(final String interval) {
+        final int parsedInt;
+        try {
+            parsedInt = Integer.parseInt(interval);
+        } catch (Exception e) {
+            final String errorMessage =
+                    String.format(
+                            "The freshness interval currently only supports positive integer type values. But was: %s",
+                            interval);
+            throw new ValidationException(errorMessage, e);
+        }
+        validateIntervalPositiveValue(parsedInt);
+        return parsedInt;
+    }
+
+    private static void validateIntervalPositiveValue(final int interval) {
+        if (interval <= 0) {
+            throw new ValidationException(
+                    String.format(
+                            "The freshness interval currently only supports positive integer type values. But was: %d",
+                            interval));
+        }
+    }
+
+    private static void validateCronConstraints(
+            IntervalFreshness intervalFreshness, long cronUpperBound) {
+        int interval = intervalFreshness.getIntervalInt();
+        TimeUnit timeUnit = intervalFreshness.getTimeUnit();
+        // Freshness must be less than cronUpperBound for corresponding time unit when convert it
+        // to cron expression
+        if (interval >= cronUpperBound) {
+            throw new ValidationException(
+                    String.format(
+                            "In full refresh mode, freshness must be less than %s when the time unit is %s.",
+                            cronUpperBound, timeUnit));
+        }
+        // Freshness must be factors of cronUpperBound for corresponding time unit
+        if (cronUpperBound % interval != 0) {
+            throw new ValidationException(
+                    String.format(
+                            "In full refresh mode, only freshness that are factors of %s are currently supported when the time unit is %s.",
+                            cronUpperBound, timeUnit));
+        }
+    }
+
+    private static void validateDayConstraints(IntervalFreshness intervalFreshness) {
+        // Since the number of days in each month is different, only one day of freshness is
+        // currently supported when the time unit is DAY
+        int interval = intervalFreshness.getIntervalInt();
+        if (interval > 1) {
+            throw new ValidationException(
+                    "In full refresh mode, freshness must be 1 when the time unit is DAY.");
+        }
     }
 }

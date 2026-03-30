@@ -90,12 +90,7 @@ public class MaterializedTableUtils {
                             "freshness");
             final int interval = freshnessInterval.getInterval();
             // Freshness interval might be only positive
-            if (interval <= 0) {
-                throw new ValidationException(
-                        String.format(
-                                "The freshness interval currently only supports positive integer type values. But was: %d",
-                                interval));
-            }
+            validateIntervalValuePositive(interval, "freshness");
             return freshnessInterval;
         }
 
@@ -505,5 +500,15 @@ public class MaterializedTableUtils {
     private static void throwPersistedColumnNotUsedException(String type, String columnName) {
         throw new ValidationException(
                 String.format(PERSISTED_COLUMN_NOT_USED_IN_QUERY, type, columnName));
+    }
+
+    private static void validateIntervalValuePositive(
+            final int interval, final String description) {
+        if (interval <= 0) {
+            throw new ValidationException(
+                    String.format(
+                            "The %s interval currently only supports positive integer type values. But was: %d",
+                            description, interval));
+        }
     }
 }
