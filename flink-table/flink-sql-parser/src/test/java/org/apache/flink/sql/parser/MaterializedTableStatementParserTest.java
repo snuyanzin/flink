@@ -742,7 +742,7 @@ class MaterializedTableStatementParserTest {
     }
 
     @Test
-    void testShowCreateMaterializedTable() {
+    void testShowCreateOrAlterMaterializedTable() {
         sql("show create materialized table mt1").ok("SHOW CREATE MATERIALIZED TABLE `MT1`");
         sql("show create materialized table db1.mt1")
                 .ok("SHOW CREATE MATERIALIZED TABLE `DB1`.`MT1`");
