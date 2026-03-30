@@ -433,7 +433,7 @@ ALTER MATERIALIZED TABLE [catalog_name.][db_name.]table_name
 `ALTER MATERIALIZED TABLE` 用于管理物化表。用户可以使用此命令暂停和恢复物化表的刷新管道，并手动触发数据刷新，以及修改物化表的查询定义。
 
 ## ADD
-Use `ADD` clause to add [columns]({{< ref "docs/sql/reference/ddl/create" >}}#columns) (only non persisted), [constraints]({{< ref "docs/sql/reference/ddl/create" >}}#primary-key), a [watermark]({{< ref "docs/sql/reference/ddl/create" >}}#watermark), and a [distribution]({{< ref "docs/sql/reference/ddl/create" >}}#distributed) to an existing materialized table.
+Use `ADD` clause to add [columns]({{< ref "docs/sql/reference/ddl/create" >}}#columns) (only non persisted like computed and metadata virtual), [constraints]({{< ref "docs/sql/reference/ddl/create" >}}#primary-key), a [watermark]({{< ref "docs/sql/reference/ddl/create" >}}#watermark), and a [distribution]({{< ref "docs/sql/reference/ddl/create" >}}#distributed) to an existing materialized table.
 
 To add a column at the specified position, use `FIRST` or `AFTER col_name`. By default, the column is appended at last.
 
@@ -466,7 +466,7 @@ ALTER MATERIALIZED TABLE MyMateralizedTable ADD DISTRIBUTION INTO 4 BUCKETS;
 <span class="label label-danger">Note</span> Add a column to be primary key will change the column's nullability to false implicitly.
 
 ## MODIFY
-Use `MODIFY` clause to change column's comment, position, type (non persisted column), change primary key columns and watermark strategy to an existing table.
+Use `MODIFY` clause to change column's comment, position, type (only non persisted like computed and metadata virtual also see [columns]({{< ref "docs/sql/reference/ddl/create" >}}#columns)), change primary key columns and watermark strategy to an existing table.
 
 To modify an existent column to a new position, use `FIRST` or `AFTER col_name`. By default, the position remains unchanged.
 
@@ -488,7 +488,7 @@ ALTER MATERIALIZED TABLE MyMateralizedTable MODIFY (
 <span class="label label-danger">Note</span> Modify a column to be primary key will change the column's nullability to false implicitly.
 
 ## DROP
-Use the `DROP` clause to drop columns(only non persisted), primary key, partitions, and watermark strategy to an existing table.
+Use the `DROP` clause to drop columns (only non persisted like computed and metadata virtual also see [columns]({{< ref "docs/sql/reference/ddl/create" >}}#columns)), primary key, partitions, and watermark strategy to an existing table.
 
 The following examples illustrate the usage of the `DROP` statements.
 
