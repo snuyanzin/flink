@@ -32,7 +32,7 @@ import org.apache.flink.table.runtime.util.collections._
 import org.apache.flink.table.types.DataType
 import org.apache.flink.table.types.logical._
 import org.apache.flink.table.types.logical.LogicalTypeRoot._
-import org.apache.flink.table.utils.DateTimeUtils
+import org.apache.flink.table.utils.{DateTimeUtils, EncodingUtils}
 import org.apache.flink.util.InstantiationUtil
 
 import java.time.ZoneId
@@ -648,9 +648,10 @@ class CodeGeneratorContext(
             " This is a bug, please file an issue.")
       })
 
+    val escapedQueryStartCurrentDatabase = EncodingUtils.escapeJava(queryStartCurrentDatabase);
     reusableMemberStatements.add(s"""
                                     |private static final $BINARY_STRING $fieldTerm =
-                                    |$BINARY_STRING.fromString("$queryStartCurrentDatabase");
+                                    |$BINARY_STRING.fromString("$escapedQueryStartCurrentDatabase");
                                     |""".stripMargin)
 
     fieldTerm
