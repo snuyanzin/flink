@@ -47,7 +47,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -203,7 +202,7 @@ class ShowCreateUtilTest {
                 createResolvedTable(
                         ONE_COLUMN_SCHEMA,
                         Map.of(),
-                        Collections.emptyList(),
+                        List.of(),
                         TableDistribution.of(
                                 TableDistribution.Kind.HASH, 2, List.of("key1", "key2")),
                         null),
@@ -217,7 +216,7 @@ class ShowCreateUtilTest {
                 createResolvedTable(
                         ONE_COLUMN_SCHEMA,
                         Map.of(),
-                        Collections.emptyList(),
+                        List.of(),
                         TableDistribution.of(TableDistribution.Kind.RANGE, 2, List.of("1", "10")),
                         "Table comment"),
                 "CREATE %sTABLE `catalogName`.`dbName`.`tableName` (\n"
@@ -231,7 +230,7 @@ class ShowCreateUtilTest {
                 createResolvedTable(
                         TWO_COLUMNS_SCHEMA_WITH_PRIMARY_KEY_AND_IMMUTABLE_COLS,
                         Map.of(),
-                        Collections.emptyList(),
+                        List.of(),
                         TableDistribution.of(TableDistribution.Kind.RANGE, 2, List.of("1", "10")),
                         "Table comment"),
                 "CREATE %sTABLE `catalogName`.`dbName`.`tableName` (\n"
@@ -250,11 +249,7 @@ class ShowCreateUtilTest {
         addTemporaryAndPermanent(
                 argList,
                 createResolvedTable(
-                        TWO_COLUMNS_SCHEMA,
-                        options,
-                        Collections.emptyList(),
-                        null,
-                        "Another table comment"),
+                        TWO_COLUMNS_SCHEMA, options, List.of(), null, "Another table comment"),
                 "CREATE %sTABLE `catalogName`.`dbName`.`tableName` (\n"
                         + "  `id` INT,\n"
                         + "  `name` VARCHAR(2147483647)\n"
