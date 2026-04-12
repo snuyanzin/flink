@@ -21,7 +21,7 @@ under the License.
 	<parent>
 		<groupId>org.apache</groupId>
 		<artifactId>apache</artifactId>
-		<version>31</version>
+		<version>37</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
@@ -2177,6 +2177,7 @@ under the License.
 						<!-- Make sure that we only use Java 11 compatible APIs -->
 						<source>${source.java.version}</source>
 						<target>${target.java.version}</target>
+						<release combine.self="override"/>
 						<!-- The semantics of this option are reversed, see MCOMPILER-209. -->
 						<useIncrementalCompilation>false</useIncrementalCompilation>
 						<compilerArgs>
