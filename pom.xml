@@ -2203,6 +2203,10 @@ under the License.
 					<version>${spotless.version}</version>
 					<configuration>
 						<skip>${spotless.skip}</skip>
+						<upToDateChecking>
+							<enabled>true</enabled>
+							<indexFile>${project.basedir}/.spotless-index-file</indexFile>
+						</upToDateChecking>
 						<java>
 							<googleJavaFormat>
 								<version>1.7</version>
