@@ -423,23 +423,99 @@ class ScalarFunctionsTest extends ScalarTypesTestBase {
   @Test
   def testLikeWithEscape(): Unit = {
     testSqlApi("f23 LIKE '&%Th_s%' ESCAPE '&'", "TRUE")
-
     testSqlApi("f23 LIKE '&%%is a%' ESCAPE '&'", "TRUE")
-
     testSqlApi("f0 LIKE 'Th_s%' ESCAPE '&'", "TRUE")
-
     testSqlApi("f0 LIKE '%is a%' ESCAPE '&'", "TRUE")
+
+    // normal escape character
+    testSqlApi("'TE-ST' LIKE '%E#_S%' ESCAPE '#'", "FALSE")
+    testSqlApi("'TE_ST' LIKE '%E#_S%' ESCAPE '#'", "TRUE")
+
+    // special character in SQL
+    testSqlApi("'TE-ST' LIKE '%E__S%' ESCAPE '_'", "FALSE")
+    testSqlApi("'TE_ST' LIKE '%E__S%' ESCAPE '_'", "TRUE")
+    testSqlApi("'TE-ST' LIKE 'TE%_ST' ESCAPE '%'", "FALSE")
+    testSqlApi("'TE_ST' LIKE 'TE%_ST' ESCAPE '%'", "TRUE")
+    testSqlApi("'TE-ST' LIKE '%E*_S%' ESCAPE '*'", "FALSE")
+    testSqlApi("'TE_ST' LIKE '%E*_S%' ESCAPE '*'", "TRUE")
+
+    // special character in Java Regex
+    testSqlApi("'TE-ST' LIKE '%E\\_S%' ESCAPE '\\'", "FALSE")
+    testSqlApi("'TE_ST' LIKE '%E\\_S%' ESCAPE '\\'", "TRUE")
+    testSqlApi("'TE-ST' LIKE '%E._S%' ESCAPE '.'", "FALSE")
+    testSqlApi("'TE_ST' LIKE '%E._S%' ESCAPE '.'", "TRUE")
+
+    // invalid escape character
+    testExpectedSqlException(
+      "'TE-ST' LIKE '%E_S%' ESCAPE 'ab'",
+      "Invalid escape",
+      classOf[RuntimeException])
+    testExpectedSqlException(
+      "'TE-ST' LIKE '%E_S%' ESCAPE '\\c'",
+      "Invalid escape",
+      classOf[RuntimeException])
+
+    // escape character at the end
+    testExpectedSqlException("'TE-ST' LIKE '%E_S%&' ESCAPE '&'", "", classOf[RuntimeException])
+
+    // invalid character after escape character
+    testExpectedSqlException(
+      "'TE-ST' LIKE '%E&-S%' ESCAPE '&'",
+      "Invalid escape",
+      classOf[RuntimeException])
+    testExpectedSqlException(
+      "'TE-ST' LIKE '%E_S%' ESCAPE '_'",
+      "Invalid escape",
+      classOf[RuntimeException])
   }
 
   @Test
   def testNotLikeWithEscape(): Unit = {
     testSqlApi("f23 NOT LIKE '&%Th_s%' ESCAPE '&'", "FALSE")
-
     testSqlApi("f23 NOT LIKE '&%%is a%' ESCAPE '&'", "FALSE")
-
     testSqlApi("f0 NOT LIKE 'Th_s%' ESCAPE '&'", "FALSE")
-
     testSqlApi("f0 NOT LIKE '%is a%' ESCAPE '&'", "FALSE")
+
+    // normal escape character
+    testSqlApi("'TE-ST' NOT LIKE '%E#_S%' ESCAPE '#'", "TRUE")
+    testSqlApi("'TE_ST' NOT LIKE '%E#_S%' ESCAPE '#'", "FALSE")
+
+    // special character in SQL
+    testSqlApi("'TE-ST' NOT LIKE '%E__S%' ESCAPE '_'", "TRUE")
+    testSqlApi("'TE_ST' NOT LIKE '%E__S%' ESCAPE '_'", "FALSE")
+    testSqlApi("'TE-ST' NOT LIKE 'TE%_ST' ESCAPE '%'", "TRUE")
+    testSqlApi("'TE_ST' NOT LIKE 'TE%_ST' ESCAPE '%'", "FALSE")
+    testSqlApi("'TE-ST' NOT LIKE '%E*_S%' ESCAPE '*'", "TRUE")
+    testSqlApi("'TE_ST' NOT LIKE '%E*_S%' ESCAPE '*'", "FALSE")
+
+    // special character in Java Regex
+    testSqlApi("'TE-ST' NOT LIKE '%E\\_S%' ESCAPE '\\'", "TRUE")
+    testSqlApi("'TE_ST' NOT LIKE '%E\\_S%' ESCAPE '\\'", "FALSE")
+    testSqlApi("'TE-ST' NOT LIKE '%E._S%' ESCAPE '.'", "TRUE")
+    testSqlApi("'TE_ST' NOT LIKE '%E._S%' ESCAPE '.'", "FALSE")
+
+    // invalid character
+    testExpectedSqlException(
+      "'TE-ST' NOT LIKE '%E_S%' ESCAPE 'ab'",
+      "Invalid escape",
+      classOf[RuntimeException])
+    testExpectedSqlException(
+      "'TE-ST' NOT LIKE '%E_S%' ESCAPE '\\c'",
+      "Invalid escape",
+      classOf[RuntimeException])
+
+    // escape character at the end
+    testExpectedSqlException("'TE-ST' NOT LIKE '%E_S%&' ESCAPE '&'", "", classOf[RuntimeException])
+
+    // invalid character after escape character
+    testExpectedSqlException(
+      "'TE-ST' NOT LIKE '%E&-S%' ESCAPE '&'",
+      "Invalid escape",
+      classOf[RuntimeException])
+    testExpectedSqlException(
+      "'TE-ST' NOT LIKE '%E_S%' ESCAPE '_'",
+      "Invalid escape",
+      classOf[RuntimeException])
   }
 
   @Test
