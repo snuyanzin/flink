@@ -96,6 +96,9 @@ public class SqlLikeUtils {
                 throw invalidEscapeCharacter(escapeStr.toString());
             }
             escapeChar = escapeStr.charAt(0);
+            if (escapeChar == 0) {
+                throw invalidEscapeCharacter(escapeStr.toString());
+            }
         } else {
             escapeChar = 0;
         }
@@ -112,7 +115,7 @@ public class SqlLikeUtils {
             if (JAVA_REGEX_SPECIALS.indexOf(c) >= 0) {
                 javaPattern.append('\\');
             }
-            if (c == escapeChar) {
+            if (c == escapeChar && escapeChar != 0) {
                 if (i == (sqlPattern.length() - 1)) {
                     throw invalidEscapeSequence(sqlPattern, i);
                 }
@@ -186,7 +189,7 @@ public class SqlLikeUtils {
             char c = sqlPattern.charAt(i);
             if (c == ']') {
                 return i - 1;
-            } else if (c == escapeChar) {
+            } else if (c == escapeChar && escapeChar != 0) {
                 i++;
                 char nextChar = sqlPattern.charAt(i);
                 if (SQL_SIMILAR_SPECIALS.indexOf(nextChar) >= 0) {
@@ -235,6 +238,9 @@ public class SqlLikeUtils {
                 throw invalidEscapeCharacter(escapeStr.toString());
             }
             escapeChar = escapeStr.charAt(0);
+            if (escapeChar == 0) {
+                throw invalidEscapeCharacter(escapeStr.toString());
+            }
         } else {
             escapeChar = 0;
         }
@@ -250,7 +256,7 @@ public class SqlLikeUtils {
         final int len = sqlPattern.length();
         for (int i = 0; i < len; i++) {
             char c = sqlPattern.charAt(i);
-            if (c == escapeChar) {
+            if (c == escapeChar && escapeChar != 0) {
                 if (i == (len - 1)) {
                     // It should never reach here after the escape rule
                     // checking.
