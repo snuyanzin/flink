@@ -41,7 +41,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
     echo "Converting linux_x86_64 wheel to manylinux1"
     source `pwd`/dev/.conda/bin/activate
     # 4.1 install patchelf
-    conda install -c conda-forge patchelf=0.11 -y
+    conda install -c conda-forge patchelf==0.17.2.1 -y
     # 4.2 install auditwheel
     pip install auditwheel==6.6.0
     # 4.3 convert Linux wheel
