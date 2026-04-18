@@ -95,6 +95,10 @@ stages:
           - script: ./tools/ci/docs.sh
             condition: not(eq(variables['SKIP'], '1'))
       - template: build-python-wheels.yml
+        parameters:
+          stage_name: cron_python_wheels
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk17 -Pjava17-target"
+          container: flink-build-container
   # Special stage for nightly builds:
   - stage: cron_build
     displayName: "Cron build"
