@@ -123,11 +123,13 @@ class ScalarFunctionsValidationTest extends ScalarTypesTestBase {
   def testTimestampAddWithUnsupportedPrecision(): Unit = {
     assertThatExceptionOfType(classOf[TableException])
       .isThrownBy(
-        () => testSqlApi("TIMESTAMPADD(MICROSECOND, 1, timestamp '2016-02-24 12:42:25')", "2016-06-16"))
+        () =>
+          testSqlApi("TIMESTAMPADD(MICROSECOND, 1, timestamp '2016-02-24 12:42:25')", "2016-06-16"))
 
     assertThatExceptionOfType(classOf[TableException])
       .isThrownBy(
-        () => testSqlApi("TIMESTAMPADD(NANOSECOND, 1, timestamp '2016-02-24 12:42:25')", "2016-06-16"))
+        () =>
+          testSqlApi("TIMESTAMPADD(NANOSECOND, 1, timestamp '2016-02-24 12:42:25')", "2016-06-16"))
   }
 
   // ----------------------------------------------------------------------------------------------
