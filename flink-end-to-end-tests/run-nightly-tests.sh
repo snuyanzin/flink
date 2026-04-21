@@ -148,7 +148,9 @@ function run_group_1 {
         #     run_test "Running Kerberized YARN application on Docker test (custom fs plugin)" "$END_TO_END_DIR/test-scripts/test_yarn_application_kerberos_docker.sh dummy-fs"
         # fi
     fi
+}
 
+function run_group_2 {
     ################################################################################
     # High Availability
     ################################################################################
@@ -164,7 +166,7 @@ function run_group_1 {
     run_test "Running HA per-job cluster (rocks, incremental) end-to-end test" "$END_TO_END_DIR/test-scripts/test_ha_per_job_cluster_datastream.sh rocks true true" "skip_check_exceptions"
 }
 
-function run_group_2 {
+function run_group_3 {
     ################################################################################
     # Miscellaneous
     ################################################################################
@@ -186,7 +188,9 @@ function run_group_2 {
     run_test "Streaming File Sink s3 end-to-end test" "$END_TO_END_DIR/test-scripts/test_file_sink.sh s3 StreamingFileSink" "skip_check_exceptions"
     run_test "New File Sink end-to-end test" "$END_TO_END_DIR/test-scripts/test_file_sink.sh local FileSink" "skip_check_exceptions"
     run_test "New File Sink s3 end-to-end test" "$END_TO_END_DIR/test-scripts/test_file_sink.sh s3 FileSink" "skip_check_exceptions"
+}
 
+function run_group_4 {
     run_test "Stateful stream job upgrade end-to-end test" "$END_TO_END_DIR/test-scripts/test_stateful_stream_job_upgrade.sh 2 4"
 
     run_test "Netty shuffle direct memory consumption end-to-end test" "$END_TO_END_DIR/test-scripts/test_netty_shuffle_memory_control.sh"
@@ -262,9 +266,15 @@ if [ "$1" == "1" ]; then
     run_group_1
 elif [ "$1" == "2" ]; then
     run_group_2
+elif [ "$1" == "3" ]; then
+    run_group_3
+elif [ "$1" == "4" ]; then
+    run_group_4
 else
     run_group_1
     run_group_2
+    run_group_3
+    run_group_4
 fi
 
 
