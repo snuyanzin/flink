@@ -2460,7 +2460,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         enclosingNode,
                         alias,
                         forceNullable);
-                return node;
+                return newNode;
 
             case PIVOT:
                 registerPivot(
@@ -5767,11 +5767,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             setValidatedNodeType(measure, type);
 
             fields.add(alias, type);
-            sqlNodes.add(
-                    SqlStdOperatorTable.AS.createCall(
-                            SqlParserPos.ZERO,
-                            expand,
-                            new SqlIdentifier(alias, SqlParserPos.ZERO)));
+            sqlNodes.add(expand);
         }
 
         SqlNodeList list = new SqlNodeList(sqlNodes, measures.getParserPosition());
@@ -5825,11 +5821,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
             // Some extra work need required here.
             // In PREV, NEXT, FINAL and LAST, only one pattern variable is allowed.
-            sqlNodes.add(
-                    SqlStdOperatorTable.AS.createCall(
-                            SqlParserPos.ZERO,
-                            expand,
-                            new SqlIdentifier(alias, SqlParserPos.ZERO)));
+            sqlNodes.add(expand);
 
             final RelDataType type = deriveType(scope, expand);
             if (!SqlTypeUtil.inBooleanFamily(type)) {
@@ -7254,17 +7246,26 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         int firstLastCount;
         int prevNextCount;
         int aggregateCount;
+        int index;
+        int argCount;
 
         PatternValidator(boolean isMeasure) {
-            this(isMeasure, 0, 0, 0);
+            this(isMeasure, 0, 0, 0, 0, 0);
         }
 
         PatternValidator(
-                boolean isMeasure, int firstLastCount, int prevNextCount, int aggregateCount) {
+                boolean isMeasure,
+                int firstLastCount,
+                int prevNextCount,
+                int aggregateCount,
+                int index,
+                int argCount) {
             this.isMeasure = isMeasure;
             this.firstLastCount = firstLastCount;
             this.prevNextCount = prevNextCount;
             this.aggregateCount = aggregateCount;
+            this.index = index;
+            this.argCount = argCount;
         }
 
         @Override
@@ -7312,7 +7313,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         call, Static.RESOURCE.patternRunningFunctionInDefine(call.toString()));
             }
 
-            for (SqlNode node : operands) {
+            for (int i = 0; i < operands.size(); i++) {
+                SqlNode node = operands.get(i);
                 if (node != null) {
                     vars.addAll(
                             requireNonNull(
@@ -7321,7 +7323,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                                                     isMeasure,
                                                     firstLastCount,
                                                     prevNextCount,
-                                                    aggregateCount)),
+                                                    aggregateCount,
+                                                    i,
+                                                    operands.size())),
                                     () -> "node.accept(PatternValidator) for node " + node));
                 }
             }
@@ -7369,7 +7373,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         @Override
         public Set<String> visit(SqlLiteral literal) {
-            return ImmutableSet.of();
+            if ((this.argCount == 1 || this.index < this.argCount - 1)
+                    && (this.firstLastCount > 0 || this.prevNextCount > 0)
+                    && !SqlUtil.isNull(literal)) {
+                return ImmutableSet.of(literal.toValue());
+            } else {
+                return ImmutableSet.of();
+            }
         }
 
         @Override
