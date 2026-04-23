@@ -178,6 +178,7 @@ import static org.apache.calcite.util.Util.first;
  * handleUnresolvedFunction at {@link SqlValidatorImpl#handleUnresolvedFunction}.
  *
  * <p>Lines 2470 ~ 2472
+ *
  * <p>Lines 2576 ~ 2595, CALCITE-7217, CALCITE-7312 should be removed after upgrading Calcite to
  * 1.42.0.
  *
@@ -189,9 +190,13 @@ import static org.apache.calcite.util.Util.first;
  * <p>Lines 5343 ~ 5349, FLINK-24352 Add null check for temporal table check on SqlSnapshot.
  *
  * <p>Lines 5779-5781
+ *
  * <p>Lines 5835-5837
+ *
  * <p>Lines 7266-7272
+ *
  * <p>Lines 7278-7283
+ *
  * <p>Lines 7393-7401
  */
 public class SqlValidatorImpl implements SqlValidatorWithHints {
@@ -7281,6 +7286,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             this.index = index;
             this.argCount = argCount;
         }
+
         // ----- FLINK MODIFICATION END -----
 
         @Override

@@ -976,7 +976,8 @@ class MatchRecognizeITCase {
         TableResult tableResult = tEnv.executeSql(sql);
         assertThat(CollectionUtil.iteratorToList(tableResult.collect())).containsExactly(expected);
 
-        // Also check that same query is able to compile and return same result if it is used in view
+        // Also check that same query is able to compile and return same result if it is used in
+        // view
         // test cases for FLINK-39293
         tEnv.executeSql("CREATE VIEW test_view AS \n" + sql);
         TableResult tableResultWithView = tEnv.executeSql("SELECT * FROM test_view");
