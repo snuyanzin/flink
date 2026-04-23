@@ -177,7 +177,7 @@ import static org.apache.calcite.util.Util.first;
  * <p>Lines 2036 ~ 2050, Flink improves error message for functions without appropriate arguments in
  * handleUnresolvedFunction at {@link SqlValidatorImpl#handleUnresolvedFunction}.
  *
- * <p>Lines 2470 ~ 2472
+ * <p>Lines 2475 ~ 2477
  *
  * <p>Lines 2576 ~ 2595, CALCITE-7217, CALCITE-7312 should be removed after upgrading Calcite to
  * 1.42.0.
@@ -189,15 +189,15 @@ import static org.apache.calcite.util.Util.first;
  *
  * <p>Lines 5343 ~ 5349, FLINK-24352 Add null check for temporal table check on SqlSnapshot.
  *
- * <p>Lines 5779-5781
+ * <p>Lines 5784-5786
  *
- * <p>Lines 5835-5837
+ * <p>Lines 5840-5842
  *
- * <p>Lines 7266-7272
+ * <p>Lines 7267-7290
  *
- * <p>Lines 7278-7283
+ * <p>Lines 7337-7354
  *
- * <p>Lines 7393-7401
+ * <p>Lines 7399-7407
  */
 public class SqlValidatorImpl implements SqlValidatorWithHints {
     // ~ Static fields/initializers ---------------------------------------------
