@@ -177,6 +177,7 @@ import static org.apache.calcite.util.Util.first;
  * <p>Lines 2036 ~ 2050, Flink improves error message for functions without appropriate arguments in
  * handleUnresolvedFunction at {@link SqlValidatorImpl#handleUnresolvedFunction}.
  *
+ * <p>Lines 2465 ~ 2467
  * <p>Lines 2576 ~ 2595, CALCITE-7217, CALCITE-7312 should be removed after upgrading Calcite to
  * 1.42.0.
  *
@@ -186,6 +187,12 @@ import static org.apache.calcite.util.Util.first;
  * SqlCall when using NamedParameters at {@link SqlValidatorImpl#checkRollUp}.
  *
  * <p>Lines 5343 ~ 5349, FLINK-24352 Add null check for temporal table check on SqlSnapshot.
+ *
+ * <p>Lines 5780-5782
+ * <p>Lines 5834-5836
+ * <p>Lines 7270-7272
+ * <p>Lines 7278-7283
+ * <p>Lines 7393-7401
  */
 public class SqlValidatorImpl implements SqlValidatorWithHints {
     // ~ Static fields/initializers ---------------------------------------------
@@ -2460,7 +2467,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         enclosingNode,
                         alias,
                         forceNullable);
+                // ----- FLINK MODIFICATION BEGIN -----
                 return newNode;
+            // ----- FLINK MODIFICATION END -----
 
             case PIVOT:
                 registerPivot(
@@ -5767,7 +5776,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             setValidatedNodeType(measure, type);
 
             fields.add(alias, type);
+            // ----- FLINK MODIFICATION BEGIN -----
             sqlNodes.add(expand);
+            // ----- FLINK MODIFICATION END -----
         }
 
         SqlNodeList list = new SqlNodeList(sqlNodes, measures.getParserPosition());
@@ -5821,7 +5832,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
             // Some extra work need required here.
             // In PREV, NEXT, FINAL and LAST, only one pattern variable is allowed.
+            // ----- FLINK MODIFICATION BEGIN -----
             sqlNodes.add(expand);
+            // ----- FLINK MODIFICATION END -----
 
             final RelDataType type = deriveType(scope, expand);
             if (!SqlTypeUtil.inBooleanFamily(type)) {
@@ -7250,9 +7263,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         int argCount;
 
         PatternValidator(boolean isMeasure) {
+            // ----- FLINK MODIFICATION BEGIN -----
             this(isMeasure, 0, 0, 0, 0, 0);
+            // ----- FLINK MODIFICATION END -----
         }
 
+        // ----- FLINK MODIFICATION BEGIN -----
         PatternValidator(
                 boolean isMeasure,
                 int firstLastCount,
@@ -7267,6 +7283,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             this.index = index;
             this.argCount = argCount;
         }
+        // ----- FLINK MODIFICATION END -----
 
         @Override
         public Set<String> visit(SqlCall call) {
@@ -7313,6 +7330,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         call, Static.RESOURCE.patternRunningFunctionInDefine(call.toString()));
             }
 
+            // ----- FLINK MODIFICATION BEGIN -----
             for (int i = 0; i < operands.size(); i++) {
                 SqlNode node = operands.get(i);
                 if (node != null) {
@@ -7329,6 +7347,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                                     () -> "node.accept(PatternValidator) for node " + node));
                 }
             }
+            // ----- FLINK MODIFICATION END -----
 
             if (isSingle) {
                 switch (kind) {
@@ -7373,6 +7392,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         @Override
         public Set<String> visit(SqlLiteral literal) {
+            // ----- FLINK MODIFICATION BEGIN -----
             if ((this.argCount == 1 || this.index < this.argCount - 1)
                     && (this.firstLastCount > 0 || this.prevNextCount > 0)
                     && !SqlUtil.isNull(literal)) {
@@ -7380,6 +7400,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             } else {
                 return ImmutableSet.of();
             }
+            // ----- FLINK MODIFICATION END -----
         }
 
         @Override
