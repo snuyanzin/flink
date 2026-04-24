@@ -271,7 +271,7 @@ jobs:
           DOCKER_HOST: unix:///var/run/docker.sock
         timeout-minutes: ${{ fromJSON(env.GHA_JOB_TIMEOUT) }}
         run: |
-          runuser -u flink -- bash -c '${{ inputs.environment }} PROFILE="$PROFILE -Pgithub-actions" ./tools/azure-pipelines/uploading_watchdog.sh \
+          runuser -l -u flink -- bash -c '${{ inputs.environment }} PROFILE="$PROFILE -Pgithub-actions" ./tools/azure-pipelines/uploading_watchdog.sh \
               ./tools/ci/test_controller.sh ${{ matrix.module }}'
 
       - name: "Post-build Disk Info"
