@@ -249,14 +249,24 @@ jobs:
 
       - name: "Create non-root user for test execution"
         run: |
+          set -euo pipefail
           useradd -m -u 1001 flink
           echo "flink ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          
+          # Make the docker socket usable by flink (Testcontainers needs it).
           for sock in /var/run/docker.sock /run/docker.sock; do
-            if [ -e "$sock" ]; then
-              chmod 660 "$sock"
-              echo "Docker socket found at $sock"
+            [ -S "$sock" ] || continue
+            sock_gid=$(stat -c '%g' "$sock")
+            sock_group=$(getent group "$sock_gid" | cut -d: -f1 || true)
+            if [ -z "$sock_group" ]; then
+              sock_group=docker-host
+              groupadd -g "$sock_gid" "$sock_group"
             fi
+            usermod -aG "$sock_group" flink
+            chmod 660 "$sock"
+            echo "Docker socket $sock -> group $sock_group (gid $sock_gid)"
           done
+          
           chown -R flink:flink ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
           chown -R flink:flink ${{ env.MAVEN_REPO_FOLDER }}
           chown -R flink:flink ${{ env.DOCKER_IMAGES_CACHE_FOLDER }} 2>/dev/null || true
@@ -271,8 +281,18 @@ jobs:
           DOCKER_HOST: unix:///var/run/docker.sock
         timeout-minutes: ${{ fromJSON(env.GHA_JOB_TIMEOUT) }}
         run: |
-          runuser -l flink -- bash -c '${{ inputs.environment }} PROFILE="$PROFILE -Pgithub-actions" ./tools/azure-pipelines/uploading_watchdog.sh \
-              ./tools/ci/test_controller.sh ${{ matrix.module }}'
+          # NOTE: no `--`, and command goes via -c. -l gives a login shell so
+          # flink's supplementary groups (incl. the docker-socket group) are loaded.
+          runuser -l flink -c "
+            cd '${{ env.CONTAINER_LOCAL_WORKING_DIR }}' && \
+            ${{ inputs.environment }} \
+            PROFILE='$PROFILE -Pgithub-actions' \
+            DOCKER_HOST=unix:///var/run/docker.sock \
+            IT_CASE_S3_BUCKET='${IT_CASE_S3_BUCKET}' \
+            IT_CASE_S3_ACCESS_KEY='${IT_CASE_S3_ACCESS_KEY}' \
+            IT_CASE_S3_SECRET_KEY='${IT_CASE_S3_SECRET_KEY}' \
+            ./tools/azure-pipelines/uploading_watchdog.sh \
+              ./tools/ci/test_controller.sh ${{ matrix.module }}
 
       - name: "Post-build Disk Info"
         if: ${{ always() }}
