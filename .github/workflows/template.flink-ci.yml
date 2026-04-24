@@ -253,7 +253,7 @@ jobs:
           echo "flink ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           for sock in /var/run/docker.sock /run/docker.sock; do
             if [ -e "$sock" ]; then
-              chmod 660 "$sock"
+              chmod 666 "$sock"
               echo "Docker socket found at $sock"
             fi
           done
