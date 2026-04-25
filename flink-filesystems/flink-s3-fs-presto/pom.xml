@@ -57,12 +57,43 @@ under the License.
 			<scope>test</scope>
 		</dependency>
 		
-		<!-- S3 base (bundled) -->
+		<!-- S3 base (bundled) - exclude AWS SDK v2 (Presto uses SDK v1) -->
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-s3-fs-base</artifactId>
 			<version>${project.version}</version>
 			<optional>${flink.markBundledAsOptional}</optional>
+			<exclusions>
+				<!-- Exclude all AWS SDK v2 dependencies - Presto uses SDK v1 -->
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>s3</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>sts</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>kms</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>dynamodb</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>sso</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>auth</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>s3-transfer-manager</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- for the HAJobRunOnPrestoS3FileSystemITCase -->
