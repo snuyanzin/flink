@@ -18,6 +18,9 @@ package org.apache.calcite.rel.metadata;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.common.collect.TreeRangeSet;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPredicateList;
@@ -27,6 +30,7 @@ import org.apache.calcite.plan.Strong;
 import org.apache.calcite.plan.volcano.RelSubset;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Aggregate;
+import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.Correlate;
 import org.apache.calcite.rel.core.Exchange;
 import org.apache.calcite.rel.core.Filter;
@@ -40,6 +44,7 @@ import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.core.Union;
+import org.apache.calcite.rel.core.Values;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexExecutor;
@@ -52,11 +57,12 @@ import org.apache.calcite.rex.RexUnknownAs;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlInternalOperators;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.util.BitSets;
 import org.apache.calcite.util.Bug;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.Sarg;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.Mapping;
 import org.apache.calcite.util.mapping.MappingType;
@@ -82,15 +88,6 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * Utility to infer Predicates that are applicable above a RelNode.
- *
- * <p>The class was copied over because of * CALCITE-6317 * and should be removed after upgraded to
- * calcite-1.37.0.
- *
- * <p>FLINK modifications are at lines
- *
- * <ol>
- *   <li>Port fix of CALCITE-6317 (Calcite 1.37.0): Lines 333~357, 402~404
- * </ol>
  *
  * <p>This is currently used by {@link
  * org.apache.calcite.rel.rules.JoinPushTransitivePredicatesRule} to infer <em>Predicates</em> that
@@ -126,6 +123,10 @@ import static java.util.Objects.requireNonNull;
  *         <li>For Full Outer Joins no predicates are pulledUp or inferred.
  *       </ul>
  * </ol>
+ *
+ * The class contains CALCITE-6599 fix from 1.39.0, should be dropped after upgrade to that version
+ *
+ * <p>Lines 183 ~ 219
  */
 public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicates> {
     public static final RelMetadataProvider SOURCE =
@@ -179,6 +180,7 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
      * </ol>
      */
     public RelOptPredicateList getPredicates(Project project, RelMetadataQuery mq) {
+        // FLINK MODIFICATION BEGIN
         final RelNode input = project.getInput();
         final RexBuilder rexBuilder = project.getCluster().getRexBuilder();
         final RelOptPredicateList inputInfo = mq.getPulledUpPredicates(input);
@@ -196,20 +198,10 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
                 int sIdx = ((RexInputRef) expr.e).getIndex();
                 m.set(sIdx, expr.i);
                 columnsMappedBuilder.set(sIdx);
-                // Project can also generate constants. We need to include them.
-            } else if (RexLiteral.isNullLiteral(expr.e)) {
-                projectPullUpPredicates.add(
-                        rexBuilder.makeCall(
-                                SqlStdOperatorTable.IS_NULL,
-                                rexBuilder.makeInputRef(project, expr.i)));
             } else if (RexUtil.isConstant(expr.e)) {
-                final List<RexNode> args =
-                        ImmutableList.of(rexBuilder.makeInputRef(project, expr.i), expr.e);
-                final SqlOperator op =
-                        args.get(0).getType().isNullable() || args.get(1).getType().isNullable()
-                                ? SqlStdOperatorTable.IS_NOT_DISTINCT_FROM
-                                : SqlStdOperatorTable.EQUALS;
-                projectPullUpPredicates.add(rexBuilder.makeCall(op, args));
+                // Project can also generate constants (including NULL). We need to
+                // include them.
+                projectPullUpPredicates.add(eqConstant(project, rexBuilder, expr.i, expr.e));
             }
         }
 
@@ -224,6 +216,23 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
             }
         }
         return RelOptPredicateList.of(rexBuilder, projectPullUpPredicates);
+        // FLINK MODIFICATION END
+    }
+
+    /**
+     * Returns a predicate that field {@code i} of relational expression {@code r} is equal to a
+     * constant expression (using {@code IS NOT DISTINCT FROM} if the expression is nullable, or
+     * {@code IS NULL} if it is literal null.
+     */
+    private static RexNode eqConstant(RelNode r, RexBuilder rexBuilder, int i, RexNode e) {
+        final RexInputRef ref = rexBuilder.makeInputRef(r, i);
+        if (RexLiteral.isNullLiteral(e)) {
+            return rexBuilder.makeCall(SqlStdOperatorTable.IS_NULL, ref);
+        } else if (ref.getType().isNullable() || e.getType().isNullable()) {
+            return rexBuilder.makeCall(SqlStdOperatorTable.IS_NOT_DISTINCT_FROM, ref, e);
+        } else {
+            return rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, ref, e);
+        }
     }
 
     /**
@@ -331,7 +340,6 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
         return joinInference.inferPredicates(false);
     }
 
-    // FLINK MODIFICATION BEGIN
     /**
      * Check whether the fields specified by the predicateColumns appear in all the groupSets of the
      * aggregate.
@@ -354,8 +362,6 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
         }
         return true;
     }
-
-    // FLINK MODIFICATION END
 
     /**
      * Infers predicates for an Aggregate.
@@ -384,7 +390,7 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
             // it is not valid to pull up predicates. In particular, consider the
             // predicate "false": it is valid on all input rows (trivially - there are
             // no rows!) but not on the output (there is one row).
-            return RelOptPredicateList.EMPTY;
+            return RelOptPredicateList.of(rexBuilder, aggPullUpPredicates);
         }
         Mapping m =
                 Mappings.create(
@@ -400,12 +406,22 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
         for (RexNode r : inputInfo.pulledUpPredicates) {
             ImmutableBitSet rCols = RelOptUtil.InputFinder.bits(r);
 
-            // FLINK MODIFICATION BEGIN
             if (groupKeys.contains(rCols) && this.allGroupSetsOverlap(rCols, agg)) {
-                // FLINK MODIFICATION END
                 r = r.accept(new RexPermuteInputsShuttle(m, input));
                 aggPullUpPredicates.add(r);
             }
+        }
+
+        i = agg.getGroupCount();
+        for (AggregateCall aggregateCall : agg.getAggCallList()) {
+            if (aggregateCall.getAggregation() == SqlInternalOperators.LITERAL_AGG) {
+                // The query
+                //   SELECT x, LITERAL_AGG[42]() AS y FROM t GROUP BY x
+                // has predicate "y = 42"
+                aggPullUpPredicates.add(
+                        eqConstant(agg, rexBuilder, i, aggregateCall.rexList.get(0)));
+            }
+            ++i;
         }
         return RelOptPredicateList.of(rexBuilder, aggPullUpPredicates);
     }
@@ -534,6 +550,63 @@ public class RelMdPredicates implements MetadataHandler<BuiltInMetadata.Predicat
     public RelOptPredicateList getPredicates(Exchange exchange, RelMetadataQuery mq) {
         RelNode input = exchange.getInput();
         return mq.getPulledUpPredicates(input);
+    }
+
+    /**
+     * Infers predicates for a Values.
+     *
+     * <p>The predicates on {@code T (x, y, z)} with rows {@code (1, 2, null), (1, 2, null), (5, 2,
+     * null)} are {@code 'y = 2'} and {@code 'z is null'}.
+     */
+    public RelOptPredicateList getPredicates(Values values, RelMetadataQuery mq) {
+        ImmutableList<ImmutableList<RexLiteral>> tuples = values.tuples;
+        if (!tuples.isEmpty()) {
+            List<RexLiteral> firstTuple = tuples.get(0);
+            List<HashSet<RexLiteral>> valueList = new ArrayList<>();
+            for (int i = 0; i < firstTuple.size(); i++) {
+                valueList.add(i, new HashSet<>());
+            }
+            for (int i = 0; i < tuples.size(); i++) {
+                List<RexLiteral> tuple = tuples.get(i);
+                for (int j = 0; j < tuple.size(); j++) {
+                    RexLiteral rexLiteral = tuple.get(j);
+                    valueList.get(j).add(rexLiteral);
+                }
+            }
+            RexBuilder rexBuilder = values.getCluster().getRexBuilder();
+            List<RexNode> predicates = new ArrayList<>();
+            for (int i = 0; i < valueList.size(); i++) {
+                HashSet<RexLiteral> rexLiteralSet = valueList.get(i);
+                if (rexLiteralSet.size() == 1) {
+                    for (RexLiteral rexLiteral : rexLiteralSet) {
+                        predicates.add(i, eqConstant(values, rexBuilder, i, rexLiteral));
+                    }
+                } else {
+                    RexUnknownAs rexUnknownAs = RexUnknownAs.UNKNOWN;
+                    RangeSet<Comparable> rangeSet = TreeRangeSet.create();
+                    for (RexLiteral rexLiteral : rexLiteralSet) {
+                        if (RexUtil.isNull(rexLiteral)) {
+                            rexUnknownAs = RexUnknownAs.TRUE;
+                            continue;
+                        }
+                        rangeSet.add(
+                                Range.singleton(
+                                        requireNonNull(rexLiteral.getValueAs(Comparable.class))));
+                    }
+                    final Sarg sarg = Sarg.of(rexUnknownAs, rangeSet);
+                    predicates.add(
+                            i,
+                            rexBuilder.makeCall(
+                                    SqlStdOperatorTable.SEARCH,
+                                    rexBuilder.makeInputRef(values, i),
+                                    rexBuilder.makeSearchArgumentLiteral(
+                                            sarg,
+                                            values.getRowType().getFieldList().get(i).getType())));
+                }
+            }
+            return RelOptPredicateList.of(rexBuilder, predicates);
+        }
+        return RelOptPredicateList.EMPTY;
     }
 
     // CHECKSTYLE: IGNORE 1
