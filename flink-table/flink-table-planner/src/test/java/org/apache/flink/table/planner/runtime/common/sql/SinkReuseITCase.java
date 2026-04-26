@@ -199,8 +199,4 @@ public class SinkReuseITCase extends AbstractTestBase {
         Collections.sort(actual);
         assertThat(actual).isEqualTo(expected);
     }
-
-    private String getTableNameWithPrefix(final String name) {
-        return this.getClass().getSimpleName() + name;
-    }
 }
