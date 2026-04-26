@@ -1607,6 +1607,13 @@ class SubQuerySemiJoinTest extends SubQueryTestBase {
       "SELECT * FROM r, LATERAL TABLE(table_func(f)) AS T(f1) WHERE a = d)"
     util.verifyRelPlan(sqlQuery)
   }
+  @Test
+  def testExistsWithCorrelatedOnLaterale3(): Unit = {
+    val sqlQuery = "" +
+      "WITH x AS  (SELECT 3 a, 123 b UNION ALL SELECT 2 a, 234 b UNION ALL SELECT 1 a, 234 b), y AS(SELECT 3 c, 123 d UNION ALL SELECT 2 c" +
+    ", 234 d UNION ALL SELECT 1 c, 234 d) SELECT MAX(a) FROM x GROUP BY 1 HAVING EXISTS(SELECT 1 FROM y WHERE c < b);"
+    util.verifyRelPlan(sqlQuery)
+  }
 
   @Test
   def testExistsWithCorrelatedOnLateralTable2(): Unit = {

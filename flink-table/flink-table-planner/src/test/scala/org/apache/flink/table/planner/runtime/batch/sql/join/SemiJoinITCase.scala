@@ -288,6 +288,104 @@ class SemiJoinITCase extends BatchTestBase {
     )
   }
 
+
+  @TestTemplate
+  def testStrangeQuery(): Unit = {
+    /*
+       (a,  b)
+    lazy val leftT = Seq(
+    row(1, 2.0),
+    row(1, 2.0),
+    row(2, 1.0),
+    row(2, 1.0),
+    row(3, 3.0),
+    row(null, null),
+    row(null, 5.0),
+    row(6, null)
+  )
+       (c,  d)
+  lazy val rightT = Seq(
+    row(2, 3.0),
+    row(2, 3.0),
+    row(3, 2.0),
+    row(4, 1.0),
+    row(null, null),
+    row(null, 5.0),
+    row(6, null)
+  )
+     */
+    checkResult(
+      "SELECT MAX(a) FROM leftT WHERE EXISTS (SELECT 1 FROM rightT WHERE c < b)",
+      Seq(row(6))
+    )
+    checkResult(
+      "SELECT MAX(a) FROM leftT WHERE EXISTS (SELECT 1 FROM rightT WHERE c < b)",
+      Seq(row(6))
+    )
+  }
+
+  @TestTemplate
+  def testStrangeQuery2(): Unit = {
+    /*
+       (a,  b)
+    lazy val leftT = Seq(
+    row(1, 2.0),
+    row(1, 2.0),
+    row(2, 1.0),
+    row(2, 1.0),
+    row(3, 3.0),
+    row(null, null),
+    row(null, 5.0),
+    row(6, null)
+  )
+       (c,  d)
+  lazy val rightT = Seq(
+    row(2, 3.0),
+    row(2, 3.0),
+    row(3, 2.0),
+    row(4, 1.0),
+    row(null, null),
+    row(null, 5.0),
+    row(6, null)
+  )
+     */
+    checkResult(
+      "SELECT MAX(a) FROM leftT WHERE EXISTS (SELECT 1 FROM rightT WHERE c < b)",
+      Seq(row(3))
+    )
+  }
+
+  @TestTemplate
+  def testStrangeQuery3(): Unit = {
+    /*
+       (a,  b)
+    lazy val leftT = Seq(
+    row(1, 2.0),
+    row(1, 2.0),
+    row(2, 1.0),
+    row(2, 1.0),
+    row(3, 3.0),
+    row(null, null),
+    row(null, 5.0),
+    row(6, null)
+  )
+       (c,  d)
+  lazy val rightT = Seq(
+    row(2, 3.0),
+    row(2, 3.0),
+    row(3, 2.0),
+    row(4, 1.0),
+    row(null, null),
+    row(null, 5.0),
+    row(6, null)
+  )
+     */
+    checkResult(
+      "SELECT MAX(a) FROM leftT, (SELECT 1 FROM leftT, rightT WHERE c < b limit 1)",
+      Seq(row(3))
+    )
+  }
+
   @TestTemplate
   def testInWithOver4(): Unit = {
     checkResult(
