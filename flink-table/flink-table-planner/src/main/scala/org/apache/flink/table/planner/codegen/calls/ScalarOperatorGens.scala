@@ -1037,17 +1037,17 @@ object ScalarOperatorGens {
   def generateCoalesce(
       ctx: CodeGeneratorContext,
       operands: Seq[GeneratedExpression],
-      resultType: LogicalType,
-      checkPosition: Int = 1): GeneratedExpression = {
-    if (operands.size == checkPosition) {
+      resultType: LogicalType): GeneratedExpression = {
+    if (operands.size == 1) {
       generateCast(ctx, operands.head, resultType, nullOnFailure = false)
     } else {
+      val condition = operands.head
+      val falseAction = generateCoalesce(ctx, operands.tail, resultType)
+
       val Seq(resultTerm, nullTerm) = newNames(ctx, "result", "isNull")
       val resultTypeTerm = boxedTypeTermForType(resultType)
       val primitiveType = primitiveTypeTermForType(resultType)
-      val falseAction = generateCoalesce(ctx, operands, resultType, checkPosition + 1)
 
-      val condition = operands.get(checkPosition)
       val operatorCode =
         s"""
            |$resultTypeTerm $resultTerm = null;

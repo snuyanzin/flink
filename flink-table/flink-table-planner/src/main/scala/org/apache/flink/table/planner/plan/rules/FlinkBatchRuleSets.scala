@@ -18,6 +18,7 @@
 package org.apache.flink.table.planner.plan.rules
 
 import org.apache.flink.table.planner.plan.nodes.logical._
+import org.apache.flink.table.planner.plan.rules.FlinkStreamRuleSets.SIMPLIFY_COALESCE_RULES
 import org.apache.flink.table.planner.plan.rules.logical._
 import org.apache.flink.table.planner.plan.rules.physical.FlinkExpandConversionRule
 import org.apache.flink.table.planner.plan.rules.physical.batch._
@@ -76,6 +77,12 @@ object FlinkBatchRuleSets {
     CoreRules.JOIN_REDUCE_EXPRESSIONS
   )
 
+  /** RuleSet to simplify coalesce invocations */
+  private val SIMPLIFY_COALESCE_RULES: RuleSet = RuleSets.ofList(
+    SimplifyCoalesceWithEquiJoinConditionRule.PROJECT_INSTANCE,
+    SimplifyCoalesceWithEquiJoinConditionRule.CALC_INSTANCE
+  )
+
   private val LIMIT_RULES: RuleSet = RuleSets.ofList(
     // push down localLimit
     PushLimitIntoTableSourceScanRule.INSTANCE,
@@ -92,6 +99,7 @@ object FlinkBatchRuleSets {
   /** RuleSet to normalize plans for batch */
   val DEFAULT_REWRITE_RULES: RuleSet = RuleSets.ofList(
     (PREDICATE_SIMPLIFY_EXPRESSION_RULES.asScala ++
+      SIMPLIFY_COALESCE_RULES.asScala ++
       REDUCE_EXPRESSION_RULES.asScala ++
       List(
         // Transform window to LogicalWindowAggregate

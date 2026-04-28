@@ -79,6 +79,11 @@ object FlinkStreamRuleSets {
     CoreRules.JOIN_REDUCE_EXPRESSIONS
   )
 
+  private val SIMPLIFY_COALESCE_RULES: RuleSet = RuleSets.ofList(
+    SimplifyCoalesceWithEquiJoinConditionRule.PROJECT_INSTANCE,
+    SimplifyCoalesceWithEquiJoinConditionRule.CALC_INSTANCE
+  )
+
   /** RuleSet to simplify predicate expressions in filters and joins */
   private val PREDICATE_SIMPLIFY_EXPRESSION_RULES: RuleSet = RuleSets.ofList(
     SimplifyFilterConditionRule.INSTANCE,
@@ -91,6 +96,7 @@ object FlinkStreamRuleSets {
   val DEFAULT_REWRITE_RULES: RuleSet = RuleSets.ofList(
     (
       PREDICATE_SIMPLIFY_EXPRESSION_RULES.asScala ++
+        SIMPLIFY_COALESCE_RULES.asScala ++
         REDUCE_EXPRESSION_RULES.asScala ++
         List(
           // removes constant keys from an Agg
