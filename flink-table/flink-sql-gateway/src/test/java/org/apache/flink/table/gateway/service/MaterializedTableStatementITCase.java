@@ -1267,10 +1267,9 @@ class MaterializedTableStatementITCase extends AbstractMaterializedTableStatemen
                         String.format(
                                 "SELECT COALESCE(`tmp`.`user_id`, 0) AS `user_id`, `tmp`.`shop_id`, COALESCE(`tmp`.`ds`, '') AS `ds`, SUM(`tmp`.`payment_amount_cents`) AS `payed_buy_fee_sum`, SUM(1) AS `pv`\n"
                                         + "FROM (SELECT `datagenSource`.`user_id`, `datagenSource`.`shop_id`, DATE_FORMAT(`datagenSource`.`order_created_at`, 'yyyy-MM-dd') AS `ds`, `datagenSource`.`payment_amount_cents`\n"
-                                        + "FROM `test_catalog11`.`test_db`.`datagenSource` AS `datagenSource`) AS `tmp`\n"
+                                        + "FROM `%s`.`%s`.`datagenSource` AS `datagenSource`) AS `tmp`\n"
                                         + "GROUP BY ROW(`tmp`.`user_id`, `tmp`.`shop_id`, `tmp`.`ds`)",
-                                fileSystemCatalogName,
-                                TEST_DEFAULT_DATABASE));
+                                fileSystemCatalogName, TEST_DEFAULT_DATABASE));
         assertThat(oldTable.getSerializedRefreshHandler())
                 .isNotEqualTo(newTable.getSerializedRefreshHandler());
 
