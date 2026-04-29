@@ -26,12 +26,15 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.OperandTypes;
 import org.apache.calcite.sql.type.ReturnTypes;
+import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.type.SqlTypeTransforms;
 import org.apache.calcite.sql.validate.SqlValidator;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 /** The <code>COALESCE</code> function. */
 public class SqlCoalesceFunction extends SqlFunction {
@@ -54,6 +57,7 @@ public class SqlCoalesceFunction extends SqlFunction {
 
     // ~ Methods ----------------------------------------------------------------
 
+    // ----- FLINK MODIFICATION BEGIN -----
     // override SqlOperator
     @Override
     public SqlNode rewriteCall(SqlValidator validator, SqlCall call) {
@@ -82,5 +86,12 @@ public class SqlCoalesceFunction extends SqlFunction {
         }
 
         return new SqlBasicCall(this, nonNullNodes, pos);
+    }
+
+    // ----- FLINK MODIFICATION END -----
+
+    @Override
+    public SqlReturnTypeInference getReturnTypeInference() {
+        return requireNonNull(super.getReturnTypeInference(), "returnTypeInference");
     }
 }
