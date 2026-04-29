@@ -1269,7 +1269,8 @@ class MaterializedTableStatementITCase extends AbstractMaterializedTableStatemen
                                         + "FROM (SELECT `datagenSource`.`user_id`, `datagenSource`.`shop_id`, DATE_FORMAT(`datagenSource`.`order_created_at`, 'yyyy-MM-dd') AS `ds`, `datagenSource`.`payment_amount_cents`\n"
                                         + "FROM `test_catalog11`.`test_db`.`datagenSource` AS `datagenSource`) AS `tmp`\n"
                                         + "GROUP BY ROW(`tmp`.`user_id`, `tmp`.`shop_id`, `tmp`.`ds`)",
-                                fileSystemCatalogName, TEST_DEFAULT_DATABASE));
+                                fileSystemCatalogName,
+                                TEST_DEFAULT_DATABASE));
         assertThat(oldTable.getSerializedRefreshHandler())
                 .isNotEqualTo(newTable.getSerializedRefreshHandler());
 
