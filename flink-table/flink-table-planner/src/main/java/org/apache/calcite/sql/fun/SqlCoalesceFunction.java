@@ -36,7 +36,7 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-/** The <code>COALESCE</code> function. */
+/** The class copied from Calcite in order to turn off COALESCE rewrite with CASE ... WHEN ... */
 public class SqlCoalesceFunction extends SqlFunction {
     // ~ Constructors -----------------------------------------------------------
 
