@@ -41,7 +41,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -94,6 +93,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
         testCases.addAll(jsonQuoteSpec());
         testCases.addAll(jsonUnquoteSpecWithValidInput());
         testCases.addAll(jsonUnquoteSpecWithInvalidInput());
+        testCases.addAll(jsonLocalRefReuseSpec());
         return testCases.stream();
     }
 
@@ -296,7 +296,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
     }
 
     private static List<TestSetSpec> isJsonSpec() {
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.IS_JSON)
                         .onFieldsWithData(1)
                         .andDataTypes(INT())
@@ -367,7 +367,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
 
     private static List<TestSetSpec> jsonQuerySpec() {
         final String jsonValue = getJsonFromResource("/json/json-query.json");
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_QUERY)
                         .onFieldsWithData((String) null)
                         .andDataTypes(STRING())
@@ -599,7 +599,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
         multisetData.put("M1", 1);
         multisetData.put("M2", 2);
 
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_STRING)
                         .onFieldsWithData(0)
                         .testResult(
@@ -616,7 +616,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                 1.23,
                                 LocalDateTime.parse("1990-06-02T13:37:42.001"),
                                 Instant.parse("1990-06-02T13:37:42.001Z"),
-                                Arrays.asList("A1", "A2", "A3"),
+                                List.of("A1", "A2", "A3"),
                                 Row.of("R1", Instant.parse("1990-06-02T13:37:42.001Z")),
                                 mapData,
                                 multisetData,
@@ -717,7 +717,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
     }
 
     private static List<TestSetSpec> jsonSpec() {
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_OBJECT)
                         .onFieldsWithData("{\"key\":\"value\"}", "{\"key\": {\"value\": 42}}")
                         .andDataTypes(STRING(), STRING())
@@ -946,7 +946,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
         multisetData.put("M1", 1);
         multisetData.put("M2", 2);
 
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_OBJECT)
                         .onFieldsWithData(0)
                         .testResult(
@@ -977,7 +977,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                 1.23,
                                 LocalDateTime.parse("1990-06-02T13:37:42.001"),
                                 Instant.parse("1990-06-02T13:37:42.001Z"),
-                                Arrays.asList("A1", "A2", "A3"),
+                                List.of("A1", "A2", "A3"),
                                 Row.of("R1", Instant.parse("1990-06-02T13:37:42.001Z")),
                                 mapData,
                                 multisetData,
@@ -1105,7 +1105,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
 
     private static List<TestSetSpec> jsonQuoteSpec() {
 
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_QUOTE)
                         .onFieldsWithData(0)
                         .testResult(
@@ -1177,7 +1177,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
 
     private static List<TestSetSpec> jsonUnquoteSpecWithValidInput() {
 
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_UNQUOTE)
                         .onFieldsWithData(0)
                         .testResult(
@@ -1319,7 +1319,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
 
     private static List<TestSetSpec> jsonUnquoteSpecWithInvalidInput() {
 
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_UNQUOTE)
                         .onFieldsWithData(0)
                         .testResult(
@@ -1406,7 +1406,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
         multisetData.put("M1", 1);
         multisetData.put("M2", 2);
 
-        return Arrays.asList(
+        return List.of(
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.JSON_ARRAY)
                         .onFieldsWithData(0)
                         .testResult(
@@ -1436,7 +1436,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                 1.23,
                                 LocalDateTime.parse("1990-06-02T13:37:42.001"),
                                 Instant.parse("1990-06-02T13:37:42.001Z"),
-                                Arrays.asList("A1", "A2", "A3"),
+                                List.of("A1", "A2", "A3"),
                                 Row.of("R1", Instant.parse("1990-06-02T13:37:42.001Z")),
                                 mapData,
                                 multisetData,
@@ -1538,6 +1538,166 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                 "JSON_ARRAY(f0 NULL ON NULL)",
                                 "[{\"field\\ttab\":\"val4\",\"field\\nline\":\"val3\",\"field\\rreturn\":\"val5\",\"field\\\"quote\":\"val1\",\"field\\\\slash\":\"val2\"}]",
                                 STRING().notNull()));
+    }
+
+    /**
+     * Pins the local-ref / common-sub-expression handling for JSON construction calls.
+     *
+     * <p>When two projections share a JSON-producing sub-expression, the planner deduplicates them
+     * into a {@link org.apache.calcite.rex.RexLocalRef} that points at the shared {@link
+     * org.apache.calcite.rex.RexCall}. The codegen helpers in {@code JsonGenerateUtils} must
+     * dereference that local ref through the surrounding {@code RexProgram} to recognize it as a
+     * JSON / JSON_OBJECT / JSON_ARRAY operand and embed the value as a raw JSON node. Without that
+     * dereference the helpers see a plain {@code RexLocalRef}, fall back to the string-quoting
+     * branch, and produce wrong output (e.g. {@code "{\"k\":\"[1,2,3]\"}"} instead of {@code
+     * "{\"k\":[1,2,3]}"}).
+     *
+     * <p>The scenarios below cover each callsite — {@code JsonObjectCallGen}, {@code
+     * JsonArrayCallGen}, {@code JsonStringCallGen} — and each branch of the inspection helpers
+     * ({@code JSON}, {@code JSON_OBJECT}, {@code JSON_ARRAY}).
+     */
+    private static List<TestSetSpec> jsonLocalRefReuseSpec() {
+        return List.of(
+                // Shared JSON(f) inside two JSON_OBJECT projections.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.JSON_OBJECT,
+                                "Shared JSON(f) sub-expression across JSON_OBJECT projections")
+                        .onFieldsWithData("[1,2,3]")
+                        .andDataTypes(STRING())
+                        .testResult(
+                                resultSpec(
+                                        jsonObject(JsonOnNull.NULL, "k1", json($("f0"))),
+                                        "JSON_OBJECT(KEY 'k1' VALUE JSON(f0))",
+                                        "{\"k1\":[1,2,3]}",
+                                        STRING().notNull(),
+                                        STRING().notNull()),
+                                resultSpec(
+                                        jsonObject(JsonOnNull.NULL, "k2", json($("f0"))),
+                                        "JSON_OBJECT(KEY 'k2' VALUE JSON(f0))",
+                                        "{\"k2\":[1,2,3]}",
+                                        STRING().notNull(),
+                                        STRING().notNull())),
+                // Shared JSON_ARRAY(...) inside two JSON_OBJECT projections.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.JSON_OBJECT,
+                                "Shared JSON_ARRAY sub-expression across JSON_OBJECT projections")
+                        .onFieldsWithData(1, 2, 3)
+                        .andDataTypes(INT(), INT(), INT())
+                        .testResult(
+                                resultSpec(
+                                        jsonObject(
+                                                JsonOnNull.NULL,
+                                                "a",
+                                                jsonArray(
+                                                        JsonOnNull.NULL,
+                                                        $("f0"),
+                                                        $("f1"),
+                                                        $("f2"))),
+                                        "JSON_OBJECT(KEY 'a' VALUE JSON_ARRAY(f0, f1, f2))",
+                                        "{\"a\":[1,2,3]}",
+                                        STRING().notNull(),
+                                        STRING().notNull()),
+                                resultSpec(
+                                        jsonObject(
+                                                JsonOnNull.NULL,
+                                                "b",
+                                                jsonArray(
+                                                        JsonOnNull.NULL,
+                                                        $("f0"),
+                                                        $("f1"),
+                                                        $("f2"))),
+                                        "JSON_OBJECT(KEY 'b' VALUE JSON_ARRAY(f0, f1, f2))",
+                                        "{\"b\":[1,2,3]}",
+                                        STRING().notNull(),
+                                        STRING().notNull())),
+                // Shared inner JSON_OBJECT inside two outer JSON_OBJECT projections.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.JSON_OBJECT,
+                                "Shared inner JSON_OBJECT across outer JSON_OBJECT projections")
+                        .onFieldsWithData("V")
+                        .andDataTypes(STRING())
+                        .testResult(
+                                resultSpec(
+                                        jsonObject(
+                                                JsonOnNull.NULL,
+                                                "outer1",
+                                                jsonObject(JsonOnNull.NULL, "inner", $("f0"))),
+                                        "JSON_OBJECT(KEY 'outer1' VALUE JSON_OBJECT(KEY 'inner' VALUE f0))",
+                                        "{\"outer1\":{\"inner\":\"V\"}}",
+                                        STRING().notNull(),
+                                        STRING().notNull()),
+                                resultSpec(
+                                        jsonObject(
+                                                JsonOnNull.NULL,
+                                                "outer2",
+                                                jsonObject(JsonOnNull.NULL, "inner", $("f0"))),
+                                        "JSON_OBJECT(KEY 'outer2' VALUE JSON_OBJECT(KEY 'inner' VALUE f0))",
+                                        "{\"outer2\":{\"inner\":\"V\"}}",
+                                        STRING().notNull(),
+                                        STRING().notNull())),
+                // Shared JSON_OBJECT inside two JSON_ARRAY projections.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.JSON_ARRAY,
+                                "Shared JSON_OBJECT inside JSON_ARRAY across projections")
+                        .onFieldsWithData("V")
+                        .andDataTypes(STRING())
+                        .testResult(
+                                resultSpec(
+                                        jsonArray(
+                                                JsonOnNull.NULL,
+                                                jsonObject(JsonOnNull.NULL, "k", $("f0"))),
+                                        "JSON_ARRAY(JSON_OBJECT(KEY 'k' VALUE f0))",
+                                        "[{\"k\":\"V\"}]",
+                                        STRING().notNull(),
+                                        STRING().notNull()),
+                                resultSpec(
+                                        jsonArray(
+                                                JsonOnNull.NULL,
+                                                jsonObject(JsonOnNull.NULL, "k", $("f0"))),
+                                        "JSON_ARRAY(JSON_OBJECT(KEY 'k' VALUE f0))",
+                                        "[{\"k\":\"V\"}]",
+                                        STRING().notNull(),
+                                        STRING().notNull())),
+                // Shared JSON(f) inside two JSON_ARRAY projections.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.JSON_ARRAY,
+                                "Shared JSON(f) inside JSON_ARRAY across projections")
+                        .onFieldsWithData("[1,2,3]")
+                        .andDataTypes(STRING())
+                        .testResult(
+                                resultSpec(
+                                        jsonArray(JsonOnNull.NULL, json($("f0"))),
+                                        "JSON_ARRAY(JSON(f0))",
+                                        "[[1,2,3]]",
+                                        STRING().notNull(),
+                                        STRING().notNull()),
+                                resultSpec(
+                                        jsonArray(JsonOnNull.NULL, json($("f0"))),
+                                        "JSON_ARRAY(JSON(f0))",
+                                        "[[1,2,3]]",
+                                        STRING().notNull(),
+                                        STRING().notNull())),
+                // Shared JSON_OBJECT inside two JSON_STRING projections. JSON_STRING re-serializes
+                // the operand; without dereferencing the local ref it would wrap the already
+                // serialized JSON string a second time.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.JSON_STRING,
+                                "Shared JSON_OBJECT inside JSON_STRING across projections")
+                        .onFieldsWithData("V")
+                        .andDataTypes(STRING())
+                        .testResult(
+                                resultSpec(
+                                        jsonString(jsonObject(JsonOnNull.NULL, "k", $("f0"))),
+                                        "JSON_STRING(JSON_OBJECT(KEY 'k' VALUE f0))",
+                                        "{\"k\":\"V\"}",
+                                        STRING().notNull(),
+                                        STRING().notNull()),
+                                resultSpec(
+                                        jsonString(jsonObject(JsonOnNull.NULL, "k", $("f0"))),
+                                        "JSON_STRING(JSON_OBJECT(KEY 'k' VALUE f0))",
+                                        "{\"k\":\"V\"}",
+                                        STRING().notNull(),
+                                        STRING().notNull())));
     }
 
     // ---------------------------------------------------------------------------------------------

@@ -23,6 +23,7 @@ import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.api.{TableException, ValidationException}
 import org.apache.flink.table.data.{BoxedWrapperRowData, RowData}
 import org.apache.flink.table.functions.FunctionKind
+import org.apache.flink.table.planner.calcite.{FlinkRexBuilder, FlinkTypeFactory, FlinkTypeSystem}
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction
 import org.apache.flink.table.runtime.generated.GeneratedFunction
 import org.apache.flink.table.runtime.operators.CodeGenOperatorFactory
@@ -31,19 +32,19 @@ import org.apache.flink.table.types.logical.RowType
 
 import org.apache.calcite.rex._
 
+import scala.collection.JavaConverters._
+
 object CalcCodeGenerator {
 
   def generateCalcOperator(
       ctx: CodeGeneratorContext,
       inputTransform: Transformation[RowData],
+      inputType: RowType,
       outputType: RowType,
       projection: Seq[RexNode],
       condition: Option[RexNode],
       retainHeader: Boolean = false,
       opName: String): CodeGenOperatorFactory[RowData] = {
-    val inputType = inputTransform.getOutputType
-      .asInstanceOf[InternalTypeInfo[RowData]]
-      .toRowType
     // filter out time attributes
     val inputTerm = CodeGenUtils.DEFAULT_INPUT1_TERM
     val processCode = generateProcessCode(
@@ -53,8 +54,12 @@ object CalcCodeGenerator {
       classOf[BoxedWrapperRowData],
       projection,
       condition,
+      inputTerm,
+      CodeGenUtils.DEFAULT_OPERATOR_COLLECTOR_TERM,
       eagerInputUnboxingCode = true,
-      retainHeader = retainHeader)
+      retainHeader = retainHeader,
+      outputDirectly = false
+    )
 
     val genOperator =
       OperatorCodeGenerator.generateOneInputStreamOperator[RowData, RowData](
@@ -87,6 +92,7 @@ object CalcCodeGenerator {
       outRowClass,
       calcProjection,
       calcCondition,
+      inputTerm,
       collectorTerm = collectorTerm,
       eagerInputUnboxingCode = false,
       outputDirectly = true
@@ -121,7 +127,9 @@ object CalcCodeGenerator {
     projection.foreach(_.accept(ScalarFunctionsValidator))
     condition.foreach(_.accept(ScalarFunctionsValidator))
 
-    val exprGenerator = new ExprCodeGenerator(ctx, false)
+    val rexProgram = buildRexProgram(ctx.classLoader, inputType, projection, condition)
+
+    val exprGenerator = new ExprCodeGenerator(ctx, false, rexProgram)
       .bindInput(inputType, inputTerm = inputTerm)
 
     val onlyFilter = projection.lengthCompare(inputType.getFieldCount) == 0 &&
@@ -137,6 +145,8 @@ object CalcCodeGenerator {
     }
 
     def produceProjectionCode: String = {
+      val projection = rexProgram.getProjectList.asScala
+
       val projectionExprs = projection.map(exprGenerator.generateExpression)
       val projectionExpression =
         exprGenerator.generateResultExpression(projectionExprs, outRowType, outRowClass)
@@ -162,16 +172,20 @@ object CalcCodeGenerator {
           "It should be removed by CalcRemoveRule.")
     } else if (condition.isEmpty) { // only projection
       val projectionCode = produceProjectionCode
+      val localRefCode = ctx.reuseLocalRefCode()
       s"""
          |${if (eagerInputUnboxingCode) ctx.reuseInputUnboxingCode() else ""}
+         |$localRefCode
          |$projectionCode
          |""".stripMargin
     } else {
-      val filterCondition = exprGenerator.generateExpression(condition.get)
+      val filterCondition = exprGenerator.generateExpression(rexProgram.getCondition)
       // only filter
       if (onlyFilter) {
+        val localRefCode = ctx.reuseLocalRefCode()
         s"""
            |${if (eagerInputUnboxingCode) ctx.reuseInputUnboxingCode() else ""}
+           |$localRefCode
            |${filterCondition.code}
            |if (${filterCondition.resultTerm}) {
            |  ${produceOutputCode(inputTerm)}
@@ -181,24 +195,56 @@ object CalcCodeGenerator {
         val filterInputCode = ctx.reuseInputUnboxingCode()
         val filterInputSet = Set(ctx.reusableInputUnboxingExprs.keySet.toSeq: _*)
 
+        val filterLocalRefSet: Set[Int] = ctx.reusableLocalRefExprs.keySet.toSet
+
         // if any filter conditions, projection code will enter an new scope
         val projectionCode = produceProjectionCode
 
         val projectionInputCode = ctx.reusableInputUnboxingExprs
-          .filter(entry => !filterInputSet.contains(entry._1))
+          .filter { case (k, _) => !filterInputSet.contains(k) }
           .values
           .map(_.code)
           .mkString("\n")
+
+        val filterLocalRefCode = ctx.reusableLocalRefExprs
+          .filter { case (k, _) => filterLocalRefSet.contains(k) }
+          .values
+          .map(_.code)
+          .mkString("\n")
+        val projectionLocalRefCode = ctx.reusableLocalRefExprs
+          .filter { case (k, _) => !filterLocalRefSet.contains(k) }
+          .values
+          .map(_.code)
+          .mkString("\n")
+
         s"""
            |${if (eagerInputUnboxingCode) filterInputCode else ""}
+           |$filterLocalRefCode
            |${filterCondition.code}
            |if (${filterCondition.resultTerm}) {
-           |  ${if (eagerInputUnboxingCode) projectionInputCode else ""}
+           | ${if (eagerInputUnboxingCode) projectionInputCode else ""}
+           |  $projectionLocalRefCode
            |  $projectionCode
            |}
            |""".stripMargin
       }
     }
+  }
+
+  private def buildRexProgram(
+      classLoader: ClassLoader,
+      inputType: RowType,
+      projection: Seq[RexNode],
+      condition: Option[RexNode]): RexProgram = {
+    val typeFactory = new FlinkTypeFactory(classLoader, FlinkTypeSystem.INSTANCE)
+    val rexBuilder = new FlinkRexBuilder(typeFactory)
+    val relInputType = typeFactory.createFieldTypeFromLogicalType(inputType)
+    val builder = new RexProgramBuilder(relInputType, rexBuilder)
+    projection.foreach(p => builder.addProject(p, null))
+    if (condition.isDefined) {
+      builder.addCondition(condition.get)
+    }
+    builder.getProgram
   }
 
   private object ScalarFunctionsValidator extends RexVisitorImpl[Unit](true) {
