@@ -21,11 +21,11 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.util.RawValue
 import org.apache.flink.table.api.{DataTypes, JsonOnNull}
-import org.apache.flink.table.functions.BuiltInFunctionDefinitions.JSON
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
-import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable.{JSON_ARRAY, JSON_OBJECT}
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil.toScala
-import org.apache.flink.table.planner.utils.ShortcutUtils.unwrapFunctionDefinition
+import org.apache.flink.table.planner.utils.ShortcutUtils
+import org.apache.flink.table.planner.utils.ShortcutUtils.expandLocalRef
 import org.apache.flink.table.runtime.functions.SqlJsonUtils
 import org.apache.flink.table.runtime.typeutils.TypeCheckUtils.isCharacterString
 import org.apache.flink.table.types.logical._
@@ -33,7 +33,7 @@ import org.apache.flink.table.types.logical.LogicalTypeRoot._
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks
 import org.apache.flink.table.utils.EncodingUtils
 
-import org.apache.calcite.rex.{RexCall, RexNode}
+import org.apache.calcite.rex.RexNode
 
 import java.time.format.DateTimeFormatter
 
@@ -51,8 +51,9 @@ object JsonGenerateUtils {
   def createNodeTerm(
       ctx: CodeGeneratorContext,
       expression: GeneratedExpression,
-      operand: RexNode): String = {
-    if (isJsonObjectOrArrayOperand(operand) || isJsonFunctionOperand(operand)) {
+      operand: RexNode,
+      exprs: java.util.List[RexNode]): String = {
+    if (isJsonObjectOrArrayOperand(operand, exprs) || isJsonFunctionOperand(operand, exprs)) {
       createRawNodeTerm(expression)
     } else {
       createNodeTerm(ctx, expression)
@@ -177,59 +178,36 @@ object JsonGenerateUtils {
     }
   }
 
-  /** Determines whether the given operand is a call to a JSON_OBJECT */
-  def isJsonObjectOperand(operand: RexNode): Boolean = {
-    operand match {
-      case rexCall: RexCall =>
-        rexCall.getOperator match {
-          case JSON_OBJECT => true
-          case _ => false
-        }
-      case _ => false
-    }
-  }
+  /** Determines whether the given operand is a call to a JSON_OBJECT. */
+  def isJsonObjectOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+    ShortcutUtils.isOneOfFunctionDefinitions(
+      expandLocalRef(operand, exprs),
+      BuiltInFunctionDefinitions.JSON_OBJECT)
 
-  /** Determines whether the given operand is a call to a JSON_ARRAY */
-  def isJsonArrayOperand(operand: RexNode): Boolean = {
-    operand match {
-      case rexCall: RexCall =>
-        rexCall.getOperator match {
-          case JSON_ARRAY => true
-          case _ => false
-        }
-      case _ => false
-    }
-  }
+  /** Determines whether the given operand is a call to a JSON_ARRAY. */
+  def isJsonArrayOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+    ShortcutUtils.isOneOfFunctionDefinitions(
+      expandLocalRef(operand, exprs),
+      BuiltInFunctionDefinitions.JSON_ARRAY)
 
   /**
    * Determines whether the given operand is a call to a JSON_OBJECT or JSON_ARRAY whose result
    * should be inserted as a raw value instead of as a character string.
    */
-  def isJsonObjectOrArrayOperand(operand: RexNode): Boolean = {
-    operand match {
-      case rexCall: RexCall =>
-        rexCall.getOperator match {
-          case JSON_OBJECT | JSON_ARRAY => true
-          case _ => false
-        }
-      case _ => false
-    }
-  }
+  def isJsonObjectOrArrayOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+    ShortcutUtils.isOneOfFunctionDefinitions(
+      expandLocalRef(operand, exprs),
+      BuiltInFunctionDefinitions.JSON_OBJECT,
+      BuiltInFunctionDefinitions.JSON_ARRAY)
 
   /**
    * Determines whether the given operand is a call to JSON function whose call currently just
-   * passes through the input value as output value
+   * passes through the input value as output value.
    */
-  def isJsonFunctionOperand(operand: RexNode): Boolean = {
-    operand match {
-      case rexCall: RexCall =>
-        unwrapFunctionDefinition(rexCall) match {
-          case JSON => true
-          case _ => false
-        }
-      case _ => false
-    }
-  }
+  def isJsonFunctionOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+    ShortcutUtils.isOneOfFunctionDefinitions(
+      expandLocalRef(operand, exprs),
+      BuiltInFunctionDefinitions.JSON)
 
   /**
    * Determines whether a JSON function is allowed in the current context. JSON functions are
@@ -237,9 +215,13 @@ object JsonGenerateUtils {
    * of a JSON_OBJECT call, we do (i % 2) == 0 to check if it's being used in second parameter, the
    * values' parameter.
    */
-  def isSupportedJsonOperand(operand: RexNode, call: RexNode, i: Int): Boolean = {
-    isJsonFunctionOperand(operand) &&
-    (isJsonArrayOperand(call) || isJsonObjectOperand(call) && (i % 2) == 0)
+  def isSupportedJsonOperand(
+      operand: RexNode,
+      call: RexNode,
+      i: Int,
+      exprs: java.util.List[RexNode]): Boolean = {
+    isJsonFunctionOperand(operand, exprs) &&
+    (isJsonArrayOperand(call, exprs) || isJsonObjectOperand(call, exprs) && (i % 2) == 0)
   }
 
   /** Generates a method to convert arrays into [[ArrayNode]]. */

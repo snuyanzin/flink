@@ -17,7 +17,6 @@
  */
 package org.apache.flink.table.planner.codegen
 
-import org.apache.flink.api.common.functions.Function
 import org.apache.flink.api.common.typeutils.TypeSerializer
 import org.apache.flink.configuration.ReadableConfig
 import org.apache.flink.table.data.GenericRowData
@@ -116,6 +115,24 @@ class CodeGeneratorContext(
   val reusableInputUnboxingExprs: mutable.Map[(String, Int), GeneratedExpression] =
     mutable.Map[(String, Int), GeneratedExpression]()
 
+  // map of expressions for shared RexProgram exprList entries that will be added only once
+  // exprList index -> expr
+  val reusableLocalRefExprs: mutable.LinkedHashMap[Int, GeneratedExpression] =
+    mutable.LinkedHashMap[Int, GeneratedExpression]()
+
+  // Stack of RexLocalRef cache scopes. The bottom scope IS reusableLocalRefExprs and is read
+  // by CalcCodeGenerator.reuseLocalRefCode() — its bodies are hoisted to the top of the
+  // generated method and so must be safe to evaluate unconditionally.
+  //
+  // ExprCodeGenerator pushes an inner scope before visiting a guarded operand (CASE WHEN's
+  // THEN/ELSE branch, AND/OR's right-hand side, ...) and pops it after. Any RexLocalRef body
+  // cached during that visit lives only in the inner scope; ExprCodeGenerator folds those
+  // bodies into the operand's generated code so they execute only when the guard fires.
+  // Without this scoping, an arithmetic expression like (a / b) inside CASE WHEN b > 0 would
+  // be hoisted above the if-block and divide by zero on rows where b == 0.
+  private val localRefScopes: mutable.ArrayBuffer[mutable.LinkedHashMap[Int, GeneratedExpression]] =
+    mutable.ArrayBuffer(reusableLocalRefExprs)
+
   // set of constructor statements that will be added only once
   // we use a LinkedHashSet to keep the insertion order
   private val reusableConstructorStatements: mutable.LinkedHashSet[(String, String)] =
@@ -172,6 +189,19 @@ class CodeGeneratorContext(
 
   def getReusableInputUnboxingExprs(inputTerm: String, index: Int): Option[GeneratedExpression] =
     reusableInputUnboxingExprs.get((inputTerm, index))
+
+  def getReusableLocalRefExpr(index: Int): Option[GeneratedExpression] = {
+    // Search innermost-out: a body cached in an inner (guarded) scope wins over outer
+    // entries. In practice the cache is monotone — an entry never appears in two scopes
+    // simultaneously.
+    var i = localRefScopes.size - 1
+    while (i >= 0) {
+      val maybe = localRefScopes(i).get(index)
+      if (maybe.isDefined) return maybe
+      i -= 1
+    }
+    None
+  }
 
   /** Prioritize using the nameCounter of the ancestor. */
   def getNameCounter: AtomicLong = if (parentCtx == null) nameCounter else parentCtx.getNameCounter
@@ -375,6 +405,10 @@ class CodeGeneratorContext(
     reusableInputUnboxingExprs.values.map(_.code).mkString("\n")
   }
 
+  def reuseLocalRefCode(): String = {
+    reusableLocalRefExprs.values.map(_.code).mkString("\n")
+  }
+
   /** Returns code block of unboxing input variables which belongs to the given inputTerm. */
   def reuseInputUnboxingCode(inputTerm: String): String = {
     val exprs = reusableInputUnboxingExprs.filter {
@@ -457,6 +491,10 @@ class CodeGeneratorContext(
       inputTerm: String,
       index: Int,
       expr: GeneratedExpression): Unit = reusableInputUnboxingExprs((inputTerm, index)) = expr
+
+  /** Adds a reusable RexLocalRef expression keyed by its index in the program's exprList. */
+  def addReusableLocalRefExpr(index: Int, expr: GeneratedExpression): Unit =
+    localRefScopes.last(index) = expr
 
   /** Adds a reusable output record statement to member area. */
   def addReusableOutputRecord(
@@ -1074,5 +1112,16 @@ class CodeGeneratorContext(
     reusableInitStatements.add(nullableInit)
 
     fieldTerm
+  }
+
+  def pushLocalRefScope(): Unit = {
+    localRefScopes.append(mutable.LinkedHashMap.empty)
+  }
+
+  def popLocalRefScope(): scala.collection.Map[Int, GeneratedExpression] = {
+    require(
+      localRefScopes.size > 1,
+      "Cannot pop the bottom RexLocalRef cache scope (reusableLocalRefExprs).")
+    localRefScopes.remove(localRefScopes.size - 1)
   }
 }
