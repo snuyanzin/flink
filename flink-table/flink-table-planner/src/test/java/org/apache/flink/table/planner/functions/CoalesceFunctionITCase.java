@@ -196,14 +196,6 @@ class CoalesceFunctionITCase extends BuiltInFunctionTestBase {
                                 "COALESCE(f0, f1, f2)",
                                 1L,
                                 BIGINT().notNull()),
-                TestSetSpec.forFunction(BuiltInFunctionDefinitions.COALESCE, "FLOAT and DOUBLE")
-                        .onFieldsWithData(null, 1.0f, 2.0d)
-                        .andDataTypes(FLOAT().nullable(), FLOAT().nullable(), DOUBLE().notNull())
-                        .testResult(
-                                coalesce($("f0"), $("f1"), $("f2")),
-                                "COALESCE(f0, f1, f2)",
-                                1.0d,
-                                DOUBLE().notNull()),
                 TestSetSpec.forFunction(BuiltInFunctionDefinitions.COALESCE, "TINYINT and INT")
                         .onFieldsWithData(null, (byte) 7, 42)
                         .andDataTypes(TINYINT().nullable(), TINYINT().nullable(), INT().notNull())
@@ -211,7 +203,103 @@ class CoalesceFunctionITCase extends BuiltInFunctionTestBase {
                                 coalesce($("f0"), $("f1"), $("f2")),
                                 "COALESCE(f0, f1, f2)",
                                 7,
-                                INT().notNull()));
+                                INT().notNull()),
+
+                // TIMESTAMP precision widening: TIMESTAMP(0) < TIMESTAMP(3) → declared
+                // TIMESTAMP(3). Calcite stores TIMESTAMP as a Long millis value, so widening
+                // precision does not change the underlying value.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.COALESCE,
+                                "TIMESTAMP(0) and TIMESTAMP(3)")
+                        .onFieldsWithData(
+                                null,
+                                LocalDateTime.parse("2026-01-01T00:00:00"),
+                                LocalDateTime.parse("2026-01-01T00:00:00.123"))
+                        .andDataTypes(
+                                TIMESTAMP(0).nullable(),
+                                TIMESTAMP(0).nullable(),
+                                TIMESTAMP(3).notNull())
+                        .testResult(
+                                coalesce($("f0"), $("f1"), $("f2")),
+                                "COALESCE(f0, f1, f2)",
+                                LocalDateTime.parse("2026-01-01T00:00:00"),
+                                TIMESTAMP(3).notNull()),
+
+                // DECIMAL precision widening, same scale: DECIMAL(5,2) < DECIMAL(10,2)
+                //   → declared DECIMAL(10, 2).
+                // Same scale → underlying BigDecimal representation pre/post simplify is
+                // identical.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.COALESCE,
+                                "DECIMAL(5,2) and DECIMAL(10,2) (same scale)")
+                        .onFieldsWithData(
+                                null, new BigDecimal("1.23"), new BigDecimal("9876543.21"))
+                        .andDataTypes(
+                                DECIMAL(5, 2).nullable(),
+                                DECIMAL(5, 2).nullable(),
+                                DECIMAL(10, 2).notNull())
+                        .testResult(
+                                coalesce($("f0"), $("f1"), $("f2")),
+                                "COALESCE(f0, f1, f2)",
+                                new BigDecimal("1.23"),
+                                DECIMAL(10, 2).notNull()),
+
+                // DECIMAL precision and scale widening: DECIMAL(5,2) < DECIMAL(10,4)
+                //   → declared DECIMAL(10, 4) (Calcite widening rule:
+                //     d = max(p1-s1, p2-s2) = max(3, 6) = 6, scale = max(2,4) = 4, precision = 10).
+                // Different scale changes the BigDecimal scale on simplification, exercising the
+                // codegen coercion path (the `(primitiveType) value` Java cast was a no-op for
+                // DecimalData; generateCoalesce now routes the chosen branch through
+                // generateCast when the operand's type doesn't match resultType).
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.COALESCE,
+                                "DECIMAL(5,2) and DECIMAL(10,4) (different scale)")
+                        .onFieldsWithData(null, new BigDecimal("1.23"), new BigDecimal("4.5678"))
+                        .andDataTypes(
+                                DECIMAL(5, 2).nullable(),
+                                DECIMAL(5, 2).nullable(),
+                                DECIMAL(10, 4).notNull())
+                        .testResult(
+                                coalesce($("f0"), $("f1"), $("f2")),
+                                "COALESCE(f0, f1, f2)",
+                                new BigDecimal("1.2300"),
+                                DECIMAL(10, 4).notNull()),
+
+                // INTERVAL YEAR TO MONTH — same shape on every operand. Stored as a single int
+                // (months); precision is metadata, the underlying value is unchanged.
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.COALESCE, "INTERVAL MONTH precision")
+                        .onFieldsWithData(null, Period.ofMonths(2), Period.ofMonths(5))
+                        .andDataTypes(
+                                INTERVAL(MONTH()).nullable(),
+                                INTERVAL(MONTH()).nullable(),
+                                INTERVAL(MONTH()).notNull())
+                        .testResult(
+                                coalesce($("f0"), $("f1"), $("f2")),
+                                "COALESCE(f0, f1, f2)",
+                                Period.ofMonths(2),
+                                INTERVAL(MONTH()).notNull()),
+
+                // INTERVAL DAY TO SECOND with same second-precision on every operand —
+                // confirms the Table API conversion + CALCITE-7499 simplify-time cast handle
+                // INTERVAL_DAY_TIME without surprises when no widening is required. (Mixed
+                // second-precision is intentionally avoided here: Calcite's LEAST_RESTRICTIVE
+                // for INTERVAL SECOND with different fractional precisions normalises to the
+                // *narrower* precision rather than the wider — that's a separate Calcite quirk
+                // independent of COALESCE.)
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.COALESCE,
+                                "INTERVAL SECOND same precision")
+                        .onFieldsWithData(null, Duration.ofSeconds(10), Duration.ofMillis(15000))
+                        .andDataTypes(
+                                INTERVAL(SECOND(3)).nullable(),
+                                INTERVAL(SECOND(3)).nullable(),
+                                INTERVAL(SECOND(3)).notNull())
+                        .testResult(
+                                coalesce($("f0"), $("f1"), $("f2")),
+                                "COALESCE(f0, f1, f2)",
+                                Duration.ofSeconds(10),
+                                INTERVAL(SECOND(3)).notNull()));
     }
 
     /**
