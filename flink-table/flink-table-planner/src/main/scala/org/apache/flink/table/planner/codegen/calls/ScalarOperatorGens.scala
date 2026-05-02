@@ -1041,7 +1041,12 @@ object ScalarOperatorGens {
     if (operands.size == 1) {
       generateCast(ctx, operands.head, resultType, nullOnFailure = false)
     } else {
-      val condition = operands.head
+      val condition =
+        if (operands.head.resultType.equals(resultType)) {
+          operands.head
+        } else {
+          generateCast(ctx, operands.head, resultType, nullOnFailure = false)
+        }
       val falseAction = generateCoalesce(ctx, operands.tail, resultType)
 
       val Seq(resultTerm, nullTerm) = newNames(ctx, "result", "isNull")
