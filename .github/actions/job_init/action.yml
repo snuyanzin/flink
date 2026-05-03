@@ -76,7 +76,7 @@ runs:
 
     - name: "Setup Maven package cache"
       if: ${{ inputs.maven_repo_folder != '' }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ inputs.maven_repo_folder }}
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
