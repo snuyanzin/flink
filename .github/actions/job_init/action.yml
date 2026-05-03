@@ -85,34 +85,25 @@ runs:
         else
           ns="${{ github.ref_name }}"
         fi
+        # Map release tags (release-X.Y.Z, release-X.Y.Z-rcN) back to their parent branch
+        # (release-X.Y) so tag builds reuse the branch's warm cache.
+        case "${ns}" in
+          release-[0-9]*.[0-9]*.[0-9]*) ns="$(printf '%s' "${ns}" | sed 's/^\(release-[0-9][0-9]*\.[0-9][0-9]*\)\..*/\1/')" ;;
+        esac
         # Sanitize for use in a cache key (no slashes, spaces, etc.).
-        ns="$(echo "${ns}" | tr -c '[:alnum:]._-' '-')"
+        ns="$(printf '%s' "${ns}" | tr -c '[:alnum:]._-' '-')"
         echo "namespace=${ns}" >> "${GITHUB_OUTPUT}"
         echo "Cache namespace: ${ns}"
 
-    - name: "Read Flink version from root pom"
-      id: flink-version
-      shell: bash
-      working-directory: ${{ inputs.source_directory != '' && inputs.source_directory || github.workspace }}
-      run: |
-        # The root pom inherits from the apache parent pom, so the first <version> element is
-        # the parent's version (e.g. "35"). The project version is the next <version> after the
-        # </parent> close tag (e.g. "2.4-SNAPSHOT", "1.20.1").
-        version=$(awk '/<\/parent>/{found=1;next} found && /<version>/{gsub(/.*<version>|<\/version>.*/, ""); print; exit}' pom.xml)
-        version="$(echo "${version}" | tr -c '[:alnum:]._-' '-')"
-        echo "version=${version}" >> "${GITHUB_OUTPUT}"
-        echo "Flink version: ${version}"
-
     - name: "Setup Maven package cache"
       if: ${{ inputs.maven_repo_folder != '' }}
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ inputs.maven_repo_folder }}
-        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-flink${{ steps.flink-version.outputs.version }}-maven-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
+        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
         restore-keys: |
-          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-flink${{ steps.flink-version.outputs.version }}-maven-${{ hashFiles('**/pom.xml') }}-
-          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-flink${{ steps.flink-version.outputs.version }}-maven-
-          ${{ runner.os }}-flink${{ steps.flink-version.outputs.version }}-maven-
+          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-
+          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-
           ${{ runner.os }}-maven-
 
     - name: "Moves checkout content from ${{ inputs.source_directory }} to ${{ inputs.target_directory }}."
