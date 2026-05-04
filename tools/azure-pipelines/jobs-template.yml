@@ -41,6 +41,27 @@ jobs:
     target: host
     condition: not(eq('${{parameters.test_pool_definition.name}}', 'Default'))
     displayName: Free up disk space
+  # Defense 3: bucket unknown branches into a shared "scratch" namespace so the
+  # active per-branch cache slot count stays bounded (master + each release-X.Y + scratch).
+  - bash: |
+      # Derive directly from env vars Azure exposes. $(...) macros for variables
+      # defined via $[...] runtime expressions don't expand inside bash bodies (bash
+      # interprets them as command substitution), so we cannot use $(RAW_NAMESPACE).
+      raw="${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCHNAME:-}}"
+      # Strip refs/heads/ prefix Azure adds to PR target branches.
+      raw="${raw#refs/heads/}"
+      ns="$raw"
+      case "$ns" in
+        master|release-[0-9]*.[0-9]*) ;;
+        *) ns="scratch" ;;
+      esac
+      echo "##vso[task.setvariable variable=CACHE_NAMESPACE]$ns"
+      echo "DEBUG cache vars:"
+      echo "  BUILD_SOURCEBRANCHNAME          = ${BUILD_SOURCEBRANCHNAME:-<unset>}"
+      echo "  SYSTEM_PULLREQUEST_TARGETBRANCH = ${SYSTEM_PULLREQUEST_TARGETBRANCH:-<unset>}"
+      echo "  raw (post-coalesce)             = $raw"
+      echo "  CACHE_NAMESPACE (after norm.)   = $ns"
+    displayName: Normalize cache namespace
   # The cache task is persisting the .m2 directory between builds, so that
   # we do not have to re-download all dependencies from maven central for
   # each build. The hope is that downloading the cache is faster than
@@ -49,18 +70,23 @@ jobs:
   # as a key for the build cache (CACHE_KEY). If we have a cache miss on the hash
   # (usually because a pom file has changed), we'll fall back to a key without
   # the pom files (CACHE_FALLBACK_KEY).
-  # Note that we use the year number that the pipeline run starts in the cache key,
-  # which means the cache is invalidated per year, in order to avoid the size of
+  # Note that we use the year-month bucket that the pipeline run starts in the cache key,
+  # which means the cache is invalidated per month, in order to avoid the size of
   # cached .m2 directory growing indefinitely.
+  # Defense 2: only persist on long-lived branches (master/release-*); PR/topic builds
+  # restore-and-save normally only when running on those branches. This gating prevents
+  # short-lived branches from polluting the cache pool.
   # Offical documentation of the Cache task: https://docs.microsoft.com/en-us/azure/devops/pipelines/caching/?view=azure-devops
   - task: Cache@2
     inputs:
-      key: $(PIPELINE_START_YEAR) | $(CACHE_KEY)
-      restoreKeys: $(PIPELINE_START_YEAR) | $(CACHE_FALLBACK_KEY)
+      key: $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_KEY)
+      restoreKeys: |
+        $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_FALLBACK_KEY)
+        $(PIPELINE_START_BUCKET) | $(CACHE_FALLBACK_KEY)
       path: $(MAVEN_CACHE_FOLDER)
     continueOnError: true # continue the build even if the cache fails.
-    # do not use cache on the "Default" queue
-    condition: not(eq('${{parameters.test_pool_definition.name}}', 'Default'))
+    # do not use cache on the "Default" queue, and only persist on long-lived branches
+    condition: and(not(eq('${{parameters.test_pool_definition.name}}', 'Default')), or(eq(variables['CACHE_NAMESPACE'], 'master'), startsWith(variables['CACHE_NAMESPACE'], 'release-')))
     displayName: Cache Maven local repo
   - script: |
       echo "##vso[task.setvariable variable=JAVA_HOME]$JAVA_HOME_${{parameters.jdk}}_X64"
@@ -77,6 +103,13 @@ jobs:
     inputs:
       targetPath: $(FLINK_ARTIFACT_DIR)
       artifact: FlinkCompileArtifact-${{parameters.stage_name}}
+
+  # Defense 1: prune the m2 before the cache post-step tars it for upload.
+  # condition: always() so the prune runs even on test failure.
+  - script: ./tools/azure-pipelines/prune_m2_cache.sh "$(MAVEN_CACHE_FOLDER)"
+    displayName: Prune Maven local repo before cache save
+    condition: always()
+    continueOnError: true
 
 - job: test_${{parameters.stage_name}}
   dependsOn: compile_${{parameters.stage_name}}
@@ -124,13 +157,37 @@ jobs:
   - script: ./tools/azure-pipelines/unpack_build_artifact.sh
     displayName: "Unpack Build artifact"
 
+  # Defense 3: bucket unknown branches into a shared "scratch" namespace.
+  - bash: |
+      # Derive directly from env vars Azure exposes. $(...) macros for variables
+      # defined via $[...] runtime expressions don't expand inside bash bodies (bash
+      # interprets them as command substitution), so we cannot use $(RAW_NAMESPACE).
+      raw="${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCHNAME:-}}"
+      # Strip refs/heads/ prefix Azure adds to PR target branches.
+      raw="${raw#refs/heads/}"
+      ns="$raw"
+      case "$ns" in
+        master|release-[0-9]*.[0-9]*) ;;
+        *) ns="scratch" ;;
+      esac
+      echo "##vso[task.setvariable variable=CACHE_NAMESPACE]$ns"
+      echo "DEBUG cache vars:"
+      echo "  BUILD_SOURCEBRANCHNAME          = ${BUILD_SOURCEBRANCHNAME:-<unset>}"
+      echo "  SYSTEM_PULLREQUEST_TARGETBRANCH = ${SYSTEM_PULLREQUEST_TARGETBRANCH:-<unset>}"
+      echo "  raw (post-coalesce)             = $raw"
+      echo "  CACHE_NAMESPACE (after norm.)   = $ns"
+    displayName: Normalize cache namespace
+
+  # Defense 2: only persist on long-lived branches.
   - task: Cache@2
     inputs:
-      key: $(PIPELINE_START_YEAR) | $(CACHE_KEY)
-      restoreKeys: $(PIPELINE_START_YEAR) | $(CACHE_FALLBACK_KEY)
+      key: $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_KEY)
+      restoreKeys: |
+        $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_FALLBACK_KEY)
+        $(PIPELINE_START_BUCKET) | $(CACHE_FALLBACK_KEY)
       path: $(MAVEN_CACHE_FOLDER)
     continueOnError: true # continue the build even if the cache fails.
-    condition: not(eq('${{parameters.test_pool_definition.name}}', 'Default'))
+    condition: and(not(eq('${{parameters.test_pool_definition.name}}', 'Default')), or(eq(variables['CACHE_NAMESPACE'], 'master'), startsWith(variables['CACHE_NAMESPACE'], 'release-')))
     displayName: Cache Maven local repo
 
   - task: Cache@2
@@ -179,6 +236,12 @@ jobs:
   - script: ./tools/azure-pipelines/cache_docker_images.sh save
     displayName: Save docker images
     condition: and(not(canceled()), or(failed(), ne(variables.DOCKER_IMAGES_CACHE_HIT, 'true')))
+    continueOnError: true
+
+  # Defense 1: prune the m2 before the cache post-step tars it for upload.
+  - script: ./tools/azure-pipelines/prune_m2_cache.sh "$(MAVEN_CACHE_FOLDER)"
+    displayName: Prune Maven local repo before cache save
+    condition: always()
     continueOnError: true
 
 - template: e2e-template.yml

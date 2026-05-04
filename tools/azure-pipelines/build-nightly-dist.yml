@@ -24,13 +24,35 @@ jobs:
     workspace:
       clean: all
     steps:
+      # Defense 3: bucket unknown branches into a shared "scratch" namespace.
+      - bash: |
+          # Derive directly from env vars Azure exposes. $(...) macros for variables
+          # defined via $[...] runtime expressions don't expand inside bash bodies.
+          raw="${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCHNAME:-}}"
+          raw="${raw#refs/heads/}"
+          ns="$raw"
+          case "$ns" in
+            master|release-[0-9]*.[0-9]*) ;;
+            *) ns="scratch" ;;
+          esac
+          echo "##vso[task.setvariable variable=CACHE_NAMESPACE]$ns"
+          echo "DEBUG cache vars:"
+          echo "  BUILD_SOURCEBRANCHNAME          = ${BUILD_SOURCEBRANCHNAME:-<unset>}"
+          echo "  SYSTEM_PULLREQUEST_TARGETBRANCH = ${SYSTEM_PULLREQUEST_TARGETBRANCH:-<unset>}"
+          echo "  raw (post-coalesce)             = $raw"
+          echo "  CACHE_NAMESPACE (after norm.)   = $ns"
+        displayName: Normalize cache namespace
+      # Defense 2: only persist on long-lived branches.
       - task: Cache@2
         displayName: Cache Maven local repo
         inputs:
-          key: $(PIPELINE_START_YEAR) | $(CACHE_KEY)
-          restoreKeys: $(PIPELINE_START_YEAR) | $(CACHE_FALLBACK_KEY)
+          key: $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_KEY)
+          restoreKeys: |
+            $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_FALLBACK_KEY)
+            $(PIPELINE_START_BUCKET) | $(CACHE_FALLBACK_KEY)
           path: $(MAVEN_CACHE_FOLDER)
         continueOnError: true
+        condition: or(eq(variables['CACHE_NAMESPACE'], 'master'), startsWith(variables['CACHE_NAMESPACE'], 'release-'))
       - script: |
           echo "##vso[task.setvariable variable=JAVA_HOME]$JAVA_HOME_${{parameters.jdk}}_X64"
           echo "##vso[task.setvariable variable=PATH]$JAVA_HOME_${{parameters.jdk}}_X64/bin:$PATH"
@@ -67,6 +89,11 @@ jobs:
       #  inputs:
       #    targetPath: ./tools/releasing/release
       #    artifact: nightly-release
+      # Defense 1: prune the m2 before the cache post-step tars it for upload.
+      - script: ./tools/azure-pipelines/prune_m2_cache.sh "$(MAVEN_CACHE_FOLDER)"
+        displayName: Prune Maven local repo before cache save
+        condition: always()
+        continueOnError: true
   - job: ${{parameters.stage_name}}_maven
     pool:
       vmImage: 'ubuntu-24.04'
@@ -75,13 +102,35 @@ jobs:
     workspace:
       clean: all
     steps:
+      # Defense 3: bucket unknown branches into a shared "scratch" namespace.
+      - bash: |
+          # Derive directly from env vars Azure exposes. $(...) macros for variables
+          # defined via $[...] runtime expressions don't expand inside bash bodies.
+          raw="${SYSTEM_PULLREQUEST_TARGETBRANCH:-${BUILD_SOURCEBRANCHNAME:-}}"
+          raw="${raw#refs/heads/}"
+          ns="$raw"
+          case "$ns" in
+            master|release-[0-9]*.[0-9]*) ;;
+            *) ns="scratch" ;;
+          esac
+          echo "##vso[task.setvariable variable=CACHE_NAMESPACE]$ns"
+          echo "DEBUG cache vars:"
+          echo "  BUILD_SOURCEBRANCHNAME          = ${BUILD_SOURCEBRANCHNAME:-<unset>}"
+          echo "  SYSTEM_PULLREQUEST_TARGETBRANCH = ${SYSTEM_PULLREQUEST_TARGETBRANCH:-<unset>}"
+          echo "  raw (post-coalesce)             = $raw"
+          echo "  CACHE_NAMESPACE (after norm.)   = $ns"
+        displayName: Normalize cache namespace
+      # Defense 2: only persist on long-lived branches.
       - task: Cache@2
         displayName: Cache Maven local repo
         inputs:
-          key: $(PIPELINE_START_YEAR) | $(CACHE_KEY)
-          restoreKeys: $(PIPELINE_START_YEAR) | $(CACHE_FALLBACK_KEY)
+          key: $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_KEY)
+          restoreKeys: |
+            $(PIPELINE_START_BUCKET) | $(CACHE_NAMESPACE) | $(CACHE_FALLBACK_KEY)
+            $(PIPELINE_START_BUCKET) | $(CACHE_FALLBACK_KEY)
           path: $(MAVEN_CACHE_FOLDER)
         continueOnError: true
+        condition: or(eq(variables['CACHE_NAMESPACE'], 'master'), startsWith(variables['CACHE_NAMESPACE'], 'release-'))
       - script: |
           echo "##vso[task.setvariable variable=JAVA_HOME]$JAVA_HOME_${{parameters.jdk}}_X64"
           echo "##vso[task.setvariable variable=PATH]$JAVA_HOME_${{parameters.jdk}}_X64/bin:$PATH"
@@ -124,3 +173,8 @@ jobs:
         env:
           MAVEN_DEPLOY_USER: $(MAVEN_DEPLOY_USER)
           MAVEN_DEPLOY_PASS: $(MAVEN_DEPLOY_PASS)
+      # Defense 1: prune the m2 before the cache post-step tars it for upload.
+      - script: ./tools/azure-pipelines/prune_m2_cache.sh "$(MAVEN_CACHE_FOLDER)"
+        displayName: Prune Maven local repo before cache save
+        condition: always()
+        continueOnError: true

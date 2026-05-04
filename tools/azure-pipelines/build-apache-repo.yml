@@ -46,7 +46,20 @@ variables:
   E2E_CACHE_FOLDER: $(Pipeline.Workspace)/e2e_cache
   E2E_TARBALL_CACHE: $(Pipeline.Workspace)/e2e_artifact_cache
   MAVEN_ARGS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
-  PIPELINE_START_YEAR: $[format('{0:yyyy}', pipeline.startTime)]
+  # Time bucket for cache key; monthly rollover so stale entries become unreachable
+  # within ~30 days instead of ~365 (was: yearly).
+  PIPELINE_START_BUCKET: $[format('{0:yyyy-MM}', pipeline.startTime)]
+  # Raw namespace = PR target branch (for PRs) | source branch otherwise.
+  # Per-job "Normalize cache namespace" step buckets unknown branches into a shared
+  # "scratch" slot so the active namespace count stays bounded (master + each release-X.Y + scratch).
+  # CACHE_NAMESPACE is set by the per-job "Normalize cache namespace" bash step using
+  # the BUILD_SOURCEBRANCHNAME / SYSTEM_PULLREQUEST_TARGETBRANCH env vars. We initialize
+  # it to "scratch" so that if the normalize step doesn't run for some reason, the
+  # cache condition (eq 'master' or startsWith 'release-') correctly skips save.
+  # Note: $[...] runtime variables are NOT expanded as $(...) macros inside bash bodies,
+  # which is why we don't use a RAW_NAMESPACE indirection here — the bash step would
+  # see "$(RAW_NAMESPACE)" verbatim and try to execute it as a command.
+  CACHE_NAMESPACE: scratch
   CACHE_KEY: maven | $(Agent.OS) | **/pom.xml, !**/target/**
   CACHE_FALLBACK_KEY: maven | $(Agent.OS)
   DOCKER_IMAGES_CACHE_KEY: docker-images-cache | $(Agent.OS) | **/cache_docker_images.sh | flink-test-utils-parent/**/DockerImageVersions.java
