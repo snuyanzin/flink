@@ -70,14 +70,33 @@ jobs:
         mkdir -p $(E2E_TARBALL_CACHE)
         mkdir -p $(DOCKER_IMAGES_CACHE_FOLDER)
       displayName: Create cache directories
+    # Defense 3: bucket unknown branches into a shared "scratch" namespace.
+    - bash: |
+        ns="$(RAW_NAMESPACE)"
+        case "$ns" in
+          master|release-[0-9]*.[0-9]*) ;;
+          *) ns="scratch" ;;
+        esac
+        echo "##vso[task.setvariable variable=CACHE_NAMESPACE]$ns"
+        echo "Resolved cache namespace: $ns"
+      displayName: Normalize cache namespace
+      condition: not(eq(variables['SKIP'], '1'))
+    # Defense 2: only persist on long-lived branches.
     - task: Cache@2
       inputs:
-        key: $(PIPELINE_START_YEAR) | $(CACHE_KEY)
-        restoreKeys: $(PIPELINE_START_YEAR) | $(CACHE_FALLBACK_KEY)
+        key: $(PIPELINE_START_BUCKET) | $(CACHE_KEY)
+        restoreKeys: $(PIPELINE_START_BUCKET) | $(CACHE_FALLBACK_KEY)
         path: $(MAVEN_CACHE_FOLDER)
       displayName: Cache Maven local repo
       continueOnError: true
-      condition: not(eq(variables['SKIP'], '1'))
+      condition: |
+        and(
+          not(eq(variables['SKIP'], '1')),
+          or(
+            eq(variables['CACHE_NAMESPACE'], 'master'),
+            startsWith(variables['CACHE_NAMESPACE'], 'release-')
+          )
+        )
     - task: Cache@2
       inputs:
         key: e2e-cache-${{parameters.group}} | flink-end-to-end-tests/**/*.java, !**/avro/**
@@ -148,4 +167,9 @@ jobs:
     - script: ./tools/azure-pipelines/cache_docker_images.sh save
       displayName: Save docker images
       condition: and(not(eq(variables['SKIP'], '1')), ne(variables.DOCKER_IMAGES_CACHE_HIT, 'true'))
+      continueOnError: true
+    # Defense 1: prune the m2 before the cache post-step tars it for upload.
+    - script: ./tools/azure-pipelines/prune_m2_cache.sh "$(MAVEN_CACHE_FOLDER)"
+      displayName: Prune Maven local repo before cache save
+      condition: always()
       continueOnError: true
