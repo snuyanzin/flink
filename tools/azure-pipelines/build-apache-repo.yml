@@ -46,7 +46,18 @@ variables:
   E2E_CACHE_FOLDER: $(Pipeline.Workspace)/e2e_cache
   E2E_TARBALL_CACHE: $(Pipeline.Workspace)/e2e_artifact_cache
   MAVEN_ARGS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
-  PIPELINE_START_YEAR: $[format('{0:yyyy}', pipeline.startTime)]
+  # Time bucket for cache key; monthly rollover so stale entries become unreachable
+  # within ~30 days instead of ~365 (was: yearly).
+  PIPELINE_START_BUCKET: $[format('{0:yyyy-MM}', pipeline.startTime)]
+  # Raw namespace = PR target branch (for PRs) | source branch otherwise.
+  # Per-job "Normalize cache namespace" step buckets unknown branches into a shared
+  # "scratch" slot so the active namespace count stays bounded (master + each release-X.Y + scratch).
+  RAW_NAMESPACE: $[coalesce(variables['System.PullRequest.TargetBranch'], variables['Build.SourceBranchName'])]
+  CACHE_NAMESPACE: $(RAW_NAMESPACE)
+  # CACHE_NAMESPACE is intentionally NOT inlined here — it's mutated mid-job by the
+  # "Normalize cache namespace" step via task.setvariable, and Azure's nested macro
+  # expansion is unreliable for variables updated by setvariable. The cache key in
+  # each Cache@2 task references $(CACHE_NAMESPACE) at the outer level instead.
   CACHE_KEY: maven | $(Agent.OS) | **/pom.xml, !**/target/**
   CACHE_FALLBACK_KEY: maven | $(Agent.OS)
   DOCKER_IMAGES_CACHE_KEY: docker-images-cache | $(Agent.OS) | **/cache_docker_images.sh | flink-test-utils-parent/**/DockerImageVersions.java
