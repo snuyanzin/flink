@@ -39,8 +39,6 @@ import java.util.Collections
  */
 class BridgingSqlFunctionCallGen(call: RexCall, rexProgram: RexProgram) extends CallGenerator {
 
-  def this(call: RexCall) = this(call, null)
-
   override def generate(
       ctx: CodeGeneratorContext,
       operands: Seq[GeneratedExpression],

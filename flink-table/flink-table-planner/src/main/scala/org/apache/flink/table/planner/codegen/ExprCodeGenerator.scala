@@ -587,8 +587,9 @@ class ExprCodeGenerator(
           ctx.popLocalRefScope()
           throw t
       }
-    if (scopedBodies.isEmpty) operandExpr
-    else
+    if (scopedBodies.isEmpty) {
+      operandExpr
+    } else
       GeneratedExpression(
         operandExpr.resultTerm,
         operandExpr.nullTerm,
