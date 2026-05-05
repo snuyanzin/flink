@@ -199,13 +199,6 @@ public final class ShortcutUtils {
         return false;
     }
 
-    public static RexNode expandLocalRef(RexNode operand, @Nullable List<RexNode> exprs) {
-        while (operand instanceof RexLocalRef && exprs != null) {
-            operand = exprs.get(((RexLocalRef) operand).getIndex());
-        }
-        return operand;
-    }
-
     public static boolean isDeterministicThroughProgram(
             RexNode node, @Nullable List<RexNode> exprs) {
         if (exprs == null) {

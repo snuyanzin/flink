@@ -39,8 +39,6 @@ import org.apache.calcite.rex.{RexCall, RexProgram}
  */
 class JsonObjectCallGen(call: RexCall, rexProgram: RexProgram) extends CallGenerator {
 
-  def this(call: RexCall) = this(call, null)
-
   private def jsonUtils = className[SqlJsonUtils]
 
   override def generate(

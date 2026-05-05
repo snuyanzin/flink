@@ -37,7 +37,7 @@ import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable._
 import org.apache.flink.table.planner.functions.sql.SqlThrowExceptionFunction
 import org.apache.flink.table.planner.functions.utils.{ScalarSqlFunction, TableSqlFunction}
-import org.apache.flink.table.planner.plan.utils.RexLiteralUtil
+import org.apache.flink.table.planner.plan.utils.{FlinkRexUtil, RexLiteralUtil}
 import org.apache.flink.table.planner.utils.ShortcutUtils
 import org.apache.flink.table.runtime.types.LogicalTypeDataTypeConverter.fromLogicalTypeToDataType
 import org.apache.flink.table.runtime.types.PlannerTypeUtils.isInteroperable
@@ -587,8 +587,9 @@ class ExprCodeGenerator(
           ctx.popLocalRefScope()
           throw t
       }
-    if (scopedBodies.isEmpty) operandExpr
-    else
+    if (scopedBodies.isEmpty) {
+      operandExpr
+    } else
       GeneratedExpression(
         operandExpr.resultTerm,
         operandExpr.nullTerm,
@@ -983,7 +984,7 @@ class ExprCodeGenerator(
     // RexLocalRef. JSON_OBJECT/JSON_ARRAY operands recognised as JSON via
     // isSupportedJsonOperand may therefore arrive here as a RexLocalRef; resolve it back to
     // the underlying RexCall before casting.
-    val jsonCall = ShortcutUtils
+    val jsonCall = FlinkRexUtil
       .expandLocalRef(operand, if (rexProgram == null) null else rexProgram.getExprList)
       .asInstanceOf[RexCall]
     val jsonOperands = jsonCall.getOperands.map(_.accept(this))

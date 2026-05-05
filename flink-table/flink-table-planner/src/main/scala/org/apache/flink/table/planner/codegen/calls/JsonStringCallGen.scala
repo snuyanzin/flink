@@ -28,8 +28,6 @@ import org.apache.calcite.rex.{RexCall, RexProgram}
 /** [[CallGenerator]] for `JSON_STRING`. */
 class JsonStringCallGen(call: RexCall, rexProgram: RexProgram) extends CallGenerator {
 
-  def this(call: RexCall) = this(call, null)
-
   private def jsonUtils = className[SqlJsonUtils]
 
   override def generate(

@@ -23,9 +23,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.util.RawV
 import org.apache.flink.table.api.{DataTypes, JsonOnNull}
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
+import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil.toScala
 import org.apache.flink.table.planner.utils.ShortcutUtils
-import org.apache.flink.table.planner.utils.ShortcutUtils.expandLocalRef
 import org.apache.flink.table.runtime.functions.SqlJsonUtils
 import org.apache.flink.table.runtime.typeutils.TypeCheckUtils.isCharacterString
 import org.apache.flink.table.types.logical._
@@ -179,24 +179,24 @@ object JsonGenerateUtils {
   }
 
   /** Determines whether the given operand is a call to a JSON_OBJECT. */
-  def isJsonObjectOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+  def isJsonObjectOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
     ShortcutUtils.isOneOfFunctionDefinitions(
-      expandLocalRef(operand, exprs),
+      FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON_OBJECT)
 
   /** Determines whether the given operand is a call to a JSON_ARRAY. */
-  def isJsonArrayOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+  def isJsonArrayOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
     ShortcutUtils.isOneOfFunctionDefinitions(
-      expandLocalRef(operand, exprs),
+      FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON_ARRAY)
 
   /**
    * Determines whether the given operand is a call to a JSON_OBJECT or JSON_ARRAY whose result
    * should be inserted as a raw value instead of as a character string.
    */
-  def isJsonObjectOrArrayOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+  def isJsonObjectOrArrayOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
     ShortcutUtils.isOneOfFunctionDefinitions(
-      expandLocalRef(operand, exprs),
+      FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON_OBJECT,
       BuiltInFunctionDefinitions.JSON_ARRAY)
 
@@ -204,9 +204,9 @@ object JsonGenerateUtils {
    * Determines whether the given operand is a call to JSON function whose call currently just
    * passes through the input value as output value.
    */
-  def isJsonFunctionOperand(operand: RexNode, exprs: java.util.List[RexNode]): Boolean =
+  def isJsonFunctionOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
     ShortcutUtils.isOneOfFunctionDefinitions(
-      expandLocalRef(operand, exprs),
+      FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON)
 
   /**
@@ -219,9 +219,9 @@ object JsonGenerateUtils {
       operand: RexNode,
       call: RexNode,
       i: Int,
-      exprs: java.util.List[RexNode]): Boolean = {
-    isJsonFunctionOperand(operand, exprs) &&
-    (isJsonArrayOperand(call, exprs) || isJsonObjectOperand(call, exprs) && (i % 2) == 0)
+      localRefs: java.util.List[RexNode]): Boolean = {
+    isJsonFunctionOperand(operand, localRefs) &&
+    (isJsonArrayOperand(call, localRefs) || isJsonObjectOperand(call, localRefs) && (i % 2) == 0)
   }
 
   /** Generates a method to convert arrays into [[ArrayNode]]. */
