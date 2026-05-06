@@ -43,6 +43,7 @@ object CalcCodeGenerator {
       outputType: RowType,
       projection: Seq[RexNode],
       condition: Option[RexNode],
+      typeFactory: FlinkTypeFactory,
       retainHeader: Boolean = false,
       opName: String): CodeGenOperatorFactory[RowData] = {
     // filter out time attributes
@@ -54,6 +55,7 @@ object CalcCodeGenerator {
       classOf[BoxedWrapperRowData],
       projection,
       condition,
+      typeFactory,
       inputTerm,
       CodeGenUtils.DEFAULT_OPERATOR_COLLECTOR_TERM,
       eagerInputUnboxingCode = true,
@@ -81,7 +83,8 @@ object CalcCodeGenerator {
       calcProjection: Seq[RexNode],
       calcCondition: Option[RexNode],
       tableConfig: ReadableConfig,
-      classLoader: ClassLoader): GeneratedFunction[FlatMapFunction[RowData, RowData]] = {
+      classLoader: ClassLoader,
+      typeFactory: FlinkTypeFactory): GeneratedFunction[FlatMapFunction[RowData, RowData]] = {
     val ctx = new CodeGeneratorContext(tableConfig, classLoader)
     val inputTerm = CodeGenUtils.DEFAULT_INPUT1_TERM
     val collectorTerm = CodeGenUtils.DEFAULT_COLLECTOR_TERM
@@ -92,6 +95,7 @@ object CalcCodeGenerator {
       outRowClass,
       calcProjection,
       calcCondition,
+      typeFactory,
       inputTerm,
       collectorTerm = collectorTerm,
       eagerInputUnboxingCode = false,
@@ -116,6 +120,7 @@ object CalcCodeGenerator {
       outRowClass: Class[_ <: RowData],
       projection: Seq[RexNode],
       condition: Option[RexNode],
+      typeFactory: FlinkTypeFactory,
       inputTerm: String = CodeGenUtils.DEFAULT_INPUT1_TERM,
       collectorTerm: String = CodeGenUtils.DEFAULT_OPERATOR_COLLECTOR_TERM,
       eagerInputUnboxingCode: Boolean,
@@ -127,7 +132,7 @@ object CalcCodeGenerator {
     projection.foreach(_.accept(ScalarFunctionsValidator))
     condition.foreach(_.accept(ScalarFunctionsValidator))
 
-    val rexProgram = buildRexProgram(ctx.classLoader, inputType, projection, condition)
+    val rexProgram = buildRexProgram(typeFactory, inputType, projection, condition)
 
     val exprGenerator = new ExprCodeGenerator(ctx, false, rexProgram)
       .bindInput(inputType, inputTerm = inputTerm)
@@ -232,11 +237,11 @@ object CalcCodeGenerator {
   }
 
   private def buildRexProgram(
-      classLoader: ClassLoader,
+      typeFactory: FlinkTypeFactory,
       inputType: RowType,
       projection: Seq[RexNode],
-      condition: Option[RexNode]): RexProgram = {
-    val typeFactory = new FlinkTypeFactory(classLoader, FlinkTypeSystem.INSTANCE)
+      condition: Option[RexNode]
+  ): RexProgram = {
     val rexBuilder = new FlinkRexBuilder(typeFactory)
     val relInputType = typeFactory.createFieldTypeFromLogicalType(inputType)
     val builder = new RexProgramBuilder(relInputType, rexBuilder)

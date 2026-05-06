@@ -120,17 +120,34 @@ class CodeGeneratorContext(
   val reusableLocalRefExprs: mutable.LinkedHashMap[Int, GeneratedExpression] =
     mutable.LinkedHashMap[Int, GeneratedExpression]()
 
-  // Stack of RexLocalRef cache scopes. The bottom scope IS reusableLocalRefExprs and is read
-  // by CalcCodeGenerator.reuseLocalRefCode() — its bodies are hoisted to the top of the
-  // generated method and so must be safe to evaluate unconditionally.
+  // Stack of RexLocalRef cache scopes (`exprList-index -> generated body`).
+  //   * Bottom scope == reusableLocalRefExprs: bodies are hoisted to the top of the method
+  //     and run unconditionally for every row.
+  //   * Inner scopes (push/popLocalRefScope): bodies are folded into a single guarded
+  //     operand's code by ExprCodeGenerator.visitOperandInScopedCache and run only when
+  //     the guard fires. Inserts always target the innermost scope; lookup walks innermost-out.
   //
-  // ExprCodeGenerator pushes an inner scope before visiting a guarded operand (CASE WHEN's
-  // THEN/ELSE branch, AND/OR's right-hand side, ...) and pops it after. Any RexLocalRef body
-  // cached during that visit lives only in the inner scope; ExprCodeGenerator folds those
-  // bodies into the operand's generated code so they execute only when the guard fires.
-  // Without this scoping, an arithmetic expression like (a / b) inside CASE WHEN b > 0 would
-  // be hoisted above the if-block and divide by zero on rows where b == 0.
-  private val localRefScopes: mutable.ArrayBuffer[mutable.LinkedHashMap[Int, GeneratedExpression]] =
+  // Example — `CASE WHEN b <> 0 THEN a / b ELSE NULL`:
+  //
+  //   With scoping (correct):
+  //     boolean cmp = b != 0;
+  //     if (cmp) {
+  //       int div = a / b;        // emitted inside the guarded scope
+  //       result = div;
+  //     } else {
+  //       result = null;
+  //     }
+  //
+  //   Without scoping (buggy):
+  //     int div = a / b;          // throws ArithmeticException when b == 0
+  //     boolean cmp = b != 0;
+  //     if (cmp) { result = div; }
+  //     else     { result = null; }
+  //
+  // The set of operand positions that get scoped lives in
+  // ExprCodeGenerator.conditionalOperandIndices — extend it when adding new short-circuit
+  // operators.
+  private val localRefScopes =
     mutable.ArrayBuffer(reusableLocalRefExprs)
 
   // set of constructor statements that will be added only once
