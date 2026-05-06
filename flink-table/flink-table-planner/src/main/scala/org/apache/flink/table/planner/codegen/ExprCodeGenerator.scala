@@ -513,7 +513,7 @@ class ExprCodeGenerator(
     val resultType = FlinkTypeFactory.toLogicalType(call.getType)
 
     // throw exception if json function is called outside JSON_OBJECT or JSON_ARRAY function
-    if (isJsonFunctionOperand(call, if (rexProgram == null) null else rexProgram.getExprList)) {
+    if (isJsonFunctionOperand(call, CodeGenUtils.getExprsFromProgramOrNull(rexProgram))) {
       throw new ValidationException(
         "The JSON() function is currently only supported inside JSON_ARRAY() or as the VALUE param" +
           " of JSON_OBJECT(). Example: JSON_OBJECT('a', JSON('{\"key\": \"value\"}')) or " +
@@ -545,7 +545,7 @@ class ExprCodeGenerator(
             operand,
             call,
             i,
-            if (rexProgram == null) null else rexProgram.getExprList) =>
+            CodeGenUtils.getExprsFromProgramOrNull(rexProgram)) =>
         generateJsonCall(operand)
 
       case (o @ _, i) if condIdxs.contains(i) => visitOperandInScopedCache(o)
@@ -976,7 +976,7 @@ class ExprCodeGenerator(
     // isSupportedJsonOperand may therefore arrive here as a RexLocalRef; resolve it back to
     // the underlying RexCall before casting.
     val jsonCall = FlinkRexUtil
-      .expandLocalRef(operand, if (rexProgram == null) null else rexProgram.getExprList)
+      .expandLocalRef(operand, CodeGenUtils.getExprsFromProgramOrNull(rexProgram))
       .asInstanceOf[RexCall]
     val jsonOperands = jsonCall.getOperands.map(_.accept(this))
     generateCallExpression(
@@ -1002,5 +1002,5 @@ class ExprCodeGenerator(
   private def isDeterministicThroughProgram(node: RexNode): Boolean =
     ShortcutUtils.isDeterministicThroughProgram(
       node,
-      if (rexProgram == null) null else rexProgram.getExprList)
+      CodeGenUtils.getExprsFromProgramOrNull(rexProgram))
 }

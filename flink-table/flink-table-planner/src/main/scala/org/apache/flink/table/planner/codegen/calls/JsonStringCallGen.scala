@@ -17,7 +17,7 @@
  */
 package org.apache.flink.table.planner.codegen.calls
 
-import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, GeneratedExpression}
+import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenUtils, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.{className, newName, primitiveTypeTermForType, BINARY_STRING}
 import org.apache.flink.table.planner.codegen.JsonGenerateUtils.createNodeTerm
 import org.apache.flink.table.runtime.functions.SqlJsonUtils
@@ -35,7 +35,7 @@ class JsonStringCallGen(call: RexCall, rexProgram: RexProgram) extends CallGener
       operands: Seq[GeneratedExpression],
       returnType: LogicalType): GeneratedExpression = {
 
-    val exprs = if (rexProgram == null) null else rexProgram.getExprList
+    val exprs = CodeGenUtils.getExprsFromProgramOrNull(rexProgram)
     val valueTerm = createNodeTerm(ctx, operands.head, call.operands.get(0), exprs)
 
     val resultTerm = newName(ctx, "result")

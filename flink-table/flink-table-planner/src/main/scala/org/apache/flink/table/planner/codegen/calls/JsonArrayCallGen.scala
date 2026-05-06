@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.codegen.calls
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.{ArrayNode, NullNode}
 import org.apache.flink.table.api.JsonOnNull
-import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, GeneratedExpression}
+import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenUtils, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.{className, newName, primitiveTypeTermForType, BINARY_STRING}
 import org.apache.flink.table.planner.codegen.JsonGenerateUtils.{createNodeTerm, getOnNullBehavior}
 import org.apache.flink.table.runtime.functions.SqlJsonUtils
@@ -48,7 +48,7 @@ class JsonArrayCallGen(call: RexCall, rexProgram: RexProgram) extends CallGenera
       .drop(1)
       .map {
         case (elementExpr, elementIdx) =>
-          val exprs = if (rexProgram == null) null else rexProgram.getExprList
+          val exprs = CodeGenUtils.getExprsFromProgramOrNull(rexProgram)
           val elementTerm =
             createNodeTerm(ctx, elementExpr, call.operands.get(elementIdx), exprs)
 

@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.codegen.calls
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.{NullNode, ObjectNode}
 import org.apache.flink.table.api.JsonOnNull
-import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, GeneratedExpression}
+import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenUtils, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
 import org.apache.flink.table.planner.codegen.JsonGenerateUtils.{createNodeTerm, getOnNullBehavior}
 import org.apache.flink.table.runtime.functions.SqlJsonUtils
@@ -58,7 +58,7 @@ class JsonObjectCallGen(call: RexCall, rexProgram: RexProgram) extends CallGener
       .grouped(2)
       .map {
         case Seq((keyExpr, _), (valueExpr, valueIdx)) =>
-          val exprs = if (rexProgram == null) null else rexProgram.getExprList
+          val exprs = CodeGenUtils.getExprsFromProgramOrNull(rexProgram)
           val valueTerm = createNodeTerm(ctx, valueExpr, call.operands.get(valueIdx), exprs)
 
           onNull match {
