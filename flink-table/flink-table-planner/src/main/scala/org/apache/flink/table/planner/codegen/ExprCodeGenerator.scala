@@ -521,15 +521,11 @@ class ExprCodeGenerator(
     }
 
     if (call.getKind == SqlKind.SEARCH) {
-      val sargLiteral =
-        if (rexProgram != null && call.getOperands.get(1).isInstanceOf[RexLocalRef]) {
-          rexProgram.getExprList
-            .get(call.getOperands.get(1).asInstanceOf[RexLocalRef].getIndex)
-            .asInstanceOf[RexLiteral]
-        } else {
-          call.getOperands.get(1).asInstanceOf[RexLiteral]
-        }
-      return generateSearch(ctx, generateExpression(call.getOperands.get(0)), sargLiteral)
+      return generateSearch(
+        ctx,
+        generateExpression(call.getOperands.get(0)),
+        rexProgram,
+        call.getOperands)
     }
 
     // convert operands and help giving untyped NULL literals a type
