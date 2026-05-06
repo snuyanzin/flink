@@ -100,7 +100,6 @@ public abstract class CommonExecCalc extends ExecNodeBase<RowData>
         final CodeGenOperatorFactory<RowData> substituteStreamOperator =
                 CalcCodeGenerator.generateCalcOperator(
                         ctx,
-                        inputTransform,
                         (RowType) inputEdge.getOutputType(),
                         (RowType) getOutputType(),
                         JavaScalaConversionUtil.toScala(projection),
