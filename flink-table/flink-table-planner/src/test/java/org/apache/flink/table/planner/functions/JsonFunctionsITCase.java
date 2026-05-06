@@ -1540,22 +1540,7 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                 STRING().notNull()));
     }
 
-    /**
-     * Pins the local-ref / common-sub-expression handling for JSON construction calls.
-     *
-     * <p>When two projections share a JSON-producing sub-expression, the planner deduplicates them
-     * into a {@link org.apache.calcite.rex.RexLocalRef} that points at the shared {@link
-     * org.apache.calcite.rex.RexCall}. The codegen helpers in {@code JsonGenerateUtils} must
-     * dereference that local ref through the surrounding {@code RexProgram} to recognize it as a
-     * JSON / JSON_OBJECT / JSON_ARRAY operand and embed the value as a raw JSON node. Without that
-     * dereference the helpers see a plain {@code RexLocalRef}, fall back to the string-quoting
-     * branch, and produce wrong output (e.g. {@code "{\"k\":\"[1,2,3]\"}"} instead of {@code
-     * "{\"k\":[1,2,3]}"}).
-     *
-     * <p>The scenarios below cover each callsite — {@code JsonObjectCallGen}, {@code
-     * JsonArrayCallGen}, {@code JsonStringCallGen} — and each branch of the inspection helpers
-     * ({@code JSON}, {@code JSON_OBJECT}, {@code JSON_ARRAY}).
-     */
+    /** Pins the local-ref / common-sub-expression handling for JSON construction calls. */
     private static List<TestSetSpec> jsonLocalRefReuseSpec() {
         return List.of(
                 // Shared JSON(f) inside two JSON_OBJECT projections.
@@ -1576,7 +1561,12 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                         "JSON_OBJECT(KEY 'k2' VALUE JSON(f0))",
                                         "{\"k2\":[1,2,3]}",
                                         STRING().notNull(),
-                                        STRING().notNull())),
+                                        STRING().notNull()))
+                        .testSqlResult(
+                                "JSON_OBJECT(KEY 'k1' VALUE JSON(f0)),"
+                                        + " JSON_OBJECT(KEY 'k2' VALUE JSON(f0))",
+                                List.of("{\"k1\":[1,2,3]}", "{\"k2\":[1,2,3]}"),
+                                List.of(STRING().notNull(), STRING().notNull())),
                 // Shared JSON_ARRAY(...) inside two JSON_OBJECT projections.
                 TestSetSpec.forFunction(
                                 BuiltInFunctionDefinitions.JSON_OBJECT,
@@ -1609,7 +1599,12 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                         "JSON_OBJECT(KEY 'b' VALUE JSON_ARRAY(f0, f1, f2))",
                                         "{\"b\":[1,2,3]}",
                                         STRING().notNull(),
-                                        STRING().notNull())),
+                                        STRING().notNull()))
+                        .testSqlResult(
+                                "JSON_OBJECT(KEY 'a' VALUE JSON_ARRAY(f0, f1, f2)),"
+                                        + " JSON_OBJECT(KEY 'b' VALUE JSON_ARRAY(f0, f1, f2))",
+                                List.of("{\"a\":[1,2,3]}", "{\"b\":[1,2,3]}"),
+                                List.of(STRING().notNull(), STRING().notNull())),
                 // Shared inner JSON_OBJECT inside two outer JSON_OBJECT projections.
                 TestSetSpec.forFunction(
                                 BuiltInFunctionDefinitions.JSON_OBJECT,
@@ -1634,7 +1629,14 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                         "JSON_OBJECT(KEY 'outer2' VALUE JSON_OBJECT(KEY 'inner' VALUE f0))",
                                         "{\"outer2\":{\"inner\":\"V\"}}",
                                         STRING().notNull(),
-                                        STRING().notNull())),
+                                        STRING().notNull()))
+                        .testSqlResult(
+                                "JSON_OBJECT(KEY 'outer1' VALUE JSON_OBJECT(KEY 'inner' VALUE f0)),"
+                                        + " JSON_OBJECT(KEY 'outer2' VALUE JSON_OBJECT(KEY 'inner' VALUE f0))",
+                                List.of(
+                                        "{\"outer1\":{\"inner\":\"V\"}}",
+                                        "{\"outer2\":{\"inner\":\"V\"}}"),
+                                List.of(STRING().notNull(), STRING().notNull())),
                 // Shared JSON_OBJECT inside two JSON_ARRAY projections.
                 TestSetSpec.forFunction(
                                 BuiltInFunctionDefinitions.JSON_ARRAY,
@@ -1657,7 +1659,12 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                         "JSON_ARRAY(JSON_OBJECT(KEY 'k' VALUE f0))",
                                         "[{\"k\":\"V\"}]",
                                         STRING().notNull(),
-                                        STRING().notNull())),
+                                        STRING().notNull()))
+                        .testSqlResult(
+                                "JSON_ARRAY(JSON_OBJECT(KEY 'k' VALUE f0)),"
+                                        + " JSON_ARRAY(JSON_OBJECT(KEY 'k' VALUE f0))",
+                                List.of("[{\"k\":\"V\"}]", "[{\"k\":\"V\"}]"),
+                                List.of(STRING().notNull(), STRING().notNull())),
                 // Shared JSON(f) inside two JSON_ARRAY projections.
                 TestSetSpec.forFunction(
                                 BuiltInFunctionDefinitions.JSON_ARRAY,
@@ -1676,7 +1683,11 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                         "JSON_ARRAY(JSON(f0))",
                                         "[[1,2,3]]",
                                         STRING().notNull(),
-                                        STRING().notNull())),
+                                        STRING().notNull()))
+                        .testSqlResult(
+                                "JSON_ARRAY(JSON(f0)), JSON_ARRAY(JSON(f0))",
+                                List.of("[[1,2,3]]", "[[1,2,3]]"),
+                                List.of(STRING().notNull(), STRING().notNull())),
                 // Shared JSON_OBJECT inside two JSON_STRING projections. JSON_STRING re-serializes
                 // the operand; without dereferencing the local ref it would wrap the already
                 // serialized JSON string a second time.
@@ -1697,7 +1708,12 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                         "JSON_STRING(JSON_OBJECT(KEY 'k' VALUE f0))",
                                         "{\"k\":\"V\"}",
                                         STRING().notNull(),
-                                        STRING().notNull())));
+                                        STRING().notNull()))
+                        .testSqlResult(
+                                "JSON_STRING(JSON_OBJECT(KEY 'k' VALUE f0)),"
+                                        + " JSON_STRING(JSON_OBJECT(KEY 'k' VALUE f0))",
+                                List.of("{\"k\":\"V\"}", "{\"k\":\"V\"}"),
+                                List.of(STRING().notNull(), STRING().notNull())));
     }
 
     // ---------------------------------------------------------------------------------------------
