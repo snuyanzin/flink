@@ -24,7 +24,6 @@ import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.delegation.Planner;
 import org.apache.flink.table.expressions.CallExpression;
 import org.apache.flink.table.expressions.ResolvedExpression;
-import org.apache.flink.table.functions.BuiltInFunctionDefinition;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkContext;
@@ -32,6 +31,7 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+import org.apache.flink.table.planner.functions.sql.FunctionDefinitionQueryable;
 import org.apache.flink.table.planner.functions.utils.TableSqlFunction;
 
 import org.apache.calcite.plan.Context;
@@ -155,14 +155,18 @@ public final class ShortcutUtils {
             return null;
         }
         final RexCall call = (RexCall) rexNode;
-        if (!(call.getOperator() instanceof BridgingSqlFunction)) {
+        final SqlOperator operator = call.getOperator();
+        if (!(operator instanceof BridgingSqlFunction)) {
+            if (operator instanceof FunctionDefinitionQueryable) {
+                return ((FunctionDefinitionQueryable) operator).getFunctionDefinition();
+            }
             // legacy
-            if (call.getOperator() instanceof TableSqlFunction) {
-                return ((TableSqlFunction) call.getOperator()).udtf();
+            if (operator instanceof TableSqlFunction) {
+                return ((TableSqlFunction) operator).udtf();
             }
             return null;
         }
-        return ((BridgingSqlFunction) call.getOperator()).getDefinition();
+        return ((BridgingSqlFunction) operator).getDefinition();
     }
 
     public static @Nullable FunctionDefinition unwrapFunctionDefinition(SqlOperator operator) {
@@ -184,15 +188,8 @@ public final class ShortcutUtils {
         }
         final RexCall call = (RexCall) rexNode;
         final FunctionDefinition unwrapped = unwrapFunctionDefinition(call);
-        final String operatorName = call.getOperator().getName();
         for (FunctionDefinition expected : expectedDefinitions) {
-            if (unwrapped != null && unwrapped == expected) {
-                return true;
-            }
-            if (expected instanceof BuiltInFunctionDefinition
-                    && ((BuiltInFunctionDefinition) expected)
-                            .getName()
-                            .equalsIgnoreCase(operatorName)) {
+            if (unwrapped == expected) {
                 return true;
             }
         }

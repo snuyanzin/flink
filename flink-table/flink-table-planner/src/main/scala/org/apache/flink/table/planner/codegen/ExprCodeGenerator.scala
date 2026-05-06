@@ -577,16 +577,11 @@ class ExprCodeGenerator(
 
   private def visitOperandInScopedCache(operand: RexNode): GeneratedExpression = {
     ctx.pushLocalRefScope()
-    val (operandExpr, scopedBodies) =
-      try {
-        val expr = operand.accept(this)
-        val popped = ctx.popLocalRefScope()
-        (expr, popped.values.map(_.code).mkString("\n"))
-      } catch {
-        case t: Throwable =>
-          ctx.popLocalRefScope()
-          throw t
-      }
+    val (operandExpr, scopedBodies) = {
+      val expr = operand.accept(this)
+      val popped = ctx.popLocalRefScope()
+      (expr, popped.values.map(_.code).mkString("\n"))
+    }
     if (scopedBodies.isEmpty) {
       operandExpr
     } else

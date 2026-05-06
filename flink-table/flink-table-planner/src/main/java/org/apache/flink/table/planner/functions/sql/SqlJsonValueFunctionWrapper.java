@@ -18,6 +18,9 @@
 
 package org.apache.flink.table.planner.functions.sql;
 
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
+import org.apache.flink.table.functions.FunctionDefinition;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlJsonValueReturning;
 import org.apache.calcite.sql.SqlOperatorBinding;
@@ -35,7 +38,8 @@ import static org.apache.flink.table.planner.plan.type.FlinkReturnTypes.VARCHAR_
  * VARCHAR_FORCE_NULLABLE} return type inference by default. It also supports specifying return type
  * with the RETURNING keyword just like the original {@link SqlJsonValueFunction}.
  */
-class SqlJsonValueFunctionWrapper extends SqlJsonValueFunction {
+class SqlJsonValueFunctionWrapper extends SqlJsonValueFunction
+        implements FunctionDefinitionQueryable {
 
     private final SqlReturnTypeInference returnTypeInference;
 
@@ -79,5 +83,10 @@ class SqlJsonValueFunctionWrapper extends SqlJsonValueFunction {
             return opBinding.getOperandType(3);
         }
         return null;
+    }
+
+    @Override
+    public FunctionDefinition getFunctionDefinition() {
+        return BuiltInFunctionDefinitions.JSON_VALUE;
     }
 }
