@@ -207,19 +207,6 @@ class CodeGeneratorContext(
   def getReusableInputUnboxingExprs(inputTerm: String, index: Int): Option[GeneratedExpression] =
     reusableInputUnboxingExprs.get((inputTerm, index))
 
-  def getReusableLocalRefExpr(index: Int): Option[GeneratedExpression] = {
-    // Search innermost-out: a body cached in an inner (guarded) scope wins over outer
-    // entries. In practice the cache is monotone — an entry never appears in two scopes
-    // simultaneously.
-    var i = localRefScopes.size - 1
-    while (i >= 0) {
-      val maybe = localRefScopes(i).get(index)
-      if (maybe.isDefined) return maybe
-      i -= 1
-    }
-    None
-  }
-
   /** Prioritize using the nameCounter of the ancestor. */
   def getNameCounter: AtomicLong = if (parentCtx == null) nameCounter else parentCtx.getNameCounter
 
@@ -420,10 +407,6 @@ class CodeGeneratorContext(
    */
   def reuseInputUnboxingCode(): String = {
     reusableInputUnboxingExprs.values.map(_.code).mkString("\n")
-  }
-
-  def reuseLocalRefCode(): String = {
-    reusableLocalRefExprs.values.map(_.code).mkString("\n")
   }
 
   /** Returns code block of unboxing input variables which belongs to the given inputTerm. */
@@ -1129,6 +1112,27 @@ class CodeGeneratorContext(
     reusableInitStatements.add(nullableInit)
 
     fieldTerm
+  }
+
+  // ---------------------------------------------------------------------------------
+  // Reusable local ref code with scope
+  // ---------------------------------------------------------------------------------
+
+  def getReusableLocalRefExpr(index: Int): Option[GeneratedExpression] = {
+    // Search innermost-out: a body cached in an inner (guarded) scope wins over outer
+    // entries. In practice the cache is monotone — an entry never appears in two scopes
+    // simultaneously.
+    var i = localRefScopes.size - 1
+    while (i >= 0) {
+      val maybe = localRefScopes(i).get(index)
+      if (maybe.isDefined) return maybe
+      i -= 1
+    }
+    None
+  }
+
+  def reuseLocalRefCode(): String = {
+    reusableLocalRefExprs.values.map(_.code).mkString("\n")
   }
 
   def pushLocalRefScope(): Unit = {
