@@ -21,6 +21,7 @@ import org.apache.flink.table.api.JsonValueOnEmptyOrError
 import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenException, CodeGenUtils, GeneratedExpression}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.{qualifyEnum, qualifyMethod, BINARY_STRING}
 import org.apache.flink.table.planner.codegen.GenerateUtils.generateCallWithStmtIfArgsNotNull
+import org.apache.flink.table.runtime.functions.SqlJsonUtils
 import org.apache.flink.table.types.logical.{LogicalType, LogicalTypeRoot}
 
 import org.apache.calcite.sql.SqlJsonEmptyOrError
@@ -44,8 +45,21 @@ class JsonValueCallGen extends CallGenerator {
         {
           val emptyBehavior = getBehavior(operands, SqlJsonEmptyOrError.EMPTY)
           val errorBehavior = getBehavior(operands, SqlJsonEmptyOrError.ERROR)
+          val inputTerm = s"${argTerms.head}.toString()"
+
+          val (parsedTerm, parseCode) = ctx.getReusableParsedJson(inputTerm) match {
+            case Some(existing) => (existing, "")
+            case None =>
+              val varName = CodeGenUtils.newName(ctx, "jsonParsed")
+              ctx.addReusableMember(s"${classOf[SqlJsonUtils.JsonValueContext].getName} $varName;")
+              ctx.addReusableParsedJson(inputTerm, varName)
+              val assign =
+                s"$varName = ${qualifyMethod(BuiltInMethods.JSON_PARSE)}($inputTerm);"
+              (varName, assign)
+          }
+
           val terms = Seq(
-            s"${argTerms.head}.toString()",
+            parsedTerm,
             s"${argTerms(1)}.toString()",
             qualifyEnum(emptyBehavior._1),
             emptyBehavior._2,
@@ -55,8 +69,10 @@ class JsonValueCallGen extends CallGenerator {
 
           val rawResultTerm = CodeGenUtils.newName(ctx, "rawResult")
           val call = s"""
+                        |$parseCode
                         |Object $rawResultTerm =
-                        |    ${qualifyMethod(BuiltInMethods.JSON_VALUE)}(${terms.mkString(", ")});
+                        |    ${qualifyMethod(BuiltInMethods.JSON_VALUE)}(${terms
+                         .mkString(", ")});
            """.stripMargin
 
           val convertedResult = returnType.getTypeRoot match {
