@@ -31,7 +31,6 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
-import org.apache.flink.table.planner.functions.sql.FunctionDefinitionQueryable;
 import org.apache.flink.table.planner.functions.utils.TableSqlFunction;
 
 import org.apache.calcite.plan.Context;
@@ -157,9 +156,6 @@ public final class ShortcutUtils {
         final RexCall call = (RexCall) rexNode;
         final SqlOperator operator = call.getOperator();
         if (!(operator instanceof BridgingSqlFunction)) {
-            if (operator instanceof FunctionDefinitionQueryable) {
-                return ((FunctionDefinitionQueryable) operator).getFunctionDefinition();
-            }
             // legacy
             if (operator instanceof TableSqlFunction) {
                 return ((TableSqlFunction) operator).udtf();
@@ -179,21 +175,6 @@ public final class ShortcutUtils {
     public static boolean isFunctionKind(SqlOperator operator, FunctionKind kind) {
         final FunctionDefinition functionDefinition = unwrapFunctionDefinition(operator);
         return functionDefinition != null && functionDefinition.getKind() == kind;
-    }
-
-    public static boolean isOneOfFunctionDefinitions(
-            RexNode rexNode, FunctionDefinition... expectedDefinitions) {
-        if (!(rexNode instanceof RexCall)) {
-            return false;
-        }
-        final RexCall call = (RexCall) rexNode;
-        final FunctionDefinition unwrapped = unwrapFunctionDefinition(call);
-        for (FunctionDefinition expected : expectedDefinitions) {
-            if (unwrapped == expected) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public static boolean isDeterministicThroughProgram(

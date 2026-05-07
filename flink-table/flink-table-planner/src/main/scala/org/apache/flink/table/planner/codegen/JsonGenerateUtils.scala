@@ -21,8 +21,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.util.RawValue
 import org.apache.flink.table.api.{DataTypes, JsonOnNull}
-import org.apache.flink.table.functions.BuiltInFunctionDefinitions
+import org.apache.flink.table.functions.{BuiltInFunctionDefinitions, FunctionDefinition}
 import org.apache.flink.table.planner.codegen.CodeGenUtils._
+import org.apache.flink.table.planner.functions.sql.{SqlJsonArrayFunctionWrapper, SqlJsonObjectFunctionWrapper, SqlJsonQueryFunctionWrapper, SqlJsonValueFunctionWrapper}
 import org.apache.flink.table.planner.plan.utils.FlinkRexUtil
 import org.apache.flink.table.planner.utils.JavaScalaConversionUtil.toScala
 import org.apache.flink.table.planner.utils.ShortcutUtils
@@ -33,7 +34,7 @@ import org.apache.flink.table.types.logical.LogicalTypeRoot._
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks
 import org.apache.flink.table.utils.EncodingUtils
 
-import org.apache.calcite.rex.RexNode
+import org.apache.calcite.rex.{RexCall, RexNode}
 
 import java.time.format.DateTimeFormatter
 
@@ -180,13 +181,13 @@ object JsonGenerateUtils {
 
   /** Determines whether the given operand is a call to a JSON_OBJECT. */
   def isJsonObjectOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
-    ShortcutUtils.isOneOfFunctionDefinitions(
+    isOneOfFunctionDefinitions(
       FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON_OBJECT)
 
   /** Determines whether the given operand is a call to a JSON_ARRAY. */
   def isJsonArrayOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
-    ShortcutUtils.isOneOfFunctionDefinitions(
+    isOneOfFunctionDefinitions(
       FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON_ARRAY)
 
@@ -195,7 +196,7 @@ object JsonGenerateUtils {
    * should be inserted as a raw value instead of as a character string.
    */
   def isJsonObjectOrArrayOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
-    ShortcutUtils.isOneOfFunctionDefinitions(
+    isOneOfFunctionDefinitions(
       FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON_OBJECT,
       BuiltInFunctionDefinitions.JSON_ARRAY)
@@ -205,7 +206,7 @@ object JsonGenerateUtils {
    * passes through the input value as output value.
    */
   def isJsonFunctionOperand(operand: RexNode, localRefs: java.util.List[RexNode]): Boolean =
-    ShortcutUtils.isOneOfFunctionDefinitions(
+    isOneOfFunctionDefinitions(
       FlinkRexUtil.expandLocalRef(operand, localRefs),
       BuiltInFunctionDefinitions.JSON)
 
@@ -312,5 +313,24 @@ object JsonGenerateUtils {
 
     ctx.addReusableMember(methodCode)
     methodName
+  }
+
+  def isOneOfFunctionDefinitions(
+      rexNode: RexNode,
+      expectedDefinitions: FunctionDefinition*): Boolean = {
+    if (!rexNode.isInstanceOf[RexCall]) return false
+    val call = rexNode.asInstanceOf[RexCall]
+    val unwrapped = ShortcutUtils.unwrapFunctionDefinition(call) match {
+      case d if d != null => d
+      case _ =>
+        call.getOperator match {
+          case _: SqlJsonArrayFunctionWrapper => BuiltInFunctionDefinitions.JSON_ARRAY
+          case _: SqlJsonObjectFunctionWrapper => BuiltInFunctionDefinitions.JSON_OBJECT
+          case _: SqlJsonQueryFunctionWrapper => BuiltInFunctionDefinitions.JSON_QUERY
+          case _: SqlJsonValueFunctionWrapper => BuiltInFunctionDefinitions.JSON_VALUE
+          case _ => return false
+        }
+    }
+    expectedDefinitions.exists(_ eq unwrapped)
   }
 }

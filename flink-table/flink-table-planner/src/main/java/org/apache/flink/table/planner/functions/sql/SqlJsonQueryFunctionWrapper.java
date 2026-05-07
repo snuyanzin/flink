@@ -19,8 +19,6 @@
 package org.apache.flink.table.planner.functions.sql;
 
 import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCallBinding;
@@ -44,8 +42,7 @@ import static org.apache.flink.table.planner.plan.type.FlinkReturnTypes.VARCHAR_
  * This class is a wrapper class for the {@link SqlJsonQueryFunction} but using the {@code
  * VARCHAR_FORCE_NULLABLE} return type inference.
  */
-class SqlJsonQueryFunctionWrapper extends SqlJsonQueryFunction
-        implements FunctionDefinitionQueryable {
+public class SqlJsonQueryFunctionWrapper extends SqlJsonQueryFunction {
     private final SqlReturnTypeInference returnTypeInference;
 
     SqlJsonQueryFunctionWrapper() {
@@ -144,10 +141,5 @@ class SqlJsonQueryFunctionWrapper extends SqlJsonQueryFunction
             return opBinding.getOperandType(5);
         }
         return null;
-    }
-
-    @Override
-    public FunctionDefinition getFunctionDefinition() {
-        return BuiltInFunctionDefinitions.JSON_QUERY;
     }
 }
