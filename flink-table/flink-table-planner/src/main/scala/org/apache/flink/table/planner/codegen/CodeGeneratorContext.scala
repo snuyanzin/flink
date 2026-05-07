@@ -115,13 +115,8 @@ class CodeGeneratorContext(
   val reusableInputUnboxingExprs: mutable.Map[(String, Int), GeneratedExpression] =
     mutable.Map[(String, Int), GeneratedExpression]()
 
-  // map of expressions for shared RexProgram exprList entries that will be added only once
-  // exprList index -> expr
-  val reusableLocalRefExprs: mutable.LinkedHashMap[Int, GeneratedExpression] =
-    mutable.LinkedHashMap[Int, GeneratedExpression]()
-
   // Stack of RexLocalRef cache scopes (`exprList-index -> generated body`).
-  //   * Bottom scope == reusableLocalRefExprs: bodies are hoisted to the top of the method
+  //   * Bottom scope == getReusableLocalRefExprBottomScope: bodies are hoisted to the top of the method
   //     and run unconditionally for every row.
   //   * Inner scopes (push/popLocalRefScope): bodies are folded into a single guarded
   //     operand's code by ExprCodeGenerator.visitOperandInScopedCache and run only when
@@ -148,7 +143,7 @@ class CodeGeneratorContext(
   // ExprCodeGenerator.conditionalOperandIndices — extend it when adding new short-circuit
   // operators.
   private val localRefScopes =
-    mutable.ArrayBuffer(reusableLocalRefExprs)
+    mutable.ArrayBuffer(mutable.LinkedHashMap.empty[Int, GeneratedExpression])
 
   // set of constructor statements that will be added only once
   // we use a LinkedHashSet to keep the insertion order
@@ -1115,6 +1110,10 @@ class CodeGeneratorContext(
   // Reusable local ref code with scope
   // ---------------------------------------------------------------------------------
 
+  // Bottom scope of localRefScopes: holds unconditionally evaluated local refs.
+  def getReusableLocalRefExprBottomScope: mutable.LinkedHashMap[Int, GeneratedExpression] =
+    localRefScopes(0)
+
   /**
    * Adds a reusable [[org.apache.calcite.rex.RexLocalRef]] expression keyed by its index in the
    * program's exprList. The expression is stored in the innermost active scope.
@@ -1145,7 +1144,7 @@ class CodeGeneratorContext(
    * scope), concatenated in insertion order.
    */
   def reuseLocalRefCode(): String = {
-    reusableLocalRefExprs.values.map(_.code).mkString("\n")
+    getReusableLocalRefExprBottomScope.values.map(_.code).mkString("\n")
   }
 
   /** Pushes a new, empty local-ref cache scope onto the scope stack. */
@@ -1155,7 +1154,7 @@ class CodeGeneratorContext(
 
   /**
    * Pops the innermost local-ref cache scope and returns its entries. The bottom scope
-   * ([[reusableLocalRefExprs]]) cannot be popped.
+   * ([[getReusableLocalRefExprBottomScope]]) cannot be popped.
    */
   def popLocalRefScope(): scala.collection.Map[Int, GeneratedExpression] = {
     require(

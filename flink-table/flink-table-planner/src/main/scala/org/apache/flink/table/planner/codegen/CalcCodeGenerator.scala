@@ -197,7 +197,7 @@ object CalcCodeGenerator {
         val filterInputCode = ctx.reuseInputUnboxingCode()
         val filterInputSet = Set(ctx.reusableInputUnboxingExprs.keySet.toSeq: _*)
 
-        val filterLocalRefSet: Set[Int] = ctx.reusableLocalRefExprs.keySet.toSet
+        val filterLocalRefSet: Set[Int] = ctx.getReusableLocalRefExprBottomScope.keySet.toSet
 
         // if any filter conditions, projection code will enter an new scope
         val projectionCode = produceProjectionCode
@@ -208,12 +208,12 @@ object CalcCodeGenerator {
           .map(_.code)
           .mkString("\n")
 
-        val filterLocalRefCode = ctx.reusableLocalRefExprs
+        val filterLocalRefCode = ctx.getReusableLocalRefExprBottomScope
           .filter { case (k, _) => filterLocalRefSet.contains(k) }
           .values
           .map(_.code)
           .mkString("\n")
-        val projectionLocalRefCode = ctx.reusableLocalRefExprs
+        val projectionLocalRefCode = ctx.getReusableLocalRefExprBottomScope
           .filter { case (k, _) => !filterLocalRefSet.contains(k) }
           .values
           .map(_.code)
