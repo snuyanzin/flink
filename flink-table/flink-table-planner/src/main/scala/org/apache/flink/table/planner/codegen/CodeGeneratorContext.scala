@@ -492,10 +492,6 @@ class CodeGeneratorContext(
       index: Int,
       expr: GeneratedExpression): Unit = reusableInputUnboxingExprs((inputTerm, index)) = expr
 
-  /** Adds a reusable RexLocalRef expression keyed by its index in the program's exprList. */
-  def addReusableLocalRefExpr(index: Int, expr: GeneratedExpression): Unit =
-    localRefScopes.last(index) = expr
-
   /** Adds a reusable output record statement to member area. */
   def addReusableOutputRecord(
       t: LogicalType,
@@ -821,6 +817,7 @@ class CodeGeneratorContext(
 
   /**
    * Adds a reusable Object to the member area of the generated class
+   *
    * @param obj
    *   the object to be added to the generated class
    * @param fieldNamePrefix
@@ -1118,6 +1115,18 @@ class CodeGeneratorContext(
   // Reusable local ref code with scope
   // ---------------------------------------------------------------------------------
 
+  /**
+   * Adds a reusable [[org.apache.calcite.rex.RexLocalRef]] expression keyed by its index in the
+   * program's exprList. The expression is stored in the innermost active scope.
+   */
+  def addReusableLocalRefExpr(index: Int, expr: GeneratedExpression): Unit =
+    localRefScopes.last(index) = expr
+
+  /**
+   * Looks up a previously cached [[org.apache.calcite.rex.RexLocalRef]] expression by its exprList
+   * index. Scopes are searched innermost-out so that a body cached inside a guarded scope takes
+   * precedence over an outer entry.
+   */
   def getReusableLocalRefExpr(index: Int): Option[GeneratedExpression] = {
     // Search innermost-out: a body cached in an inner (guarded) scope wins over outer
     // entries. In practice the cache is monotone — an entry never appears in two scopes
@@ -1131,14 +1140,23 @@ class CodeGeneratorContext(
     None
   }
 
+  /**
+   * Returns the generated code for all unconditionally-evaluated local-ref expressions (bottom
+   * scope), concatenated in insertion order.
+   */
   def reuseLocalRefCode(): String = {
     reusableLocalRefExprs.values.map(_.code).mkString("\n")
   }
 
+  /** Pushes a new, empty local-ref cache scope onto the scope stack. */
   def pushLocalRefScope(): Unit = {
     localRefScopes.append(mutable.LinkedHashMap.empty)
   }
 
+  /**
+   * Pops the innermost local-ref cache scope and returns its entries. The bottom scope
+   * ([[reusableLocalRefExprs]]) cannot be popped.
+   */
   def popLocalRefScope(): scala.collection.Map[Int, GeneratedExpression] = {
     require(
       localRefScopes.size > 1,
