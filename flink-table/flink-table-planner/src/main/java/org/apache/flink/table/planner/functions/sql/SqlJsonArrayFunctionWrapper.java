@@ -32,7 +32,7 @@ import static org.apache.flink.table.planner.plan.type.FlinkReturnTypes.VARCHAR_
  * This class is a wrapper class for the {@link SqlJsonArrayFunction} but using the {@code
  * VARCHAR_NOT_NULL} return type inference.
  */
-class SqlJsonArrayFunctionWrapper extends SqlJsonArrayFunction
+public class SqlJsonArrayFunctionWrapper extends SqlJsonArrayFunction
         implements FunctionDefinitionQueryable {
 
     @Override
