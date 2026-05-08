@@ -45,7 +45,7 @@ Note: This version requires that your CDC data encodes updates using a full imag
 
 ```sql
 SELECT * FROM FROM_CHANGELOG(
-  input => TABLE source_table,
+  input => TABLE source_table [PARTITION BY key_col],
   [op => DESCRIPTOR(op_column_name),]
   [op_mapping => MAP[
       'c, r', 'INSERT',
@@ -61,7 +61,7 @@ SELECT * FROM FROM_CHANGELOG(
 
 | Parameter    | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 |:-------------|:---------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `input`      | Yes      | The input table. Must be append-only.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `input`      | Yes      | The input table. Must be append-only. Use `PARTITION BY` to ensure rows for the same key are processed together.                                                                                                                                                                                                                                                                                                          |
 | `op`         | No       | A `DESCRIPTOR` with a single column name for the operation code column. Defaults to `op`. The column must exist in the input table and be of type STRING.                                                                                                                                                                                                                                                                                                                                       |
 | `op_mapping` | No       | A `MAP<STRING, STRING>` mapping user-defined codes to Flink change operation names. Keys are user-defined codes (e.g., `'c'`, `'u'`, `'d'`), values are Flink change operation names (`INSERT`, `UPDATE_BEFORE`, `UPDATE_AFTER`, `DELETE`). Keys can contain comma-separated codes to map multiple codes to the same operation (e.g., `'c, r'`). Each change operation may appear at most once across all entries. |
 | `error_handling` | No | Controls behavior when an input row's operation code is `NULL` or not present in the `op_mapping`. Valid values: `FAIL` (default) — throw a `TableRuntimeException`, `SKIP` — silently drop the row. |
@@ -126,6 +126,28 @@ SELECT * FROM FROM_CHANGELOG(
 )
 -- The operation column named 'operation' is used instead of 'op'
 ```
+
+#### Partitioning by a key
+
+```sql
+-- Input table 'cdc_stream' with columns (name, id, op, doc)
+-- Default output schema:           [name, id, doc]
+-- Output schema with PARTITION BY: [id, name, doc]
+
+SELECT * FROM FROM_CHANGELOG(
+  input => TABLE cdc_stream PARTITION BY id
+)
+```
+
+When `PARTITION BY` is provided, **the output schema changes**. The partition key columns are moved to the front by the engine, and the function emits the remaining input columns (excluding the op column). The order becomes:
+
+```
+[partition_keys, non_partition_input_columns_excluding_op]
+```
+
+Prefer row semantics, when possible. `PARTITION BY` is only necessary when downstream operators are keyed on that column and you want to co-locate rows for the same key in the same parallel operator instance.
+
+If you are producing an upsert table — that is, you are emitting `UPDATE_AFTER` but no `UPDATE_BEFORE` from your CDC input stream — the partition key you select here will be considered both the primary key and the upsert key by the engine. Make sure the `PARTITION BY` key matches your primary key exactly.
 
 #### Invalid operation code handling
 

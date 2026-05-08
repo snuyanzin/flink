@@ -27,14 +27,17 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeStrategy;
+import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.types.ColumnList;
 import org.apache.flink.types.RowKind;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,8 +52,6 @@ public final class FromChangelogTypeStrategy {
     public static final int ARG_OP = 1;
     public static final int ARG_OP_MAPPING = 2;
     public static final int ARG_ERROR_HANDLING = 3;
-
-    public static final String DEFAULT_OP_COLUMN_NAME = "op";
 
     private static final Set<String> VALID_ROW_KIND_NAMES =
             Set.of("INSERT", "UPDATE_BEFORE", "UPDATE_AFTER", "DELETE");
@@ -86,7 +87,8 @@ public final class FromChangelogTypeStrategy {
                                                 new ValidationException(
                                                         "First argument must be a table for FROM_CHANGELOG."));
 
-                final String opColumnName = resolveOpColumnName(callContext);
+                final String opColumnName =
+                        ChangelogTypeStrategyUtils.resolveOpColumnName(callContext);
 
                 final List<Field> outputFields = buildOutputFields(tableSemantics, opColumnName);
 
@@ -97,7 +99,6 @@ public final class FromChangelogTypeStrategy {
     // Helpers
     // --------------------------------------------------------------------------------------------
 
-    @SuppressWarnings("rawtypes")
     private static Optional<List<DataType>> validateInputs(
             final CallContext callContext, final boolean throwOnFailure) {
         Optional<List<DataType>> error;
@@ -156,23 +157,26 @@ public final class FromChangelogTypeStrategy {
             final CallContext callContext, final boolean throwOnFailure) {
 
         final TableSemantics tableSemantics = callContext.getTableSemantics(ARG_TABLE).get();
-        final String opColumnName = resolveOpColumnName(callContext);
-        final List<Field> inputFields = DataType.getFields(tableSemantics.dataType());
-        final Optional<Field> opField =
-                inputFields.stream().filter(f -> f.getName().equals(opColumnName)).findFirst();
-        if (opField.isEmpty()) {
+        final String opColumnName = ChangelogTypeStrategyUtils.resolveOpColumnName(callContext);
+        final OptionalInt opIndex =
+                ChangelogTypeStrategyUtils.resolveOpColumnIndex(tableSemantics, opColumnName);
+        if (opIndex.isEmpty()) {
             return callContext.fail(
                     throwOnFailure,
                     String.format(
                             "The op column '%s' does not exist in the input schema.",
                             opColumnName));
         }
-        if (!opField.get().getDataType().getLogicalType().is(LogicalTypeFamily.CHARACTER_STRING)) {
+        final LogicalType opFieldType =
+                DataType.getFieldDataTypes(tableSemantics.dataType())
+                        .get(opIndex.getAsInt())
+                        .getLogicalType();
+        if (!opFieldType.is(LogicalTypeFamily.CHARACTER_STRING)) {
             return callContext.fail(
                     throwOnFailure,
                     String.format(
                             "The op column '%s' must be of STRING type, but was '%s'.",
-                            opColumnName, opField.get().getDataType().getLogicalType()));
+                            opColumnName, opFieldType));
         }
         return Optional.empty();
     }
@@ -273,21 +277,13 @@ public final class FromChangelogTypeStrategy {
         return Optional.empty();
     }
 
-    private static String resolveOpColumnName(final CallContext callContext) {
-        return callContext
-                .getArgumentValue(ARG_OP, ColumnList.class)
-                .filter(cl -> !cl.getNames().isEmpty())
-                .map(cl -> cl.getNames().get(0))
-                .orElse(DEFAULT_OP_COLUMN_NAME);
-    }
-
     private static List<Field> buildOutputFields(
             final TableSemantics tableSemantics, final String opColumnName) {
         final List<Field> inputFields = DataType.getFields(tableSemantics.dataType());
-
-        // Exclude the op column (becomes RowKind), keep all other columns
-        return inputFields.stream()
-                .filter(f -> !f.getName().equals(opColumnName))
+        return Arrays.stream(
+                        ChangelogTypeStrategyUtils.computeOutputIndices(
+                                tableSemantics, opColumnName))
+                .mapToObj(inputFields::get)
                 .collect(Collectors.toList());
     }
 

@@ -35,10 +35,8 @@ public class FromChangelogTestPrograms {
     // SQL tests
     // --------------------------------------------------------------------------------------------
 
-    public static final TableTestProgram DEFAULT_OP_MAPPING =
-            TableTestProgram.of(
-                            "from-changelog-default-op-mapping",
-                            "default mapping with standard op names")
+    public static final TableTestProgram RETRACT =
+            TableTestProgram.of("from-changelog-retract", "retract changelog with default mapping")
                     .setupTableSource(
                             SourceTestStep.newBuilder("cdc_stream")
                                     .addSchema(SIMPLE_CDC_SCHEMA)
@@ -146,7 +144,6 @@ public class FromChangelogTestPrograms {
                                     + "error_handling => 'SKIP')")
                     .build();
 
-    /** Custom op column name via DESCRIPTOR. */
     public static final TableTestProgram CUSTOM_OP_NAME =
             TableTestProgram.of(
                             "from-changelog-custom-op-name", "custom op column name via DESCRIPTOR")
@@ -170,6 +167,62 @@ public class FromChangelogTestPrograms {
                             "INSERT INTO sink SELECT * FROM FROM_CHANGELOG("
                                     + "input => TABLE cdc_stream, "
                                     + "op => DESCRIPTOR(operation))")
+                    .build();
+
+    public static final TableTestProgram RETRACT_PARTITION_BY =
+            TableTestProgram.of(
+                            "from-changelog-retract-partition-by",
+                            "retract changelog with PARTITION BY")
+                    .setupTableSource(
+                            SourceTestStep.newBuilder("cdc_stream")
+                                    .addSchema("name STRING", "id INT", "op STRING")
+                                    .producedValues(
+                                            Row.of("Alice", 1, "INSERT"),
+                                            Row.of("Bob", 2, "INSERT"),
+                                            Row.of("Alice", 1, "UPDATE_BEFORE"),
+                                            Row.of("Alice2", 1, "UPDATE_AFTER"),
+                                            Row.of("Bob", 2, "DELETE"))
+                                    .build())
+                    .setupTableSink(
+                            SinkTestStep.newBuilder("sink")
+                                    .addSchema("id INT", "name STRING")
+                                    .consumedValues(
+                                            Row.ofKind(RowKind.INSERT, 1, "Alice"),
+                                            Row.ofKind(RowKind.INSERT, 2, "Bob"),
+                                            Row.ofKind(RowKind.UPDATE_BEFORE, 1, "Alice"),
+                                            Row.ofKind(RowKind.UPDATE_AFTER, 1, "Alice2"),
+                                            Row.ofKind(RowKind.DELETE, 2, "Bob"))
+                                    .build())
+                    .runSql(
+                            "INSERT INTO sink SELECT * FROM FROM_CHANGELOG("
+                                    + "input => TABLE cdc_stream PARTITION BY id)")
+                    .build();
+
+    public static final TableTestProgram DELETION_FLAG_PARTITION_BY =
+            TableTestProgram.of(
+                            "from-changelog-deletion-flag-partition-by",
+                            "deletion flag mapping with PARTITION BY: 'false' -> INSERT, 'true' -> DELETE")
+                    .setupTableSource(
+                            SourceTestStep.newBuilder("cdc_stream")
+                                    .addSchema("id INT", "deleted STRING", "name STRING")
+                                    .producedValues(
+                                            Row.of(1, "false", "Alice"),
+                                            Row.of(2, "false", "Bob"),
+                                            Row.of(2, "true", "Bob"))
+                                    .build())
+                    .setupTableSink(
+                            SinkTestStep.newBuilder("sink")
+                                    .addSchema("id INT", "name STRING")
+                                    .consumedValues(
+                                            Row.ofKind(RowKind.INSERT, 1, "Alice"),
+                                            Row.ofKind(RowKind.INSERT, 2, "Bob"),
+                                            Row.ofKind(RowKind.DELETE, 2, "Bob"))
+                                    .build())
+                    .runSql(
+                            "INSERT INTO sink SELECT * FROM FROM_CHANGELOG("
+                                    + "input => TABLE cdc_stream PARTITION BY id, "
+                                    + "op => DESCRIPTOR(deleted), "
+                                    + "op_mapping => MAP['false', 'INSERT', 'true', 'DELETE'])")
                     .build();
 
     // --------------------------------------------------------------------------------------------
