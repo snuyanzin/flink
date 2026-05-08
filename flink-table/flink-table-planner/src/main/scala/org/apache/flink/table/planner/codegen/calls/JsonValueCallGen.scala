@@ -44,8 +44,21 @@ class JsonValueCallGen extends CallGenerator {
         {
           val emptyBehavior = getBehavior(operands, SqlJsonEmptyOrError.EMPTY)
           val errorBehavior = getBehavior(operands, SqlJsonEmptyOrError.ERROR)
+          val inputTerm = s"${argTerms.head}.toString()"
+
+          val (parsedTerm, parseCode) = ctx.getReusableParsedJson(inputTerm) match {
+            case Some(existing) => (existing, "")
+            case None =>
+              val varName = CodeGenUtils.newName(ctx, "jsonParsed")
+              ctx.addReusableMember(s"Object $varName;")
+              ctx.addReusableParsedJson(inputTerm, varName)
+              val assign =
+                s"$varName = ${qualifyMethod(BuiltInMethods.JSON_PARSE)}($inputTerm);"
+              (varName, assign)
+          }
+
           val terms = Seq(
-            s"${argTerms.head}.toString()",
+            parsedTerm,
             s"${argTerms(1)}.toString()",
             qualifyEnum(emptyBehavior._1),
             emptyBehavior._2,
@@ -55,8 +68,10 @@ class JsonValueCallGen extends CallGenerator {
 
           val rawResultTerm = CodeGenUtils.newName(ctx, "rawResult")
           val call = s"""
+                        |$parseCode
                         |Object $rawResultTerm =
-                        |    ${qualifyMethod(BuiltInMethods.JSON_VALUE)}(${terms.mkString(", ")});
+                        |    ${qualifyMethod(BuiltInMethods.JSON_VALUE_PARSED)}(${terms
+                         .mkString(", ")});
            """.stripMargin
 
           val convertedResult = returnType.getTypeRoot match {

@@ -501,6 +501,31 @@ object BuiltInMethods {
     classOf[JsonQueryOnEmptyOrError]
   )
 
+  val JSON_PARSE =
+    Types.lookupMethod(classOf[SqlJsonUtils], "jsonParse", classOf[String])
+
+  val JSON_VALUE_PARSED = Types.lookupMethod(
+    classOf[SqlJsonUtils],
+    "jsonValueParsed",
+    classOf[Any],
+    classOf[String],
+    classOf[JsonValueOnEmptyOrError],
+    classOf[Any],
+    classOf[JsonValueOnEmptyOrError],
+    classOf[Any]
+  )
+
+  val JSON_QUERY_PARSED = Types.lookupMethod(
+    classOf[SqlJsonUtils],
+    "jsonQueryParsed",
+    classOf[Any],
+    classOf[String],
+    classOf[JsonQueryReturnType],
+    classOf[JsonQueryWrapper],
+    classOf[JsonQueryOnEmptyOrError],
+    classOf[JsonQueryOnEmptyOrError]
+  )
+
   val IS_JSON_VALUE = Types.lookupMethod(classOf[SqlJsonUtils], "isJsonValue", classOf[String])
 
   val IS_JSON_OBJECT = Types.lookupMethod(classOf[SqlJsonUtils], "isJsonObject", classOf[String])

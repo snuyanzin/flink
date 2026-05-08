@@ -50,8 +50,21 @@ class JsonQueryCallGen extends CallGenerator {
           } else {
             JsonQueryReturnType.STRING
           }
+          val inputTerm = s"${argTerms.head}.toString()"
+
+          val (parsedTerm, parseCode) = ctx.getReusableParsedJson(inputTerm) match {
+            case Some(existing) => (existing, "")
+            case None =>
+              val varName = CodeGenUtils.newName(ctx, "jsonParsed")
+              ctx.addReusableMember(s"Object $varName;")
+              ctx.addReusableParsedJson(inputTerm, varName)
+              val assign =
+                s"$varName = ${qualifyMethod(BuiltInMethods.JSON_PARSE)}($inputTerm);"
+              (varName, assign)
+          }
+
           val terms = Seq(
-            s"${argTerms.head}.toString()",
+            parsedTerm,
             s"${argTerms(1)}.toString()",
             qualifyEnum(jsonQueryReturnType),
             qualifyEnum(wrapperBehavior),
@@ -61,8 +74,10 @@ class JsonQueryCallGen extends CallGenerator {
 
           val rawResultTerm = CodeGenUtils.newName(ctx, "rawResult")
           val call = s"""
+                        |$parseCode
                         |Object $rawResultTerm =
-                        |    ${qualifyMethod(BuiltInMethods.JSON_QUERY)}(${terms.mkString(", ")});
+                        |    ${qualifyMethod(BuiltInMethods.JSON_QUERY_PARSED)}(${terms
+                         .mkString(", ")});
            """.stripMargin
 
           val convertedResult = returnType.getTypeRoot match {
