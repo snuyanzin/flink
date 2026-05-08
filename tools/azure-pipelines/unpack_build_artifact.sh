@@ -46,6 +46,10 @@ find . -type f -name '*.proto' -exec touch -d "$PROTO_TIME" {} +
 SOURCE_TIME=$(date -d "@$((BASE_TIME + 5))" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "$((BASE_TIME + 5))" '+%Y-%m-%d %H:%M:%S')
 find . -type f \( -name '*.java' -o -name '*.scala' \) -exec touch -d "$SOURCE_TIME" {} +
 
-# T+10: compiled files (newest - Maven sees "up-to-date", skips recompile)
+# T+10: compiled files
 COMPILED_TIME=$(date -d "@$((BASE_TIME + 10))" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "$((BASE_TIME + 10))" '+%Y-%m-%d %H:%M:%S')
 find . -type f \( -name '*.class' -o -name '*.timestamp' \) -exec touch -d "$COMPILED_TIME" {} +
+
+# T+15: compiled files (newest - Maven sees "up-to-date", skips re-jarring)
+JAR_TIME=$(date -d "@$((BASE_TIME + 15))" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "$((BASE_TIME + 15))" '+%Y-%m-%d %H:%M:%S')
+find . -type f \( -name '*.jar' -o -name '*.timestamp' \) -exec touch -d "$JAR_TIME" {} +
