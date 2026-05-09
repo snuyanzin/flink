@@ -145,11 +145,6 @@ class CodeGeneratorContext(
   private val localRefScopes =
     mutable.ArrayBuffer(mutable.LinkedHashMap.empty[Int, GeneratedExpression])
 
-  // cache of pre-parsed JSON variables keyed by input result term, so that multiple
-  // JSON function calls on the same input share a single parse
-  private val reusableParsedJsonExprs: mutable.Map[String, String] =
-    mutable.Map[String, String]()
-
   // set of constructor statements that will be added only once
   // we use a LinkedHashSet to keep the insertion order
   private val reusableConstructorStatements: mutable.LinkedHashSet[(String, String)] =
@@ -491,12 +486,6 @@ class CodeGeneratorContext(
       inputTerm: String,
       index: Int,
       expr: GeneratedExpression): Unit = reusableInputUnboxingExprs((inputTerm, index)) = expr
-
-  def addReusableParsedJson(inputTerm: String, varName: String): Unit =
-    reusableParsedJsonExprs(inputTerm) = varName
-
-  def getReusableParsedJson(inputTerm: String): Option[String] =
-    reusableParsedJsonExprs.get(inputTerm)
 
   /** Adds a reusable output record statement to member area. */
   def addReusableOutputRecord(
