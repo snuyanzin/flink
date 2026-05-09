@@ -27,14 +27,17 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeStrategy;
+import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.types.ColumnList;
 import org.apache.flink.types.RowKind;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,10 +45,20 @@ import java.util.stream.Collectors;
 @Internal
 public final class FromChangelogTypeStrategy {
 
-    private static final String DEFAULT_OP_COLUMN_NAME = "op";
+    // Positional argument indexes for FROM_CHANGELOG. Must match the order of StaticArguments
+    // registered in BuiltInFunctionDefinitions#FROM_CHANGELOG; changing one without the other
+    // silently breaks argument resolution.
+    public static final int ARG_TABLE = 0;
+    public static final int ARG_OP = 1;
+    public static final int ARG_OP_MAPPING = 2;
+    public static final int ARG_ERROR_HANDLING = 3;
 
     private static final Set<String> VALID_ROW_KIND_NAMES =
             Set.of("INSERT", "UPDATE_BEFORE", "UPDATE_AFTER", "DELETE");
+
+    private static final String UPDATE_BEFORE = RowKind.UPDATE_BEFORE.name();
+
+    private static final String UPDATE_AFTER = RowKind.UPDATE_AFTER.name();
 
     // --------------------------------------------------------------------------------------------
     // Input validation
@@ -68,26 +81,24 @@ public final class FromChangelogTypeStrategy {
             callContext -> {
                 final TableSemantics tableSemantics =
                         callContext
-                                .getTableSemantics(0)
+                                .getTableSemantics(ARG_TABLE)
                                 .orElseThrow(
                                         () ->
                                                 new ValidationException(
                                                         "First argument must be a table for FROM_CHANGELOG."));
 
-                final String opColumnName = resolveOpColumnName(callContext);
+                final String opColumnName =
+                        ChangelogTypeStrategyUtils.resolveOpColumnName(callContext);
 
                 final List<Field> outputFields = buildOutputFields(tableSemantics, opColumnName);
 
                 return Optional.of(DataTypes.ROW(outputFields).notNull());
             };
-    private static final String UPDATE_BEFORE = RowKind.UPDATE_BEFORE.name();
-    private static final String UPDATE_AFTER = RowKind.UPDATE_AFTER.name();
 
     // --------------------------------------------------------------------------------------------
     // Helpers
     // --------------------------------------------------------------------------------------------
 
-    @SuppressWarnings("rawtypes")
     private static Optional<List<DataType>> validateInputs(
             final CallContext callContext, final boolean throwOnFailure) {
         Optional<List<DataType>> error;
@@ -112,12 +123,17 @@ public final class FromChangelogTypeStrategy {
             return error;
         }
 
+        error = validateErrorHandling(callContext, throwOnFailure);
+        if (error.isPresent()) {
+            return error;
+        }
+
         return Optional.of(callContext.getArgumentDataTypes());
     }
 
     private static Optional<List<DataType>> validateTableArg(
             final CallContext callContext, final boolean throwOnFailure) {
-        if (callContext.getTableSemantics(0).isEmpty()) {
+        if (callContext.getTableSemantics(ARG_TABLE).isEmpty()) {
             return callContext.fail(
                     throwOnFailure, "First argument must be a table for FROM_CHANGELOG.");
         }
@@ -126,7 +142,8 @@ public final class FromChangelogTypeStrategy {
 
     private static Optional<List<DataType>> validateOpDescriptor(
             final CallContext callContext, final boolean throwOnFailure) {
-        final Optional<ColumnList> opDescriptor = callContext.getArgumentValue(1, ColumnList.class);
+        final Optional<ColumnList> opDescriptor =
+                callContext.getArgumentValue(ARG_OP, ColumnList.class);
         if (opDescriptor.isPresent() && opDescriptor.get().getNames().size() != 1) {
             return callContext.fail(
                     throwOnFailure,
@@ -139,24 +156,27 @@ public final class FromChangelogTypeStrategy {
     private static Optional<List<DataType>> validateOpColumn(
             final CallContext callContext, final boolean throwOnFailure) {
 
-        final TableSemantics tableSemantics = callContext.getTableSemantics(0).get();
-        final String opColumnName = resolveOpColumnName(callContext);
-        final List<Field> inputFields = DataType.getFields(tableSemantics.dataType());
-        final Optional<Field> opField =
-                inputFields.stream().filter(f -> f.getName().equals(opColumnName)).findFirst();
-        if (opField.isEmpty()) {
+        final TableSemantics tableSemantics = callContext.getTableSemantics(ARG_TABLE).get();
+        final String opColumnName = ChangelogTypeStrategyUtils.resolveOpColumnName(callContext);
+        final OptionalInt opIndex =
+                ChangelogTypeStrategyUtils.resolveOpColumnIndex(tableSemantics, opColumnName);
+        if (opIndex.isEmpty()) {
             return callContext.fail(
                     throwOnFailure,
                     String.format(
                             "The op column '%s' does not exist in the input schema.",
                             opColumnName));
         }
-        if (!opField.get().getDataType().getLogicalType().is(LogicalTypeFamily.CHARACTER_STRING)) {
+        final LogicalType opFieldType =
+                DataType.getFieldDataTypes(tableSemantics.dataType())
+                        .get(opIndex.getAsInt())
+                        .getLogicalType();
+        if (!opFieldType.is(LogicalTypeFamily.CHARACTER_STRING)) {
             return callContext.fail(
                     throwOnFailure,
                     String.format(
                             "The op column '%s' must be of STRING type, but was '%s'.",
-                            opColumnName, opField.get().getDataType().getLogicalType()));
+                            opColumnName, opFieldType));
         }
         return Optional.empty();
     }
@@ -165,14 +185,14 @@ public final class FromChangelogTypeStrategy {
     @SuppressWarnings("unchecked")
     private static Optional<List<DataType>> validateOpMapping(
             final CallContext callContext, final boolean throwOnFailure) {
-        final boolean hasMappingArgProvided = !callContext.isArgumentNull(2);
-        final boolean isMappingArgLiteral = callContext.isArgumentLiteral(2);
+        final boolean hasMappingArgProvided = !callContext.isArgumentNull(ARG_OP_MAPPING);
+        final boolean isMappingArgLiteral = callContext.isArgumentLiteral(ARG_OP_MAPPING);
         if (hasMappingArgProvided && !isMappingArgLiteral) {
             return callContext.fail(
                     throwOnFailure, "The 'op_mapping' argument must be a constant MAP literal.");
         }
 
-        final Optional<Map> opMapping = callContext.getArgumentValue(2, Map.class);
+        final Optional<Map> opMapping = callContext.getArgumentValue(ARG_OP_MAPPING, Map.class);
         if (opMapping.isPresent()) {
             final Map<String, String> mapping = opMapping.get();
             final Optional<List<DataType>> validationError =
@@ -231,21 +251,39 @@ public final class FromChangelogTypeStrategy {
         return Optional.empty();
     }
 
-    private static String resolveOpColumnName(final CallContext callContext) {
-        return callContext
-                .getArgumentValue(1, ColumnList.class)
-                .filter(cl -> !cl.getNames().isEmpty())
-                .map(cl -> cl.getNames().get(0))
-                .orElse(DEFAULT_OP_COLUMN_NAME);
+    private static Optional<List<DataType>> validateErrorHandling(
+            final CallContext callContext, final boolean throwOnFailure) {
+        final boolean hasErrorHandlingArgProvided = !callContext.isArgumentNull(ARG_ERROR_HANDLING);
+        final boolean isErrorHandlingArgLiteral = callContext.isArgumentLiteral(ARG_ERROR_HANDLING);
+        if (hasErrorHandlingArgProvided && !isErrorHandlingArgLiteral) {
+            return callContext.fail(
+                    throwOnFailure,
+                    "The 'error_handling' argument must be a constant STRING literal.");
+        }
+
+        final Optional<String> optionalErrorHandlingArg =
+                callContext.getArgumentValue(ARG_ERROR_HANDLING, String.class);
+        if (optionalErrorHandlingArg.isPresent()) {
+            final String errorHandlingMode = optionalErrorHandlingArg.get();
+            if (ErrorHandlingMode.fromName(errorHandlingMode).isEmpty()) {
+                return callContext.fail(
+                        throwOnFailure,
+                        String.format(
+                                "Invalid value for argument 'error_handling': '%s'. Valid values are: %s.",
+                                errorHandlingMode, ErrorHandlingMode.validNames()));
+            }
+        }
+
+        return Optional.empty();
     }
 
     private static List<Field> buildOutputFields(
             final TableSemantics tableSemantics, final String opColumnName) {
         final List<Field> inputFields = DataType.getFields(tableSemantics.dataType());
-
-        // Exclude the op column (becomes RowKind), keep all other columns
-        return inputFields.stream()
-                .filter(f -> !f.getName().equals(opColumnName))
+        return Arrays.stream(
+                        ChangelogTypeStrategyUtils.computeOutputIndices(
+                                tableSemantics, opColumnName))
+                .mapToObj(inputFields::get)
                 .collect(Collectors.toList());
     }
 

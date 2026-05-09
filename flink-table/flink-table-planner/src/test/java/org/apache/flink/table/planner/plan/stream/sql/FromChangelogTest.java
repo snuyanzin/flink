@@ -46,7 +46,7 @@ public class FromChangelogTest extends TableTestBase {
     }
 
     @Test
-    void testInsertOnlySource() {
+    void testRetract() {
         util.tableEnv()
                 .executeSql(
                         "CREATE TABLE cdc_stream ("
@@ -59,19 +59,16 @@ public class FromChangelogTest extends TableTestBase {
     }
 
     @Test
-    void testCustomOpMapping() {
+    void testRetractPartitionBy() {
         util.tableEnv()
                 .executeSql(
                         "CREATE TABLE cdc_stream ("
                                 + "  id INT,"
-                                + "  __op STRING,"
+                                + "  op STRING,"
                                 + "  name STRING"
                                 + ") WITH ('connector' = 'values')");
         util.verifyRelPlan(
-                "SELECT * FROM FROM_CHANGELOG("
-                        + "input => TABLE cdc_stream, "
-                        + "op => DESCRIPTOR(__op), "
-                        + "op_mapping => MAP['c, r', 'INSERT', 'ub', 'UPDATE_BEFORE', 'ua', 'UPDATE_AFTER', 'd', 'DELETE'])",
+                "SELECT * FROM FROM_CHANGELOG(input => TABLE cdc_stream PARTITION BY id)",
                 CHANGELOG_MODE);
     }
 }
