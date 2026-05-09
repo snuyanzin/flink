@@ -325,6 +325,10 @@ under the License.
 					<groupId>org.xerial.snappy</groupId>
 					<artifactId>snappy-java</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.alluxio</groupId>
+					<artifactId>alluxio-shaded-client</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
