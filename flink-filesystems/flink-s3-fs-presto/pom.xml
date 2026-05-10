@@ -211,6 +211,10 @@ under the License.
 					<groupId>com.facebook.airlift</groupId>
 					<artifactId>log-manager</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>com.facebook.presto.hadoop</groupId>
+					<artifactId>hadoop-apache2</artifactId>
+				</exclusion>
 
 				<!-- Other -->
 				<exclusion>
@@ -218,7 +222,7 @@ under the License.
 					<artifactId>cglib-nodep</artifactId>
 				</exclusion>
 				<exclusion>
-					<groupId>com.facebook.airlift.drift-api</groupId>
+					<groupId>com.facebook.airlift.drift</groupId>
 					<artifactId>drift-api</artifactId>
 				</exclusion>
 				<exclusion>
@@ -368,6 +372,10 @@ under the License.
 				<exclusion>
 					<groupId>net.bytebuddy</groupId>
 					<artifactId>byte-buddy</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.google.inject</groupId>
+					<artifactId>guice</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
