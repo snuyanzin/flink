@@ -218,10 +218,6 @@ under the License.
 					<artifactId>cglib-nodep</artifactId>
 				</exclusion>
 				<exclusion>
-					<groupId>com.facebook.presto</groupId>
-					<artifactId>presto-hdfs-core</artifactId>
-				</exclusion>
-				<exclusion>
 					<groupId>com.facebook.airlift.drift</groupId>
 					<artifactId>drift-codec</artifactId>
 				</exclusion>
