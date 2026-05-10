@@ -377,6 +377,10 @@ under the License.
 					<groupId>com.google.inject</groupId>
 					<artifactId>guice</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>software.amazon.awssdk</groupId>
+					<artifactId>glue</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
