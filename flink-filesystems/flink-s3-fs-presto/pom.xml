@@ -32,7 +32,7 @@ under the License.
 	<packaging>jar</packaging>
 
 	<properties>
-		<presto.version>0.275</presto.version>
+		<presto.version>0.280</presto.version>
 		<surefire.module.config> <!--
 			S5CmdOnPrestoS3FileSystemITCase uses ArraysAsListSerializer indirectly
 			-->--add-opens=java.base/java.util=ALL-UNNAMED
