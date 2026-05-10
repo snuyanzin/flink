@@ -16,11 +16,11 @@ This project bundles the following dependencies under the Apache Software Licens
 - com.facebook.airlift:log:0.215
 - com.facebook.airlift:stats:0.215
 - com.facebook.presto.hadoop:hadoop-apache2:2.7.4-9
-- com.facebook.presto:presto-common:0.290
-- com.facebook.presto:presto-hive:0.290
-- com.facebook.presto:presto-hive-common:0.290
-- com.facebook.presto:presto-hive-metastore:0.290
-- com.facebook.presto:presto-hdfs-core:0.290
+- com.facebook.presto:presto-common:0.296
+- com.facebook.presto:presto-hive:0.296
+- com.facebook.presto:presto-hive-common:0.296
+- com.facebook.presto:presto-hive-metastore:0.296
+- com.facebook.presto:presto-hdfs-core:0.296
 - com.fasterxml.jackson.core:jackson-annotations:2.21
 - com.fasterxml.jackson.core:jackson-core:2.21.3
 - com.fasterxml.jackson.core:jackson-databind:2.21.3
