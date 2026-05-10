@@ -222,6 +222,22 @@ under the License.
 					<artifactId>drift-api</artifactId>
 				</exclusion>
 				<exclusion>
+					<groupId>com.facebook.drift</groupId>
+					<artifactId>drift-codec</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.facebook.drift</groupId>
+					<artifactId>drift-codec-utils</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.facebook.drift</groupId>
+					<artifactId>drift-transport-netty</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.facebook.presto.ranger</groupId>
+					<artifactId>ranger-apache</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>com.facebook.hive</groupId>
 					<artifactId>hive-dwrf</artifactId>
 				</exclusion>
