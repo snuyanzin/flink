@@ -213,7 +213,7 @@ under the License.
 				</exclusion>
 				<exclusion>
 					<groupId>com.facebook.presto.hadoop</groupId>
-					<artifactId>hadoop-apache2</artifactId>
+					<artifactId>hadoop-apache</artifactId>
 				</exclusion>
 
 				<!-- Other -->

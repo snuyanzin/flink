@@ -17,7 +17,7 @@ This project bundles the following dependencies under the Apache Software Licens
 - com.facebook.airlift:stats:0.221
 - com.facebook.airlift:units:0.221
 - com.facebook.airlift:security:0.221
-- com.facebook.presto.hadoop:hadoop-apache:3.4.1-1
+- com.facebook.presto.hadoop:hadoop-apache2:2.4.1-1
 - com.facebook.presto:presto-common:0.297
 - com.facebook.presto:presto-hive:0.297
 - com.facebook.presto:presto-hive-common:0.297
