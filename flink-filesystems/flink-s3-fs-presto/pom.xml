@@ -218,6 +218,10 @@ under the License.
 					<artifactId>cglib-nodep</artifactId>
 				</exclusion>
 				<exclusion>
+					<groupId>com.facebook.airlift.drift-api</groupId>
+					<artifactId>drift-api</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>com.facebook.airlift.drift</groupId>
 					<artifactId>drift-codec</artifactId>
 				</exclusion>
@@ -240,6 +244,14 @@ under the License.
 				<exclusion>
 					<groupId>com.facebook.hive</groupId>
 					<artifactId>hive-dwrf</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.hibernate.validator</groupId>
+					<artifactId>hibernate-validator</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.glassfish</groupId>
+					<artifactId>jakarta.el</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>com.github.luben</groupId>
