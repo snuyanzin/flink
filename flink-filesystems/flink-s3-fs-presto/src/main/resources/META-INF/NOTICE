@@ -20,7 +20,6 @@ This project bundles the following dependencies under the Apache Software Licens
 - com.facebook.presto:presto-hive-common:0.272
 - com.facebook.presto:presto-hive-metastore:0.272
 - com.facebook.presto:presto-hive:0.272
-- com.github.pjfanning:jersey-json:1.22.0
 - com.fasterxml.jackson.core:jackson-annotations:2.21
 - com.fasterxml.jackson.core:jackson-core:2.21.3
 - com.fasterxml.jackson.core:jackson-databind:2.21.3
@@ -133,7 +132,6 @@ This project bundles the following dependencies under the Bouncy Castle License 
 This project bundles the following dependencies under the CDDL 1.1 license.
 See bundled license files for details.
 
-- com.sun.xml.bind:jaxb-impl:2.2.3-1
 - javax.xml.bind:jaxb-api:2.3.1
 
 This project bundles the following dependencies under the Go License (https://golang.org/LICENSE).

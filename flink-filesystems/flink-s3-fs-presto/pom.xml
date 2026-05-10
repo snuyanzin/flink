@@ -56,8 +56,8 @@ under the License.
 			<artifactId>flink-architecture-tests-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		
-		<!-- S3 base (bundled) - exclude AWS SDK v2 (Presto uses SDK v1) -->
+
+		<!-- S3 base (bundled) -->
 		<dependency>
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-s3-fs-base</artifactId>
@@ -593,12 +593,6 @@ under the License.
 										<exclude>mime.types</exclude>
 										<exclude>mozilla/**</exclude>
 										<exclude>META-INF/LICENSE.txt</exclude>
-										<!-- Exclude GPL-licensed content from Hadoop transitive dependencies -->
-										<exclude>com/sun/jersey/**</exclude>
-										<exclude>com/sun/xml/bind/**</exclude>
-										<exclude>THIRD-PARTY-NOTICES</exclude>
-										<exclude>LICENSE</exclude>
-										<exclude>NOTICE</exclude>
 									</excludes>
 								</filter>
 								<filter>
