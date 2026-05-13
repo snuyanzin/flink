@@ -218,7 +218,7 @@ class UserDefinedFunctionTests(object):
                              "cast (1 as SMALLINT),"
                              "cast (1 as INT),"
                              "cast (1 as BIGINT),"
-                             "cast (1.05 as DECIMAL),"
+                             "cast (1.05 as DECIMAL(3,2)),"
                              "cast (1.23 as FLOAT),"
                              "cast (1.98932 as DOUBLE),"
                              "true,"
