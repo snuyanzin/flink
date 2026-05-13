@@ -1442,12 +1442,13 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
             //     / (count(x1, x2) - 1)
             final SqlParserPos pos = SqlParserPos.ZERO;
             final SqlLiteral nullLiteral = SqlLiteral.createNull(SqlParserPos.ZERO);
+            final RelDataType highPrecision = AvgVarianceConvertlet.highPrecision(cx, varType);
 
             final RexNode arg0Rex = cx.convertExpression(arg0Input);
             final RexNode arg1Rex = cx.convertExpression(arg1Input);
 
-            final SqlNode arg0 = getCastedSqlNode(arg0Input, varType, pos, arg0Rex);
-            final SqlNode arg1 = getCastedSqlNode(arg1Input, varType, pos, arg1Rex);
+            final SqlNode arg0 = getCastedSqlNode(arg0Input, highPrecision, pos, arg0Rex);
+            final SqlNode arg1 = getCastedSqlNode(arg1Input, highPrecision, pos, arg1Rex);
             final SqlNode argSquared = SqlStdOperatorTable.MULTIPLY.createCall(pos, arg0, arg1);
             final SqlNode sumArgSquared;
             final SqlNode sum0;
@@ -1473,7 +1474,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
 
             final SqlNode sumSquared = SqlStdOperatorTable.MULTIPLY.createCall(pos, sum0, sum1);
             final SqlNode countCasted =
-                    getCastedSqlNode(count, varType, pos, cx.convertExpression(count));
+                    getCastedSqlNode(count, highPrecision, pos, cx.convertExpression(count));
 
             final SqlNode avgSumSquared =
                     SqlStdOperatorTable.DIVIDE.createCall(pos, sumSquared, countCasted);
@@ -1491,7 +1492,8 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                                 SqlNodeList.of(
                                         SqlStdOperatorTable.EQUALS.createCall(
                                                 pos, countCasted, one)),
-                                SqlNodeList.of(getCastedSqlNode(nullLiteral, varType, pos, null)),
+                                SqlNodeList.of(
+                                        getCastedSqlNode(nullLiteral, highPrecision, pos, null)),
                                 SqlStdOperatorTable.MINUS.createCall(pos, countCasted, one));
             }
 
@@ -1556,6 +1558,27 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
             return SqlStdOperatorTable.DIVIDE.createCall(pos, sumCast, count);
         }
 
+        /**
+         * Compute a higher precision version of a type.
+         *
+         * @return If type is a DECIMAL type, return a type with double the precision and scale if
+         *     possible. Otherwise, return the type unchanged.
+         */
+        private static RelDataType highPrecision(final SqlRexContext cx, final RelDataType type) {
+            if (type.getSqlTypeName() == SqlTypeName.DECIMAL) {
+                RelDataTypeFactory typeFactory = cx.getValidator().getTypeFactory();
+                return typeFactory.createSqlType(
+                        type.getSqlTypeName(),
+                        Math.min(
+                                type.getPrecision() * 2,
+                                typeFactory.getTypeSystem().getMaxPrecision(SqlTypeName.DECIMAL)),
+                        Math.min(
+                                type.getScale() * 2,
+                                typeFactory.getTypeSystem().getMaxScale(SqlTypeName.DECIMAL)));
+            }
+            return type;
+        }
+
         private static SqlNode expandVariance(
                 final SqlNode argInput,
                 final RelDataType varType,
@@ -1582,24 +1605,27 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
             //     (sum(x * x) - sum(x) * sum(x) / count(x))
             //     / (count(x) - 1)
             final SqlParserPos pos = SqlParserPos.ZERO;
+            final RelDataType highPrecision = highPrecision(cx, varType);
 
             final SqlNode arg =
-                    getCastedSqlNode(argInput, varType, pos, cx.convertExpression(argInput));
+                    getCastedSqlNode(argInput, highPrecision, pos, cx.convertExpression(argInput));
 
             final SqlNode argSquared = SqlStdOperatorTable.MULTIPLY.createCall(pos, arg, arg);
             final SqlNode argSquaredCasted =
-                    getCastedSqlNode(argSquared, varType, pos, cx.convertExpression(argSquared));
+                    getCastedSqlNode(
+                            argSquared, highPrecision, pos, cx.convertExpression(argSquared));
             final SqlNode sumArgSquared = SqlStdOperatorTable.SUM.createCall(pos, argSquaredCasted);
             final SqlNode sumArgSquaredCasted =
                     getCastedSqlNode(
-                            sumArgSquared, varType, pos, cx.convertExpression(sumArgSquared));
+                            sumArgSquared, highPrecision, pos, cx.convertExpression(sumArgSquared));
             final SqlNode sum = SqlStdOperatorTable.SUM.createCall(pos, arg);
             final SqlNode sumCasted =
-                    getCastedSqlNode(sum, varType, pos, cx.convertExpression(sum));
+                    getCastedSqlNode(sum, highPrecision, pos, cx.convertExpression(sum));
             final SqlNode sumSquared =
                     SqlStdOperatorTable.MULTIPLY.createCall(pos, sumCasted, sumCasted);
             final SqlNode sumSquaredCasted =
-                    getCastedSqlNode(sumSquared, varType, pos, cx.convertExpression(sumSquared));
+                    getCastedSqlNode(
+                            sumSquared, highPrecision, pos, cx.convertExpression(sumSquared));
             final SqlNode count = SqlStdOperatorTable.COUNT.createCall(pos, arg);
             final SqlNode countCasted =
                     getCastedSqlNode(count, varType, pos, cx.convertExpression(count));
@@ -1607,12 +1633,12 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                     SqlStdOperatorTable.DIVIDE.createCall(pos, sumSquaredCasted, countCasted);
             final SqlNode avgSumSquaredCasted =
                     getCastedSqlNode(
-                            avgSumSquared, varType, pos, cx.convertExpression(avgSumSquared));
+                            avgSumSquared, highPrecision, pos, cx.convertExpression(avgSumSquared));
             final SqlNode diff =
                     SqlStdOperatorTable.MINUS.createCall(
                             pos, sumArgSquaredCasted, avgSumSquaredCasted);
             final SqlNode diffCasted =
-                    getCastedSqlNode(diff, varType, pos, cx.convertExpression(diff));
+                    getCastedSqlNode(diff, highPrecision, pos, cx.convertExpression(diff));
             final SqlNode denominator;
             if (biased) {
                 denominator = countCasted;
@@ -1625,12 +1651,13 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                                 count,
                                 SqlNodeList.of(
                                         SqlStdOperatorTable.EQUALS.createCall(pos, count, one)),
-                                SqlNodeList.of(getCastedSqlNode(nullLiteral, varType, pos, null)),
+                                SqlNodeList.of(
+                                        getCastedSqlNode(nullLiteral, highPrecision, pos, null)),
                                 SqlStdOperatorTable.MINUS.createCall(pos, count, one));
             }
             final SqlNode div = SqlStdOperatorTable.DIVIDE.createCall(pos, diffCasted, denominator);
             final SqlNode divCasted =
-                    getCastedSqlNode(div, varType, pos, cx.convertExpression(div));
+                    getCastedSqlNode(div, highPrecision, pos, cx.convertExpression(div));
 
             SqlNode result = div;
             if (sqrt) {
