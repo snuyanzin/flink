@@ -115,7 +115,7 @@ class SqlNodeToCallOperationTest extends SqlNodeToOperationConversionTestBase {
                 sql,
                 "CALL PROCEDURE:"
                         + " (procedureIdentifier: [`p1`.`system`.`row_result`],"
-                        + " inputTypes: [DECIMAL(10, 2)], outputTypes: [ROW<`i` INT>], arguments: [1.20])");
+                        + " inputTypes: [DECIMAL(10, 2)], outputTypes: [ROW<`i` INT>], arguments: [1.00])");
         sql = "call `system`.row_result(1.2)";
         verifyCallOperation(
                 sql,

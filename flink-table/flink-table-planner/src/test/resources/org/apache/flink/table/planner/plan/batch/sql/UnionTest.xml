@@ -70,7 +70,7 @@ LogicalProject(a=[$0], b=[$1]), rowType=[RecordType(INTEGER a, DECIMAL(20, 1) b)
 +- LogicalUnion(all=[true]), rowType=[RecordType(INTEGER a, DECIMAL(20, 1) b)]
    :- LogicalProject(a=[$0], b=[$1]), rowType=[RecordType(INTEGER a, BIGINT b)]
    :  +- LogicalTableScan(table=[[default_catalog, default_database, MyTable1]]), rowType=[RecordType(INTEGER a, BIGINT b, VARCHAR(2147483647) c)]
-   +- LogicalProject(a=[$0], EXPR$1=[0:DECIMAL(2, 1)]), rowType=[RecordType(INTEGER a, DECIMAL(2, 1) EXPR$1)]
+   +- LogicalProject(a=[$0], EXPR$1=[0.0:DECIMAL(2, 1)]), rowType=[RecordType(INTEGER a, DECIMAL(2, 1) EXPR$1)]
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2]]), rowType=[RecordType(INTEGER a, BIGINT b, VARCHAR(2147483647) c)]
 ]]>
     </Resource>
