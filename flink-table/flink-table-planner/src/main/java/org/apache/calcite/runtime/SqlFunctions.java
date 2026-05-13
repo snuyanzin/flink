@@ -44,6 +44,7 @@ import org.apache.calcite.linq4j.tree.Primitive;
 import org.apache.calcite.rel.type.TimeFrame;
 import org.apache.calcite.rel.type.TimeFrameSet;
 import org.apache.calcite.runtime.FlatLists.ComparableList;
+import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.fun.SqlLibraryOperators;
 import org.apache.calcite.util.NumberUtil;
@@ -3990,6 +3991,16 @@ public class SqlFunctions {
 
     public static String timeWithLocalTimeZoneToString(int v, TimeZone timeZone) {
         return TimeWithTimeZoneString.fromMillisOfDay(v).withTimeZone(timeZone).toString();
+    }
+
+    public static long unixDateExtract(TimeUnitRange range, long date) {
+        return DateTimeUtils.unixDateExtract(range, date);
+    }
+
+    public static long unixDateExtract(String rangeString, long date) {
+        final TimeUnitRange timeUnitRange =
+                TimeUnitRange.of(SqlIntervalQualifier.stringToDatePartTimeUnit(rangeString), null);
+        return DateTimeUtils.unixDateExtract(timeUnitRange, date);
     }
 
     /**

@@ -21,6 +21,7 @@ import org.apache.flink.table.planner.calcite.FlinkSqlCallBinding;
 import org.apache.flink.table.planner.functions.sql.ml.SqlVectorSearchTableFunction;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.calcite.linq4j.Ord;
@@ -54,6 +55,7 @@ import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlAccessEnum;
 import org.apache.calcite.sql.SqlAccessType;
 import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlAsOperator;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCallBinding;
@@ -544,6 +546,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             return identifier;
         }
 
+        final Map<String, String> fieldAliases = getFieldAliases(scope);
+
         for (String name : SqlIdentifier.simpleNames((SqlNodeList) getCondition(join))) {
             if (identifier.getSimple().equals(name)) {
                 final List<SqlNode> qualifiedNode = new ArrayList<>();
@@ -558,11 +562,22 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 }
 
                 assert qualifiedNode.size() == 2;
-                return SqlStdOperatorTable.AS.createCall(
-                        SqlParserPos.ZERO,
+                // If there is an alias for the column, no need to wrap the coalesce with an AS
+                // operator
+                boolean haveAlias = fieldAliases.containsKey(name);
+
+                final SqlCall coalesceCall =
                         SqlStdOperatorTable.COALESCE.createCall(
-                                SqlParserPos.ZERO, qualifiedNode.get(0), qualifiedNode.get(1)),
-                        new SqlIdentifier(name, SqlParserPos.ZERO));
+                                SqlParserPos.ZERO, qualifiedNode.get(0), qualifiedNode.get(1));
+
+                if (haveAlias) {
+                    return coalesceCall;
+                } else {
+                    return SqlStdOperatorTable.AS.createCall(
+                            SqlParserPos.ZERO,
+                            coalesceCall,
+                            new SqlIdentifier(name, SqlParserPos.ZERO));
+                }
             }
         }
 
@@ -574,6 +589,26 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         } else {
             return identifier;
         }
+    }
+
+    private static Map<String, String> getFieldAliases(final SelectScope scope) {
+        final ImmutableMap.Builder<String, String> fieldAliases = new ImmutableMap.Builder<>();
+
+        for (SqlNode selectItem : scope.getNode().getSelectList()) {
+            if (selectItem instanceof SqlCall) {
+                final SqlCall call = (SqlCall) selectItem;
+                if (!(call.getOperator() instanceof SqlAsOperator)
+                        || !(call.operand(0) instanceof SqlIdentifier)) {
+                    continue;
+                }
+
+                final SqlIdentifier fieldIdentifier = call.operand(0);
+                fieldAliases.put(
+                        fieldIdentifier.getSimple(), ((SqlIdentifier) call.operand(1)).getSimple());
+            }
+        }
+
+        return fieldAliases.build();
     }
 
     /**
