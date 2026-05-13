@@ -139,7 +139,7 @@ class FlinkRelMdColumnIntervalTest extends FlinkRelMdHandlerTestBase {
     // id <= 20
     val expr1 = relBuilder.call(LESS_THAN_OR_EQUAL, relBuilder.field(0), relBuilder.literal(20))
     // id > 10.0 (note: the types of id and literal are different)
-    val expr2 = relBuilder.call(GREATER_THAN, relBuilder.field(0), relBuilder.literal(10.0))
+    val expr2 = relBuilder.call(GREATER_THAN, relBuilder.field(0), relBuilder.literal(bd(10.0)))
     // DIV(id, 2) > 3
     val expr3 = relBuilder.call(
       GREATER_THAN,
@@ -165,13 +165,13 @@ class FlinkRelMdColumnIntervalTest extends FlinkRelMdHandlerTestBase {
     // id <= 20 AND id > 10 AND DIV(id, 2) > 3
     val filter2 = relBuilder.push(ts).filter(expr1, expr2, expr3).build
     assertEquals(
-      ValueInterval(bd(10.0), bd(20), includeLower = false),
+      ValueInterval(bd(10.0), bd(20.0), includeLower = false),
       mq.getColumnInterval(filter2, 0))
 
     // id <= 20 AND id > 10 AND score < 4.1
     val filter3 = relBuilder.push(ts).filter(expr1, expr2, expr4).build
     assertEquals(
-      ValueInterval(bd(10.0), bd(20), includeLower = false),
+      ValueInterval(bd(10.0), bd(20.0), includeLower = false),
       mq.getColumnInterval(filter3, 0))
 
     // score > 6.0 OR score <= 4.0

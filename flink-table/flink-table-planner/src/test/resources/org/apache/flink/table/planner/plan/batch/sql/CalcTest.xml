@@ -144,13 +144,13 @@ Calc(select=[a, b, c], where=[((a < 10) AND (b > 20))])
     </Resource>
     <Resource name="ast">
       <![CDATA[
-LogicalProject(EXPR$0=[ARRAY(0.12:DECIMAL(3, 2), 0.5:DECIMAL(3, 2), 0.99:DECIMAL(3, 2))])
+LogicalProject(EXPR$0=[ARRAY(0.12:DECIMAL(3, 2), 0.50:DECIMAL(3, 2), 0.99:DECIMAL(3, 2))])
 +- LogicalValues(tuples=[[{ 0 }]])
 ]]>
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[ARRAY(0.12, 0.5, 0.99) AS EXPR$0])
+Calc(select=[ARRAY(0.12, 0.50, 0.99) AS EXPR$0])
 +- Values(tuples=[[{ 0 }]], values=[ZERO])
 ]]>
     </Resource>
@@ -161,13 +161,13 @@ Calc(select=[ARRAY(0.12, 0.5, 0.99) AS EXPR$0])
     </Resource>
     <Resource name="ast">
       <![CDATA[
-LogicalProject(EXPR$0=[MAP(_UTF-16LE'a', 0.12:DECIMAL(3, 2), _UTF-16LE'b', 0.5:DECIMAL(3, 2))])
+LogicalProject(EXPR$0=[MAP(_UTF-16LE'a', 0.12:DECIMAL(3, 2), _UTF-16LE'b', 0.50:DECIMAL(3, 2))])
 +- LogicalValues(tuples=[[{ 0 }]])
 ]]>
     </Resource>
     <Resource name="optimized exec plan">
       <![CDATA[
-Calc(select=[MAP('a', 0.12, 'b', 0.5) AS EXPR$0])
+Calc(select=[MAP('a', 0.12, 'b', 0.50) AS EXPR$0])
 +- Values(tuples=[[{ 0 }]], values=[ZERO])
 ]]>
     </Resource>
