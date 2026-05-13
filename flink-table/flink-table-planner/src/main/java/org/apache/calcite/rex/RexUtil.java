@@ -399,8 +399,8 @@ public class RexUtil {
         final RexNode right;
         switch (predicate.getKind()) {
             case EQUALS:
-                // FLINK BEGIN MODIFICATION
-                // case IS_NOT_DISTINCT_FROM:
+            // FLINK BEGIN MODIFICATION
+            case IS_NOT_DISTINCT_FROM:
                 // FLINK END MODIFICATION
                 left = ((RexCall) predicate).getOperands().get(0);
                 right = ((RexCall) predicate).getOperands().get(1);
