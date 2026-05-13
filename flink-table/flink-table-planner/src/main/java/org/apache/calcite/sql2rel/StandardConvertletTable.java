@@ -16,7 +16,6 @@
  */
 package org.apache.calcite.sql2rel;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -102,15 +101,7 @@ import static org.apache.calcite.sql.fun.SqlStdOperatorTable.QUANTIFY_OPERATORS;
 import static org.apache.calcite.sql.type.NonNullableAccessors.getComponentTypeOrThrow;
 import static org.apache.calcite.util.Util.first;
 
-/**
- * Standard implementation of {@link SqlRexConvertletTable}.
- *
- * <p>FLINK modifications are at lines
- *
- * <ol>
- *   <li>Added in Flink-35216: Lines 843 ~ 889
- * </ol>
- */
+/** Standard implementation of {@link SqlRexConvertletTable}. */
 public class StandardConvertletTable extends ReflectiveConvertletTable {
 
     /** Singleton instance. */
@@ -645,9 +636,11 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                 call.getOperandList().size() > 2
                         ? call.operand(2)
                         : SqlLiteral.createNull(SqlParserPos.ZERO);
+
         final RexBuilder rexBuilder = cx.getRexBuilder();
         final RexNode arg = cx.convertExpression(left);
         final RexLiteral formatArg = (RexLiteral) cx.convertLiteral(format);
+
         if (right instanceof SqlIntervalQualifier) {
             final SqlIntervalQualifier intervalQualifier = (SqlIntervalQualifier) right;
             if (left instanceof SqlIntervalLiteral) {
@@ -840,9 +833,6 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         return cx.getRexBuilder().makeCall(returnType, fun, exprs);
     }
 
-    // BEGIN FLINK MODIFICATION
-    // Reason: this method is changed to extract return type from RETURNING clause of JSON_QUERY
-    // Whole class should be removed after CALCITE-6365 is fixed
     public RexNode convertJsonValueFunction(
             SqlRexContext cx, SqlJsonValueFunction fun, SqlCall call) {
         return convertJsonReturningFunction(
@@ -885,8 +875,6 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         requireNonNull(returnType, () -> "Unable to get type of " + call);
         return cx.getRexBuilder().makeCall(returnType, fun, exprs);
     }
-
-    // END FLINK MODIFICATION
 
     public RexNode convertSequenceValue(
             SqlRexContext cx, SqlSequenceValueOperator fun, SqlCall call) {
@@ -1755,7 +1743,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
 
         SubstrConvertlet(SqlLibrary library) {
             this.library = library;
-            Preconditions.checkArgument(
+            checkArgument(
                     library == SqlLibrary.ORACLE
                             || library == SqlLibrary.MYSQL
                             || library == SqlLibrary.BIG_QUERY
