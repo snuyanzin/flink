@@ -54,6 +54,7 @@ import org.apache.calcite.util.Util;
 import org.apache.calcite.util.format.FormatElement;
 import org.apache.calcite.util.format.FormatModel;
 import org.apache.calcite.util.format.FormatModels;
+import org.apache.calcite.util.format.PostgresqlDateTimeFormatter;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
@@ -90,6 +91,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
@@ -4044,6 +4046,13 @@ public class SqlFunctions {
             return sb.toString().trim();
         }
 
+        public String toCharPg(long timestamp, String pattern) {
+            final Timestamp sqlTimestamp = internalToTimestamp(timestamp);
+            final ZonedDateTime zonedDateTime =
+                    ZonedDateTime.of(sqlTimestamp.toLocalDateTime(), ZoneId.systemDefault());
+            return PostgresqlDateTimeFormatter.toChar(pattern, zonedDateTime).trim();
+        }
+
         public int toDate(String dateString, String fmtString) {
             return toInt(new java.sql.Date(internalToDateTime(dateString, fmtString)));
         }
@@ -5514,6 +5523,9 @@ public class SqlFunctions {
     public static List mapEntries(Map<Object, Object> map) {
         final List result = new ArrayList(map.size());
         for (Map.Entry<Object, Object> entry : map.entrySet()) {
+            if (entry.getKey() == null) {
+                throw new IllegalArgumentException("Cannot use null as map key");
+            }
             result.add(Arrays.asList(entry.getKey(), entry.getValue()));
         }
         return result;
