@@ -55,7 +55,7 @@ import org.apache.calcite.util.Util;
 import org.apache.calcite.util.format.FormatElement;
 import org.apache.calcite.util.format.FormatModel;
 import org.apache.calcite.util.format.FormatModels;
-import org.apache.calcite.util.format.PostgresqlDateTimeFormatter;
+import org.apache.calcite.util.format.postgresql.PostgresqlDateTimeFormatter;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
@@ -199,8 +199,6 @@ public class SqlFunctions {
      */
     private static final ThreadLocal<Map<String, AtomicLong>> THREAD_SEQUENCES =
             ThreadLocal.withInitial(HashMap::new);
-
-    private static final Pattern PATTERN_0_STAR_E = Pattern.compile("0*E");
 
     /** A byte string consisting of a single byte that is the ASCII space character (0x20). */
     private static final ByteString SINGLE_SPACE_BYTE_STRING = ByteString.of("20", 16);
@@ -1547,6 +1545,32 @@ public class SqlFunctions {
     public static String concatMultiWithSeparator(String... args) {
         // the separator arg could be null
         final String sep = args[0] == null ? "" : args[0];
+        return concatMultiWithSeparator(sep, args);
+    }
+
+    /** SQL {@code CONCAT_WS(sep[, str | array(str)]+)} function, return null for null sep. */
+    public static String concatMultiTypeWithSeparator(String sep, Object... args) {
+        if (args.length == 0) {
+            return "";
+        }
+        Object[] argsArray = array(args);
+        List<String> arrayList = new ArrayList<>();
+        arrayList.add(sep);
+        for (Object arg : argsArray) {
+            if (arg == null) {
+                continue;
+            }
+            if (arg instanceof String) {
+                arrayList.add((String) arg);
+            }
+            if (arg instanceof List<?>) {
+                arrayList.addAll((List<String>) arg);
+            }
+        }
+        return concatMultiWithSeparator(sep, arrayList.toArray(new String[0]));
+    }
+
+    private static String concatMultiWithSeparator(String sep, String... args) {
         StringBuilder sb = new StringBuilder();
         for (int i = 1; i < args.length; i++) {
             if (args[i] != null) {
@@ -2798,33 +2822,35 @@ public class SqlFunctions {
     // LN, LOG, LOG10, LOG2
 
     /** SQL {@code LOG(number, number2)} function applied to double values. */
-    public static double log(double d0, double d1) {
-        return Math.log(d0) / Math.log(d1);
+    public static @Nullable Double log(double number, double number2, int nullFlag) {
+        if (nullFlag == 1 && number <= 0) {
+            return null;
+        }
+        return Math.log(number) / Math.log(number2);
     }
 
     /** SQL {@code LOG(number, number2)} function applied to double and BigDecimal values. */
-    public static double log(double d0, BigDecimal d1) {
-        return Math.log(d0) / Math.log(d1.doubleValue());
+    public static @Nullable Double log(double number, BigDecimal number2, int nullFlag) {
+        if (nullFlag == 1 && number <= 0) {
+            return null;
+        }
+        return Math.log(number) / Math.log(number2.doubleValue());
     }
 
     /** SQL {@code LOG(number, number2)} function applied to BigDecimal and double values. */
-    public static double log(BigDecimal d0, double d1) {
-        return Math.log(d0.doubleValue()) / Math.log(d1);
+    public static @Nullable Double log(BigDecimal number, double number2, int nullFlag) {
+        if (nullFlag == 1 && number.doubleValue() <= 0) {
+            return null;
+        }
+        return Math.log(number.doubleValue()) / Math.log(number2);
     }
 
     /** SQL {@code LOG(number, number2)} function applied to double values. */
-    public static double log(BigDecimal d0, BigDecimal d1) {
-        return Math.log(d0.doubleValue()) / Math.log(d1.doubleValue());
-    }
-
-    /** SQL {@code LOG2(number)} function applied to double values. */
-    public static @Nullable Double log2(double number) {
-        return (number <= 0) ? null : log(number, 2);
-    }
-
-    /** SQL {@code LOG2(number)} function applied to BigDecimal values. */
-    public static @Nullable Double log2(BigDecimal number) {
-        return log2(number.doubleValue());
+    public static @Nullable Double log(BigDecimal number, BigDecimal number2, int nullFlag) {
+        if (nullFlag == 1 && number.doubleValue() <= 0) {
+            return null;
+        }
+        return Math.log(number.doubleValue()) / Math.log(number2.doubleValue());
     }
 
     // MOD
@@ -3518,9 +3544,7 @@ public class SqlFunctions {
         if (x == 0) {
             return "0E0";
         }
-        BigDecimal bigDecimal = new BigDecimal(x, MathContext.DECIMAL32).stripTrailingZeros();
-        final String s = bigDecimal.toString();
-        return PATTERN_0_STAR_E.matcher(s).replaceAll("E").replace("E+", "E");
+        return Float.toString(x);
     }
 
     /** CAST(DOUBLE AS VARCHAR). */
@@ -3528,9 +3552,7 @@ public class SqlFunctions {
         if (x == 0) {
             return "0E0";
         }
-        BigDecimal bigDecimal = new BigDecimal(x, MathContext.DECIMAL64).stripTrailingZeros();
-        final String s = bigDecimal.toString();
-        return PATTERN_0_STAR_E.matcher(s).replaceAll("E").replace("E+", "E");
+        return Double.toString(x);
     }
 
     /** CAST(DECIMAL AS VARCHAR). */

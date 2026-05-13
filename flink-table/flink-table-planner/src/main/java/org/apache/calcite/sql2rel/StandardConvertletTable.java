@@ -176,7 +176,9 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         registerOp(SqlLibraryOperators.RTRIM, new TrimConvertlet(SqlTrimFunction.Flag.TRAILING));
 
         registerOp(SqlLibraryOperators.GREATEST, new GreatestConvertlet());
+        registerOp(SqlLibraryOperators.GREATEST_PG, new GreatestPgConvertlet());
         registerOp(SqlLibraryOperators.LEAST, new GreatestConvertlet());
+        registerOp(SqlLibraryOperators.LEAST_PG, new GreatestPgConvertlet());
         registerOp(
                 SqlLibraryOperators.SUBSTR_BIG_QUERY, new SubstrConvertlet(SqlLibrary.BIG_QUERY));
         registerOp(SqlLibraryOperators.SUBSTR_MYSQL, new SubstrConvertlet(SqlLibrary.MYSQL));
@@ -201,6 +203,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                 operator -> registerOp(operator, StandardConvertletTable::convertQuantifyOperator));
 
         registerOp(SqlLibraryOperators.NVL, StandardConvertletTable::convertNvl);
+        registerOp(SqlLibraryOperators.NVL2, StandardConvertletTable::convertNvl2);
         registerOp(SqlLibraryOperators.DECODE, StandardConvertletTable::convertDecode);
         registerOp(SqlLibraryOperators.IF, StandardConvertletTable::convertIf);
 
@@ -400,6 +403,33 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                                         .createTypeWithNullability(
                                                 type, operand1.getType().isNullable()),
                                 operand1)));
+    }
+
+    /** Converts a call to the {@code NVL2} function. */
+    private static RexNode convertNvl2(SqlRexContext cx, SqlCall call) {
+        final RexBuilder rexBuilder = cx.getRexBuilder();
+        final List<RexNode> operands =
+                convertOperands(
+                        cx, call, call.getOperandList(), SqlOperandTypeChecker.Consistency.NONE);
+        final RelDataType type = cx.getValidator().getValidatedNodeType(call);
+
+        // Create a CASE expression equivalent to the NVL2 function
+        // NVL2(x, y, z) is equivalent to CASE WHEN x IS NOT NULL THEN y ELSE z END
+        return rexBuilder.makeCall(
+                type,
+                SqlStdOperatorTable.CASE,
+                ImmutableList.of(
+                        rexBuilder.makeCall(SqlStdOperatorTable.IS_NOT_NULL, operands.get(0)),
+                        rexBuilder.makeCast(
+                                cx.getTypeFactory()
+                                        .createTypeWithNullability(
+                                                type, operands.get(1).getType().isNullable()),
+                                operands.get(1)),
+                        rexBuilder.makeCast(
+                                cx.getTypeFactory()
+                                        .createTypeWithNullability(
+                                                type, operands.get(2).getType().isNullable()),
+                                operands.get(2))));
     }
 
     /**
@@ -1748,6 +1778,60 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                 list.add(expr);
             }
             list.add(exprs.get(exprs.size() - 1));
+            return rexBuilder.makeCall(type, SqlStdOperatorTable.CASE, list);
+        }
+    }
+
+    /** Convertlet that converts {@code GREATEST} and {@code LEAST}. */
+    private static class GreatestPgConvertlet implements SqlRexConvertlet {
+        @Override
+        public RexNode convertCall(SqlRexContext cx, SqlCall call) {
+            // Translate
+            //   GREATEST(a, b, c, d)
+            // to
+            //   CASE
+            //   WHEN a IS NOT NULL AND (b IS NULL OR a > b) AND (c IS NULL OR a > c) AND
+            //        (d IS NULL OR a > d)
+            //   THEN a
+            //   WHEN b IS NOT NULL AND (c IS NULL OR b > c) AND (d IS NULL OR b > d)
+            //   THEN b
+            //   WHEN C IS NOT NULL AND (d IS NULL OR c > d)
+            //   THEN c
+            //   WHEN d IS NOT NULL
+            //   THEN d
+            //   ELSE NULL
+            //   END
+            final RexBuilder rexBuilder = cx.getRexBuilder();
+            final RelDataType type = cx.getValidator().getValidatedNodeType(call);
+            final SqlBinaryOperator op;
+            switch (call.getKind()) {
+                case GREATEST_PG:
+                    op = SqlStdOperatorTable.GREATER_THAN;
+                    break;
+                case LEAST_PG:
+                    op = SqlStdOperatorTable.LESS_THAN;
+                    break;
+                default:
+                    throw new AssertionError();
+            }
+            final List<RexNode> exprs =
+                    convertOperands(cx, call, SqlOperandTypeChecker.Consistency.NONE);
+            final List<RexNode> list = new ArrayList<>();
+            for (int i = 0; i < exprs.size(); i++) {
+                RexNode expr = exprs.get(i);
+                final List<RexNode> andList = new ArrayList<>();
+                andList.add(rexBuilder.makeCall(SqlStdOperatorTable.IS_NOT_NULL, expr));
+                for (int j = i + 1; j < exprs.size(); j++) {
+                    final RexNode expr2 = exprs.get(j);
+                    final List<RexNode> orList = new ArrayList<>();
+                    orList.add(rexBuilder.makeCall(SqlStdOperatorTable.IS_NULL, expr2));
+                    orList.add(rexBuilder.makeCall(op, expr, expr2));
+                    andList.add(RexUtil.composeDisjunction(rexBuilder, orList));
+                }
+                list.add(RexUtil.composeConjunction(rexBuilder, andList));
+                list.add(expr);
+            }
+            list.add(rexBuilder.makeNullLiteral(type));
             return rexBuilder.makeCall(type, SqlStdOperatorTable.CASE, list);
         }
     }
