@@ -38,6 +38,7 @@ import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.function.Deterministic;
 import org.apache.calcite.linq4j.function.Experimental;
 import org.apache.calcite.linq4j.function.Function1;
+import org.apache.calcite.linq4j.function.Functions;
 import org.apache.calcite.linq4j.function.NonDeterministic;
 import org.apache.calcite.linq4j.function.Predicate1;
 import org.apache.calcite.linq4j.tree.Primitive;
@@ -127,6 +128,7 @@ import java.util.regex.PatternSyntaxException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 import static org.apache.calcite.config.CalciteSystemProperty.FUNCTION_LEVEL_CACHE_MAX_SIZE;
 import static org.apache.calcite.linq4j.Nullness.castNonNull;
 import static org.apache.calcite.util.Static.RESOURCE;
@@ -1585,6 +1587,17 @@ public class SqlFunctions {
         return sb.toString();
     }
 
+    /** SQL {@code CONCAT_WS(sep[, any]+)} function, return null for null sep. */
+    public static String concatMultiObjectWithSeparator(String sep, Object... args) {
+        if (args.length == 0) {
+            return "";
+        }
+        return Arrays.stream(args)
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .collect(joining(sep));
+    }
+
     /** SQL {@code CONVERT(s, src_charset, dest_charset)} function. */
     public static String convertWithCharset(String s, String srcCharset, String destCharset) {
         final Charset src = SqlUtil.getCharset(srcCharset);
@@ -2068,6 +2081,14 @@ public class SqlFunctions {
         return b0 < b1;
     }
 
+    public static boolean lt(List<?> b0, List<?> b1) {
+        return Functions.compareLists(b0, b1) < 0;
+    }
+
+    public static boolean lt(Object[] b0, Object[] b1) {
+        return Functions.compareObjectArrays(b0, b1) < 0;
+    }
+
     /** SQL <code>&lt;</code> operator applied to Object values. */
     public static boolean ltAny(Object b0, Object b1) {
         if (b0.getClass().equals(b1.getClass()) && b0 instanceof Comparable) {
@@ -2105,6 +2126,16 @@ public class SqlFunctions {
     /** SQL <code>&le;</code> operator applied to BigDecimal values. */
     public static boolean le(BigDecimal b0, BigDecimal b1) {
         return b0.compareTo(b1) <= 0;
+    }
+
+    /** SQL <code>&le;</code> operator applied to List values. */
+    public static boolean le(List<?> b0, List<?> b1) {
+        return Functions.compareLists(b0, b1) <= 0;
+    }
+
+    /** SQL <code>&le;</code> operator applied to Object[] values. */
+    public static boolean le(Object[] b0, Object[] b1) {
+        return Functions.compareObjectArrays(b0, b1) <= 0;
     }
 
     /**
@@ -2185,6 +2216,14 @@ public class SqlFunctions {
         return b0 > b1;
     }
 
+    public static boolean gt(List<?> b0, List<?> b1) {
+        return Functions.compareLists(b0, b1) > 0;
+    }
+
+    public static boolean gt(Object[] b0, Object[] b1) {
+        return Functions.compareObjectArrays(b0, b1) > 0;
+    }
+
     /**
      * SQL <code>&gt;</code> operator applied to Object values (at least one operand has ANY type;
      * neither may be null).
@@ -2225,6 +2264,16 @@ public class SqlFunctions {
     /** SQL <code>&ge;</code> operator applied to BigDecimal values. */
     public static boolean ge(BigDecimal b0, BigDecimal b1) {
         return b0.compareTo(b1) >= 0;
+    }
+
+    /** SQL <code>&ge;</code> operator applied to List values. */
+    public static boolean ge(List<?> b0, List<?> b1) {
+        return Functions.compareLists(b0, b1) >= 0;
+    }
+
+    /** SQL <code>&ge;</code> operator applied to Object[] values. */
+    public static boolean ge(Object[] b0, Object[] b1) {
+        return Functions.compareObjectArrays(b0, b1) >= 0;
     }
 
     /**
@@ -2821,36 +2870,65 @@ public class SqlFunctions {
 
     // LN, LOG, LOG10, LOG2
 
-    /** SQL {@code LOG(number, number2)} function applied to double values. */
-    public static @Nullable Double log(double number, double number2, int nullFlag) {
-        if (nullFlag == 1 && number <= 0) {
+    /**
+     * SQL {@code LOG(number, base)} function applied to double values.
+     *
+     * @param nonPositiveIsNull if true return null for non-positive values
+     */
+    public static @Nullable Double log(double number, double base, boolean nonPositiveIsNull) {
+        if (nonPositiveIsNull && number <= 0) {
             return null;
         }
-        return Math.log(number) / Math.log(number2);
+        if (number <= 0 || base <= 0) {
+            throw new IllegalArgumentException("Cannot take logarithm of zero or negative number");
+        }
+        return Math.log(number) / Math.log(base);
     }
 
-    /** SQL {@code LOG(number, number2)} function applied to double and BigDecimal values. */
-    public static @Nullable Double log(double number, BigDecimal number2, int nullFlag) {
-        if (nullFlag == 1 && number <= 0) {
+    /**
+     * SQL {@code LOG(number, base)} function applied to double and BigDecimal values.
+     *
+     * @param nonPositiveIsNull if true return null for non-positive values
+     */
+    public static @Nullable Double log(double number, BigDecimal base, boolean nonPositiveIsNull) {
+        if (nonPositiveIsNull && number <= 0) {
             return null;
         }
-        return Math.log(number) / Math.log(number2.doubleValue());
+        if (number <= 0 || base.doubleValue() <= 0) {
+            throw new IllegalArgumentException("Cannot take logarithm of zero or negative number");
+        }
+        return Math.log(number) / Math.log(base.doubleValue());
     }
 
-    /** SQL {@code LOG(number, number2)} function applied to BigDecimal and double values. */
-    public static @Nullable Double log(BigDecimal number, double number2, int nullFlag) {
-        if (nullFlag == 1 && number.doubleValue() <= 0) {
+    /**
+     * SQL {@code LOG(number, base)} function applied to BigDecimal and double values.
+     *
+     * @param nonPositiveIsNull if true return null for non-positive values
+     */
+    public static @Nullable Double log(BigDecimal number, double base, Boolean nonPositiveIsNull) {
+        if (nonPositiveIsNull && number.doubleValue() <= 0) {
             return null;
         }
-        return Math.log(number.doubleValue()) / Math.log(number2);
+        if (number.doubleValue() <= 0 || base <= 0) {
+            throw new IllegalArgumentException("Cannot take logarithm of zero or negative number");
+        }
+        return Math.log(number.doubleValue()) / Math.log(base);
     }
 
-    /** SQL {@code LOG(number, number2)} function applied to double values. */
-    public static @Nullable Double log(BigDecimal number, BigDecimal number2, int nullFlag) {
-        if (nullFlag == 1 && number.doubleValue() <= 0) {
+    /**
+     * SQL {@code LOG(number, base)} function applied to double values.
+     *
+     * @param nonPositiveIsNull if true return null for non-positive values
+     */
+    public static @Nullable Double log(
+            BigDecimal number, BigDecimal base, Boolean nonPositiveIsNull) {
+        if (nonPositiveIsNull && number.doubleValue() <= 0) {
             return null;
         }
-        return Math.log(number.doubleValue()) / Math.log(number2.doubleValue());
+        if (number.doubleValue() <= 0 || base.doubleValue() <= 0) {
+            throw new IllegalArgumentException("Cannot take logarithm of zero or negative number");
+        }
+        return Math.log(number.doubleValue()) / Math.log(base.doubleValue());
     }
 
     // MOD
@@ -4031,6 +4109,21 @@ public class SqlFunctions {
      */
     @Deterministic
     public static class DateFormatFunction {
+        // Timezone to use for PostgreSQL parsing of timestamps
+        private static final ZoneId LOCAL_ZONE;
+
+        static {
+            ZoneId zoneId;
+            try {
+                // Currently the parsed timestamps are expected to be the number of
+                // milliseconds since the epoch in UTC, with no timezone information
+                zoneId = ZoneId.of("UTC");
+            } catch (Exception e) {
+                zoneId = ZoneId.systemDefault();
+            }
+            LOCAL_ZONE = zoneId;
+        }
+
         /** Work space for various functions. Clear it before you use it. */
         final StringBuilder sb = new StringBuilder();
 
@@ -4090,8 +4183,43 @@ public class SqlFunctions {
             return toInt(new java.sql.Date(internalToDateTime(dateString, fmtString)));
         }
 
+        public int toDatePg(String dateString, String fmtString) {
+            try {
+                return (int)
+                        PostgresqlDateTimeFormatter.toTimestamp(dateString, fmtString, LOCAL_ZONE)
+                                .getLong(ChronoField.EPOCH_DAY);
+            } catch (Exception e) {
+                SQLException sqlEx =
+                        new SQLException(
+                                String.format(
+                                        Locale.ROOT,
+                                        "Invalid format: '%s' for datetime string: '%s'.",
+                                        fmtString,
+                                        dateString));
+                throw Util.toUnchecked(sqlEx);
+            }
+        }
+
         public long toTimestamp(String timestampString, String fmtString) {
             return toLong(new java.sql.Timestamp(internalToDateTime(timestampString, fmtString)));
+        }
+
+        public long toTimestampPg(String timestampString, String fmtString) {
+            try {
+                return PostgresqlDateTimeFormatter.toTimestamp(
+                                timestampString, fmtString, LOCAL_ZONE)
+                        .toInstant()
+                        .toEpochMilli();
+            } catch (Exception e) {
+                SQLException sqlEx =
+                        new SQLException(
+                                String.format(
+                                        Locale.ROOT,
+                                        "Invalid format: '%s' for timestamp string: '%s'.",
+                                        fmtString,
+                                        timestampString));
+                throw Util.toUnchecked(sqlEx);
+            }
         }
 
         private long internalToDateTime(String dateString, String fmtString) {
