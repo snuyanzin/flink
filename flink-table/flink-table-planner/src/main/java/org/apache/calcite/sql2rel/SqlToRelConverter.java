@@ -3712,7 +3712,9 @@ public class SqlToRelConverter {
 
         final AggConverter aggConverter =
                 AggConverter.create(
-                        bb, (AggregatingSelectScope) validator().getSelectScope(select));
+                        bb,
+                        (AggregatingSelectScope) validator().getSelectScope(select),
+                        validator());
         createAggImpl(bb, aggConverter, selectList, groupList, having, orderExprList);
     }
 

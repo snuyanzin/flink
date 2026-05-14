@@ -89,7 +89,7 @@ public class BasicSqlType extends AbstractSqlType {
     public BasicSqlType(
             RelDataTypeSystem typeSystem, SqlTypeName typeName, boolean isNullable, int precision) {
         this(typeSystem, typeName, isNullable, precision, SCALE_NOT_SPECIFIED, null, null);
-        checkPrecScale(typeName, isNullable, true);
+        checkPrecScale(typeName, true, false);
     }
 
     /**

@@ -141,7 +141,8 @@ class AggConverter implements SqlVisitor<Void> {
      * @param bb Blackboard
      * @param scope Scope of a SELECT that has a GROUP BY
      */
-    static AggConverter create(SqlToRelConverter.Blackboard bb, AggregatingSelectScope scope) {
+    static AggConverter create(
+            SqlToRelConverter.Blackboard bb, AggregatingSelectScope scope, SqlValidator validator) {
         // Collect all expressions used in the select list so that aggregate
         // calls can be named correctly.
         final Map<String, String> nameMap = new HashMap<>();
@@ -160,7 +161,7 @@ class AggConverter implements SqlVisitor<Void> {
                 });
 
         final AggregatingSelectScope.Resolved resolved = scope.resolved.get();
-        return new AggConverter(bb, ImmutableMap.copyOf(nameMap)) {
+        return new AggConverter(bb, ImmutableMap.copyOf(nameMap), validator, scope) {
             @Override
             AggregatingSelectScope.Resolved getResolved() {
                 return resolved;
