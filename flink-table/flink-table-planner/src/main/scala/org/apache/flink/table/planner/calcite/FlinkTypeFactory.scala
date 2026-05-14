@@ -208,7 +208,7 @@ class FlinkTypeFactory(
         getTypeSystem,
         originalType.asInstanceOf[BasicSqlType],
         isNullable,
-        isEventTime = false))
+        false))
   }
 
   /** Creates a indicator type for event-time, but with similar properties as SQL timestamp. */
@@ -224,7 +224,7 @@ class FlinkTypeFactory(
         getTypeSystem,
         originalType.asInstanceOf[BasicSqlType],
         isNullable,
-        isEventTime = true))
+        true))
   }
 
   /**
@@ -462,8 +462,8 @@ class FlinkTypeFactory(
 
       case it: TimeIndicatorRelDataType =>
         new TimeIndicatorRelDataType(
-          it.typeSystemField,
-          it.originalType,
+          it.getTypeSystem,
+          it.getOriginalType,
           isNullable,
           it.isEventTime)
 
@@ -560,7 +560,7 @@ object FlinkTypeFactory {
   def isTimestampLtzIndicatorType(relDataType: RelDataType): Boolean =
     relDataType match {
       case ti: TimeIndicatorRelDataType
-          if ti.originalType.getSqlTypeName.equals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE) =>
+          if ti.getOriginalType.getSqlTypeName.equals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE) =>
         true
       case _ => false
     }

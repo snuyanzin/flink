@@ -187,6 +187,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                 SqlLibraryOperators.SUBSTR_POSTGRESQL, new SubstrConvertlet(SqlLibrary.POSTGRESQL));
 
         registerOp(SqlLibraryOperators.DATE_ADD, new TimestampAddConvertlet());
+        registerOp(SqlLibraryOperators.ADD_MONTHS, new TimestampAddConvertlet());
         registerOp(SqlLibraryOperators.DATE_DIFF, new TimestampDiffConvertlet());
         registerOp(SqlLibraryOperators.DATE_SUB, new TimestampSubConvertlet());
         registerOp(SqlLibraryOperators.DATETIME_ADD, new TimestampAddConvertlet());
@@ -265,6 +266,11 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
         registerOp(SqlStdOperatorTable.ITEM, this::convertItem);
         // "AS" has no effect, so expand "x AS id" into "x".
         registerOp(SqlStdOperatorTable.AS, (cx, call) -> cx.convertExpression(call.operand(0)));
+
+        // "MEASURE" has no effect, so expand "x AS MEASURE id" into "x".
+        registerOp(
+                SqlInternalOperators.MEASURE, (cx, call) -> cx.convertExpression(call.operand(0)));
+
         registerOp(SqlStdOperatorTable.CONVERT, this::convertCharset);
         registerOp(SqlStdOperatorTable.TRANSLATE, this::translateCharset);
         // "SQRT(x)" is equivalent to "POWER(x, .5)"
@@ -600,14 +606,15 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
 
     public RexNode convertMultiset(SqlRexContext cx, SqlMultisetValueConstructor op, SqlCall call) {
         final RelDataType originalType = cx.getValidator().getValidatedNodeType(call);
-        RexRangeRef rr = cx.getSubQueryExpr(call);
-        assert rr != null;
+        RexRangeRef rr = requireNonNull(cx.getSubQueryExpr(call));
         RelDataType msType = rr.getType().getFieldList().get(0).getType();
         RexNode expr = cx.getRexBuilder().makeInputRef(msType, rr.getOffset());
-        assert msType.getComponentType() != null && msType.getComponentType().isStruct()
-                : "componentType of " + msType + " must be struct";
-        assert originalType.getComponentType() != null
-                : "componentType of " + originalType + " must be struct";
+        if (msType.getComponentType() == null || !msType.getComponentType().isStruct()) {
+            throw new AssertionError("componentType of " + msType + " must be struct");
+        }
+        if (originalType.getComponentType() == null) {
+            throw new AssertionError("componentType of " + originalType + " must be struct");
+        }
         if (!originalType.getComponentType().isStruct()) {
             // If the type is not a struct, the multiset operator will have
             // wrapped the type as a record. Add a call to the $SLICE operator
@@ -636,14 +643,15 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     public RexNode convertMultisetQuery(
             SqlRexContext cx, SqlMultisetQueryConstructor op, SqlCall call) {
         final RelDataType originalType = cx.getValidator().getValidatedNodeType(call);
-        RexRangeRef rr = cx.getSubQueryExpr(call);
-        assert rr != null;
+        RexRangeRef rr = requireNonNull(cx.getSubQueryExpr(call));
         RelDataType msType = rr.getType().getFieldList().get(0).getType();
         RexNode expr = cx.getRexBuilder().makeInputRef(msType, rr.getOffset());
-        assert msType.getComponentType() != null
-                : "componentType of " + msType + " must not be null";
-        assert originalType.getComponentType() != null
-                : "componentType of " + originalType + " must not be null";
+        if (msType.getComponentType() == null) {
+            throw new AssertionError("componentType of " + msType + " must not be null");
+        }
+        if (originalType.getComponentType() == null) {
+            throw new AssertionError("componentType of " + originalType + " must not be null");
+        }
         return expr;
     }
 
@@ -655,6 +663,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     }
 
     protected RexNode convertCast(SqlRexContext cx, final SqlCall call) {
+
         RelDataTypeFactory typeFactory = cx.getTypeFactory();
         final SqlValidator validator = cx.getValidator();
         final SqlKind kind = call.getKind();
@@ -2032,11 +2041,44 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
             final RexNode op2;
             switch (call.operandCount()) {
                 case 2:
-                    // BigQuery-style 'TIMESTAMP_ADD(timestamp, interval)'
-                    final SqlBasicCall operandCall = call.operand(1);
-                    qualifier = operandCall.operand(1);
-                    op1 = cx.convertExpression(operandCall.operand(0));
-                    op2 = cx.convertExpression(call.operand(0));
+                    // Oracle-style 'ADD_MONTHS(date, integer months)'
+                    if (call.getOperator() == SqlLibraryOperators.ADD_MONTHS) {
+                        qualifier =
+                                new SqlIntervalQualifier(TimeUnit.MONTH, null, SqlParserPos.ZERO);
+                        RexNode opfirstparameter = cx.convertExpression(call.operand(0));
+                        if (opfirstparameter.getType().getSqlTypeName() == SqlTypeName.TIMESTAMP) {
+                            RelDataType timestampType =
+                                    cx.getTypeFactory().createSqlType(SqlTypeName.DATE);
+                            op2 = rexBuilder.makeCast(timestampType, opfirstparameter);
+                        } else {
+                            op2 = cx.convertExpression(call.operand(0));
+                        }
+
+                        RexNode opsecondparameter = cx.convertExpression(call.operand(1));
+                        RelDataTypeFactory typeFactory = cx.getTypeFactory();
+
+                        // In Calcite, cast('1.2' as integer) is invalid.
+                        // For details, see https://issues.apache.org/jira/browse/CALCITE-1439
+                        // When trying to cast a string value to an integer type, Calcite may
+                        // encounter errors if the string value cannot be successfully converted.
+                        // To handle this, the string needs to be first converted to a double type,
+                        // and then the double value can be converted to an integer type.
+                        // Since the final target type is integer, converting the string to double
+                        // first
+                        // will not lose precision for the add_months operation.
+                        if (opsecondparameter.getType().getSqlTypeName() == SqlTypeName.CHAR) {
+                            RelDataType doubleType = typeFactory.createSqlType(SqlTypeName.DOUBLE);
+                            opsecondparameter = rexBuilder.makeCast(doubleType, opsecondparameter);
+                        }
+                        RelDataType intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
+                        op1 = rexBuilder.makeCast(intType, opsecondparameter);
+                    } else {
+                        // BigQuery-style 'TIMESTAMP_ADD(timestamp, interval)'
+                        final SqlBasicCall operandCall = call.operand(1);
+                        qualifier = operandCall.operand(1);
+                        op1 = cx.convertExpression(operandCall.operand(0));
+                        op2 = cx.convertExpression(call.operand(0));
+                    }
                     break;
                 default:
                     // JDBC-style 'TIMESTAMPADD(unit, count, timestamp)'

@@ -440,7 +440,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
     public @Nullable Frame decorrelateRel(RelNode rel, boolean isCorVarDefined) {
         RelNode newRel = rel.copy(rel.getTraitSet(), rel.getInputs());
 
-        if (rel.getInputs().size() > 0) {
+        if (!rel.getInputs().isEmpty()) {
             List<RelNode> oldInputs = rel.getInputs();
             List<RelNode> newInputs = new ArrayList<>();
             for (int i = 0; i < oldInputs.size(); ++i) {
@@ -608,8 +608,6 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 newPos++;
             }
         }
-
-        assert newPos == newInputOutput.size();
 
         // This Project will be what the old input maps to,
         // replacing any previous mapping from old input).
@@ -855,10 +853,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
         for (CorRef corVar : correlations) {
             final int oldCorVarOffset = corVar.field;
 
-            final RelNode oldInput = getCorRel(corVar);
-            assert oldInput != null;
-            final Frame frame = getOrCreateFrame(oldInput);
-            assert frame != null;
+            final RelNode oldInput = requireNonNull(getCorRel(corVar));
+            final Frame frame = requireNonNull(getOrCreateFrame(oldInput));
             final RelNode newInput = frame.r;
 
             final List<Integer> newLocalOutputs;
@@ -888,10 +884,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
 
         RelNode r = null;
         for (CorRef corVar : correlations) {
-            final RelNode oldInput = getCorRel(corVar);
-            assert oldInput != null;
-            final RelNode newInput = getOrCreateFrame(oldInput).r;
-            assert newInput != null;
+            final RelNode oldInput = requireNonNull(getCorRel(corVar));
+            final RelNode newInput = requireNonNull(getOrCreateFrame(oldInput).r);
 
             if (!joinedInputs.contains(newInput)) {
                 final List<Integer> positions =
@@ -933,11 +927,9 @@ public class RelDecorrelator implements ReflectiveVisitor {
         for (CorRef corRef : correlations) {
             // The first input of a Correlate is always the rel defining
             // the correlated variables.
-            final RelNode oldInput = getCorRel(corRef);
-            assert oldInput != null;
+            final RelNode oldInput = requireNonNull(getCorRel(corRef));
             final Frame frame = getOrCreateFrame(oldInput);
-            final RelNode newInput = frame.r;
-            assert newInput != null;
+            final RelNode newInput = requireNonNull(frame.r);
 
             final List<Integer> newLocalOutputs =
                     requireNonNull(
@@ -1395,7 +1387,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
 
     private static RexInputRef getNewForOldInputRef(
             RelNode currentRel, Map<RelNode, Frame> map, RexInputRef oldInputRef) {
-        assert currentRel != null;
+        requireNonNull(currentRel, "currentRel");
 
         int oldOrdinal = oldInputRef.getIndex();
         int newOrdinal = 0;
@@ -1418,10 +1410,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
             oldOrdinal -= n;
         }
 
-        assert oldInput != null;
-
-        final Frame frame = map.get(oldInput);
-        assert frame != null;
+        requireNonNull(oldInput, "oldInput");
+        final Frame frame = requireNonNull(map.get(oldInput));
 
         // now oldOrdinal is relative to oldInput
         int oldLocalOrdinal = oldOrdinal;
@@ -1548,7 +1538,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
             @Nullable Filter filter,
             @Nullable List<RexFieldAccess> correlatedJoinKeys) {
         if (filter != null) {
-            assert correlatedJoinKeys != null;
+            requireNonNull(correlatedJoinKeys, "correlatedJoinKeys");
 
             // check that all correlated refs in the filter condition are
             // used in the join(as field access).
@@ -2082,7 +2072,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 right = right.stripped();
 
                 // check filter input contains no correlation
-                if (RelOptUtil.getVariablesUsed(right).size() > 0) {
+                if (!RelOptUtil.getVariablesUsed(right).isEmpty()) {
                     return;
                 }
 
@@ -2144,7 +2134,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                         left.getRowType().getFieldCount() + rightJoinKeys.get(0).getIndex();
             } else if (d.cm.mapRefRelToCorRef.containsKey(project)) {
                 // check filter input contains no correlation
-                if (RelOptUtil.getVariablesUsed(right).size() > 0) {
+                if (!RelOptUtil.getVariablesUsed(right).isEmpty()) {
                     return;
                 }
 
@@ -2307,8 +2297,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
             int k = -1;
             for (AggregateCall aggCall : aggCalls) {
                 ++k;
-                if ((aggCall.getAggregation() instanceof SqlCountAggFunction)
-                        && (aggCall.getArgList().size() == 0)) {
+                if (aggCall.getAggregation() instanceof SqlCountAggFunction
+                        && aggCall.getArgList().isEmpty()) {
                     isCountStar.add(k);
                 }
             }
@@ -2325,7 +2315,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 right = right.stripped();
 
                 // check filter input contains no correlation
-                if (RelOptUtil.getVariablesUsed(right).size() > 0) {
+                if (!RelOptUtil.getVariablesUsed(right).isEmpty()) {
                     return;
                 }
 
@@ -2421,7 +2411,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 joinCond = d.removeCorrelationExpr(filter.getCondition(), false);
             } else if (d.cm.mapRefRelToCorRef.containsKey(aggInputProject)) {
                 // check rightInput contains no correlation
-                if (RelOptUtil.getVariablesUsed(right).size() > 0) {
+                if (!RelOptUtil.getVariablesUsed(right).isEmpty()) {
                     return;
                 }
 

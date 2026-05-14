@@ -987,11 +987,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         SqlNode right = join.getRight();
         SqlNode condition = join.getCondition();
         lookupFromHints(left, scope, pos, hintList);
-        if (hintList.size() > 0) {
+        if (!hintList.isEmpty()) {
             return;
         }
         lookupFromHints(right, scope, pos, hintList);
-        if (hintList.size() > 0) {
+        if (!hintList.isEmpty()) {
             return;
         }
         final JoinConditionType conditionType = join.getConditionType();
@@ -1023,7 +1023,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // Remove the last part of name - it is a dummy
         List<String> subNames = Util.skipLast(names);
 
-        if (subNames.size() > 0) {
+        if (!subNames.isEmpty()) {
             // If there's a prefix, resolve it to a namespace.
             SqlValidatorNamespace ns = null;
             for (String name : subNames) {
@@ -1761,7 +1761,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
         SqlNode selfJoinTgtExpr =
                 getSelfJoinExprForUpdate(updateCall.getTargetTable(), updateAlias.getSimple());
-        assert selfJoinTgtExpr != null;
+        requireNonNull(selfJoinTgtExpr, "selfJoinTgtExpr");
 
         // Create join condition between source and target exprs,
         // creating a conjunction with the user-level WHERE
@@ -1916,7 +1916,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
      */
     @Nullable RelDataType getTableConstructorRowType(SqlCall values, SqlValidatorScope scope) {
         final List<SqlNode> rows = values.getOperandList();
-        assert rows.size() >= 1;
+        assert !rows.isEmpty();
         final List<RelDataType> rowTypes = new ArrayList<>();
         for (final SqlNode row : rows) {
             assert row.getKind() == SqlKind.ROW;
@@ -2062,7 +2062,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             @Nullable SqlFunction resolvedConstructor,
             List<RelDataType> argTypes) {
         SqlIdentifier sqlIdentifier = unresolvedConstructor.getSqlIdentifier();
-        assert sqlIdentifier != null;
+        requireNonNull(sqlIdentifier, "sqlIdentifier");
         RelDataType type = catalogReader.getNamedType(sqlIdentifier);
         if (type == null) {
             // TODO jvs 12-Feb-2005:  proper type name formatting
@@ -2678,7 +2678,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                     tableScope = new TableScope(parentScope, node);
                 }
                 tableScope.addChild(newNs, requireNonNull(alias, "alias"), forceNullable);
-                if (extendList != null && extendList.size() != 0) {
+                if (extendList != null && !extendList.isEmpty()) {
                     return enclosingNode;
                 }
                 return newNode;
@@ -2838,7 +2838,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         extendList,
                         forceNullable,
                         lateral);
-                if (extendList != null && extendList.size() != 0) {
+                if (extendList != null && !extendList.isEmpty()) {
                     return enclosingNode;
                 }
                 return newNode;
@@ -3232,7 +3232,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             // recursive scope is only set for the recursive queries.
             recursiveScope =
                     scope != null && scope.recursiveScope != null
-                            ? Objects.requireNonNull(scope.recursiveScope)
+                            ? requireNonNull(scope.recursiveScope)
                             : parentScope;
         }
         for (int i = 0; i < call.getOperandList().size(); i++) {
@@ -3522,7 +3522,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     @Override
     public void validateIntervalQualifier(SqlIntervalQualifier qualifier) {
-        assert qualifier != null;
+        requireNonNull(qualifier, "qualifier");
         boolean startPrecisionOutOfRange = false;
         boolean fractionalSecondPrecisionOutOfRange = false;
         final RelDataTypeSystem typeSystem = typeFactory.getTypeSystem();
@@ -4380,7 +4380,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     private static @Nullable Table resolveTable(SqlIdentifier identifier, SqlValidatorScope scope) {
         SqlQualified fullyQualified = scope.fullyQualify(identifier);
-        assert fullyQualified.namespace != null : "namespace must not be null in " + fullyQualified;
+        if (fullyQualified.namespace == null) {
+            throw new IllegalArgumentException("namespace must not be null in " + fullyQualified);
+        }
         SqlValidatorTable sqlValidatorTable = fullyQualified.namespace.getTable();
         if (sqlValidatorTable != null) {
             return sqlValidatorTable.table();
@@ -4534,7 +4536,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         // Make sure that ORDER BY is possible.
         final SqlNodeList orderList = select.getOrderList();
-        if (orderList != null && orderList.size() > 0) {
+        if (orderList != null && !orderList.isEmpty()) {
             switch (modality) {
                 case STREAM:
                     if (!hasSortedPrefix(scope, orderList)) {
@@ -4838,7 +4840,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return orderExpr3;
     }
 
-    private SqlNode measureToValue(SqlNode e) {
+    private static SqlNode measureToValue(SqlNode e) {
         if (e.getKind() == SqlKind.V2M) {
             return ((SqlCall) e).operand(0);
         }
@@ -4896,7 +4898,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             aggregatingScope = (AggregatingSelectScope) selectScope;
         }
         for (SqlNode groupItem : groupList) {
-            if (groupItem instanceof SqlNodeList && ((SqlNodeList) groupItem).size() == 0) {
+            if (groupItem instanceof SqlNodeList && ((SqlNodeList) groupItem).isEmpty()) {
                 continue;
             }
             validateGroupItem(groupScope, aggregatingScope, groupItem);
@@ -5303,7 +5305,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             final List<SqlNode> values = ((SqlCall) source).getOperandList();
             for (final int colIndex : constrainedTargetColumns) {
                 final String colName = tableFields.get(colIndex).getName();
-                final RelDataTypeField targetField = tableIndexToTargetField.get(colIndex);
+                final RelDataTypeField targetField =
+                        requireNonNull(tableIndexToTargetField.get(colIndex));
                 for (SqlNode row : values) {
                     final SqlCall call = (SqlCall) row;
                     final SqlNode sourceValue = call.operand(targetField.getIndex());
@@ -5893,7 +5896,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     @Override
     public CalciteContextException newValidationError(
             SqlNode node, Resources.ExInst<SqlValidatorException> e) {
-        assert node != null;
+        requireNonNull(node, "node");
         final SqlParserPos pos = node.getParserPosition();
         return SqlUtil.newContextException(pos, e);
     }
@@ -6020,38 +6023,34 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         final RelDataTypeFactory.Builder typeBuilder = typeFactory.builder();
 
         // parse PARTITION BY column
-        SqlNodeList partitionBy = matchRecognize.getPartitionList();
-        if (partitionBy != null) {
-            for (SqlNode node : partitionBy) {
-                SqlIdentifier identifier = (SqlIdentifier) node;
-                identifier.validate(this, scope);
-                RelDataType type = deriveType(scope, identifier);
-                String name = identifier.names.get(1);
-                typeBuilder.add(name, type);
-            }
+        for (SqlNode node : matchRecognize.getPartitionList()) {
+            SqlIdentifier identifier = (SqlIdentifier) node;
+            identifier.validate(this, scope);
+            RelDataType type = deriveType(scope, identifier);
+            String name = identifier.names.get(1);
+            typeBuilder.add(name, type);
         }
 
         // parse ORDER BY column
-        SqlNodeList orderBy = matchRecognize.getOrderList();
-        if (orderBy != null) {
-            for (SqlNode node : orderBy) {
-                node.validate(this, scope);
-                SqlIdentifier identifier;
-                if (node instanceof SqlBasicCall) {
-                    identifier = ((SqlBasicCall) node).operand(0);
-                } else {
-                    identifier =
-                            requireNonNull(
-                                    (SqlIdentifier) node,
-                                    () -> "order by field is null. All fields: " + orderBy);
-                }
+        for (SqlNode node : matchRecognize.getOrderList()) {
+            node.validate(this, scope);
+            SqlIdentifier identifier;
+            if (node instanceof SqlBasicCall) {
+                identifier = ((SqlBasicCall) node).operand(0);
+            } else {
+                identifier =
+                        requireNonNull(
+                                (SqlIdentifier) node,
+                                () ->
+                                        "order by field is null. All fields: "
+                                                + matchRecognize.getOrderList());
+            }
 
-                if (allRows) {
-                    RelDataType type = deriveType(scope, identifier);
-                    String name = identifier.names.get(1);
-                    if (!typeBuilder.nameExists(name)) {
-                        typeBuilder.add(name, type);
-                    }
+            if (allRows) {
+                RelDataType type = deriveType(scope, identifier);
+                String name = identifier.names.get(1);
+                if (!typeBuilder.nameExists(name)) {
+                    typeBuilder.add(name, type);
                 }
             }
         }
@@ -6081,11 +6080,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         RESOURCE.intervalMustBeNonNegative(
                                 intervalValue != null ? intervalValue : interval.toString()));
             }
-            if (orderBy == null || orderBy.size() == 0) {
+            if (matchRecognize.getOrderList().isEmpty()) {
                 throw newValidationError(interval, RESOURCE.cannotUseWithinWithoutOrderBy());
             }
 
-            SqlNode firstOrderByColumn = orderBy.get(0);
+            SqlNode firstOrderByColumn = matchRecognize.getOrderList().get(0);
             SqlIdentifier identifier;
             if (firstOrderByColumn instanceof SqlBasicCall) {
                 identifier = ((SqlBasicCall) firstOrderByColumn).operand(0);
@@ -6106,7 +6105,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         validateDefinitions(matchRecognize, scope);
 
         SqlNodeList subsets = matchRecognize.getSubsetList();
-        if (subsets != null && subsets.size() > 0) {
+        if (!subsets.isEmpty()) {
             for (SqlNode node : subsets) {
                 List<SqlNode> operands = ((SqlCall) node).getOperandList();
                 String leftString = ((SqlIdentifier) operands.get(0)).getSimple();
@@ -6594,8 +6593,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                                 orderList, RESOURCE.orderByRequiresOneKey(op.getName()));
                     }
                     // Validate that the ORDER BY field is of NUMERIC type
-                    SqlNode node = orderList.get(0);
-                    assert node != null;
+                    SqlNode node = requireNonNull(orderList.get(0));
                     final RelDataType type = deriveType(scope, node);
                     final @Nullable SqlTypeFamily family = type.getSqlTypeName().getFamily();
                     if (family == null || family.allowableDifferenceTypes().isEmpty()) {
@@ -6935,7 +6933,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     /** Visitor that retrieves pattern variables defined. */
     private static class PatternVarVisitor implements SqlVisitor<Void> {
-        private MatchRecognizeScope scope;
+        private final MatchRecognizeScope scope;
 
         PatternVarVisitor(MatchRecognizeScope scope) {
             this.scope = scope;
@@ -7081,7 +7079,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             for (; i < id.names.size(); i++) {
                 String name = id.names.get(i);
                 final RelDataTypeField field;
-                if (name.equals("")) {
+                if (name.isEmpty()) {
                     // The wildcard "*" is represented as an empty name. It never
                     // resolves to a field.
                     name = "*";
@@ -7565,7 +7563,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 return newInnerNode;
             }
 
-            if (operands.size() > 0) {
+            if (!operands.isEmpty()) {
                 for (SqlNode node : operands) {
                     if (node != null) {
                         SqlNode newNode = node.accept(new NavigationExpander());
@@ -7756,7 +7754,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         }
                         break;
                     default:
-                        if (operands.size() == 0
+                        if (operands.isEmpty()
                                 || !(operands.get(0) instanceof SqlCall)
                                 || ((SqlCall) operands.get(0)).getOperator()
                                         != SqlStdOperatorTable.CLASSIFIER) {
@@ -7885,7 +7883,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         private RelDataTypeField field(String name) {
             RelDataTypeField field = catalogReader.nameMatcher().field(rowType, name);
-            assert field != null : "field " + name + " was not found in " + rowType;
+            if (field == null) {
+                throw new AssertionError("field " + name + " was not found in " + rowType);
+            }
             return field;
         }
 
