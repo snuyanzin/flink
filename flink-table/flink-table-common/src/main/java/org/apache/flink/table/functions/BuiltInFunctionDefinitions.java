@@ -2846,7 +2846,7 @@ public final class BuiltInFunctionDefinitions {
                                     sequence(
                                             logical(LogicalTypeFamily.CHARACTER_STRING),
                                             symbol(JsonType.class))))
-                    .outputTypeStrategy(explicit(BOOLEAN().notNull()))
+                    .outputTypeStrategy(explicit(BOOLEAN()))
                     .runtimeDeferred()
                     .build();
 

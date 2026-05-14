@@ -26,6 +26,7 @@ import org.apache.flink.table.planner.plan.FlinkCalciteCatalogSnapshotReader;
 import org.apache.flink.table.planner.plan.utils.FlinkRelOptUtil;
 import org.apache.flink.table.planner.utils.ShortcutUtils;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -160,13 +161,13 @@ import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.SqlWithItem;
 import org.apache.calcite.sql.fun.SqlCase;
 import org.apache.calcite.sql.fun.SqlInOperator;
+import org.apache.calcite.sql.fun.SqlInternalOperators;
 import org.apache.calcite.sql.fun.SqlQuantifyOperator;
 import org.apache.calcite.sql.fun.SqlRowOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.sql.type.TableFunctionReturnTypeInference;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlVisitor;
@@ -175,6 +176,7 @@ import org.apache.calcite.sql.validate.CollectNamespace;
 import org.apache.calcite.sql.validate.DelegatingScope;
 import org.apache.calcite.sql.validate.ListScope;
 import org.apache.calcite.sql.validate.MatchRecognizeScope;
+import org.apache.calcite.sql.validate.MeasureScope;
 import org.apache.calcite.sql.validate.ParameterScope;
 import org.apache.calcite.sql.validate.SelectScope;
 import org.apache.calcite.sql.validate.SqlLambdaScope;
@@ -239,8 +241,15 @@ import static org.apache.calcite.runtime.FlatLists.append;
 import static org.apache.calcite.sql.SqlUtil.containsDefault;
 import static org.apache.calcite.sql.SqlUtil.containsIn;
 import static org.apache.calcite.sql.SqlUtil.stripAs;
+import static org.apache.calcite.sql.type.SqlTypeUtil.equalSansNullability;
+import static org.apache.calcite.sql.type.SqlTypeUtil.fromMeasure;
+import static org.apache.calcite.sql.type.SqlTypeUtil.hasScale;
+import static org.apache.calcite.sql.type.SqlTypeUtil.isApproximateNumeric;
+import static org.apache.calcite.sql.type.SqlTypeUtil.isExactNumeric;
+import static org.apache.calcite.sql.type.SqlTypeUtil.keepSourceTypeAndTargetNullability;
+import static org.apache.calcite.sql.type.SqlTypeUtil.promoteToRowType;
 import static org.apache.calcite.util.Static.RESOURCE;
-import static org.apache.flink.util.Preconditions.checkNotNull;
+import static org.apache.calcite.util.Util.transform;
 
 /**
  * Converts a SQL parse tree (consisting of {@link org.apache.calcite.sql.SqlNode} objects) into a
@@ -517,7 +526,7 @@ public class SqlToRelConverter {
         this.explainParamCount = explainParamCount;
     }
 
-    private void checkConvertedType(SqlNode query, RelNode result) {
+    private void checkConvertedType(SqlNode query, RelNode result, boolean unwrapMeasures) {
         if (query.isA(SqlKind.DML)) {
             return;
         }
@@ -532,7 +541,11 @@ public class SqlToRelConverter {
                 validator()
                         .getTypeFactory()
                         .createStructType(
-                                Pair.right(validatedFields),
+                                transform(
+                                        validatedFields,
+                                        unwrapMeasures
+                                                ? f -> fromMeasure(typeFactory, f.getType())
+                                                : RelDataTypeField::getType),
                                 SqlValidatorUtil.uniquify(
                                         Pair.left(validatedFields),
                                         catalogReader.nameMatcher().isCaseSensitive()));
@@ -583,7 +596,7 @@ public class SqlToRelConverter {
         }
         final RelNode result = decorrelateQuery(rootRel);
         if (result != rootRel) {
-            checkConvertedType(query, result);
+            checkConvertedType(query, result, false);
         }
         return result;
     }
@@ -651,12 +664,16 @@ public class SqlToRelConverter {
      *     <code>false</code> if the query will be part of a view.
      */
     public RelRoot convertQuery(SqlNode query, final boolean needsValidation, final boolean top) {
+        final boolean unwrapMeasures = !validator().config().embeddedQuery();
         if (needsValidation) {
             query = validator().validate(query);
         }
 
         RelNode result = convertQueryRecursive(query, top, null).rel;
         if (top) {
+            if (unwrapMeasures) {
+                result = unwrapMeasures(result);
+            }
             if (isStream(query)) {
                 result = new LogicalDelta(cluster, result.getTraitSet(), result);
             }
@@ -667,7 +684,7 @@ public class SqlToRelConverter {
                 collation = requiredCollation(result);
             }
         }
-        checkConvertedType(query, result);
+        checkConvertedType(query, result, top && unwrapMeasures);
 
         if (SQL2REL_LOGGER.isDebugEnabled()) {
             SQL2REL_LOGGER.debug(
@@ -715,6 +732,28 @@ public class SqlToRelConverter {
                 .withHints(hints);
     }
 
+    /**
+     * If any of the fields of {@code r} are measures, wraps them in calls to the {@code M2V}
+     * function.
+     */
+    private RelNode unwrapMeasures(RelNode r) {
+        if (r.getRowType().getFieldList().stream().anyMatch(f -> f.getType().isMeasure())) {
+            return relBuilder
+                    .push(r)
+                    .project(
+                            relBuilder.fields().stream()
+                                    .map(this::measureToValue)
+                                    .collect(toImmutableList()),
+                            relBuilder.peek().getRowType().getFieldNames())
+                    .build();
+        }
+        return r;
+    }
+
+    private RexNode measureToValue(RexNode e) {
+        return e.getType().isMeasure() ? relBuilder.call(SqlInternalOperators.M2V, e) : e;
+    }
+
     private static boolean isStream(SqlNode query) {
         return query instanceof SqlSelect
                 && ((SqlSelect) query).isKeywordPresent(SqlSelectKeyword.STREAM);
@@ -750,8 +789,10 @@ public class SqlToRelConverter {
     /** Converts a SELECT statement's parse tree into a relational expression. */
     public RelNode convertSelect(SqlSelect select, boolean top) {
         final SqlValidatorScope selectScope = validator().getWhereScope(select);
+        final MeasureScope measureScope = (MeasureScope) validator().getMeasureScope(select);
         final Blackboard bb = createBlackboard(selectScope, null, top);
-        convertSelectImpl(bb, select);
+        final Blackboard measureBb = new MeasureBlackboard(measureScope, bb);
+        convertSelectImpl(bb, measureBb, select);
         return castNonNull(bb.root);
     }
 
@@ -762,7 +803,8 @@ public class SqlToRelConverter {
     }
 
     /** Implementation of {@link #convertSelect(SqlSelect, boolean)}; derived class may override. */
-    protected void convertSelectImpl(final Blackboard bb, SqlSelect select) {
+    protected void convertSelectImpl(
+            final Blackboard bb, final Blackboard measureBb, SqlSelect select) {
         convertFrom(bb, select.getFrom());
 
         // We would like to remove ORDER BY clause from an expanded view, except if
@@ -809,7 +851,7 @@ public class SqlToRelConverter {
         if (validator().isAggregate(select)) {
             convertAgg(bb, select, orderExprList);
         } else {
-            convertSelectList(bb, select, orderExprList);
+            convertSelectList(bb, measureBb, select, orderExprList);
         }
 
         convertQualify(bb, select.getQualify());
@@ -1050,7 +1092,7 @@ public class SqlToRelConverter {
                         SqlNode elseOperand =
                                 requireNonNull(
                                         caseNode.getElseOperand(),
-                                        "getElseOperand for " + caseNode);
+                                        () -> "getElseOperand for " + caseNode);
                         if (!SqlUtil.isNull(elseOperand)) {
                             // "not(unknown)" is "unknown", so no need to simplify
                             final SqlCall not =
@@ -1292,7 +1334,7 @@ public class SqlToRelConverter {
                     return;
                 }
                 final RelDataType targetRowType =
-                        SqlTypeUtil.promoteToRowType(
+                        promoteToRowType(
                                 typeFactory, validator().getValidatedNodeType(leftKeyNode), null);
                 final boolean notIn = call.getOperator().kind == SqlKind.NOT_IN;
                 converted =
@@ -1824,7 +1866,7 @@ public class SqlToRelConverter {
                 rexComparison =
                         RexUtil.composeConjunction(
                                 rexBuilder,
-                                Util.transform(
+                                transform(
                                         Pair.zip(leftKeys, call.getOperandList()),
                                         pair ->
                                                 bb.convertExpression(
@@ -1925,15 +1967,10 @@ public class SqlToRelConverter {
 
         final ImmutableList.Builder<ImmutableList<RexLiteral>> tupleList = ImmutableList.builder();
         final RelDataType listType = validator().getValidatedNodeType(rowList);
-        final RelDataType rowType;
+        RelDataType rowType = promoteToRowType(typeFactory, listType, null);
         if (targetRowType != null) {
-            rowType =
-                    SqlTypeUtil.keepSourceTypeAndTargetNullability(
-                            targetRowType, listType, typeFactory);
-        } else {
-            rowType = SqlTypeUtil.promoteToRowType(typeFactory, listType, null);
+            rowType = keepSourceTypeAndTargetNullability(targetRowType, rowType, typeFactory);
         }
-
         final List<RelNode> unionInputs = new ArrayList<>();
         for (SqlNode node : rows) {
             SqlBasicCall call;
@@ -2017,12 +2054,12 @@ public class SqlToRelConverter {
         }
 
         RexLiteral literal = (RexLiteral) literalExpr;
+        Comparable<?> value = literal.getValue();
 
-        Comparable value = literal.getValue();
-
-        if (value != null && SqlTypeUtil.isExactNumeric(type) && SqlTypeUtil.hasScale(type)) {
+        if (value != null && isExactNumeric(type) && hasScale(type)) {
             BigDecimal roundedValue =
-                    NumberUtil.rescaleBigDecimal((BigDecimal) value, type.getScale());
+                    NumberUtil.rescaleBigDecimal(
+                            requireNonNull(literal.getValueAs(BigDecimal.class)), type.getScale());
             return rexBuilder.makeExactLiteral(roundedValue, type);
         }
 
@@ -3125,7 +3162,7 @@ public class SqlToRelConverter {
             ZoneId zoneId = tableConfig.getLocalTimeZone();
             TimestampString timestampString =
                     ((RexLiteral) period).getValueAs(TimestampString.class);
-            checkNotNull(
+            Preconditions.checkNotNull(
                     timestampString,
                     "The time travel expression %s can not convert to a valid timestamp string. This is a bug. Please file an issue.",
                     period);
@@ -3892,7 +3929,6 @@ public class SqlToRelConverter {
             List<SqlNode> extraExprs,
             RelFieldCollation.Direction direction,
             RelFieldCollation.NullDirection nullDirection) {
-        assert select != null;
         // Handle DESC keyword, e.g. 'select a, b from t order by a desc'.
         switch (orderItem.getKind()) {
             case DESCENDING:
@@ -3920,12 +3956,11 @@ public class SqlToRelConverter {
                 break;
         }
 
-        SqlNode converted = validator().expandOrderExpr(select, orderItem);
-
+        final SqlValidator validator = validator();
         switch (nullDirection) {
             case UNSPECIFIED:
                 nullDirection =
-                        validator().config().defaultNullCollation().last(desc(direction))
+                        validator.config().defaultNullCollation().last(desc(direction))
                                 ? RelFieldCollation.NullDirection.LAST
                                 : RelFieldCollation.NullDirection.FIRST;
                 break;
@@ -3933,10 +3968,12 @@ public class SqlToRelConverter {
                 break;
         }
 
+        SqlNode converted = validator.expandOrderExpr(select, orderItem);
+
         // Scan the select list and order exprs for an identical expression.
         final SelectScope selectScope =
                 requireNonNull(
-                        validator().getRawSelectScope(select),
+                        validator.getRawSelectScope(select),
                         () -> "getRawSelectScope is not found for " + select);
         int ordinal = -1;
         List<SqlNode> expandedSelectList = selectScope.getExpandedSelectList();
@@ -4234,7 +4271,7 @@ public class SqlToRelConverter {
             namespace = targetNs.resolve();
         }
         RelOptTable table = SqlValidatorUtil.getRelOptTable(namespace, catalogReader, null, null);
-        return requireNonNull(table, "no table found for " + call);
+        return requireNonNull(table, () -> "no table found for " + call);
     }
 
     /**
@@ -4590,6 +4627,14 @@ public class SqlToRelConverter {
             pv = identifier.names.get(0);
         }
 
+        final @Nullable SqlNode measure = bb.lookupMeasure(identifier);
+        if (measure != null) {
+            return bb.convertExpression(measure);
+        }
+        if (bb instanceof MeasureBlackboard) {
+            bb = ((MeasureBlackboard) bb).parentBlackboard;
+        }
+
         final SqlQualified qualified = bb.scope.fullyQualify(identifier);
         final Pair<RexNode, @Nullable BiFunction<RexNode, String, RexNode>> e0 =
                 bb.lookupExp(qualified);
@@ -4654,8 +4699,7 @@ public class SqlToRelConverter {
     protected RexNode adjustInputRef(Blackboard bb, RexInputRef inputRef) {
         RelDataTypeField field = bb.getRootField(inputRef);
         if (field != null) {
-            if (!SqlTypeUtil.equalSansNullability(
-                    typeFactory, field.getType(), inputRef.getType())) {
+            if (!equalSansNullability(typeFactory, field.getType(), inputRef.getType())) {
                 return inputRef;
             }
             return rexBuilder.makeInputRef(field.getType(), inputRef.getIndex());
@@ -4805,7 +4849,8 @@ public class SqlToRelConverter {
         return ret;
     }
 
-    private void convertSelectList(Blackboard bb, SqlSelect select, List<SqlNode> orderList) {
+    private void convertSelectList(
+            Blackboard bb, Blackboard measureBb, SqlSelect select, List<SqlNode> orderList) {
         SqlNodeList selectList = select.getSelectList();
         selectList = validator().expandStar(selectList, select, false);
 
@@ -4828,7 +4873,19 @@ public class SqlToRelConverter {
         int i = -1;
         for (SqlNode expr : selectList) {
             ++i;
-            exprs.add(bb.convertExpression(expr));
+            final SqlNode measure = SqlValidatorUtil.getMeasure(expr);
+            final RexNode e;
+            if (measure != null) {
+                final RexNode m = measureBb.convertExpression(measure);
+                if (m.getType().isMeasure()) {
+                    e = m;
+                } else {
+                    e = rexBuilder.makeCall(SqlInternalOperators.V2M, m);
+                }
+            } else {
+                e = bb.convertExpression(expr);
+            }
+            exprs.add(e);
             fieldNames.add(deriveAlias(expr, aliases, i));
         }
 
@@ -5071,7 +5128,7 @@ public class SqlToRelConverter {
 
         if (targetRowType == null) {
             RelDataType listType = validator().getValidatedNodeType(values);
-            targetRowType = SqlTypeUtil.promoteToRowType(typeFactory, listType, null);
+            targetRowType = promoteToRowType(typeFactory, listType, null);
         }
 
         assert insertOp instanceof SqlInsert || !processDefaults : "operation: " + insertOp;
@@ -5509,7 +5566,8 @@ public class SqlToRelConverter {
                             (e, fieldName) -> {
                                 final int j =
                                         requireNonNull(
-                                                fieldMap.get(fieldName), "field " + fieldName);
+                                                fieldMap.get(fieldName),
+                                                () -> "field " + fieldName);
                                 return rexBuilder.makeFieldAccess(e, j);
                             });
                 }
@@ -5609,11 +5667,17 @@ public class SqlToRelConverter {
                 if (ref >= 0) {
                     return rexBuilder.makeInputRef(root(), ref);
                 }
+
                 if (expr instanceof SqlCall) {
                     final RexNode rex = agg.lookupAggregates((SqlCall) expr);
                     if (rex != null) {
                         return rex;
                     }
+                }
+
+                final RexNode rex = agg.lookupMeasure(expandedGroupExpr);
+                if (rex != null) {
+                    return rex;
                 }
             }
 
@@ -6071,6 +6135,10 @@ public class SqlToRelConverter {
         public List<SqlMonotonicity> getColumnMonotonicities() {
             return columnMonotonicities;
         }
+
+        public @Nullable SqlNode lookupMeasure(SqlIdentifier identifier) {
+            return null;
+        }
     }
 
     private static SqlQuantifyOperator negate(SqlQuantifyOperator operator) {
@@ -6339,10 +6407,9 @@ public class SqlToRelConverter {
          * approximation to it.
          */
         private RelDataType computeHistogramType(RelDataType type) {
-            if (SqlTypeUtil.isExactNumeric(type) && type.getSqlTypeName() != SqlTypeName.BIGINT) {
+            if (isExactNumeric(type) && type.getSqlTypeName() != SqlTypeName.BIGINT) {
                 return typeFactory.createSqlType(SqlTypeName.BIGINT);
-            } else if (SqlTypeUtil.isApproximateNumeric(type)
-                    && type.getSqlTypeName() != SqlTypeName.DOUBLE) {
+            } else if (isApproximateNumeric(type) && type.getSqlTypeName() != SqlTypeName.DOUBLE) {
                 return typeFactory.createSqlType(SqlTypeName.DOUBLE);
             } else {
                 return type;
@@ -6758,6 +6825,26 @@ public class SqlToRelConverter {
                 return jsonInputFields.contains(inputRef.getIndex());
             }
             return false;
+        }
+    }
+
+    /** Blackboard for converting measure expressions. */
+    private class MeasureBlackboard extends Blackboard {
+        private final MeasureScope measureScope;
+        private final Blackboard parentBlackboard;
+
+        MeasureBlackboard(MeasureScope measureScope, Blackboard bb) {
+            super(measureScope, bb.nameToNodeMap, bb.top);
+            this.measureScope = measureScope;
+            this.parentBlackboard = bb;
+        }
+
+        @Override
+        public @Nullable SqlNode lookupMeasure(SqlIdentifier identifier) {
+            if (identifier.isSimple()) {
+                return measureScope.lookupMeasure(identifier.getSimple());
+            }
+            return super.lookupMeasure(identifier);
         }
     }
 }

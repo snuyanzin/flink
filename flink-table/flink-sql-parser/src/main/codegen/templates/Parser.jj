@@ -73,6 +73,7 @@ import org.apache.calcite.sql.SqlJsonQueryWrapperBehavior;
 import org.apache.calcite.sql.SqlJsonValueEmptyOrErrorBehavior;
 import org.apache.calcite.sql.SqlJsonValueReturning;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLambda;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlMatchRecognize;
 import org.apache.calcite.sql.SqlMerge;
@@ -1949,15 +1950,14 @@ void AddSelectItem(List<SqlNode> list) :
 {
     e = SelectExpression()
     (
-        [ <AS> ]
-        (
-            [ <AS>
-                [ <MEASURE> {
-                        e = SqlInternalOperators.MEASURE.createCall(
-                            e.getParserPosition(), e);
-                    }
-                ]
+        [ <AS>
+            [ <MEASURE> {
+                    e = SqlInternalOperators.MEASURE.createCall(
+                        e.getParserPosition(), e);
+                }
             ]
+        ]
+        (
             id = SimpleIdentifier()
         |
             // Mute the warning about ambiguity between alias and continued
@@ -4861,9 +4861,9 @@ SqlLiteral DateTimeLiteral() :
     }
 |
     LOOKAHEAD(2)
-        <TIME> { s = span(); } <WITH> ( <LOCAL> { local = true; } )? <TIME> <ZONE> p = SimpleStringLiteral() {
-            return SqlLiteral.createUnknown("TIME WITH " + (local ? "LOCAL " : "") + "TIME ZONE", p, s.end(this));
-        }
+    <TIME> { s = span(); } <WITH> ( <LOCAL> { local = true; } )? <TIME> <ZONE> p = SimpleStringLiteral() {
+        return SqlLiteral.createUnknown("TIME WITH " + (local ? "LOCAL " : "") + "TIME ZONE", p, s.end(this));
+    }
 |
     LOOKAHEAD(2)
     <TIMESTAMP> { s = span(); } <WITH> ( <LOCAL> { local = true; } )? <TIME> <ZONE> p = SimpleStringLiteral() {
