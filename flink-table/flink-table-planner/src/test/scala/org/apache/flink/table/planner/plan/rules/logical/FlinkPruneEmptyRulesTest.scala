@@ -47,7 +47,7 @@ class FlinkPruneEmptyRulesTest extends TableTestBase {
           CoreRules.FILTER_REDUCE_EXPRESSIONS,
           CoreRules.PROJECT_REDUCE_EXPRESSIONS,
           CoreRules.FILTER_SET_OP_TRANSPOSE,
-          CoreRules.FILTER_PROJECT_TRANSPOSE,
+          FlinkFilterProjectTransposeRule.INSTANCE,
           CoreRules.PROJECT_MERGE,
           CoreRules.PROJECT_FILTER_VALUES_MERGE,
           FlinkPruneEmptyRules.UNION_INSTANCE,
