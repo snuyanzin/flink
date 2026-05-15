@@ -44,6 +44,11 @@ public class TimeIndicatorRelDataType extends BasicSqlType {
         // unique name for each TimeIndicatorRelDataType
         final String typeNameStr =
                 (typeName == SqlTypeName.TIMESTAMP) ? "TIMESTAMP(3)" : "TIMESTAMP_LTZ(3)";
-        return typeNameStr + (isEventTime ? "*ROWTIME*" : "*PROCTIME*");
+        return typeNameStr + " " + (isEventTime ? "*ROWTIME*" : "*PROCTIME*");
+    }
+
+    @Override
+    public void generateTypeString(StringBuilder sb, boolean withDetail) {
+        sb.append(this);
     }
 }

@@ -1634,7 +1634,7 @@ class SubQuerySemiJoinTest extends SubQueryTestBase {
     // TODO some bugs in SubQueryRemoveRule
     //  the result RelNode (LogicalJoin(condition=[=($1, $8)], joinType=[left]))
     //  after SubQueryRemoveRule is unexpected
-    assertThatExceptionOfType(classOf[AssertionError])
+    assertThatExceptionOfType(classOf[NullPointerException])
       .isThrownBy(() => util.verifyRelPlanNotExpected(sqlQuery, "joinType=[semi]"))
   }
 
