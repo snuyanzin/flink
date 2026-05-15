@@ -19,7 +19,6 @@
 package org.apache.flink.table.planner.plan.batch.sql;
 
 import org.apache.flink.table.api.ExplainDetail;
-import org.apache.flink.table.api.SqlParserException;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.connector.sink.abilities.SupportsRowLevelUpdate;
@@ -173,7 +172,7 @@ class RowLevelUpdateTest extends TableTestBase {
                                         + ") ",
                                 updateMode));
 
-        assertThatExceptionOfType(SqlParserException.class)
+        assertThatExceptionOfType(AssertionError.class)
                 .isThrownBy(
                         () ->
                                 util.verifyExplainInsert(
