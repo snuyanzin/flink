@@ -1357,6 +1357,7 @@ public class SqlToRelConverter {
                                     null,
                                     ImmutableList.of(
                                             AggregateCall.create(
+                                                    call.getParserPosition(),
                                                     SqlStdOperatorTable.COUNT,
                                                     false,
                                                     false,
@@ -1369,6 +1370,7 @@ public class SqlToRelConverter {
                                                     longType,
                                                     null),
                                             AggregateCall.create(
+                                                    call.getParserPosition(),
                                                     SqlStdOperatorTable.COUNT,
                                                     false,
                                                     false,
@@ -2406,7 +2408,12 @@ public class SqlToRelConverter {
             checkArgument(bb.window == null, "already in window agg mode");
             bb.window = window;
             RexNode rexAgg = exprConverter.convertCall(bb, aggCall);
-            rexAgg = rexBuilder.ensureType(validator().getValidatedNodeType(call), rexAgg, false);
+            rexAgg =
+                    rexBuilder.ensureType(
+                            call.getParserPosition(),
+                            validator().getValidatedNodeType(call),
+                            rexAgg,
+                            false);
 
             // Walk over the tree and apply 'over' to all agg functions. This is
             // necessary because the returned expression is not necessarily a call
@@ -2760,7 +2767,10 @@ public class SqlToRelConverter {
                             newOperands.add(arg);
                         }
                         return rexBuilder.makeCall(
-                                validator().getUnknownType(), call.getOperator(), newOperands);
+                                call.getParserPosition(),
+                                validator().getUnknownType(),
+                                call.getOperator(),
+                                newOperands);
                     }
 
                     @Override
@@ -2810,8 +2820,9 @@ public class SqlToRelConverter {
 
         final RexNode after;
         if (afterMatch instanceof SqlCall) {
-            List<SqlNode> operands = ((SqlCall) afterMatch).getOperandList();
-            SqlOperator operator = ((SqlCall) afterMatch).getOperator();
+            final SqlCall afterCall = (SqlCall) afterMatch;
+            List<SqlNode> operands = afterCall.getOperandList();
+            SqlOperator operator = afterCall.getOperator();
             assert operands.size() == 1;
             SqlIdentifier id = (SqlIdentifier) operands.get(0);
             assert patternVarsSet.contains(id.getSimple())
@@ -2819,7 +2830,10 @@ public class SqlToRelConverter {
             RexNode rex = rexBuilder.makeLiteral(id.getSimple());
             after =
                     rexBuilder.makeCall(
-                            validator().getUnknownType(), operator, ImmutableList.of(rex));
+                            afterCall.getParserPosition(),
+                            validator().getUnknownType(),
+                            operator,
+                            ImmutableList.of(rex));
         } else {
             after = matchBb.convertExpression(afterMatch);
         }
@@ -5924,7 +5938,7 @@ public class SqlToRelConverter {
                     requireNonNull(subQuery, "subQuery");
                     rex = requireNonNull(subQuery.expr);
                     return StandardConvertletTable.castToValidatedType(
-                            expr, rex, validator(), rexBuilder, false);
+                            expr.getParserPosition(), expr, rex, validator(), rexBuilder, false);
 
                 case SELECT:
                 case EXISTS:
@@ -6405,15 +6419,20 @@ public class SqlToRelConverter {
                             0,
                             reinterpretCast
                                     ? rexBuilder.makeReinterpretCast(
+                                            call.getParserPosition(),
                                             histogramType,
                                             exprs.get(0),
                                             rexBuilder.makeLiteral(false))
-                                    : rexBuilder.makeCast(histogramType, exprs.get(0)));
+                                    : rexBuilder.makeCast(
+                                            call.getParserPosition(), histogramType, exprs.get(0)));
                 }
 
                 RexNode over =
                         relBuilder
-                                .aggregateCall(SqlStdOperatorTable.HISTOGRAM_AGG, exprs)
+                                .aggregateCall(
+                                        call.getParserPosition(),
+                                        SqlStdOperatorTable.HISTOGRAM_AGG,
+                                        exprs)
                                 .distinct(distinct)
                                 .ignoreNulls(ignoreNulls)
                                 .over()
@@ -6429,7 +6448,11 @@ public class SqlToRelConverter {
                                 .toRex();
 
                 RexNode histogramCall =
-                        rexBuilder.makeCall(histogramType, histogramOp, ImmutableList.of(over));
+                        rexBuilder.makeCall(
+                                call.getParserPosition(),
+                                histogramType,
+                                histogramOp,
+                                ImmutableList.of(over));
 
                 // If needed, post Cast result back to original
                 // type.
@@ -6437,9 +6460,13 @@ public class SqlToRelConverter {
                     if (reinterpretCast) {
                         histogramCall =
                                 rexBuilder.makeReinterpretCast(
-                                        type, histogramCall, rexBuilder.makeLiteral(false));
+                                        call.getParserPosition(),
+                                        type,
+                                        histogramCall,
+                                        rexBuilder.makeLiteral(false));
                     } else {
-                        histogramCall = rexBuilder.makeCast(type, histogramCall);
+                        histogramCall =
+                                rexBuilder.makeCast(call.getParserPosition(), type, histogramCall);
                     }
                 }
 
@@ -6447,7 +6474,7 @@ public class SqlToRelConverter {
             } else {
                 boolean nullWhenCountZero = aggOp == SqlStdOperatorTable.SUM && type.isNullable();
                 return relBuilder
-                        .aggregateCall(aggOp, exprs)
+                        .aggregateCall(call.getParserPosition(), aggOp, exprs)
                         .distinct(distinct)
                         .ignoreNulls(ignoreNulls)
                         .over()
@@ -6879,7 +6906,8 @@ public class SqlToRelConverter {
                         builder.add(call.operands.get(i));
                     }
                 }
-                return rexBuilder.makeCall(SqlStdOperatorTable.JSON_OBJECT, builder.build());
+                return rexBuilder.makeCall(
+                        call.getParserPosition(), SqlStdOperatorTable.JSON_OBJECT, builder.build());
             }
             if (call.getOperator() == SqlStdOperatorTable.JSON_ARRAY) {
                 final ImmutableList.Builder<RexNode> builder = ImmutableList.builder();
@@ -6887,7 +6915,8 @@ public class SqlToRelConverter {
                 for (int i = 1; i < call.operands.size(); ++i) {
                     builder.add(forceChildJsonType(call.operands.get(i)));
                 }
-                return rexBuilder.makeCall(SqlStdOperatorTable.JSON_ARRAY, builder.build());
+                return rexBuilder.makeCall(
+                        call.getParserPosition(), SqlStdOperatorTable.JSON_ARRAY, builder.build());
             }
             return super.visitCall(call);
         }

@@ -1865,7 +1865,9 @@ public class RelDecorrelator implements ReflectiveVisitor {
                     // and preferably in the base class RexShuttle.
                     newType = call.getType();
                 }
-                newCall = rexBuilder.makeCall(newType, operator, clonedOperands);
+                newCall =
+                        rexBuilder.makeCall(
+                                call.getParserPosition(), newType, operator, clonedOperands);
             } else {
                 newCall = call;
             }

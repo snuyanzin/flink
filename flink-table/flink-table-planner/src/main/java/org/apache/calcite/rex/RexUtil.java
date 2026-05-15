@@ -1570,7 +1570,8 @@ public class RexUtil {
             final SqlOperator op = call.getOperator();
             final List<RexNode> flattenedOperands = flatten(call.getOperands(), op);
             if (!isFlat(call.getOperands(), op)) {
-                return rexBuilder.makeCall(call.getType(), op, flattenedOperands);
+                return rexBuilder.makeCall(
+                        call.getParserPosition(), call.getType(), op, flattenedOperands);
             }
         }
         return node;
@@ -2114,7 +2115,7 @@ public class RexUtil {
             case LESS_THAN_OR_EQUAL:
             case GREATER_THAN_OR_EQUAL:
                 final SqlOperator op = op(call.getKind().negateNullSafe());
-                return rexBuilder.makeCall(op, call.getOperands());
+                return rexBuilder.makeCall(call.getParserPosition(), op, call.getOperands());
             default:
                 break;
         }
@@ -2130,7 +2131,8 @@ public class RexUtil {
             case LESS_THAN_OR_EQUAL:
             case GREATER_THAN_OR_EQUAL:
                 final SqlOperator op = requireNonNull(call.getOperator().reverse());
-                return rexBuilder.makeCall(op, Lists.reverse(call.getOperands()));
+                return rexBuilder.makeCall(
+                        call.getParserPosition(), op, Lists.reverse(call.getOperands()));
             default:
                 return null;
         }
