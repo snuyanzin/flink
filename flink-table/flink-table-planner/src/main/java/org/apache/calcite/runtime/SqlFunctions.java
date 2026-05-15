@@ -51,6 +51,7 @@ import org.apache.calcite.sql.fun.SqlLibraryOperators;
 import org.apache.calcite.util.NumberUtil;
 import org.apache.calcite.util.TimeWithTimeZoneString;
 import org.apache.calcite.util.TimestampWithTimeZoneString;
+import org.apache.calcite.util.TryThreadLocal;
 import org.apache.calcite.util.Unsafe;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.format.FormatElement;
@@ -205,8 +206,8 @@ public class SqlFunctions {
      * parsed, validated and planned. A real application will want persistent values for sequences,
      * shared among threads.
      */
-    private static final ThreadLocal<Map<String, AtomicLong>> THREAD_SEQUENCES =
-            ThreadLocal.withInitial(HashMap::new);
+    private static final TryThreadLocal<Map<String, AtomicLong>> THREAD_SEQUENCES =
+            TryThreadLocal.withInitial(HashMap::new);
 
     /** A byte string consisting of a single byte that is the ASCII space character (0x20). */
     private static final ByteString SINGLE_SPACE_BYTE_STRING = ByteString.of("20", 16);
@@ -2843,13 +2844,88 @@ public class SqlFunctions {
         return b0 & b1;
     }
 
+    /**
+     * Bitwise function <code>BITAND</code> applied to a Long and int value. Needed for handling
+     * NULL for the first argument.
+     */
+    public static long bitAnd(Long b0, int b1) {
+        return b0 & b1;
+    }
+
+    /**
+     * Bitwise function <code>BITAND</code> applied to a Long and int value. Needed for handling
+     * NULL for the second argument.
+     */
+    public static long bitAnd(int b0, Long b1) {
+        return b0 & b1;
+    }
+
     /** Bitwise function <code>BIT_AND</code> applied to binary values. */
     public static ByteString bitAnd(ByteString b0, ByteString b1) {
         return binaryOperator(b0, b1, (x, y) -> (byte) (x & y));
     }
 
+    /**
+     * Helper function for implementing <code>BITCOUNT</code>. Counts the number of bits set in an
+     * integer value.
+     */
+    public static long bitCount(long b) {
+        return Long.bitCount(b);
+    }
+
+    private static final BigDecimal BITCOUNT_MAX =
+            new BigDecimal(2).pow(64).subtract(new BigDecimal(1));
+    private static final BigDecimal BITCOUNT_MIN = new BigDecimal(2).pow(63).negate();
+
+    /**
+     * Helper function for implementing <code>BITCOUNT</code>. Counts the number of bits set in the
+     * integer portion of a decimal value.
+     */
+    public static long bitCount(BigDecimal b) {
+        final int comparison = b.compareTo(BITCOUNT_MAX);
+        if (comparison < 0) {
+            if (b.compareTo(BITCOUNT_MIN) <= 0) {
+                return 1;
+            } else {
+                return bitCount(b.setScale(0, RoundingMode.DOWN).longValue());
+            }
+        } else if (comparison == 0) {
+            return 64;
+        } else {
+            return 63;
+        }
+    }
+
+    /**
+     * Helper function for implementing <code>BITCOUNT</code>. Counts the number of bits set in a
+     * ByteString value.
+     */
+    public static long bitCount(ByteString b) {
+        long bitsSet = 0;
+        for (int i = 0; i < b.length(); i++) {
+            bitsSet += Integer.bitCount(0xff & b.byteAt(i));
+        }
+        return bitsSet;
+    }
+
     /** Bitwise function <code>BIT_OR</code> applied to integer values. */
     public static long bitOr(long b0, long b1) {
+        return b0 | b1;
+    }
+
+    /**
+     * Bitwise function <code>BITOR</code> applied to a Long and int value. Needed for handling NULL
+     * for the first argument.
+     */
+    public static long bitOr(Long b0, int b1) {
+        return b0 | b1;
+    }
+
+    /**
+     * Bitwise function <code>BITOR</code> applied to a Long and int value. Needed for handling NULL
+     * for the second argument.
+     */
+    public static long bitOr(int b0, Long b1) {
         return b0 | b1;
     }
 
@@ -2860,6 +2936,22 @@ public class SqlFunctions {
 
     /** Bitwise function <code>BIT_XOR</code> applied to integer values. */
     public static long bitXor(long b0, long b1) {
+        return b0 ^ b1;
+    }
+
+    /**
+     * Bitwise function <code>BITXOR</code> applied to a Long and int value. Needed for handling
+     * NULL for the first argument.
+     */
+    public static long bitXor(Long b0, int b1) {
+        return b0 ^ b1;
+    }
+
+    /**
+     * Bitwise function <code>BITXOR</code> applied to a Long and int value. Needed for handling
+     * NULL for the second argument.
+     */
+    public static long bitXor(int b0, Long b1) {
         return b0 ^ b1;
     }
 
@@ -2988,6 +3080,16 @@ public class SqlFunctions {
             throw new IllegalArgumentException("Cannot take logarithm of zero or negative number");
         }
         return Math.log(number.doubleValue()) / Math.log(base.doubleValue());
+    }
+
+    /** SQL <code>LOG1P</code> operator applied to double values. */
+    public static @Nullable Double log1p(double b0) {
+        return b0 <= -1 ? null : Math.log1p(b0);
+    }
+
+    /** SQL <code>LOG1P</code> operator applied to BigDecimal values. */
+    public static @Nullable Double log1p(BigDecimal b0) {
+        return b0.doubleValue() <= -1 ? null : Math.log1p(b0.doubleValue());
     }
 
     // MOD
@@ -5503,14 +5605,8 @@ public class SqlFunctions {
     }
 
     private static AtomicLong getAtomicLong(String key) {
-        final Map<String, AtomicLong> map =
-                requireNonNull(THREAD_SEQUENCES.get(), "THREAD_SEQUENCES.get()");
-        AtomicLong atomic = map.get(key);
-        if (atomic == null) {
-            atomic = new AtomicLong();
-            map.put(key, atomic);
-        }
-        return atomic;
+        final Map<String, AtomicLong> map = THREAD_SEQUENCES.get();
+        return map.computeIfAbsent(key, key_ -> new AtomicLong());
     }
 
     /** Support the ARRAYS_OVERLAP function. */
@@ -5905,6 +6001,55 @@ public class SqlFunctions {
             map.put(key, value);
         }
         return map;
+    }
+
+    /** Support the SUBSTRING_INDEX function. */
+    public static String substringIndex(String string, String delimiter, int count) {
+        if (string.isEmpty() || count == 0) {
+            return "";
+        }
+        if (count > 0) {
+            int idx = -1;
+            while (count > 0) {
+                idx = string.indexOf(delimiter, idx + 1);
+                if (idx >= 0) {
+                    count--;
+                } else {
+                    // can not find enough delim
+                    return string;
+                }
+            }
+            if (idx == 0) {
+                return "";
+            }
+            return string.substring(0, idx);
+        } else {
+            int idx = string.length() - delimiter.length() + 1;
+            count = -count;
+            while (count > 0) {
+                idx = rfind(string, delimiter, idx - 1);
+                if (idx >= 0) {
+                    count--;
+                } else {
+                    return string;
+                }
+            }
+            if (idx + delimiter.length() == string.length()) {
+                return "";
+            }
+            return string.substring(idx + delimiter.length());
+        }
+    }
+
+    /** Find the string from right to left. */
+    private static int rfind(String string, String delim, int start) {
+        while (start >= 0) {
+            if (string.indexOf(delim, start) >= 0) {
+                return start;
+            }
+            start -= 1;
+        }
+        return -1;
     }
 
     /** Support the SLICE function. */

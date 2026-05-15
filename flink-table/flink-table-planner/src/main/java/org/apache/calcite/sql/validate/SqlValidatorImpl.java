@@ -358,11 +358,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         if (config.conformance().allowLenientCoercion()) {
             final SqlTypeCoercionRule rules =
-                    requireNonNull(
-                            config.typeCoercionRules() != null
-                                    ? config.typeCoercionRules()
-                                    : SqlTypeCoercionRule.THREAD_PROVIDERS.get(),
-                            "rules");
+                    first(config.typeCoercionRules(), SqlTypeCoercionRule.instance());
 
             final ImmutableSet<SqlTypeName> arrayMapping =
                     ImmutableSet.<SqlTypeName>builder()
