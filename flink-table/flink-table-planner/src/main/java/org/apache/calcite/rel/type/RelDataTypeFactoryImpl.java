@@ -71,7 +71,6 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
                     .build(CacheLoader.from(RelDataTypeFactoryImpl::keyToType));
 
     /** Global cache for RelDataType. */
-    @SuppressWarnings("BetaApi")
     private static final Interner<RelDataType> DATATYPE_CACHE = Interners.newWeakInterner();
 
     private static RelDataType keyToType(Key key) {
@@ -408,7 +407,6 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
      *
      * @throws NullPointerException if type is null
      */
-    @SuppressWarnings("BetaApi")
     protected RelDataType canonize(final RelDataType type) {
         return DATATYPE_CACHE.intern(type);
     }

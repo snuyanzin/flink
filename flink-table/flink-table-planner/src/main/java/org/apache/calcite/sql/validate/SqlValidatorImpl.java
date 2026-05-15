@@ -3526,8 +3526,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         final int startPrecision = qualifier.getStartPrecision(typeSystem);
         final int fracPrecision = qualifier.getFractionalSecondPrecision(typeSystem);
         final int maxPrecision = typeSystem.getMaxPrecision(qualifier.typeName());
-        final int minPrecision = qualifier.typeName().getMinPrecision();
-        final int minScale = qualifier.typeName().getMinScale();
+        final int minPrecision = typeSystem.getMinPrecision(qualifier.typeName());
+        final int minScale = typeSystem.getMinScale(qualifier.typeName());
         final int maxScale = typeSystem.getMaxScale(qualifier.typeName());
         if (startPrecision < minPrecision || startPrecision > maxPrecision) {
             startPrecisionOutOfRange = true;
