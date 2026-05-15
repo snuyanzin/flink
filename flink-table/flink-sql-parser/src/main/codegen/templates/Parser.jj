@@ -5947,7 +5947,7 @@ SqlTypeNameSpec SqlTypeName3(Span s) :
 {
     final SqlTypeName sqlTypeName;
     int precision = RelDataType.PRECISION_NOT_SPECIFIED;
-    int scale = RelDataType.PRECISION_NOT_SPECIFIED;
+    int scale = RelDataType.SCALE_NOT_SPECIFIED;
 }
 {
     (

@@ -101,11 +101,11 @@ class FlinkDDLDataTypeTest {
                 createArgumentsTestItem("DEC", nullable(FIXTURE.decimalType), "DECIMAL"),
                 createArgumentsTestItem("NUMERIC", nullable(FIXTURE.decimalType), "DECIMAL"),
                 createArgumentsTestItem(
-                        "DECIMAL(10)", nullable(FIXTURE.decimalP10S0Type), "DECIMAL(10, -1)"),
+                        "DECIMAL(10)", nullable(FIXTURE.decimalP10S0Type), "DECIMAL(10)"),
                 createArgumentsTestItem(
-                        "DEC(10)", nullable(FIXTURE.decimalP10S0Type), "DECIMAL(10, -1)"),
+                        "DEC(10)", nullable(FIXTURE.decimalP10S0Type), "DECIMAL(10)"),
                 createArgumentsTestItem(
-                        "NUMERIC(10)", nullable(FIXTURE.decimalP10S0Type), "DECIMAL(10, -1)"),
+                        "NUMERIC(10)", nullable(FIXTURE.decimalP10S0Type), "DECIMAL(10)"),
                 createArgumentsTestItem(
                         "DECIMAL(10, 3)", nullable(FIXTURE.decimalP10S3Type), "DECIMAL(10, 3)"),
                 createArgumentsTestItem(
