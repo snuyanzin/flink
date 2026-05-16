@@ -88,6 +88,12 @@ class S3ClientProvider implements AutoCloseableAsync {
     private final boolean checksumValidation;
     private final int maxConnections;
     private final int maxRetries;
+    @Nullable private final String region;
+    @Nullable private final String endpoint;
+    @Nullable private final String assumeRoleArn;
+    @Nullable private final String assumeRoleExternalId;
+    @Nullable private final String assumeRoleSessionName;
+    private final int assumeRoleSessionDurationSeconds;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     private S3ClientProvider(
@@ -104,7 +110,13 @@ class S3ClientProvider implements AutoCloseableAsync {
             boolean chunkedEncoding,
             boolean checksumValidation,
             int maxConnections,
-            int maxRetries) {
+            int maxRetries,
+            @Nullable String region,
+            @Nullable String endpoint,
+            @Nullable String assumeRoleArn,
+            @Nullable String assumeRoleExternalId,
+            @Nullable String assumeRoleSessionName,
+            int assumeRoleSessionDurationSeconds) {
         this.s3Client = Preconditions.checkNotNull(s3Client, "s3Client must not be null");
         this.transferManager =
                 Preconditions.checkNotNull(transferManager, "transferManager must not be null");
@@ -129,6 +141,12 @@ class S3ClientProvider implements AutoCloseableAsync {
         this.checksumValidation = checksumValidation;
         this.maxConnections = maxConnections;
         this.maxRetries = maxRetries;
+        this.region = region;
+        this.endpoint = endpoint;
+        this.assumeRoleArn = assumeRoleArn;
+        this.assumeRoleExternalId = assumeRoleExternalId;
+        this.assumeRoleSessionName = assumeRoleSessionName;
+        this.assumeRoleSessionDurationSeconds = assumeRoleSessionDurationSeconds;
     }
 
     public S3Client getS3Client() {
@@ -194,6 +212,41 @@ class S3ClientProvider implements AutoCloseableAsync {
     @VisibleForTesting
     int getMaxRetries() {
         return maxRetries;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    String getRegion() {
+        return region;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    String getEndpoint() {
+        return endpoint;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    String getAssumeRoleArn() {
+        return assumeRoleArn;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    String getAssumeRoleExternalId() {
+        return assumeRoleExternalId;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    String getAssumeRoleSessionName() {
+        return assumeRoleSessionName;
+    }
+
+    @VisibleForTesting
+    int getAssumeRoleSessionDurationSeconds() {
+        return assumeRoleSessionDurationSeconds;
     }
 
     @Override
@@ -462,7 +515,13 @@ class S3ClientProvider implements AutoCloseableAsync {
                     chunkedEncoding,
                     checksumValidation,
                     maxConnections,
-                    maxRetries);
+                    maxRetries,
+                    region,
+                    endpoint,
+                    assumeRoleArn,
+                    assumeRoleExternalId,
+                    assumeRoleSessionName,
+                    assumeRoleSessionDurationSeconds);
         }
 
         private AwsCredentialsProvider buildBaseCredentialsProvider() {
