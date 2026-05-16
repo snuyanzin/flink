@@ -4575,6 +4575,14 @@ public class SqlToRelConverter {
             }
         }
 
+        // ----- FLINK MODIFICATION BEGIN -----
+        // For nested field access (e.g. b.r.order_id in a LEFT JOIN), the result
+        // is a RexFieldAccess (or CAST of one) whose reference RexInputRef still
+        // has the pre-join type. Adjust the reference so that field access on a
+        // nullable ROW from the non-preserved side produces a nullable type.
+        e = adjustFieldAccessInputRef(bb, e);
+        // ----- FLINK MODIFICATION END -----
+
         if (e0.left instanceof RexCorrelVariable) {
             // ----- FLINK MODIFICATION BEGIN -----
             // adjust the type to account for nulls introduced by FlinkRexBuilder#makeFieldAccess
@@ -4587,6 +4595,40 @@ public class SqlToRelConverter {
     }
 
     // ----- FLINK MODIFICATION BEGIN -----
+    /**
+     * For nested field access (e.g. {@code b.r.order_id} in a LEFT JOIN), the reference {@link
+     * RexInputRef} inside the {@link RexFieldAccess} may still carry the pre-join type. This
+     * adjusts it via {@link #adjustInputRef} so that the field access on a nullable ROW from the
+     * non-preserved side of an outer join produces a nullable result.
+     */
+    private RexNode adjustFieldAccessInputRef(Blackboard bb, RexNode e) {
+        final RexFieldAccess fieldAccess;
+        if (e instanceof RexFieldAccess) {
+            fieldAccess = (RexFieldAccess) e;
+        } else if (e instanceof RexCall
+                && e.getKind() == SqlKind.CAST
+                && ((RexCall) e).getOperands().get(0) instanceof RexFieldAccess) {
+            fieldAccess = (RexFieldAccess) ((RexCall) e).getOperands().get(0);
+        } else {
+            return e;
+        }
+
+        final RexNode ref = fieldAccess.getReferenceExpr();
+        if (!(ref instanceof RexInputRef)) {
+            return e;
+        }
+
+        final RexNode adjusted = adjustInputRef(bb, (RexInputRef) ref);
+        if (adjusted.getType().isNullable() == ref.getType().isNullable()) {
+            return e;
+        }
+        // Build the field access with nullable type directly, bypassing
+        // FlinkRexBuilder's CAST approach which would be stripped by RexSimplify.
+        final RelDataType nullableFieldType =
+                typeFactory.createTypeWithNullability(fieldAccess.getField().getType(), true);
+        return rexBuilder.makeCast(nullableFieldType, adjusted);
+    }
+
     private RexFieldAccess adjustRexFieldAccess(RexNode rexNode) {
         // Either RexFieldAccess or CAST of RexFieldAccess to nullable
         assert rexNode instanceof RexFieldAccess
