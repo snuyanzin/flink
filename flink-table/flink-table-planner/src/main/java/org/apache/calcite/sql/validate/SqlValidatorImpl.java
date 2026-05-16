@@ -33,6 +33,7 @@ import org.apache.calcite.rel.type.DynamicRecordType;
 import org.apache.calcite.rel.type.RelCrossType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.rel.type.RelRecordType;
@@ -198,6 +199,9 @@ import static org.apache.calcite.util.Util.first;
  * <p>Lines 7337-7354, CALCITE-7486 should be removed after upgrading Calcite to 1.42.0.
  *
  * <p>Lines 7399-7407, CALCITE-7486 should be removed after upgrading Calcite to 1.42.0.
+ *
+ * <p>Lines 6704-6717, Added in FLINK-39695 (backport of CALCITE-6764): propagate parent record
+ * nullability to nested fields.
  */
 public class SqlValidatorImpl implements SqlValidatorWithHints {
     // ~ Static fields/initializers ---------------------------------------------
@@ -6700,7 +6704,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 if (field == null) {
                     throw newValidationError(id.getComponent(i), RESOURCE.unknownField(name));
                 }
+                // ----- FLINK MODIFICATION BEGIN -----
+                // Backport from Calcite (CALCITE-6764): if the parent record is
+                // nullable, the field must also be nullable.
+                boolean recordIsNullable = type.isNullable();
                 type = field.getType();
+                if (recordIsNullable) {
+                    type =
+                            ((RelDataTypeFactoryImpl) getTypeFactory())
+                                    .enforceTypeWithNullability(type, true);
+                }
+                // ----- FLINK MODIFICATION END -----
             }
             type = SqlTypeUtil.addCharsetAndCollation(type, getTypeFactory());
             return type;
