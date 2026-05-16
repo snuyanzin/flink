@@ -4626,7 +4626,9 @@ public class SqlToRelConverter {
         // FlinkRexBuilder's CAST approach which would be stripped by RexSimplify.
         final RelDataType nullableFieldType =
                 typeFactory.createTypeWithNullability(fieldAccess.getField().getType(), true);
-        return rexBuilder.makeCast(nullableFieldType, rexBuilder.makeFieldAccess(adjusted, fieldAccess.getField().getIndex()));
+        return rexBuilder.makeCast(
+                nullableFieldType,
+                rexBuilder.makeFieldAccess(adjusted, fieldAccess.getField().getIndex()));
     }
 
     private RexFieldAccess adjustRexFieldAccess(RexNode rexNode) {

@@ -2476,7 +2476,9 @@ public class RexUtil {
             expr.accept(this);
             final RexNode normalizedExpr = lookup(expr);
             if (normalizedExpr != expr) {
-                fieldAccess = new RexFieldAccess(normalizedExpr, fieldAccess.getField());
+                fieldAccess =
+                        new RexFieldAccess(
+                                normalizedExpr, fieldAccess.getField(), fieldAccess.getType());
             }
             return register(fieldAccess);
         }
@@ -3186,7 +3188,6 @@ public class RexUtil {
             }
         }
     }
-
 
     // ----- FLINK MODIFICATION END -----
 }

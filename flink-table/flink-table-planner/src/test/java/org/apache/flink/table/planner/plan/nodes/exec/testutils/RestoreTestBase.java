@@ -280,6 +280,7 @@ public abstract class RestoreTestBase implements TableTestProgramRunner {
      * Execute this test to generate test files. Remember to be using the correct branch when
      * generating the test files.
      */
+    @Disabled
     @ParameterizedTest
     @MethodSource("supportedPrograms")
     @Order(0)
