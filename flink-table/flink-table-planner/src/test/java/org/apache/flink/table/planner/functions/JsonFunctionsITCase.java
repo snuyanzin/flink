@@ -292,7 +292,13 @@ class JsonFunctionsITCase extends BuiltInFunctionTestBase {
                                         "wrong"),
                         "JSON_VALUE(f0, 'strict $.[''contains blank'']' NULL ON EMPTY DEFAULT 'wrong' ON ERROR)",
                         "right",
-                        STRING());
+                        STRING())
+
+                // Multiple JSON_VALUE calls on the same input should reuse parsed JSON
+                .testSqlResult(
+                        "JSON_VALUE(f0, '$.type'), JSON_VALUE(f0, '$.age')",
+                        List.of("account", "42"),
+                        List.of(STRING(), STRING()));
     }
 
     private static List<TestSetSpec> isJsonSpec() {
