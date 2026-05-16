@@ -134,7 +134,7 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("lj_nn_sink")
                                     .addSchema("order_id BIGINT", "detail_id BIGINT")
-                                    .consumedValues("+I[1, 1]", "+I[2, null]")
+                                    .consumedValues("+I[1, null]", "-D[1, null]", "+I[1, 1]", "+I[2, null]")
                                     .build())
                     .runSql(
                             "INSERT INTO lj_nn_sink "
@@ -194,7 +194,7 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("fj_nn_sink")
                                     .addSchema("left_id BIGINT", "right_id BIGINT")
-                                    .consumedValues("+I[1, null]", "+I[2, 2]", "+I[null, 3]")
+                                    .consumedValues("+I[1, null]", "+I[null, 2]", "-D[null, 2]", "+I[2, 2]", "+I[null, 3]")
                                     .build())
                     .runSql(
                             "INSERT INTO fj_nn_sink "
@@ -224,7 +224,7 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("lj_n_sink")
                                     .addSchema("order_id BIGINT", "detail_id BIGINT")
-                                    .consumedValues("+I[1, 1]", "+I[2, null]")
+                                    .consumedValues("+I[1, null]", "-D[1, null]", "+I[1, 1]", "+I[2, null]")
                                     .build())
                     .runSql(
                             "INSERT INTO lj_n_sink "
@@ -278,7 +278,7 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("fj_n_sink")
                                     .addSchema("left_id BIGINT", "right_id BIGINT")
-                                    .consumedValues("+I[1, null]", "+I[2, 2]", "+I[null, 3]")
+                                    .consumedValues("+I[1, null]", "+I[null, 2]", "-D[null, 2]", "+I[2, 2]", "+I[null, 3]")
                                     .build())
                     .runSql(
                             "INSERT INTO fj_n_sink "
