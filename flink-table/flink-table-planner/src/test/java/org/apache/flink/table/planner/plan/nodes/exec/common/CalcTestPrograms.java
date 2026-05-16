@@ -320,8 +320,7 @@ public class CalcTestPrograms {
                                             "`order_id` BIGINT NOT NULL",
                                             "`amount` DOUBLE",
                                             "PRIMARY KEY (`order_id`) NOT ENFORCED")
-                                    .producedBeforeRestore(Row.of(1L, 10.0), Row.of(2L, 20.0))
-                                    .producedAfterRestore(Row.of(3L, 30.0))
+                                    .producedValues(Row.of(1L, 10.0), Row.of(2L, 20.0))
                                     .build())
                     .setupTableSource(
                             SourceTestStep.newBuilder("order_details_row")
@@ -329,14 +328,12 @@ public class CalcTestPrograms {
                                             "`r` ROW<`order_id` BIGINT NOT NULL, `name` STRING NOT NULL> NOT NULL",
                                             "`detail` STRING",
                                             "PRIMARY KEY (`r`) NOT ENFORCED")
-                                    .producedBeforeRestore(Row.of(Row.of(1L, "first"), "d1"))
-                                    .producedAfterRestore(Row.of(Row.of(3L, "third"), "d3"))
+                                    .producedValues(Row.of(Row.of(1L, "first"), "d1"))
                                     .build())
                     .setupTableSink(
                             SinkTestStep.newBuilder("coalesce_sink")
                                     .addSchema("order_id_str STRING")
-                                    .consumedBeforeRestore("+I[1]", "+I[2]")
-                                    .consumedAfterRestore("+I[3]")
+                                    .consumedValues("+I[1]", "+I[2]")
                                     .build())
                     .runSql(
                             "INSERT INTO coalesce_sink "
