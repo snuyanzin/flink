@@ -104,6 +104,7 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("sink_t")
                                     .addSchema("output STRING")
+                                    .testMaterializedData()
                                     .consumedValues("+I[test_diff]")
                                     .build())
                     .runSql(
@@ -134,7 +135,8 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("lj_nn_sink")
                                     .addSchema("order_id BIGINT", "detail_id BIGINT")
-                                    .consumedValues("+I[1, null]", "-D[1, null]", "+I[1, 1]", "+I[2, null]")
+                                    .testMaterializedData()
+                                    .consumedValues("+I[1, 1]", "+I[2, null]")
                                     .build())
                     .runSql(
                             "INSERT INTO lj_nn_sink "
@@ -164,6 +166,7 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("rj_nn_sink")
                                     .addSchema("detail_id BIGINT", "order_id BIGINT")
+                                    .testMaterializedData()
                                     .consumedValues("+I[1, 1]", "+I[null, 2]")
                                     .build())
                     .runSql(
@@ -194,7 +197,8 @@ public class JoinSemanticTestPrograms {
                     .setupTableSink(
                             SinkTestStep.newBuilder("fj_nn_sink")
                                     .addSchema("left_id BIGINT", "right_id BIGINT")
-                                    .consumedValues("+I[1, null]", "+I[null, 2]", "-D[null, 2]", "+I[2, 2]", "+I[null, 3]")
+                                    .testMaterializedData()
+                                    .consumedValues("+I[1, null]", "+I[2, 2]", "+I[null, 3]")
                                     .build())
                     .runSql(
                             "INSERT INTO fj_nn_sink "
@@ -218,13 +222,17 @@ public class JoinSemanticTestPrograms {
                                     .build())
                     .setupTableSource(
                             SourceTestStep.newBuilder("lj_n_details")
-                                    .addSchema("`r` ROW<`order_id` BIGINT NOT NULL, `name` STRING>")
-                                    .producedValues(Row.of(Row.of(1L, "first")))
+                                    .addSchema(
+                                            "`id` BIGINT NOT NULL",
+                                            "`r` ROW<`order_id` BIGINT NOT NULL, `name` STRING>",
+                                            "PRIMARY KEY (`id`) NOT ENFORCED")
+                                    .producedValues(Row.of(1L, Row.of(1L, "first")))
                                     .build())
                     .setupTableSink(
                             SinkTestStep.newBuilder("lj_n_sink")
                                     .addSchema("order_id BIGINT", "detail_id BIGINT")
-                                    .consumedValues("+I[1, null]", "-D[1, null]", "+I[1, 1]", "+I[2, null]")
+                                    .testMaterializedData()
+                                    .consumedValues("+I[1, 1]", "+I[2, null]")
                                     .build())
                     .runSql(
                             "INSERT INTO lj_n_sink "
@@ -246,12 +254,16 @@ public class JoinSemanticTestPrograms {
                                     .build())
                     .setupTableSource(
                             SourceTestStep.newBuilder("rj_n_details")
-                                    .addSchema("`r` ROW<`order_id` BIGINT NOT NULL, `name` STRING>")
-                                    .producedValues(Row.of(Row.of(1L, "first")))
+                                    .addSchema(
+                                            "`id` BIGINT NOT NULL",
+                                            "`r` ROW<`order_id` BIGINT NOT NULL, `name` STRING>",
+                                            "PRIMARY KEY (`id`) NOT ENFORCED")
+                                    .producedValues(Row.of(1L, Row.of(1L, "first")))
                                     .build())
                     .setupTableSink(
                             SinkTestStep.newBuilder("rj_n_sink")
                                     .addSchema("detail_id BIGINT", "order_id BIGINT")
+                                    .testMaterializedData()
                                     .consumedValues("+I[1, 1]", "+I[null, 2]")
                                     .build())
                     .runSql(
@@ -267,18 +279,25 @@ public class JoinSemanticTestPrograms {
                             "nullable ROW fields from both sides of FULL JOIN must be nullable")
                     .setupTableSource(
                             SourceTestStep.newBuilder("fj_n_left")
-                                    .addSchema("`r` ROW<`id` BIGINT NOT NULL>")
-                                    .producedValues(Row.of(Row.of(1L)), Row.of(Row.of(2L)))
+                                    .addSchema(
+                                            "`id` BIGINT NOT NULL",
+                                            "`r` ROW<`id` BIGINT NOT NULL>",
+                                            "PRIMARY KEY (`id`) NOT ENFORCED")
+                                    .producedValues(Row.of(1L, Row.of(1L)), Row.of(2L, Row.of(2L)))
                                     .build())
                     .setupTableSource(
                             SourceTestStep.newBuilder("fj_n_right")
-                                    .addSchema("`r` ROW<`id` BIGINT NOT NULL>")
-                                    .producedValues(Row.of(Row.of(2L)), Row.of(Row.of(3L)))
+                                    .addSchema(
+                                            "`id` BIGINT NOT NULL",
+                                            "`r` ROW<`id` BIGINT NOT NULL>",
+                                            "PRIMARY KEY (`id`) NOT ENFORCED")
+                                    .producedValues(Row.of(2L, Row.of(2L)), Row.of(3L, Row.of(3L)))
                                     .build())
                     .setupTableSink(
                             SinkTestStep.newBuilder("fj_n_sink")
                                     .addSchema("left_id BIGINT", "right_id BIGINT")
-                                    .consumedValues("+I[1, null]", "+I[null, 2]", "-D[null, 2]", "+I[2, 2]", "+I[null, 3]")
+                                    .testMaterializedData()
+                                    .consumedValues("+I[1, null]", "+I[2, 2]", "+I[null, 3]")
                                     .build())
                     .runSql(
                             "INSERT INTO fj_n_sink "
