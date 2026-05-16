@@ -33,6 +33,7 @@ import org.apache.calcite.rel.type.DynamicRecordType;
 import org.apache.calcite.rel.type.RelCrossType;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.rel.type.RelRecordType;
@@ -6700,7 +6701,19 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 if (field == null) {
                     throw newValidationError(id.getComponent(i), RESOURCE.unknownField(name));
                 }
+                // ----- FLINK MODIFICATION BEGIN -----
+                // Backport from Calcite (CALCITE-6610): if the parent record is
+                // nullable, the field must also be nullable.
+                boolean recordIsNullable = type.isNullable();
+                // ----- FLINK MODIFICATION END -----
                 type = field.getType();
+                // ----- FLINK MODIFICATION BEGIN -----
+                if (recordIsNullable) {
+                    type =
+                            ((RelDataTypeFactoryImpl) getTypeFactory())
+                                    .enforceTypeWithNullability(type, true);
+                }
+                // ----- FLINK MODIFICATION END -----
             }
             type = SqlTypeUtil.addCharsetAndCollation(type, getTypeFactory());
             return type;
