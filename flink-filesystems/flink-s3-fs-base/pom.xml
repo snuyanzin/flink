@@ -32,9 +32,10 @@ under the License.
 
 	<properties>
 		<fs.s3.aws.version>1.12.779</fs.s3.aws.version>
-		<!-- Aligned with Hadoop 3.4.2's aws-java-sdk-v2.version
-		     https://github.com/apache/hadoop/blob/rel/release-3.4.2/hadoop-project/pom.xml#L206 -->
-		<fs.s3.aws.sdk2.version>2.29.52</fs.s3.aws.sdk2.version>
+		<!-- Held above Hadoop 3.4.3's bundled aws-java-sdk-v2 because hadoop-aws 3.4.3's
+		     ChecksumSupport.<clinit> references CRC64_NVME, which was added to
+		     software.amazon.awssdk:checksums-spi in 2.30.x. Aligned with flink-s3-fs-native. -->
+		<fs.s3.aws.sdk2.version>2.44.4</fs.s3.aws.sdk2.version>
 		<japicmp.skip>true</japicmp.skip>
 		<surefire.module.config> <!--
 			S5CmdOnMinioITCase uses ArraysAsListSerializer indirectly

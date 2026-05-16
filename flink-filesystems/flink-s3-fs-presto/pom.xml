@@ -714,6 +714,14 @@ under the License.
 										<exclude>META-INF/services/javax.xml.stream.*</exclude>
 										<exclude>META-INF/LICENSE.txt</exclude>
 										<exclude>LICENSE</exclude>
+										<!-- Strip root-level license-style files shipped by transitives
+										     (e.g. presto-hive 0.297, hadoop-common 3.4.3 transitives). The
+										     license checker rejects root-level license files and the
+										     THIRD-PARTY-NOTICES text references GPL/LGPL which trips
+										     JarFileChecker's forbidden-regex scan. Attribution for bundled
+										     deps is consolidated in this module's META-INF/NOTICE. -->
+										<exclude>NOTICE</exclude>
+										<exclude>THIRD-PARTY-NOTICES</exclude>
 									</excludes>
 								</filter>
 								<filter>
