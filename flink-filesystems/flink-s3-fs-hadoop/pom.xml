@@ -314,6 +314,20 @@ under the License.
 										<exclude>com/amazonaws/services/s3/model/transform/XmlResponsesSaxParser**</exclude>
 									</excludes>
 								</filter>
+								<filter>
+									<!-- analyticsaccelerator-s3 (transitive of hadoop-aws 3.4.x) ships
+									     LICENSE, NOTICE, and THIRD-PARTY-NOTICES at the jar root. The
+									     license checker rejects root-level license files; the
+									     THIRD-PARTY-NOTICES also references GPL/LGPL terms that the
+									     checker flags. Attribution is consolidated in this module's
+									     META-INF/NOTICE. -->
+									<artifact>software.amazon.s3.analyticsaccelerator:analyticsaccelerator-s3</artifact>
+									<excludes>
+										<exclude>LICENSE</exclude>
+										<exclude>NOTICE</exclude>
+										<exclude>THIRD-PARTY-NOTICES</exclude>
+									</excludes>
+								</filter>
 							</filters>
 						</configuration>
 					</execution>
