@@ -3187,23 +3187,6 @@ public class RexUtil {
         }
     }
 
-    // ----- FLINK MODIFICATION BEGIN -----
-
-    /**
-     * Creates a {@link RexFieldAccess} with an explicit type. Unlike the default constructor which
-     * uses {@code field.getType()}, this allows overriding the nullability — needed when the
-     * containing expression is nullable (e.g. from an outer join) but the field's declared type is
-     * NOT NULL.
-     */
-    public static RexFieldAccess makeFieldAccessWithType(
-            RexNode expr, RelDataTypeField field, RelDataType type) {
-        return new RexFieldAccess(expr, field) {
-            @Override
-            public RelDataType getType() {
-                return type;
-            }
-        };
-    }
 
     // ----- FLINK MODIFICATION END -----
 }
