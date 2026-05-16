@@ -31,6 +31,7 @@ import org.apache.flink.table.test.program.TableTestProgram;
 import org.apache.flink.types.Row;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /** {@link TableTestProgram}s for testing {@link StreamExecCalc} and {@link BatchExecCalc}. */
@@ -130,6 +131,34 @@ public class CalcTestPrograms {
                                     .build())
                     .runSql(
                             "INSERT INTO sink_t SELECT a FROM source_t WHERE a = 1 or a = 2 or a is null")
+                    .build();
+
+    public static final TableTestProgram CALC_SARG_DATE =
+            TableTestProgram.of(
+                            "calc-sarg-date",
+                            "validates calc node with Sarg on DATE column using string literals")
+                    .setupTableSource(
+                            SourceTestStep.newBuilder("source_t")
+                                    .addSchema("a INT", "d DATE")
+                                    .producedBeforeRestore(
+                                            Row.of(1, LocalDate.of(2000, 6, 30)),
+                                            Row.of(2, LocalDate.of(2000, 9, 27)),
+                                            Row.of(3, LocalDate.of(2000, 1, 1)))
+                                    .producedAfterRestore(
+                                            Row.of(4, LocalDate.of(2000, 11, 17)),
+                                            Row.of(5, LocalDate.of(2000, 12, 25)))
+                                    .build())
+                    .setupTableSink(
+                            SinkTestStep.newBuilder("sink_t")
+                                    .addSchema("a INT", "d DATE")
+                                    .consumedBeforeRestore(
+                                            Row.of(1, LocalDate.of(2000, 6, 30)),
+                                            Row.of(2, LocalDate.of(2000, 9, 27)))
+                                    .consumedAfterRestore(Row.of(4, LocalDate.of(2000, 11, 17)))
+                                    .build())
+                    .runSql(
+                            "INSERT INTO sink_t SELECT a, d FROM source_t "
+                                    + "WHERE d IN ('2000-06-30', '2000-09-27', '2000-11-17')")
                     .build();
 
     public static final TableTestProgram CALC_UDF_SIMPLE =
