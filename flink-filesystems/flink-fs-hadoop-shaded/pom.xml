@@ -232,10 +232,6 @@ under the License.
 									<shadedPattern>org.apache.flink.fs.shaded.hadoop3.com.google.re2j</shadedPattern>
 								</relocation>
 								<relocation>
-									<pattern>org.apache.htrace</pattern>
-									<shadedPattern>org.apache.flink.fs.shaded.hadoop3.org.apache.htrace</shadedPattern>
-								</relocation>
-								<relocation>
 									<pattern>com.fasterxml</pattern>
 									<shadedPattern>org.apache.flink.fs.shaded.hadoop3.com.fasterxml</shadedPattern>
 								</relocation>

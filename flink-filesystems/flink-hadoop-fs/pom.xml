@@ -79,6 +79,10 @@ under the License.
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-reload4j</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.htrace</groupId>
+					<artifactId>htrace-core4</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
@@ -94,6 +98,10 @@ under the License.
 				<exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-reload4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.htrace</groupId>
+					<artifactId>htrace-core4</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -144,6 +152,10 @@ under the License.
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-reload4j</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.htrace</groupId>
+					<artifactId>htrace-core4</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -174,7 +186,18 @@ under the License.
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-reload4j</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>org.apache.htrace</groupId>
+					<artifactId>htrace-core4</artifactId>
+				</exclusion>
 			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.htrace</groupId>
+			<artifactId>htrace-core4</artifactId>
+			<version>4.2.0-incubating</version>
+			<scope>test</scope>
 		</dependency>
 
 	</dependencies>
