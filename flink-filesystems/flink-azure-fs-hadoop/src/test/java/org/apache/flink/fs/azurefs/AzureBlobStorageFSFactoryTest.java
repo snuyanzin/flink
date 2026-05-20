@@ -66,7 +66,8 @@ class AzureBlobStorageFSFactoryTest {
         config.set(getIntConfigOption("fs.azure.io.retry.max.retries"), 0);
         factory.configure(config);
 
-        assertThatThrownBy(() -> factory.create(uri)).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> factory.create(uri))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @TestAllFsImpl
