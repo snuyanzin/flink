@@ -19,8 +19,8 @@
 package org.apache.flink.fs.azurefs;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.azure.KeyProvider;
-import org.apache.hadoop.fs.azure.KeyProviderException;
+import org.apache.hadoop.fs.azurebfs.services.KeyProvider;
+import org.apache.hadoop.fs.azurebfs.contracts.exceptions.KeyProviderException;
 
 /**
  * An implementation of {@link org.apache.hadoop.fs.azure.KeyProvider}, which reads the Azure

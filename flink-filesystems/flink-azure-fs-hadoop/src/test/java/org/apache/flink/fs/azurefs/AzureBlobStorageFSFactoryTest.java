@@ -20,7 +20,6 @@ package org.apache.flink.fs.azurefs;
 
 import org.apache.flink.configuration.Configuration;
 
-import org.apache.hadoop.fs.azure.AzureException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -67,7 +66,7 @@ class AzureBlobStorageFSFactoryTest {
         config.set(getIntConfigOption("fs.azure.io.retry.max.retries"), 0);
         factory.configure(config);
 
-        assertThatThrownBy(() -> factory.create(uri)).isInstanceOf(AzureException.class);
+        assertThatThrownBy(() -> factory.create(uri)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @TestAllFsImpl
