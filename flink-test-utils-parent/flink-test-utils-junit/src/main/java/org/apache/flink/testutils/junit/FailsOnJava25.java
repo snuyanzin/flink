@@ -18,5 +18,4 @@
 package org.apache.flink.testutils.junit;
 
 /** Marker interface for tests that fail on Java 25. */
-public interface FailsOnJava25 {
-}
+public interface FailsOnJava25 {}
