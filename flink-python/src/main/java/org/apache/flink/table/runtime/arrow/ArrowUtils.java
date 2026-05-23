@@ -184,8 +184,9 @@ public final class ArrowUtils {
         // be set to true for JDK >= 9. Please refer to ARROW-5412 for more details.
         if (System.getProperty("io.netty.tryReflectionSetAccessible") == null) {
             System.setProperty("io.netty.tryReflectionSetAccessible", "true");
-        } else if (Runtime.version().feature() < 24 && !io.netty.util.internal.PlatformDependent
-                .hasDirectBufferNoCleanerConstructor()) {
+        } else if (Runtime.version().feature() < 24
+                && !io.netty.util.internal.PlatformDependent
+                        .hasDirectBufferNoCleanerConstructor()) {
             throw new RuntimeException(
                     "Arrow depends on "
                             + "DirectByteBuffer.<init>(long, int) which is not available. Please set the "
