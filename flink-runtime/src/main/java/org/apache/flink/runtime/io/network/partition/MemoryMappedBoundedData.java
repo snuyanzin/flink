@@ -18,10 +18,9 @@
 
 package org.apache.flink.runtime.io.network.partition;
 
+import org.apache.flink.core.memory.MemoryUtils;
 import org.apache.flink.runtime.io.network.buffer.Buffer;
 import org.apache.flink.util.IOUtils;
-
-import org.apache.flink.shaded.netty4.io.netty.util.internal.PlatformDependent;
 
 import javax.annotation.Nullable;
 
@@ -144,12 +143,12 @@ final class MemoryMappedBoundedData implements BoundedData {
         IOUtils.closeQuietly(file); // in case we dispose before finishing writes
 
         for (ByteBuffer bb : fullBuffers) {
-            PlatformDependent.freeDirectBuffer(bb);
+            MemoryUtils.UNSAFE.invokeCleaner(bb);
         }
         fullBuffers.clear();
 
         if (currentBuffer != null) {
-            PlatformDependent.freeDirectBuffer(currentBuffer);
+            MemoryUtils.UNSAFE.invokeCleaner(currentBuffer);
             currentBuffer = null;
         }
 

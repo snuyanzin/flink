@@ -18,10 +18,9 @@
 
 package org.apache.flink.runtime.io.network.partition;
 
+import org.apache.flink.core.memory.MemoryUtils;
 import org.apache.flink.runtime.io.network.buffer.Buffer;
 import org.apache.flink.util.IOUtils;
-
-import org.apache.flink.shaded.netty4.io.netty.util.internal.PlatformDependent;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -153,7 +152,7 @@ final class FileChannelMemoryMappedBoundedData implements BoundedData {
         IOUtils.closeQuietly(fileChannel);
 
         for (ByteBuffer bb : memoryMappedRegions) {
-            PlatformDependent.freeDirectBuffer(bb);
+            MemoryUtils.UNSAFE.invokeCleaner(bb);
         }
         memoryMappedRegions.clear();
 
