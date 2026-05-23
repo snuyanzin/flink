@@ -62,7 +62,8 @@ public class DefaultClusterClientServiceLoader implements ClusterClientServiceLo
                     compatibleFactories.add(factory);
                 }
             } catch (Throwable e) {
-                if (e.getCause() instanceof NoClassDefFoundError) {
+                if (e instanceof NoClassDefFoundError
+                        || e.getCause() instanceof NoClassDefFoundError) {
                     LOG.info("Could not load factory due to missing dependencies.");
                 } else {
                     throw e;
