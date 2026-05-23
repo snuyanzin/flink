@@ -78,6 +78,19 @@ under the License.
 					<groupId>com.sun.jersey</groupId>
 					<artifactId>jersey-server</artifactId>
 				</exclusion>
+				<!-- Pulled in by hadoop-common 3.4.x via com.github.pjfanning:jersey-json,
+				     ships com/sun/jersey/json/** classes. -->
+				<exclusion>
+					<groupId>com.github.pjfanning</groupId>
+					<artifactId>jersey-json</artifactId>
+				</exclusion>
+				<!-- Transitive of jersey-json above; ships com/sun/xml/bind/** classes
+				     (CDDL+GPLv2-with-classpath-exception). The JDK provides JAXB RI; we
+				     only ship the API as a Java 11+ multi-release resource. -->
+				<exclusion>
+					<groupId>com.sun.xml.bind</groupId>
+					<artifactId>jaxb-impl</artifactId>
+				</exclusion>
 				<exclusion>
 					<groupId>org.apache.avro</groupId>
 					<artifactId>avro</artifactId>
