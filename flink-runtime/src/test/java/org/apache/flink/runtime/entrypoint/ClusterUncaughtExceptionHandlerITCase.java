@@ -33,6 +33,7 @@ import org.apache.flink.util.concurrent.ScheduledExecutor;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Tag;
 
 import java.io.IOException;
 
@@ -41,6 +42,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 /** Integration test to check exit behaviour for the {@link ClusterUncaughtExceptionHandler}. */
+@Tag("org.apache.flink.testutils.junit.FailsOnJava25")
 public class ClusterUncaughtExceptionHandlerITCase extends TestLogger {
 
     @Before
