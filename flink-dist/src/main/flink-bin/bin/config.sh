@@ -291,6 +291,10 @@ if [ -z "${FLINK_ENV_JAVA_OPTS}" ]; then
       # set security manager property to allow calls to System.setSecurityManager() at runtime
       FLINK_ENV_JAVA_OPTS="$FLINK_ENV_JAVA_OPTS -Djava.security.manager=allow"
     fi
+    if [[ $JAVA_SPEC_VERSION -ge 25 ]]; then
+      # used by Pekko
+      FLINK_ENV_JAVA_OPTS="$FLINK_ENV_JAVA_OPTS --sun-misc-unsafe-memory-access=allow"
+    fi
 fi
 
 if [ -z "${FLINK_ENV_JAVA_OPTS_JM}" ]; then
