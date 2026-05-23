@@ -1217,6 +1217,7 @@ under the License.
 			<properties>
 				<surefire.excludedGroups.jdk>org.apache.flink.testutils.junit.FailsOnJava25</surefire.excludedGroups.jdk>
 				<flink.surefire.baseArgLine>-XX:+UseG1GC -Xms256m -XX:+IgnoreUnrecognizedVMOptions ${surefire.module.config} --enable-native-access=ALL-UNNAMED</flink.surefire.baseArgLine>
+				<scala.version>2.12.21</scala.version>
 			</properties>
 
 			<build>
