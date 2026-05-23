@@ -293,7 +293,7 @@ if [ -z "${FLINK_ENV_JAVA_OPTS}" ]; then
     fi
     if [[ $JAVA_SPEC_VERSION -ge 25 ]]; then
       # used by Pekko
-      FLINK_ENV_JAVA_OPTS="$FLINK_ENV_JAVA_OPTS --sun-misc-unsafe-memory-access=allow"
+      FLINK_ENV_JAVA_OPTS="$FLINK_ENV_JAVA_OPTS --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED"
     fi
 fi
 
