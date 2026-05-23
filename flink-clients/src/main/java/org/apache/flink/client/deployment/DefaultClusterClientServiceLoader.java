@@ -52,8 +52,11 @@ public class DefaultClusterClientServiceLoader implements ClusterClientServiceLo
 
         final List<ClusterClientFactory> compatibleFactories = new ArrayList<>();
         final Iterator<ClusterClientFactory> factories = loader.iterator();
-        while (factories.hasNext()) {
+        while (true) {
             try {
+                if (!factories.hasNext()) {
+                    break;
+                }
                 final ClusterClientFactory factory = factories.next();
                 if (factory != null && factory.isCompatibleWith(configuration)) {
                     compatibleFactories.add(factory);
@@ -98,8 +101,11 @@ public class DefaultClusterClientServiceLoader implements ClusterClientServiceLo
         final List<String> result = new ArrayList<>();
 
         final Iterator<ClusterClientFactory> it = loader.iterator();
-        while (it.hasNext()) {
+        while (true) {
             try {
+                if (!it.hasNext()) {
+                    break;
+                }
                 final ClusterClientFactory clientFactory = it.next();
 
                 final Optional<String> applicationName = clientFactory.getApplicationTargetName();
@@ -107,7 +113,7 @@ public class DefaultClusterClientServiceLoader implements ClusterClientServiceLo
                     result.add(applicationName.get());
                 }
 
-            } catch (ServiceConfigurationError e) {
+            } catch (ServiceConfigurationError | NoClassDefFoundError e) {
                 // cannot be loaded, most likely because Hadoop is not
                 // in the classpath, we can ignore it for now.
             }
