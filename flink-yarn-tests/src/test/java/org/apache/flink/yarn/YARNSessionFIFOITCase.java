@@ -36,6 +36,7 @@ import org.apache.hadoop.yarn.server.resourcemanager.scheduler.ResourceScheduler
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.fifo.FifoScheduler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -57,6 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * This test starts a MiniYARNCluster with a FIFO scheduler. There are no queues for that scheduler.
  */
+@Tag("org.apache.flink.testutils.junit.FailsOnJava25")
 class YARNSessionFIFOITCase extends YarnTestBase {
     private static final Logger log = LoggerFactory.getLogger(YARNSessionFIFOITCase.class);
 
