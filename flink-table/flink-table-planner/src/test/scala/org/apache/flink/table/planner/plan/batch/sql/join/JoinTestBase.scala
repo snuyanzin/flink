@@ -256,7 +256,7 @@ abstract class JoinTestBase extends TableTestBase {
                           |   (select a, count(b) as b from MyTable1 group by a)
                           |   join
                           |   (select d, count(e) as e from MyTable2 group by d)
-                          |   on a = d and b = e and d = 2
+                          |   on a = d and b = e and d = 2 and b = 1
                           |""".stripMargin)
   }
 
