@@ -1201,6 +1201,7 @@ under the License.
 			</activation>
 
 			<properties>
+				<flink.surefire.baseArgLine>-XX:+UseG1GC -Xms256m -XX:+IgnoreUnrecognizedVMOptions ${surefire.module.config} --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true</flink.surefire.baseArgLine>
 				<surefire.excludedGroups.jdk>org.apache.flink.testutils.junit.FailsOnJava25</surefire.excludedGroups.jdk>
 			</properties>
 
