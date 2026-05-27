@@ -83,7 +83,13 @@ public class RexShuttle implements RexVisitor<RexNode> {
             //   but we prefer "RANGE"
             rows = false;
         }
-        return new RexWindow(clonedPartitionKeys, clonedOrderKeys, lowerBound, upperBound, rows);
+        return new RexWindow(
+                clonedPartitionKeys,
+                clonedOrderKeys,
+                lowerBound,
+                upperBound,
+                rows,
+                window.getExclude());
     }
 
     @Override
