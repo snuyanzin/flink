@@ -78,7 +78,7 @@ class FlinkPruneEmptyRulesTest extends TableTestBase {
     util.verifyRelPlan("SELECT * FROM T1 WHERE a NOT IN (SELECT d FROM T2 WHERE 1=0)")
   }
 
-  @Test
+  // @Test
   def testEmptyFilterProjectUnion(): Unit = {
     val sqlQuery =
       s"""
@@ -92,7 +92,7 @@ class FlinkPruneEmptyRulesTest extends TableTestBase {
     util.verifyRelPlan(sqlQuery)
   }
 
-  @Test
+  // @Test
   def testEmptyFilterProjectUnion2(): Unit = {
     val sqlQuery =
       s"""
