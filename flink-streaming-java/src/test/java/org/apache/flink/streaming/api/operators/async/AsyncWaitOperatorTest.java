@@ -1569,6 +1569,7 @@ public class AsyncWaitOperatorTest {
         private static final long serialVersionUID = 1L;
 
         protected static Map<Integer, Integer> tryCounts = new HashMap<>();
+        protected transient ExecutorService executor;
 
         @VisibleForTesting
         public int getTryCount(Integer item) {
@@ -1579,6 +1580,7 @@ public class AsyncWaitOperatorTest {
         public void open(OpenContext openContext) throws Exception {
             super.open(openContext);
             tryCounts = new HashMap<>();
+            executor = Executors.newCachedThreadPool();
         }
 
         @Override
@@ -1593,13 +1595,22 @@ public class AsyncWaitOperatorTest {
                             throw new RuntimeException(e);
                         }
                         resultFuture.completeExceptionally(new Exception("Dummy error"));
-                    });
+                    },
+                    executor);
         }
 
         @Override
         public void timeout(Integer input, ResultFuture<Integer> resultFuture) {
             // collect a default value -1 when timeout
             resultFuture.complete(Collections.singletonList(-1));
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (executor != null) {
+                executor.shutdownNow();
+            }
+            super.close();
         }
     }
 
