@@ -1221,16 +1221,16 @@ public class SqlToRelConverter {
                 }
                 final SqlNode leftKeyNode = call.operand(0);
 
-                final List<RexNode> leftKeys;
+                final List<SqlNode> leftSqlKeys;
                 switch (leftKeyNode.getKind()) {
                     case ROW:
-                        leftKeys = new ArrayList<>();
+                        leftSqlKeys = new ArrayList<>();
                         for (SqlNode sqlExpr : ((SqlBasicCall) leftKeyNode).getOperandList()) {
-                            leftKeys.add(bb.convertExpression(sqlExpr));
+                            leftSqlKeys.add(sqlExpr);
                         }
                         break;
                     default:
-                        leftKeys = ImmutableList.of(bb.convertExpression(leftKeyNode));
+                        leftSqlKeys = ImmutableList.of(leftKeyNode);
                 }
 
                 if (query instanceof SqlNodeList) {
@@ -1242,7 +1242,7 @@ public class SqlToRelConverter {
                         subQuery.expr =
                                 convertInToOr(
                                         bb,
-                                        leftKeys,
+                                        leftSqlKeys,
                                         valueList,
                                         (SqlInOperator) call.getOperator());
                         return;
@@ -1252,6 +1252,9 @@ public class SqlToRelConverter {
                     // values list into an inline table for the
                     // reference to Q below.
                 }
+
+                final List<RexNode> leftKeys =
+                        leftSqlKeys.stream().map(bb::convertExpression).collect(toImmutableList());
 
                 // Project out the search columns from the left side
 
@@ -1791,12 +1794,11 @@ public class SqlToRelConverter {
      */
     private @Nullable RexNode convertInToOr(
             final Blackboard bb,
-            final List<RexNode> leftKeys,
+            final List<SqlNode> leftKeys,
             SqlNodeList valuesList,
             SqlInOperator op) {
         final List<RexNode> comparisons = new ArrayList<>();
         for (SqlNode rightVals : valuesList) {
-            RexNode rexComparison;
             final SqlOperator comparisonOp;
             if (op instanceof SqlQuantifyOperator) {
                 comparisonOp =
@@ -1806,14 +1808,12 @@ public class SqlToRelConverter {
             } else {
                 comparisonOp = SqlStdOperatorTable.EQUALS;
             }
+            RexNode rexComparison;
             if (leftKeys.size() == 1) {
-                rexComparison =
-                        rexBuilder.makeCall(
-                                comparisonOp,
-                                leftKeys.get(0),
-                                ensureSqlType(
-                                        leftKeys.get(0).getType(),
-                                        bb.convertExpression(rightVals)));
+                SqlCall sqlCall =
+                        comparisonOp.createCall(
+                                rightVals.getParserPosition(), leftKeys.get(0), rightVals);
+                rexComparison = bb.convertExpression(sqlCall);
             } else {
                 assert rightVals instanceof SqlCall;
                 final SqlBasicCall call = (SqlBasicCall) rightVals;
@@ -1825,18 +1825,11 @@ public class SqlToRelConverter {
                                 Util.transform(
                                         Pair.zip(leftKeys, call.getOperandList()),
                                         pair ->
-                                                rexBuilder.makeCall(
-                                                        comparisonOp,
-                                                        pair.left,
-                                                        // TODO: remove requireNonNull when
-                                                        // checkerframework issue resolved
-                                                        ensureSqlType(
-                                                                requireNonNull(
-                                                                                pair.left,
-                                                                                "pair.left")
-                                                                        .getType(),
-                                                                bb.convertExpression(
-                                                                        pair.right)))));
+                                                bb.convertExpression(
+                                                        comparisonOp.createCall(
+                                                                rightVals.getParserPosition(),
+                                                                pair.left,
+                                                                pair.right))));
             }
             comparisons.add(rexComparison);
         }
@@ -1854,19 +1847,6 @@ public class SqlToRelConverter {
             default:
                 throw new AssertionError();
         }
-    }
-
-    /**
-     * Ensures that an expression has a given {@link SqlTypeName}, applying a cast if necessary. If
-     * the expression already has the right type family, returns the expression unchanged.
-     */
-    private RexNode ensureSqlType(RelDataType type, RexNode node) {
-        if (type.getSqlTypeName() == node.getType().getSqlTypeName()
-                || (type.getSqlTypeName() == SqlTypeName.VARCHAR
-                        && node.getType().getSqlTypeName() == SqlTypeName.CHAR)) {
-            return node;
-        }
-        return rexBuilder.ensureType(type, node, true);
     }
 
     /**
