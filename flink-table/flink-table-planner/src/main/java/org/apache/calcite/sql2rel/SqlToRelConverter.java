@@ -2650,25 +2650,35 @@ public class SqlToRelConverter {
                 });
         RelNode child = (null != bb.root) ? bb.root : LogicalValues.createOneRow(cluster);
         RelNode uncollect;
-        if (validator().config().conformance().allowAliasUnnestItems()) {
-            uncollect =
-                    relBuilder
-                            .push(child)
-                            .project(exprs)
-                            .uncollect(
-                                    requireNonNull(fieldNames, "fieldNames"),
-                                    operator.withOrdinality)
-                            .build();
-        } else {
-            // REVIEW danny 2020-04-26: should we unify the normal field aliases and
-            // the item aliases?
-            uncollect =
-                    relBuilder
-                            .push(child)
-                            .project(exprs)
-                            .uncollect(Collections.emptyList(), operator.withOrdinality)
-                            .let(r -> fieldNames == null ? r : r.rename(fieldNames))
-                            .build();
+        try {
+            if (validator().config().conformance().allowAliasUnnestItems()) {
+                uncollect =
+                        relBuilder
+                                .push(child)
+                                .project(exprs)
+                                .uncollect(
+                                        requireNonNull(fieldNames, "fieldNames"),
+                                        operator.withOrdinality)
+                                .build();
+            } else {
+                // REVIEW danny 2020-04-26: should we unify the normal field aliases and
+                // the item aliases?
+                uncollect =
+                        relBuilder
+                                .push(child)
+                                .project(exprs)
+                                .uncollect(Collections.emptyList(), operator.withOrdinality)
+                                .let(r -> fieldNames == null ? r : r.rename(fieldNames))
+                                .build();
+            }
+        } catch (Exception ex) {
+            SqlParserPos pos = call.getParserPosition();
+            throw RESOURCE.validatorContext(
+                            pos.getLineNum(),
+                            pos.getColumnNum(),
+                            pos.getEndLineNum(),
+                            pos.getEndColumnNum())
+                    .ex(ex);
         }
         bb.setRoot(uncollect, true);
     }
@@ -3779,7 +3789,17 @@ public class SqlToRelConverter {
 
         // implement HAVING (we have already checked that it is non-trivial)
         relBuilder.push(bb.root());
-        relBuilder.filter(havingExpr);
+        // Set the correlation variables used in this sub-query to the filter node,
+        // same logic is being used for the filter generated in where clause.
+        Set<CorrelationId> variableSet = new HashSet<>();
+        RexSubQuery subQ = RexUtil.SubQueryFinder.find(havingExpr);
+        if (subQ != null) {
+            CorrelationUse p = getCorrelationUse(bb, subQ.rel);
+            if (p != null) {
+                variableSet.add(p.id);
+            }
+        }
+        relBuilder.filter(variableSet, havingExpr);
 
         // implement the SELECT list
         relBuilder.project(projects.leftList(), projects.rightList()).rename(projects.rightList());

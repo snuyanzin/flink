@@ -54,6 +54,7 @@ import org.apache.calcite.util.Util;
 import org.apache.calcite.util.format.FormatElement;
 import org.apache.calcite.util.format.FormatModel;
 import org.apache.calcite.util.format.FormatModels;
+import org.apache.calcite.util.format.PostgresqlDateTimeFormatter;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
@@ -90,6 +91,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
@@ -194,10 +196,8 @@ public class SqlFunctions {
      * parsed, validated and planned. A real application will want persistent values for sequences,
      * shared among threads.
      */
-    private static final ThreadLocal<Map<String, AtomicLong>> THREAD_SEQUENCES =
+    private static final ThreadLocal<@Nullable Map<String, AtomicLong>> THREAD_SEQUENCES =
             ThreadLocal.withInitial(HashMap::new);
-
-    private static final Pattern PATTERN_0_STAR_E = Pattern.compile("0*E");
 
     /** A byte string consisting of a single byte that is the ASCII space character (0x20). */
     private static final ByteString SINGLE_SPACE_BYTE_STRING = ByteString.of("20", 16);
@@ -3515,9 +3515,7 @@ public class SqlFunctions {
         if (x == 0) {
             return "0E0";
         }
-        BigDecimal bigDecimal = new BigDecimal(x, MathContext.DECIMAL32).stripTrailingZeros();
-        final String s = bigDecimal.toString();
-        return PATTERN_0_STAR_E.matcher(s).replaceAll("E").replace("E+", "E");
+        return Float.toString(x);
     }
 
     /** CAST(DOUBLE AS VARCHAR). */
@@ -3525,9 +3523,7 @@ public class SqlFunctions {
         if (x == 0) {
             return "0E0";
         }
-        BigDecimal bigDecimal = new BigDecimal(x, MathContext.DECIMAL64).stripTrailingZeros();
-        final String s = bigDecimal.toString();
-        return PATTERN_0_STAR_E.matcher(s).replaceAll("E").replace("E+", "E");
+        return Double.toString(x);
     }
 
     /** CAST(DECIMAL AS VARCHAR). */
@@ -4042,6 +4038,13 @@ public class SqlFunctions {
                     pattern,
                     elements -> elements.forEach(element -> element.format(sb, sqlTimestamp)));
             return sb.toString().trim();
+        }
+
+        public String toCharPg(long timestamp, String pattern) {
+            final Timestamp sqlTimestamp = internalToTimestamp(timestamp);
+            final ZonedDateTime zonedDateTime =
+                    ZonedDateTime.of(sqlTimestamp.toLocalDateTime(), ZoneId.systemDefault());
+            return PostgresqlDateTimeFormatter.toChar(pattern, zonedDateTime).trim();
         }
 
         public int toDate(String dateString, String fmtString) {
@@ -5514,6 +5517,9 @@ public class SqlFunctions {
     public static List mapEntries(Map<Object, Object> map) {
         final List result = new ArrayList(map.size());
         for (Map.Entry<Object, Object> entry : map.entrySet()) {
+            if (entry.getKey() == null) {
+                throw new IllegalArgumentException("Cannot use null as map key");
+            }
             result.add(Arrays.asList(entry.getKey(), entry.getValue()));
         }
         return result;

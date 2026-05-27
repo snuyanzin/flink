@@ -16,7 +16,6 @@
  */
 package org.apache.calcite.sql2rel;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.calcite.avatica.util.DateTimeUtils;
 import org.apache.calcite.avatica.util.TimeUnit;
@@ -102,15 +101,7 @@ import static org.apache.calcite.sql.fun.SqlStdOperatorTable.QUANTIFY_OPERATORS;
 import static org.apache.calcite.sql.type.NonNullableAccessors.getComponentTypeOrThrow;
 import static org.apache.calcite.util.Util.first;
 
-/**
- * Standard implementation of {@link SqlRexConvertletTable}.
- *
- * <p>FLINK modifications are at lines
- *
- * <ol>
- *   <li>Added in Flink-35216: Lines 843 ~ 889
- * </ol>
- */
+/** Standard implementation of {@link SqlRexConvertletTable}. */
 public class StandardConvertletTable extends ReflectiveConvertletTable {
 
     /** Singleton instance. */
@@ -634,6 +625,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     }
 
     protected RexNode convertCast(SqlRexContext cx, final SqlCall call) {
+
         RelDataTypeFactory typeFactory = cx.getTypeFactory();
         final SqlValidator validator = cx.getValidator();
         final SqlKind kind = call.getKind();
@@ -645,9 +637,11 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
                 call.getOperandList().size() > 2
                         ? call.operand(2)
                         : SqlLiteral.createNull(SqlParserPos.ZERO);
+
         final RexBuilder rexBuilder = cx.getRexBuilder();
         final RexNode arg = cx.convertExpression(left);
         final RexLiteral formatArg = (RexLiteral) cx.convertLiteral(format);
+
         if (right instanceof SqlIntervalQualifier) {
             final SqlIntervalQualifier intervalQualifier = (SqlIntervalQualifier) right;
             if (left instanceof SqlIntervalLiteral) {
@@ -1178,6 +1172,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     }
 
     private RexNode convertIsDistinctFrom(SqlRexContext cx, SqlCall call, boolean neg) {
+
         RexNode op0 = cx.convertExpression(call.operand(0));
         RexNode op1 = cx.convertExpression(call.operand(1));
         return RelOptUtil.isDistinctFrom(cx.getRexBuilder(), op0, op1, neg);
@@ -1362,6 +1357,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
 
     @Deprecated // to be removed before 2.0
     public RexNode castToValidatedType(SqlRexContext cx, SqlCall call, RexNode value) {
+
         return castToValidatedType(call, value, cx.getValidator(), cx.getRexBuilder(), false);
     }
 
@@ -1755,7 +1751,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
 
         SubstrConvertlet(SqlLibrary library) {
             this.library = library;
-            Preconditions.checkArgument(
+            checkArgument(
                     library == SqlLibrary.ORACLE
                             || library == SqlLibrary.MYSQL
                             || library == SqlLibrary.BIG_QUERY
