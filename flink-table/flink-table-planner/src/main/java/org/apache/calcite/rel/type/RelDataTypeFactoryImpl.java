@@ -403,10 +403,7 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
         return canonize(newType);
     }
 
-    // ----- FLINK MODIFICATION BEGIN -----
-    // Backport from Calcite (CALCITE-6764): creates a type with specified nullability
-    // without deep-copying record field types. For record types, makes the struct
-    // itself nullable/not-nullable while keeping field types unchanged.
+    @Override
     public RelDataType enforceTypeWithNullability(final RelDataType type, final boolean nullable) {
         requireNonNull(type, "type");
         RelDataType newType;
@@ -433,8 +430,6 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
         }
         return canonize(newType);
     }
-
-    // ----- FLINK MODIFICATION END -----
 
     /**
      * Registers a type, or returns the existing type if it is already registered.
@@ -672,6 +667,13 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
         protected void generateTypeString(StringBuilder sb, boolean withDetail) {
             sb.append("JavaType(");
             sb.append(clazz);
+            if (clazz == String.class
+                    && charset != null
+                    && !SqlCollation.IMPLICIT.getCharset().equals(charset)) {
+                sb.append(" CHARACTER SET \"");
+                sb.append(charset.name());
+                sb.append("\"");
+            }
             sb.append(")");
         }
 

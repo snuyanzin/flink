@@ -194,7 +194,8 @@ class SqlExpressionTest extends ExpressionTestBase {
     testSqlApi("UPPER('string')", "STRING")
     testSqlApi("LOWER('STRING')", "string")
     testSqlApi("POSITION('STR' IN 'STRING')", "1")
-    testSqlApi("TRIM(BOTH ' STRING ')", "STRING")
+    // result of CALCITE-6709
+    testSqlApi("TRIM(BOTH FROM ' STRING ')", "STRING")
     testSqlApi("TRIM(LEADING 'x' FROM 'xxxxSTRINGxxxx')", "STRINGxxxx")
     testSqlApi("TRIM(TRAILING 'x' FROM 'xxxxSTRINGxxxx')", "xxxxSTRING")
     testSqlApi(

@@ -1136,7 +1136,8 @@ public class CastFunctionITCase extends BuiltInFunctionTestBase {
                         .fromCase(INTERVAL(MONTH()), 5, "+0-05")
                         .fromCase(INTERVAL(MONTH()), 123, "+10-03")
                         .fromCase(INTERVAL(MONTH()), 12334, "+1027-10")
-                        .fromCase(INTERVAL(DAY()), 10, "+0 00:00:00.010")
+                        // CALCITE-6714
+                        .fromCase(INTERVAL(DAY()), 10, "+0 00:00:10.000")
                         .fromCase(INTERVAL(DAY()), 123456789L, "+1 10:17:36.789")
                         .fromCase(INTERVAL(DAY()), Duration.ofHours(36), "+1 12:00:00.000")
                         .fromCase(ARRAY(INT().nullable()), new Integer[] {null, 456}, "[NULL, 456]")
