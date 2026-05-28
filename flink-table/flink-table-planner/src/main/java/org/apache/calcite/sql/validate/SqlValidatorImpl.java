@@ -4113,7 +4113,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         validateWhereClause(select);
         validateGroupClause(select);
-        validateHavingClause(select);
         validateWindowClause(select);
         validateQualifyClause(select);
         handleOffsetFetch(select.getOffset(), select.getFetch());
@@ -4123,6 +4122,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // window name in the WINDOW clause etc.
         final RelDataType rowType = validateSelectList(selectItems, select, targetRowType);
         ns.setType(rowType);
+        validateHavingClause(select);
 
         // Deduce which columns must be filtered.
         ns.mustFilterFields = ImmutableBitSet.of();
@@ -5023,8 +5023,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         if (SqlUtil.containsCall(having, call -> call.getOperator() instanceof SqlOverOperator)) {
             throw newValidationError(originalHaving, RESOURCE.windowInHavingNotAllowed());
         }
-        havingScope.checkAggregateExpr(having, true);
         inferUnknownTypes(booleanType, havingScope, having);
+        havingScope.checkAggregateExpr(having, true);
         having.validate(this, havingScope);
         final RelDataType type = deriveType(havingScope, having);
         if (!SqlTypeUtil.inBooleanFamily(type)) {
