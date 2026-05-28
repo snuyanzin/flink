@@ -605,7 +605,7 @@ class AggConverter implements SqlVisitor<Void> {
 
     /**
      * If an expression is structurally identical to one of the group-by expressions, returns a
-     * reference to the expression, otherwise returns null.
+     * reference to the expression, otherwise returns -1.
      */
     int lookupGroupExpr(SqlNode expr) {
         return SqlUtil.indexOfDeep(groupExprs, expr, Litmus.IGNORE);
