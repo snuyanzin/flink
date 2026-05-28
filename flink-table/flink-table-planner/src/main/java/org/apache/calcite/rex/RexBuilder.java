@@ -1883,7 +1883,7 @@ public class RexBuilder {
             case CHAR:
                 final NlsString nlsString = (NlsString) value;
                 if (trim) {
-                    return makeCharLiteral(nlsString.rtrim());
+                    return makeCharLiteral(nlsString.rtrim(type.getPrecision()));
                 } else {
                     return makeCharLiteral(padRight(nlsString, type.getPrecision()));
                 }
