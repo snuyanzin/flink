@@ -3686,7 +3686,9 @@ public class SqlToRelConverter {
         final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
         final List<RexNode> list = new ArrayList<>();
         for (String name : nameList) {
-            List<RexNode> operands = new ArrayList<>();
+            // For each field joined on we compare the types from the left and right relation
+            List<RexNode> operands = new ArrayList<>(2);
+            List<RelDataType> comparedTypes = new ArrayList<>(2);
             int offset = 0;
             for (SqlValidatorNamespace n : ImmutableList.of(leftNamespace, rightNamespace)) {
                 final RelDataType rowType = n.getRowType();
@@ -3700,10 +3702,37 @@ public class SqlToRelConverter {
                                     + " with "
                                     + nameMatcher);
                 }
+
+                comparedTypes.add(field.getType());
                 operands.add(rexBuilder.makeInputRef(field.getType(), offset + field.getIndex()));
                 offset += rowType.getFieldList().size();
             }
-            list.add(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, operands));
+
+            RelDataType resultType =
+                    validator()
+                            .getTypeCoercion()
+                            .commonTypeForBinaryComparison(
+                                    comparedTypes.get(0), comparedTypes.get(1));
+            if (resultType == null) {
+                // This should never happen, since the program has been validated.
+                throw new IllegalArgumentException(
+                        "Cannot join on field `"
+                                + name
+                                + "` because the types are not comparable: "
+                                + comparedTypes);
+            }
+
+            List<RexNode> castedOperands = new ArrayList<>();
+            for (int i = 0; i < operands.size(); i++) {
+                RexNode operand = operands.get(i);
+                RelDataType fieldType = comparedTypes.get(i);
+                RexNode expr = operand;
+                if (!fieldType.equals(resultType)) {
+                    expr = rexBuilder.makeCast(resultType, operand, true, false);
+                }
+                castedOperands.add(expr);
+            }
+            list.add(rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, castedOperands));
         }
         return RexUtil.composeConjunction(rexBuilder, list);
     }
