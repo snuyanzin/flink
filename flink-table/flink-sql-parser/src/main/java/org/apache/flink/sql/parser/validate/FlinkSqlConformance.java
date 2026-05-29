@@ -123,6 +123,11 @@ public enum FlinkSqlConformance implements SqlConformance {
     }
 
     @Override
+    public boolean allowNiladicConstantWithoutParentheses() {
+        return true;
+    }
+
+    @Override
     public boolean allowExplicitRowValueConstructor() {
         return true;
     }

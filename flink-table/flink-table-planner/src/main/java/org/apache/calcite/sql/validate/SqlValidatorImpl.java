@@ -2018,14 +2018,26 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             opTab.lookupOperatorOverloads(
                     id, null, SqlSyntax.FUNCTION, list, catalogReader.nameMatcher());
             for (SqlOperator operator : list) {
-                if (operator.getSyntax() == SqlSyntax.FUNCTION_ID) {
+                if (operator.getSyntax() == SqlSyntax.FUNCTION_ID
+                        || operator.getSyntax() == SqlSyntax.FUNCTION_ID_CONSTANT) {
                     // Even though this looks like an identifier, it is a
                     // actually a call to a function. Construct a fake
                     // call to this function, so we can use the regular
                     // operator validation.
-                    return new SqlBasicCall(
-                                    operator, ImmutableList.of(), id.getParserPosition(), null)
-                            .withExpanded(true);
+                    SqlCall sqlCall =
+                            new SqlBasicCall(
+                                            operator,
+                                            ImmutableList.of(),
+                                            id.getParserPosition(),
+                                            null)
+                                    .withExpanded(true);
+                    if (operator.getSyntax() == SqlSyntax.FUNCTION_ID_CONSTANT
+                            && !this.config
+                                    .conformance()
+                                    .allowNiladicConstantWithoutParentheses()) {
+                        throw handleUnresolvedFunction(sqlCall, operator, ImmutableList.of(), null);
+                    }
+                    return sqlCall;
                 }
             }
         }
@@ -2125,7 +2137,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 catalogReader.nameMatcher());
         if (overloads.size() == 1) {
             SqlFunction fun = (SqlFunction) overloads.get(0);
-            if ((fun.getSqlIdentifier() == null) && (fun.getSyntax() != SqlSyntax.FUNCTION_ID)) {
+            if ((fun.getSqlIdentifier() == null)
+                    && (fun.getSyntax() != SqlSyntax.FUNCTION_ID
+                            && fun.getSyntax() != SqlSyntax.FUNCTION_ID_CONSTANT)) {
                 final int expectedArgCount = fun.getOperandCountRange().getMin();
                 throw newValidationError(
                         call,
