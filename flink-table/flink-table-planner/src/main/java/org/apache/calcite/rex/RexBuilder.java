@@ -44,6 +44,7 @@ import org.apache.calcite.sql.fun.SqlLibraryOperators;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
+import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.MapSqlType;
 import org.apache.calcite.sql.type.MultisetSqlType;
 import org.apache.calcite.sql.type.SqlTypeFamily;
@@ -1265,8 +1266,16 @@ public class RexBuilder {
                 o = ((TimestampWithTimeZoneString) o).round(p);
                 break;
             case DECIMAL:
-                if (o != null && type.getScale() != RelDataType.SCALE_NOT_SPECIFIED) {
-                    assert o instanceof BigDecimal;
+                if (o == null) {
+                    break;
+                }
+                assert o instanceof BigDecimal;
+                if (type instanceof IntervalSqlType) {
+                    SqlIntervalQualifier qualifier =
+                            ((IntervalSqlType) type).getIntervalQualifier();
+                    o = ((BigDecimal) o).multiply(qualifier.getUnit().multiplier);
+                    typeName = type.getSqlTypeName();
+                } else if (type.getScale() != RelDataType.SCALE_NOT_SPECIFIED) {
                     o =
                             ((BigDecimal) o)
                                     .setScale(
