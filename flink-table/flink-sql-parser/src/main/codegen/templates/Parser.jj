@@ -4878,6 +4878,11 @@ SqlLiteral DateTimeLiteral() :
     }
 |
     LOOKAHEAD(2)
+    <UUID> { s = span(); } p = SimpleStringLiteral() {
+        return SqlLiteral.createUnknown("UUID", p, s.end(this));
+    }
+|
+    LOOKAHEAD(2)
     <TIMESTAMP> { s = span(); } p = SimpleStringLiteral() {
         return SqlLiteral.createUnknown("TIMESTAMP", p, s.end(this));
     }
@@ -5912,6 +5917,8 @@ SqlTypeNameSpec SqlTypeName1(Span s) :
         <FLOAT> { s.add(this); sqlTypeName = SqlTypeName.FLOAT; }
     |
         <VARIANT> { s.add(this); sqlTypeName = SqlTypeName.VARIANT; }
+    |
+        <UUID> { s.add(this); sqlTypeName = SqlTypeName.UUID; }
     )
     {
         return new SqlBasicTypeNameSpec(sqlTypeName, s.end(this));
@@ -8717,6 +8724,7 @@ SqlPostfixOperator PostfixRowOperator() :
 |   < UTF8: "UTF8" >
 |   < UTF16: "UTF16" >
 |   < UTF32: "UTF32" >
+|   < UUID: "UUID" >
 |   < VALUE: "VALUE" >
 |   < VALUES: "VALUES" > { afterTableName(); }
 |   < VALUE_OF: "VALUE_OF" >
