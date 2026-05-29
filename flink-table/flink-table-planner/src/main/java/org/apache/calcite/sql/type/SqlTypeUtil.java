@@ -89,7 +89,7 @@ public abstract class SqlTypeUtil {
      *     same charset and collation of same charset
      */
     public static boolean isCharTypeComparable(List<RelDataType> argTypes) {
-        assert argTypes != null;
+        requireNonNull(argTypes, "argTypes");
         assert argTypes.size() >= 2;
 
         // Filter out ANY and NULL elements.
@@ -751,6 +751,10 @@ public abstract class SqlTypeUtil {
         return t.getFamily() == SqlTypeFamily.ANY;
     }
 
+    private static boolean isVariant(RelDataType t) {
+        return t.getFamily() == SqlTypeFamily.VARIANT;
+    }
+
     public static boolean isMeasure(RelDataType t) {
         return t instanceof MeasureSqlType;
     }
@@ -861,7 +865,7 @@ public abstract class SqlTypeUtil {
             return canCastFrom(
                     toType, requireNonNull(fromType.getMeasureElementType()), typeMappingRule);
         }
-        if (isAny(toType) || isAny(fromType)) {
+        if (isAny(toType) || isAny(fromType) || isVariant(toType) || isVariant(fromType)) {
             return true;
         }
 
@@ -1049,7 +1053,7 @@ public abstract class SqlTypeUtil {
 
         // TODO jvs 28-Dec-2004:  support row types, user-defined types,
         // interval types, multiset types, etc
-        assert typeName != null;
+        requireNonNull(typeName, "typeName");
 
         final SqlTypeNameSpec typeNameSpec;
         if (isAtomic(type)
@@ -1467,12 +1471,8 @@ public abstract class SqlTypeUtil {
         }
 
         // We can implicitly convert from character to date
-        if (family1 == SqlTypeFamily.CHARACTER && canConvertStringInCompare(family2)
-                || family2 == SqlTypeFamily.CHARACTER && canConvertStringInCompare(family1)) {
-            return true;
-        }
-
-        return false;
+        return family1 == SqlTypeFamily.CHARACTER && canConvertStringInCompare(family2)
+                || family2 == SqlTypeFamily.CHARACTER && canConvertStringInCompare(family1);
     }
 
     /**
@@ -1760,6 +1760,7 @@ public abstract class SqlTypeUtil {
     }
 
     /** Returns a DECIMAL type with the maximum precision for the current type system. */
+    @SuppressWarnings("deprecation") // [CALCITE-6598]
     public static RelDataType getMaxPrecisionScaleDecimal(RelDataTypeFactory factory) {
         int maxPrecision = factory.getTypeSystem().getMaxNumericPrecision();
         int maxScale = factory.getTypeSystem().getMaxNumericScale();

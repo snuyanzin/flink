@@ -188,6 +188,10 @@ public class RexBuilder {
      */
     public RexNode makeFieldAccess(RexNode expr, String fieldName, boolean caseSensitive) {
         final RelDataType type = expr.getType();
+        if (type.getSqlTypeName() == SqlTypeName.VARIANT) {
+            // VARIANT.field is rewritten as an VARIANT[field]
+            return this.makeCall(SqlStdOperatorTable.ITEM, expr, this.makeLiteral(fieldName));
+        }
         final RelDataTypeField field = type.getField(fieldName, caseSensitive, false);
         if (field == null) {
             throw new AssertionError("Type '" + type + "' has no field '" + fieldName + "'");
@@ -809,7 +813,7 @@ public class RexBuilder {
             return true;
         }
         final SqlTypeName sqlType = toType.getSqlTypeName();
-        if (sqlType == SqlTypeName.MEASURE) {
+        if (sqlType == SqlTypeName.MEASURE || sqlType == SqlTypeName.VARIANT) {
             return false;
         }
         if (!RexLiteral.valueMatchesType(value, sqlType, false)) {
