@@ -633,6 +633,7 @@
     "OVERWRITING"
     "PARTITIONED"
     "PARTITIONS"
+    "UUID"
     "VIRTUAL"
     "ANALYZE"
     "COMPUTE"
