@@ -820,6 +820,28 @@ LogicalProject(a=[$0], b=[$1], c=[$2])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testNotInOnWhere_NotSubQuery">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM x WHERE a NOT IN (1, 2, 3, 4)]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1])
++- LogicalFilter(condition=[NOT(IN($0, {
+LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }]])
+}))])
+   +- LogicalTableScan(table=[[default_catalog, default_database, x]])
+]]>
+    </Resource>
+    <Resource name="optimized rel plan">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1])
++- LogicalJoin(condition=[OR(IS NULL($0), =($0, $2))], joinType=[anti])
+   :- LogicalTableScan(table=[[default_catalog, default_database, x]])
+   +- LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testNotInWithCorrelatedOnLateralTable">
     <Resource name="sql">
       <![CDATA[SELECT * FROM l WHERE c NOT IN (SELECT f1 FROM r, LATERAL TABLE(table_func(f)) AS T(f1) WHERE a = d)]]>

@@ -1523,6 +1523,28 @@ LogicalProject(a=[$0], b=[$1], c=[$2])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testInOnWhere_NotSubQuery">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM l WHERE a IN (1, 2, 3, 4)]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1], c=[$2])
++- LogicalFilter(condition=[IN($0, {
+LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }]])
+})])
+   +- LogicalTableScan(table=[[default_catalog, default_database, l]])
+]]>
+    </Resource>
+    <Resource name="optimized rel plan">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1], c=[$2])
++- LogicalJoin(condition=[=($0, $3)], joinType=[semi])
+   :- LogicalTableScan(table=[[default_catalog, default_database, l]])
+   +- LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testInWithCorrelatedOnHaving">
     <Resource name="sql">
       <![CDATA[SELECT SUM(a) AS s FROM x GROUP BY b HAVING MAX(a) IN (SELECT d FROM y WHERE y.d = x.b)]]>

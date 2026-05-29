@@ -39,7 +39,7 @@ class SubQueryAntiJoinTest extends SubQueryTestBase {
   @Test
   def testNotInOnWhere_NotSubQuery(): Unit = {
     val sqlQuery = "SELECT * FROM x WHERE a NOT IN (1, 2, 3, 4)"
-    util.verifyRelPlanNotExpected(sqlQuery, "joinType=[anti]")
+    util.verifyRelPlan(sqlQuery)
   }
 
   @Test
