@@ -27,6 +27,7 @@ import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Join;
 import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.LogicVisitor;
 import org.apache.calcite.rex.RexInputRef;
@@ -161,11 +162,10 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
      */
     private static RexNode rewriteSome(
             RexSubQuery e, Set<CorrelationId> variablesSet, RelBuilder builder, int subQueryIndex) {
-        // If the sub-query is guaranteed to return 0 row, just return
+        // If the sub-query is guaranteed empty, just return
         // FALSE.
         final RelMetadataQuery mq = e.rel.getCluster().getMetadataQuery();
-        final Double maxRowCount = mq.getMaxRowCount(e.rel);
-        if (maxRowCount != null && maxRowCount <= 0D) {
+        if (RelMdUtil.isRelDefinitelyEmpty(mq, e.rel)) {
             return builder.getRexBuilder().makeLiteral(Boolean.FALSE, e.getType(), true);
         }
         // Most general case, where the left and right keys might have nulls, and
@@ -404,22 +404,32 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
                     //     then false // sub-query is empty for corresponding corr value
                     //   when q.c = 0 then false // sub-query is empty
                     //   when e.deptno is null then unknown
-                    //   when q.c <> q.d && q.d <= 1
+                    //   when q.c <> q.d && q.dd <= 1
                     //     then e.deptno != m || unknown
-                    //   when q.d = 1
+                    //   when q.dd = 1
                     //     then e.deptno != m // sub-query has the distinct result
                     //   else true
                     //   end as v
                     // from emp as e
                     // left outer join (
-                    //   select name, count(distinct *) as c, count(distinct deptno) as d,
+                    //   select name, count(*) as c, count(deptno) as d, count(distinct deptno) as
+                    // dd,
                     //       max(deptno) as m, "alwaysTrue" as indicator
                     //   from emp group by name) as q on e.name = q.name
+
+                    // Additional details on the `q.c <> q.d && q.dd <= 1` clause:
+                    // the q.c <> q.d comparison identifies if there are any null values,
+                    // since count(*) counts null values and count(deptno) does not.
+                    // if there's no null value, c should be equal to d.
+                    // the q.dd <= 1 part means: true if there is at most one non-null value
+                    // so this clause means:
+                    // "if there are any null values and there is at most one non-null value".
                     builder.push(e.rel)
                             .aggregate(
                                     builder.groupKey(),
-                                    builder.count(true, "c"),
-                                    builder.count(true, "d", builder.field(0)),
+                                    builder.count(false, "c"),
+                                    builder.count(false, "d", builder.field(0)),
+                                    builder.count(true, "dd", builder.field(0)),
                                     builder.max(builder.field(0)).as("m"));
 
                     parentQueryFields.addAll(builder.fields());
@@ -439,12 +449,12 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
                                             builder.notEquals(
                                                     builder.field("d"), builder.field("c")),
                                             builder.lessThanOrEqual(
-                                                    builder.field("d"), builder.literal(1))),
+                                                    builder.field("dd"), builder.literal(1))),
                                     builder.or(
                                             builder.notEquals(
                                                     e.operands.get(0), builder.field(qAlias, "m")),
                                             literalUnknown),
-                                    builder.equals(builder.field("d"), builder.literal(1)),
+                                    builder.equals(builder.field("dd"), builder.literal(1)),
                                     builder.notEquals(
                                             e.operands.get(0), builder.field(qAlias, "m")),
                                     literalTrue);
@@ -481,15 +491,13 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
             Set<CorrelationId> variablesSet,
             RelOptUtil.Logic logic,
             RelBuilder builder) {
-        // If the sub-query is guaranteed to produce at least one row, just return
+        // If the sub-query is guaranteed never empty, just return
         // TRUE.
         final RelMetadataQuery mq = e.rel.getCluster().getMetadataQuery();
-        final Double minRowCount = mq.getMinRowCount(e.rel);
-        if (minRowCount != null && minRowCount > 0D) {
+        if (RelMdUtil.isRelDefinitelyNotEmpty(mq, e.rel)) {
             return builder.literal(true);
         }
-        final Double maxRowCount = mq.getMaxRowCount(e.rel);
-        if (maxRowCount != null && maxRowCount <= 0D) {
+        if (RelMdUtil.isRelDefinitelyEmpty(mq, e.rel)) {
             return builder.literal(false);
         }
         builder.push(e.rel);
@@ -580,11 +588,10 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
             RelBuilder builder,
             int offset,
             int subQueryIndex) {
-        // If the sub-query is guaranteed to return 0 row, just return
+        // If the sub-query is guaranteed empty, just return
         // FALSE.
         final RelMetadataQuery mq = e.rel.getCluster().getMetadataQuery();
-        final Double maxRowCount = mq.getMaxRowCount(e.rel);
-        if (maxRowCount != null && maxRowCount <= 0D) {
+        if (RelMdUtil.isRelDefinitelyEmpty(mq, e.rel)) {
             return builder.getRexBuilder().makeLiteral(Boolean.FALSE, e.getType(), true);
         }
         // Most general case, where the left and right keys might have nulls, and
