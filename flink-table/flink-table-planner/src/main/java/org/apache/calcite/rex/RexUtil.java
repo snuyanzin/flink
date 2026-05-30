@@ -2492,11 +2492,9 @@ public class RexUtil {
             expr.accept(this);
             final RexNode normalizedExpr = lookup(expr);
             if (normalizedExpr != expr) {
-                // ----- FLINK MODIFICATION BEGIN -----
                 fieldAccess =
                         new RexFieldAccess(
                                 normalizedExpr, fieldAccess.getField(), fieldAccess.getType());
-                // ----- FLINK MODIFICATION END -----
             }
             return register(fieldAccess);
         }
