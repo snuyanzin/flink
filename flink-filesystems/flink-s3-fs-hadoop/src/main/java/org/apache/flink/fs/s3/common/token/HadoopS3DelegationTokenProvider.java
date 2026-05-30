@@ -36,12 +36,12 @@ import software.amazon.awssdk.services.sts.model.GetSessionTokenResponse;
 
 import java.util.Optional;
 
-/** Delegation token provider for S3 filesystems. */
+/** Delegation token provider for S3 filesystems using AWS SDK v2. */
 @Internal
-public abstract class AbstractS3DelegationTokenProvider implements DelegationTokenProvider {
+public abstract class HadoopS3DelegationTokenProvider implements DelegationTokenProvider {
 
     private static final Logger LOG =
-            LoggerFactory.getLogger(AbstractS3DelegationTokenProvider.class);
+            LoggerFactory.getLogger(HadoopS3DelegationTokenProvider.class);
 
     private String region;
     private String accessKey;
@@ -106,4 +106,6 @@ public abstract class AbstractS3DelegationTokenProvider implements DelegationTok
                     Optional.of(credentials.expiration().toEpochMilli()));
         }
     }
+
+    public abstract String serviceConfigPrefix();
 }
