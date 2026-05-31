@@ -129,6 +129,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.zip.CRC32;
 
 import static java.lang.Byte.parseByte;
 import static java.lang.Double.parseDouble;
@@ -294,12 +295,12 @@ public class SqlFunctions {
         return new ByteString(dest);
     }
 
-    /** SQL TO_BASE64(string) function. */
+    /** SQL TO_BASE64(string)/BASE64(string) function. */
     public static String toBase64(String string) {
         return toBase64_(string.getBytes(UTF_8));
     }
 
-    /** SQL TO_BASE64(string) function for binary string. */
+    /** SQL TO_BASE64(string)/BASE64(string) function for binary string. */
     public static String toBase64(ByteString string) {
         return toBase64_(string.getBytes());
     }
@@ -318,7 +319,7 @@ public class SqlFunctions {
         return str.substring(0, str.length() - 1);
     }
 
-    /** SQL FROM_BASE64(string) function. */
+    /** SQL FROM_BASE64(string)/UNBASE64(string) function. */
     public static @Nullable ByteString fromBase64(String base64) {
         try {
             base64 = FROM_BASE64_REGEXP.matcher(base64).replaceAll("");
@@ -360,6 +361,46 @@ public class SqlFunctions {
     /** SQL TO_HEX(binary) function. */
     public static String toHex(ByteString byteString) {
         return Hex.encodeHexString(byteString.getBytes());
+    }
+
+    /** SQL HEX(varchar) function. */
+    public static String hex(String value) {
+        return Hex.encodeHexString(value.getBytes(UTF_8));
+    }
+
+    /** SQL BIN(long) function. */
+    public static String bin(long value) {
+        int zeros = Long.numberOfLeadingZeros(value);
+        if (zeros == Long.SIZE) {
+            return "0";
+        } else {
+            int length = Long.SIZE - zeros;
+            byte[] bytes = new byte[length];
+            for (int index = length - 1; index >= 0; index--) {
+                bytes[index] = (byte) ((value & 0x1) == 1 ? '1' : '0');
+                value >>>= 1;
+            }
+            // CHECKSTYLE: IGNORE 1
+            return new String(bytes, UTF_8);
+        }
+    }
+
+    /** SQL CRC32(string) function. */
+    public static long crc32(String value) {
+        final CRC32 crc32 = new CRC32();
+        crc32.reset();
+        byte[] bytes = value.getBytes(UTF_8);
+        crc32.update(bytes, 0, bytes.length);
+        return crc32.getValue();
+    }
+
+    /** SQL CRC32(string) function for binary string. */
+    public static long crc32(ByteString value) {
+        final CRC32 crc32 = new CRC32();
+        crc32.reset();
+        byte[] bytes = value.getBytes();
+        crc32.update(bytes, 0, bytes.length);
+        return crc32.getValue();
     }
 
     /** SQL MD5(string) function. */
