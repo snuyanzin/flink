@@ -1849,7 +1849,7 @@ public class SqlFunctions {
 
     public static String trim(boolean left, boolean right, String seek, String s, boolean strict) {
         if (strict && seek.length() != 1) {
-            throw RESOURCE.trimError().ex();
+            throw RESOURCE.trimError(seek).ex();
         }
         int j = s.length();
         if (right) {
@@ -5808,11 +5808,16 @@ public class SqlFunctions {
     }
 
     /** SQL {@code REPLACE(string, search, replacement)} function. */
-    public static String replace(String s, String search, String replacement) {
+    public static String replace(
+            String s, String search, String replacement, boolean isCaseSensitive) {
         if (search.isEmpty()) {
             return s;
         }
-        return s.replace(search, replacement);
+        if (isCaseSensitive) {
+            return s.replace(search, replacement);
+        }
+        // for MSSQL's REPLACE function, search pattern is case-insensitive during matching
+        return org.apache.commons.lang3.StringUtils.replaceIgnoreCase(s, search, replacement);
     }
 
     /**
