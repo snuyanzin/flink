@@ -2352,6 +2352,7 @@ public class SqlToRelConverter {
 
     private RexNode convertOver(Blackboard bb, SqlNode node) {
         SqlCall call = (SqlCall) node;
+        bb.getValidator().deriveType(bb.scope, call);
         SqlCall aggCall = call.operand(0);
         boolean ignoreNulls = false;
         switch (aggCall.getKind()) {
