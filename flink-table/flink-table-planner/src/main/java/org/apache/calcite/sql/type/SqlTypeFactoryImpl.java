@@ -526,7 +526,9 @@ public class SqlTypeFactoryImpl extends RelDataTypeFactoryImpl {
                     }
                 }
 
-                if (type.getSqlTypeName() == resultType.getSqlTypeName()
+                // FLINK MODIFICATION BEGIN
+                if (type.getSqlTypeName().getFamily() == resultType.getSqlTypeName().getFamily()
+                        // FLINK MODIFICATION END
                         && type.getSqlTypeName().allowsPrec()
                         && type.getPrecision() != resultType.getPrecision()) {
                     final int precision =
