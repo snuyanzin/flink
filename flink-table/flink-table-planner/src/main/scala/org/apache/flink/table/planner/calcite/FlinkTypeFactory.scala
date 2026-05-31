@@ -37,7 +37,7 @@ import org.apache.calcite.avatica.util.TimeUnit
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl
 import org.apache.calcite.rel.`type`._
 import org.apache.calcite.rel.RelNode
-import org.apache.calcite.sql.`type`.{BasicSqlType, MapSqlType, SqlTypeName}
+import org.apache.calcite.sql.`type`.{BasicSqlType, MapSqlType, SqlTypeMappingRules, SqlTypeName}
 import org.apache.calcite.sql.`type`.SqlTypeName._
 import org.apache.calcite.sql.SqlIntervalQualifier
 import org.apache.calcite.sql.parser.SqlParserPos
@@ -481,7 +481,7 @@ class FlinkTypeFactory(
 
   override def leastRestrictive(types: util.List[RelDataType]): RelDataType = {
     val leastRestrictive = resolveAllIdenticalTypes(types)
-      .getOrElse(super.leastRestrictive(types))
+      .getOrElse(super.leastRestrictive(types, SqlTypeMappingRules.instance(false)))
     // NULL is reserved for untyped literals only
     if (leastRestrictive == null || leastRestrictive.getSqlTypeName == NULL) {
       null
