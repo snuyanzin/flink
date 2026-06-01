@@ -171,6 +171,11 @@ public class FlinkTypeSystem extends RelDataTypeSystemImpl {
                 typeFactory, type1, type2, LogicalTypeMerging::findMultiplicationDecimalType);
     }
 
+    @Override
+    public boolean mapKeysCanBeNullable() {
+        return true;
+    }
+
     /** Use derivation from {@link LogicalTypeMerging} to derive decimal type. */
     private @Nullable RelDataType deriveDecimalType(
             RelDataTypeFactory typeFactory,
