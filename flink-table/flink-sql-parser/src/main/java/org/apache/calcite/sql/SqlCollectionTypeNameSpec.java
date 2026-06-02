@@ -85,7 +85,7 @@ public class SqlCollectionTypeNameSpec extends SqlTypeNameSpec {
 
     @Override
     public RelDataType deriveType(SqlValidator validator) {
-        // FLINK MODIFICATION BEGIN
+        // FLINK MODIFICATION BEGIN CALCITE-1466
         final RelDataType type = elementTypeName.deriveType(validator);
         // FLINK MODIFICATION END
         return createCollectionType(type, validator.getTypeFactory());
