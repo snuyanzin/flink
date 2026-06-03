@@ -16,6 +16,8 @@
  */
 package org.apache.calcite.sql.type;
 
+import org.apache.calcite.sql.SqlCollectionTypeNameSpec;
+
 import org.apache.flink.sql.parser.type.ExtendedSqlCollectionTypeNameSpec;
 import org.apache.flink.sql.parser.type.ExtendedSqlRowTypeNameSpec;
 
@@ -1167,6 +1169,8 @@ public abstract class SqlTypeUtil {
             final RelDataType componentType = getComponentTypeOrThrow(type);
             typeNameSpec =
                     new ExtendedSqlCollectionTypeNameSpec(
+            typeNameSpec =
+                    new SqlCollectionTypeNameSpec(
                             convertTypeToSpec(componentType).getTypeNameSpec(),
                             componentType.isNullable(),
                             typeName,
@@ -1208,9 +1212,11 @@ public abstract class SqlTypeUtil {
         // REVIEW angel 11-Jan-2006:
         // Use neg numbers to indicate unspecified precision/scale
 
-        // FLINK MODIFICATION BEGIN
         return new SqlDataTypeSpec(typeNameSpec, SqlParserPos.ZERO).withNullable(type.isNullable());
+<<<<<<< HEAD
         // FLINK MODIFICATION END
+=======
+>>>>>>> ff4c6560f76 (till  [CALCITE-6731])
     }
 
     /**
