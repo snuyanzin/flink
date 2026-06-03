@@ -6143,14 +6143,14 @@ public class SqlToRelConverter {
         }
 
         @Override
-        public int getGroupCount() {
+        public boolean hasEmptyGroup() {
             if (agg != null) {
-                return agg.groupExprs.size();
+                return SqlValidatorUtil.hasEmptyGroup(agg.groupExprs);
             }
             if (window != null) {
-                return window.isAlwaysNonEmpty() ? 1 : 0;
+                return !window.isAlwaysNonEmpty();
             }
-            return -1;
+            return false;
         }
 
         @Override
