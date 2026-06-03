@@ -1162,9 +1162,11 @@ public abstract class SqlTypeUtil {
                     new SqlBasicTypeNameSpec(
                             typeName, precision, scale, charSetName, SqlParserPos.ZERO);
         } else if (isCollection(type)) {
+            RelDataType componentType = getComponentTypeOrThrow(type);
             typeNameSpec =
                     new SqlCollectionTypeNameSpec(
-                            convertTypeToSpec(getComponentTypeOrThrow(type)).getTypeNameSpec(),
+                            convertTypeToSpec(componentType).getTypeNameSpec(),
+                            componentType.isNullable(),
                             typeName,
                             SqlParserPos.ZERO);
         } else if (isRow(type)) {
@@ -1202,9 +1204,7 @@ public abstract class SqlTypeUtil {
         // REVIEW angel 11-Jan-2006:
         // Use neg numbers to indicate unspecified precision/scale
 
-        // FLINK MODIFICATION BEGIN
         return new SqlDataTypeSpec(typeNameSpec, SqlParserPos.ZERO).withNullable(type.isNullable());
-        // FLINK MODIFICATION BEGIN
     }
 
     /**
