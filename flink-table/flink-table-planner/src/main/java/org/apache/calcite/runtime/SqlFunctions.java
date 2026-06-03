@@ -42,6 +42,7 @@ import org.apache.calcite.linq4j.function.Functions;
 import org.apache.calcite.linq4j.function.NonDeterministic;
 import org.apache.calcite.linq4j.function.Predicate1;
 import org.apache.calcite.linq4j.tree.Primitive;
+import org.apache.calcite.linq4j.tree.UnsignedType;
 import org.apache.calcite.rel.type.TimeFrame;
 import org.apache.calcite.rel.type.TimeFrameSet;
 import org.apache.calcite.runtime.FlatLists.ComparableList;
@@ -65,10 +66,15 @@ import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.language.Soundex;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.joou.UByte;
+import org.joou.UInteger;
+import org.joou.ULong;
+import org.joou.UShort;
+import org.joou.Unsigned;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -2530,6 +2536,22 @@ public class SqlFunctions {
         throw notArithmetic("+", b0, b1);
     }
 
+    public static UByte plus(UByte b0, UByte b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.add(b1);
+    }
+
+    public static UShort plus(UShort b0, UShort b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.add(b1);
+    }
+
+    public static UInteger plus(UInteger b0, UInteger b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.add(b1);
+    }
+
+    public static ULong plus(ULong b0, ULong b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.add(b1);
+    }
+
     // checked +
 
     static byte intToByte(int value) {
@@ -2564,6 +2586,22 @@ public class SqlFunctions {
         return Math.addExact(b0, b1);
     }
 
+    public static UByte checkedPlus(UByte b0, UByte b1) {
+        return b0.add(b1);
+    }
+
+    public static UShort checkedPlus(UShort b0, UShort b1) {
+        return b0.add(b1);
+    }
+
+    public static UInteger checkedPlus(UInteger b0, UInteger b1) {
+        return b0.add(b1);
+    }
+
+    public static ULong checkedPlus(ULong b0, ULong b1) {
+        return b0.add(b1);
+    }
+
     // -
 
     /** SQL <code>-</code> operator applied to int values. */
@@ -2596,6 +2634,11 @@ public class SqlFunctions {
         return (b0 == null || b1 == null) ? castNonNull(null) : (b0.longValue() - b1.longValue());
     }
 
+    /** SQL <code>-</code> operator applied to nullable long and long values. */
+    public static Long minus(Long b0, Long b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.longValue() - b1.longValue();
+    }
+
     /** SQL <code>-</code> operator applied to nullable BigDecimal values. */
     public static BigDecimal minus(BigDecimal b0, BigDecimal b1) {
         return (b0 == null || b1 == null) ? castNonNull(null) : b0.subtract(b1);
@@ -2615,6 +2658,23 @@ public class SqlFunctions {
         }
 
         throw notArithmetic("-", b0, b1);
+    }
+
+    public static UByte minus(UByte b0, UByte b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.subtract(b1);
+    }
+
+    public static UShort minus(UShort b0, UShort b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.subtract(b1);
+    }
+
+    public static UInteger minus(UInteger b0, UInteger b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.subtract(b1);
+    }
+
+    /** SQL <code>-</code> operator applied to nullable unsigned long and long values. */
+    public static ULong minus(ULong b0, ULong b1) {
+        return (b0 == null || b1 == null) ? castNonNull(null) : b0.subtract(b1);
     }
 
     // checked -
@@ -2649,6 +2709,38 @@ public class SqlFunctions {
 
     public static long checkedUnaryMinus(long b) {
         return Math.subtractExact(0, b);
+    }
+
+    public static UByte checkedMinus(UByte b0, UByte b1) {
+        return b0.subtract(b1);
+    }
+
+    public static UShort checkedMinus(UShort b0, UShort b1) {
+        return b0.subtract(b1);
+    }
+
+    public static UInteger checkedMinus(UInteger b0, UInteger b1) {
+        return b0.subtract(b1);
+    }
+
+    public static ULong checkedMinus(ULong b0, ULong b1) {
+        return b0.subtract(b1);
+    }
+
+    public static UByte checkedUnaryMinus(UByte b) {
+        return Unsigned.ubyte(0).subtract(b);
+    }
+
+    public static UShort checkedUnaryMinus(UShort b) {
+        return Unsigned.ushort(0).subtract(b);
+    }
+
+    public static UInteger checkedUnaryMinus(UInteger b) {
+        return Unsigned.uint(0).subtract(b);
+    }
+
+    public static ULong checkedUnaryMinus(ULong b) {
+        return Unsigned.ulong(0).subtract(b);
     }
 
     // /
@@ -2714,6 +2806,31 @@ public class SqlFunctions {
         return BigDecimal.valueOf(b0).divide(b1, RoundingMode.HALF_DOWN).longValue();
     }
 
+    public static UByte divide(UByte b0, UByte b1) {
+        return (b0 == null || b1 == null)
+                ? castNonNull(null)
+                : UByte.valueOf(b0.intValue() / b1.intValue());
+    }
+
+    public static UShort divide(UShort b0, UShort b1) {
+        return (b0 == null || b1 == null)
+                ? castNonNull(null)
+                : UShort.valueOf(b0.intValue() / b1.intValue());
+    }
+
+    public static UInteger divide(UInteger b0, UInteger b1) {
+        return (b0 == null || b1 == null)
+                ? castNonNull(null)
+                : UInteger.valueOf(b0.longValue() / b1.longValue());
+    }
+
+    public static ULong divide(ULong b0, ULong b1) {
+        return (b0 == null || b1 == null)
+                ? castNonNull(null)
+                : ULong.valueOf(
+                        UnsignedType.toBigInteger(b0).divide(UnsignedType.toBigInteger(b1)));
+    }
+
     public static byte checkedDivide(byte b0, byte b1) {
         return intToByte(b0 / b1);
     }
@@ -2742,6 +2859,22 @@ public class SqlFunctions {
         }
     }
 
+    public static UByte checkedDivide(UByte b0, UByte b1) {
+        return UByte.valueOf(b0.intValue() / b1.intValue());
+    }
+
+    public static UShort checkedDivide(UShort b0, UShort b1) {
+        return UShort.valueOf(b0.intValue() / b1.intValue());
+    }
+
+    public static UInteger checkedDivide(UInteger b0, UInteger b1) {
+        return UInteger.valueOf(b0.longValue() / b1.longValue());
+    }
+
+    public static ULong checkedDivide(ULong b0, ULong b1) {
+        return ULong.valueOf(UnsignedType.toBigInteger(b0).divide(UnsignedType.toBigInteger(b1)));
+    }
+
     // *
 
     /** SQL <code>*</code> operator applied to int values. */
@@ -2762,6 +2895,32 @@ public class SqlFunctions {
     /** SQL <code>*</code> operator applied to nullable int values. */
     public static Integer multiply(Integer b0, Integer b1) {
         return (b0 == null || b1 == null) ? castNonNull(null) : (b0 * b1);
+    }
+
+    public static UByte multiply(UByte b0, UByte b1) {
+        return (b0 == null || b1 == null)
+                ? castNonNull(null)
+                : UByte.valueOf(b0.longValue() * b1.longValue());
+    }
+
+    public static UShort multiply(UShort b0, UShort b1) {
+        return (b0 == null || b1 == null)
+                ? castNonNull(null)
+                : UShort.valueOf(b0.intValue() * b1.intValue());
+    }
+
+    public static UInteger multiply(UInteger b0, UInteger b1) {
+        return (b0 == null || b1 == null)
+                ? castNonNull(null)
+                : UInteger.valueOf(b0.longValue() * b1.longValue());
+    }
+
+    public static ULong multiply(ULong b0, ULong b1) {
+        if (b0 == null || b1 == null) {
+            return castNonNull(null);
+        }
+        BigInteger result = UnsignedType.toBigInteger(b0).multiply(UnsignedType.toBigInteger(b1));
+        return ULong.valueOf(result);
     }
 
     /** SQL <code>*</code> operator applied to nullable long and int values. */
@@ -2811,6 +2970,22 @@ public class SqlFunctions {
 
     public static long checkedMultiply(long b0, long b1) {
         return Math.multiplyExact(b0, b1);
+    }
+
+    public static UByte checkedMultiply(UByte b0, UByte b1) {
+        return UByte.valueOf(b0.intValue() * b1.intValue());
+    }
+
+    public static UShort checkedMultiply(UShort b0, UShort b1) {
+        return UShort.valueOf(b0.intValue() * b1.intValue());
+    }
+
+    public static UInteger checkedMultiply(UInteger b0, UInteger b1) {
+        return UInteger.valueOf(b0.longValue() * b1.longValue());
+    }
+
+    public static ULong checkedMultiply(ULong b0, ULong b1) {
+        return ULong.valueOf(UnsignedType.toBigInteger(b0).multiply(UnsignedType.toBigInteger(b1)));
     }
 
     /** SQL <code>SAFE_ADD</code> function applied to long values. */
@@ -5870,7 +6045,7 @@ public class SqlFunctions {
             return s.replace(search, replacement);
         }
         // for MSSQL's REPLACE function, search pattern is case-insensitive during matching
-        return org.apache.commons.lang3.StringUtils.replaceIgnoreCase(s, search, replacement);
+        return org.apache.commons.lang3.Strings.CI.replace(s, search, replacement);
     }
 
     /**
@@ -6667,12 +6842,12 @@ public class SqlFunctions {
      * array by splitting the input string value into subvalues using the specified string value as
      * the "delimiter". Optionally, allows a specified string value to be interpreted as NULL.
      */
-    public static List<String> stringToArray(String string, @Nullable String delimiter) {
+    public static List<@Nullable String> stringToArray(String string, @Nullable String delimiter) {
         return stringToArray(string, delimiter, null);
     }
 
     /** SQL {@code STRING_TO_ARRAY(string, delimiter, nullString)} function. */
-    public static List<String> stringToArray(
+    public static List<@Nullable String> stringToArray(
             String string, @Nullable String delimiter, @Nullable String nullString) {
         String[] parts;
         if (delimiter == null) {
@@ -6685,7 +6860,7 @@ public class SqlFunctions {
         } else {
             parts = string.split(delimiter);
         }
-        List<String> result = new ArrayList<>(parts.length);
+        List<@Nullable String> result = new ArrayList<>(parts.length);
         for (String part : parts) {
             if (nullString != null && nullString.equals(part)) {
                 result.add(null);
