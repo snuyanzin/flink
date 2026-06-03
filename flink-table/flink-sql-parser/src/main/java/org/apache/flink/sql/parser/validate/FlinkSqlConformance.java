@@ -193,6 +193,11 @@ public enum FlinkSqlConformance implements SqlConformance {
     }
 
     @Override
+    public boolean supportsUnsignedTypes() {
+        return false;
+    }
+
+    @Override
     public boolean isValueAllowed() {
         return true;
     }
