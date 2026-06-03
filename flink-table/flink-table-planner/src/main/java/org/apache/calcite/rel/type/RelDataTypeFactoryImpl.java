@@ -58,7 +58,6 @@ import static org.apache.calcite.util.ReflectUtil.isStatic;
  * <p>FLINK modifications are at lines
  *
  * <ol>
- *   <li>Should be removed after fixing CALCITE-5199: Lines 242-244
  *   <li>Added in FLINK-39695 (backport of CALCITE-6764): Lines 407 ~ 438
  * </ol>
  */
@@ -238,9 +237,7 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
 
         // recursively compute column-wise least restrictive
         // preserve the struct kind from type0
-        // FLINK MODIFICATION BEGIN
         final Builder builder = builder().kind(type0.getStructKind());
-        // FLINK MODIFICATION END
         for (int j = 0; j < fieldCount; ++j) {
             // REVIEW jvs 22-Jan-2004:  Always use the field name from the
             // first type?
@@ -277,9 +274,11 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
         if (type == null) {
             return null;
         }
-        return sqlTypeName == SqlTypeName.ARRAY
-                ? new ArraySqlType(type, isNullable)
-                : new MultisetSqlType(type, isNullable);
+        RelDataType collection =
+                sqlTypeName == SqlTypeName.ARRAY
+                        ? createArrayType(type, -1)
+                        : createMultisetType(type, -1);
+        return createTypeWithNullability(collection, isNullable);
     }
 
     protected @Nullable RelDataType leastRestrictiveMapType(
@@ -302,7 +301,7 @@ public abstract class RelDataTypeFactoryImpl implements RelDataTypeFactory {
         if (valueType == null) {
             return null;
         }
-        return new MapSqlType(keyType, valueType, isNullable);
+        return createTypeWithNullability(createMapType(keyType, valueType), isNullable);
     }
 
     protected RelDataType leastRestrictiveIntervalDatetimeType(
