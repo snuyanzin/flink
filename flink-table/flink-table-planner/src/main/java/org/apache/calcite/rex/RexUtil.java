@@ -25,6 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 import org.apache.calcite.DataContexts;
 import org.apache.calcite.linq4j.function.Predicate1;
+import org.apache.calcite.plan.PlanTooComplexError;
 import org.apache.calcite.plan.RelOptPredicateList;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelCollation;
@@ -802,6 +803,11 @@ public class RexUtil {
 
         @Override
         public Boolean visitLambdaRef(RexLambdaRef lambdaRef) {
+            return false;
+        }
+
+        @Override
+        public Boolean visitNodeAndFieldIndex(RexNodeAndFieldIndex nodeAndFieldIndex) {
             return false;
         }
     }
@@ -2982,12 +2988,6 @@ public class RexUtil {
             return new RexInputRef(input.getIndex() + offset, input.getType());
         }
     }
-
-    /**
-     * Exception to catch when optimizing the plan produces a result that is too complex, either at
-     * the Rel or at the Rex level.
-     */
-    private static class PlanTooComplexError extends ControlFlowException {}
 
     /**
      * Visitor that throws {@link org.apache.calcite.util.Util.FoundOne} if applied to an expression
