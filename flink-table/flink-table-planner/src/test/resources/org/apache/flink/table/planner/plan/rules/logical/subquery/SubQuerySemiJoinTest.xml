@@ -35,7 +35,7 @@ LogicalFilter(condition=[=($1, $cor0.b)])
     <Resource name="optimized rel plan">
       <![CDATA[
 LogicalProject(s=[$1])
-+- LogicalJoin(condition=[=($2, $1)], joinType=[semi])
++- LogicalJoin(condition=[=($2, $0)], joinType=[semi])
    :- LogicalAggregate(group=[{0}], s=[SUM($1)])
    :  +- LogicalProject(b=[$1], a=[$0])
    :     +- LogicalTableScan(table=[[default_catalog, default_database, x]])
@@ -1612,7 +1612,7 @@ LogicalProject(d=[$1])
       <![CDATA[
 LogicalProject(s=[$1])
 +- LogicalProject(b=[$0], s=[$1], $f2=[$2])
-   +- LogicalJoin(condition=[AND(=($3, $4), =($4, $1))], joinType=[semi])
+   +- LogicalJoin(condition=[AND(=($3, $4), =($4, $0))], joinType=[semi])
       :- LogicalProject(b=[$0], s=[$1], $f2=[$2], $f20=[CAST($2):BIGINT])
       :  +- LogicalAggregate(group=[{0}], s=[SUM($1)], agg#1=[MAX($1)])
       :     +- LogicalProject(b=[$1], a=[$0])
