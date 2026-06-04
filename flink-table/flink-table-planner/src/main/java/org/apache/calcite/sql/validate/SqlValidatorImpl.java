@@ -5667,13 +5667,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         // matched
         boolean isUpdateModifiableViewTable = false;
         if (query instanceof SqlUpdate) {
-            final SqlNodeList targetColumnList =
-                    requireNonNull(((SqlUpdate) query).getTargetColumnList());
-            final int targetColumnCount = targetColumnList.size();
-            targetRowType =
-                    SqlTypeUtil.extractLastNFields(typeFactory, targetRowType, targetColumnCount);
-            sourceRowType =
-                    SqlTypeUtil.extractLastNFields(typeFactory, sourceRowType, targetColumnCount);
             isUpdateModifiableViewTable = table.unwrap(ModifiableViewTable.class) != null;
         }
         if (SqlTypeUtil.equalAsStructSansNullability(
@@ -5794,6 +5787,16 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         final RelDataType sourceRowType = getValidatedNodeType(select);
         checkTypeAssignment(scopes.get(select), table, sourceRowType, targetRowType, call);
 
+        // Set validated sourceExpressionList from the source select.
+        // The last elements of sourceSelect are the expression list.
+        List<SqlNode> sourceExpressionList =
+                Util.last(select.getSelectList(), call.getSourceExpressionList().size());
+        call.setOperand(
+                2,
+                SqlUtil.stripListAs(
+                        new SqlNodeList(
+                                sourceExpressionList,
+                                call.getSourceExpressionList().getParserPosition())));
         checkConstraint(table, call, targetRowType);
 
         validateAccess(call.getTargetTable(), table, SqlAccessEnum.UPDATE);

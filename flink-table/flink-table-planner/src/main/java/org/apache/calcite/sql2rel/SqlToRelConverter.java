@@ -4710,14 +4710,27 @@ public class SqlToRelConverter {
             targetColumnNameList.add(field.getName());
         }
 
-        RelNode sourceRel = convertSelect(sourceSelect, false);
-
-        bb.setRoot(sourceRel, false);
-        ImmutableList.Builder<RexNode> rexNodeSourceExpressionListBuilder = ImmutableList.builder();
-        for (SqlNode n : call.getSourceExpressionList()) {
-            RexNode rn = bb.convertExpression(n);
-            rexNodeSourceExpressionListBuilder.add(rn);
+        // `sourceSelect` should contain target columns values plus source expressions
+        if (sourceSelect.getSelectList().size()
+                != targetTable.getRowType().getFieldCount()
+                        + call.getSourceExpressionList().size()) {
+            throw new AssertionError(
+                    "Unexpected select list size. Select list should contain both target table columns and "
+                            + "set expressions");
         }
+
+        RelNode sourceRel = convertSelect(sourceSelect, false);
+        bb.setRoot(sourceRel, false);
+
+        // sourceRel already contains all source expressions. Only create references to those
+        // fields.
+        List<RexNode> rexExpressionList =
+                Util.transform(
+                        Util.last(
+                                sourceRel.getRowType().getFieldList(), targetColumnNameList.size()),
+                        expressionField ->
+                                new RexInputRef(
+                                        expressionField.getIndex(), expressionField.getType()));
 
         return LogicalTableModify.create(
                 targetTable,
@@ -4725,7 +4738,7 @@ public class SqlToRelConverter {
                 sourceRel,
                 LogicalTableModify.Operation.UPDATE,
                 targetColumnNameList,
-                rexNodeSourceExpressionListBuilder.build(),
+                rexExpressionList,
                 false);
     }
 
@@ -5986,20 +5999,20 @@ public class SqlToRelConverter {
                         query = Iterables.getOnlyElement(call.getOperandList());
                         // let top=true to make the query be top-level query,
                         // then ORDER BY will be reserved.
-                        root = convertQueryRecursive(query, true, null);
-                        return RexSubQuery.array(root.rel);
+                        root = convertQuery(query, false, true);
+                        return RexSubQuery.array(root.project());
 
                     case MAP_QUERY_CONSTRUCTOR:
                         call = (SqlCall) expr;
                         query = Iterables.getOnlyElement(call.getOperandList());
-                        root = convertQueryRecursive(query, false, null);
-                        return RexSubQuery.map(root.rel);
+                        root = convertQuery(query, false, true);
+                        return RexSubQuery.map(root.project());
 
                     case MULTISET_QUERY_CONSTRUCTOR:
                         call = (SqlCall) expr;
                         query = Iterables.getOnlyElement(call.getOperandList());
-                        root = convertQueryRecursive(query, false, null);
-                        return RexSubQuery.multiset(root.rel);
+                        root = convertQuery(query, false, true);
+                        return RexSubQuery.multiset(root.project());
 
                     default:
                         break;
