@@ -3323,6 +3323,8 @@ public class RexSimplify {
                 case EQUALS:
                 case NOT_EQUALS:
                 case SEARCH:
+                case IS_NOT_DISTINCT_FROM:
+                case IS_DISTINCT_FROM:
                     return accept2(
                             ((RexCall) e).operands.get(0),
                             ((RexCall) e).operands.get(1),
@@ -3421,9 +3423,16 @@ public class RexSimplify {
                 case EQUALS:
                     b.addRange(Range.singleton(value), literal.getType());
                     return true;
+                case IS_NOT_DISTINCT_FROM:
+                    b.addRange(Range.singleton(value), literal.getType(), FALSE);
+                    return true;
                 case NOT_EQUALS:
                     b.addRange(Range.lessThan(value), literal.getType());
                     b.addRange(Range.greaterThan(value), literal.getType());
+                    return true;
+                case IS_DISTINCT_FROM:
+                    b.addRange(Range.lessThan(value), literal.getType(), TRUE);
+                    b.addRange(Range.greaterThan(value), literal.getType(), TRUE);
                     return true;
                 case SEARCH:
                     final Sarg sarg = (Sarg) value;
@@ -3468,7 +3477,8 @@ public class RexSimplify {
             if (term instanceof RexSargBuilder) {
                 final RexSargBuilder sargBuilder = (RexSargBuilder) term;
                 final Sarg sarg = sargBuilder.build();
-                if (sarg.complexity() <= 1 && simpleSarg(sarg)) {
+                boolean isSmall = sarg.complexity() <= 1 || sarg.isAll() || sarg.isNone();
+                if (isSmall && simpleSarg(sarg)) {
                     // Expand small sargs into comparisons in order to avoid plan changes
                     // and better readability.
                     return RexUtil.sargRef(
@@ -3582,10 +3592,14 @@ public class RexSimplify {
         }
 
         void addRange(Range<Comparable> range, RelDataType type) {
+            addRange(range, type, UNKNOWN);
+        }
+
+        void addRange(Range<Comparable> range, RelDataType type, RexUnknownAs unknownAs) {
             types.add(type);
             rangeSet.add(range);
             mergedSarg |= hasSarg;
-            nullAs = nullAs.or(UNKNOWN);
+            nullAs = nullAs.or(unknownAs);
         }
 
         @SuppressWarnings({"rawtypes", "unchecked"})
