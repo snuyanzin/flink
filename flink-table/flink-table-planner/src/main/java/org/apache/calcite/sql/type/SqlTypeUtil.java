@@ -1522,17 +1522,16 @@ public abstract class SqlTypeUtil {
      * @return Whether types are comparable
      */
     public static boolean isComparable(RelDataType type1, RelDataType type2) {
-        // FLINK MODIFICATION BEGIN Calcite-7230
+        if (type1.isStruct() != type2.isStruct()) {
+            return false;
+        }
+
         final RelDataTypeFamily family1 = family(type1);
         final RelDataTypeFamily family2 = family(type2);
 
         // If one of the arguments is of type 'NULL', return true.
         if (family1 == SqlTypeFamily.NULL || family2 == SqlTypeFamily.NULL) {
             return true;
-        }
-        // FLINK MODIFICATION END
-        if (type1.isStruct() != type2.isStruct()) {
-            return false;
         }
 
         if (type1.isStruct()) {
@@ -1577,11 +1576,6 @@ public abstract class SqlTypeUtil {
 
         // If one of the arguments is of type 'ANY', return true.
         if (family1 == SqlTypeFamily.ANY || family2 == SqlTypeFamily.ANY) {
-            return true;
-        }
-
-        // If one of the arguments is of type 'NULL', return true.
-        if (family1 == SqlTypeFamily.NULL || family2 == SqlTypeFamily.NULL) {
             return true;
         }
 
