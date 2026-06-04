@@ -2670,15 +2670,15 @@ public class SqlToRelConverter {
                 convertCollectionTable(bb, call2);
                 return;
 
-            // ----- FLINK MODIFICATION BEGIN -----
             case LATERAL:
                 call = (SqlCall) from;
+
                 // Extract and analyze lateral part of join call.
                 assert call.getOperandList().size() == 1;
                 final SqlCall callLateral = call.operand(0);
                 convertFrom(bb, callLateral, fieldNames);
                 return;
-            // ----- FLINK MODIFICATION END -----
+
             default:
                 throw new AssertionError("not a join operator " + from);
         }

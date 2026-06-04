@@ -1353,9 +1353,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 }
             // fall through
             case TABLE_REF:
-            // ----- FLINK MODIFICATION BEGIN -----
             case LATERAL:
-            // ----- FLINK MODIFICATION END -----
             case SNAPSHOT:
             case OVER:
             case COLLECTION_TABLE:
