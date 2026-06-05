@@ -39,6 +39,7 @@ import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeCoercionRule;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -2529,7 +2530,8 @@ public class RexSimplify {
             RexLiteral literal = (RexLiteral) call.getOperands().get(1);
             final Sarg sarg = castNonNull(literal.getValueAs(Sarg.class));
             if (sarg.isAll() || sarg.isNone()) {
-                RexNode rexNode = RexUtil.simpleSarg(rexBuilder, searchOperand, sarg, unknownAs);
+                RexNode rexNode =
+                        RexUtil.simpleSarg(call.pos, rexBuilder, searchOperand, sarg, unknownAs);
                 return simplify(rexNode, unknownAs);
             }
             // Remove null from sarg if the left-hand side is never null
@@ -2849,6 +2851,7 @@ public class RexSimplify {
                                             RexWindowBounds.CURRENT_ROW,
                                             true);
                             return new RexOver(
+                                    call.pos,
                                     call.type,
                                     (SqlAggFunction) call.op,
                                     call.operands,
@@ -3388,6 +3391,7 @@ public class RexSimplify {
                 case IS_NOT_DISTINCT_FROM:
                 case IS_DISTINCT_FROM:
                     return accept2(
+                            ((RexCall) e).getParserPosition(),
                             ((RexCall) e).operands.get(0),
                             ((RexCall) e).operands.get(1),
                             e.getKind(),
@@ -3395,7 +3399,7 @@ public class RexSimplify {
                 case IS_NULL:
                 case IS_NOT_NULL:
                     final RexNode arg = ((RexCall) e).operands.get(0);
-                    return accept1(arg, e.getKind(), newTerms);
+                    return accept1(((RexCall) e).getParserPosition(), arg, e.getKind(), newTerms);
                 default:
                     return false;
             }
@@ -3413,12 +3417,17 @@ public class RexSimplify {
          * @param newTerms the list to which the Sarg will be added if accepted
          * @return true if the operands can be converted to a Sarg, false otherwise
          */
-        private boolean accept2(RexNode left, RexNode right, SqlKind kind, List<RexNode> newTerms) {
+        private boolean accept2(
+                SqlParserPos pos,
+                RexNode left,
+                RexNode right,
+                SqlKind kind,
+                List<RexNode> newTerms) {
             if (right.isA(SqlKind.LITERAL) && RexUtil.isDeterministic(left)) {
-                return accept2b(left, kind, (RexLiteral) right, newTerms);
+                return accept2b(pos, left, kind, (RexLiteral) right, newTerms);
             }
             if (left.isA(SqlKind.LITERAL) && RexUtil.isDeterministic(right)) {
-                return accept2b(right, kind.reverse(), (RexLiteral) left, newTerms);
+                return accept2b(pos, right, kind.reverse(), (RexLiteral) left, newTerms);
             }
             return false;
         }
@@ -3436,11 +3445,14 @@ public class RexSimplify {
          * @param newTerms the list to which the Sarg is added
          * @return true since the operand is always converted to a Sarg
          */
-        private boolean accept1(RexNode e, SqlKind kind, List<RexNode> newTerms) {
+        private boolean accept1(SqlParserPos pos, RexNode e, SqlKind kind, List<RexNode> newTerms) {
             final RexSargBuilder b =
                     map.computeIfAbsent(
                             e,
-                            e2 -> addFluent(newTerms, new RexSargBuilder(e2, rexBuilder, negate)));
+                            e2 ->
+                                    addFluent(
+                                            newTerms,
+                                            new RexSargBuilder(pos, e2, rexBuilder, negate)));
             switch (negate ? kind.negate() : kind) {
                 case IS_NULL:
                     b.nullAs = b.nullAs.or(TRUE);
@@ -3466,7 +3478,11 @@ public class RexSimplify {
          * @return false if the literal operand is null, true otherwise
          */
         private boolean accept2b(
-                RexNode e, SqlKind kind, RexLiteral literal, List<RexNode> newTerms) {
+                SqlParserPos pos,
+                RexNode e,
+                SqlKind kind,
+                RexLiteral literal,
+                List<RexNode> newTerms) {
             if (literal.getValue() == null) {
                 // Cannot include expressions 'x > NULL' in a Sarg. Comparing to a NULL
                 // literal is a daft thing to do, because it always returns UNKNOWN. It
@@ -3476,7 +3492,11 @@ public class RexSimplify {
             final RexSargBuilder b =
                     map.computeIfAbsent(
                             e,
-                            e2 -> addFluent(newTerms, new RexSargBuilder(e2, rexBuilder, negate)));
+                            e2 ->
+                                    addFluent(
+                                            newTerms,
+                                            new RexSargBuilder(pos, e2, rexBuilder, negate)));
+            b.addPosition(pos);
             if (negate) {
                 kind = kind.negateNullSafe();
             }
@@ -3556,9 +3576,15 @@ public class RexSimplify {
                     // Expand small sargs into comparisons in order to avoid plan changes
                     // and better readability.
                     return RexUtil.sargRef(
-                            rexBuilder, sargBuilder.ref, sarg, term.getType(), unknownAs);
+                            sargBuilder.pos,
+                            rexBuilder,
+                            sargBuilder.ref,
+                            sarg,
+                            term.getType(),
+                            unknownAs);
                 }
                 return rexBuilder.makeCall(
+                        sargBuilder.pos,
                         SqlStdOperatorTable.SEARCH,
                         sargBuilder.ref,
                         rexBuilder.makeSearchArgumentLiteral(sarg, term.getType()));
@@ -3588,6 +3614,10 @@ public class RexSimplify {
      * {@code FALSE OR FALSE} returns {@code FALSE}.
      */
     private static class RexSargBuilder extends RexNode {
+        // The position is MUTABLE: it contains the SUM of the positions of
+        // all expressions that compose the search.  This is not ideal, but it's better
+        // than having no source position information at all.
+        SqlParserPos pos;
         final RexNode ref;
         final RexBuilder rexBuilder;
         final boolean negate;
@@ -3597,7 +3627,8 @@ public class RexSimplify {
         boolean mergedSarg;
         RexUnknownAs nullAs = FALSE;
 
-        RexSargBuilder(RexNode ref, RexBuilder rexBuilder, boolean negate) {
+        RexSargBuilder(SqlParserPos pos, RexNode ref, RexBuilder rexBuilder, boolean negate) {
+            this.pos = pos;
             this.ref = requireNonNull(ref, "ref");
             this.rexBuilder = requireNonNull(rexBuilder, "rexBuilder");
             this.negate = negate;
@@ -3656,6 +3687,10 @@ public class RexSimplify {
             throw new UnsupportedOperationException();
         }
 
+        public SqlParserPos getPos() {
+            return pos;
+        }
+
         @Override
         public int hashCode() {
             throw new UnsupportedOperationException();
@@ -3663,6 +3698,10 @@ public class RexSimplify {
 
         void addAll() {
             rangeSet.add(Range.all());
+        }
+
+        void addPosition(SqlParserPos pos) {
+            this.pos = SqlParserPos.sum(ImmutableList.of(this.pos, pos));
         }
 
         void addRange(Range<Comparable> range, RelDataType type) {
