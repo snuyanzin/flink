@@ -1990,7 +1990,8 @@ public abstract class SqlTypeUtil {
                 || SqlTypeUtil.isNumeric(type)
                 || SqlTypeUtil.isString(type)
                 || SqlTypeUtil.isBoolean(type)
-                || typeName == SqlTypeName.UUID;
+                || typeName == SqlTypeName.UUID
+                || typeName == SqlTypeName.VARIANT;
     }
 
     /** Returns a DECIMAL type with the maximum precision for the current type system. */
