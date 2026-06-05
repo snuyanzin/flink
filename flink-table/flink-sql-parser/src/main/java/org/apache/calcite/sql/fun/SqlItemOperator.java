@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.calcite.sql.fun;
 
 import org.apache.calcite.rel.type.RelDataType;
@@ -25,6 +24,7 @@ import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperandCountRange;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
@@ -41,16 +41,12 @@ import java.util.Arrays;
 import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.sql.type.NonNullableAccessors.getComponentTypeOrThrow;
 import static org.apache.calcite.sql.validate.SqlNonNullableAccessors.getOperandLiteralValueOrThrow;
+import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
  * The item operator {@code [ ... ]}, used to access a given element of an array, map or struct. For
  * example, {@code myArray[3]}, {@code "myMap['foo']"}, {@code myStruct[2]} or {@code
  * myStruct['fieldName']}.
- *
- * <p>This class was copied over from Calcite 1.39.0 version to support access variant
- * (FLINK-37924).
- *
- * <p>Line 148 ~ 153, CALCITE-7325, should be removed after upgrading Calcite to 1.42.0.
  */
 public class SqlItemOperator extends SqlSpecialOperator {
     public final int offset;
@@ -107,7 +103,48 @@ public class SqlItemOperator extends SqlSpecialOperator {
             return false;
         }
         final SqlSingleOperandTypeChecker checker = getChecker(callBinding);
-        return checker.checkSingleOperandType(callBinding, right, 0, throwOnFailure);
+        if (!checker.checkSingleOperandType(callBinding, right, 0, throwOnFailure)) {
+            return false;
+        }
+
+        final RelDataType operandType = callBinding.getOperandType(0);
+        if (operandType.getSqlTypeName() != SqlTypeName.ROW) {
+            return true;
+        }
+
+        // For ROW types validate the index value (must be a constant).
+        RelDataType indexType = callBinding.getOperandType(1);
+        if (SqlTypeUtil.isString(indexType)) {
+            final String fieldName = getOperandLiteralValueOrThrow(callBinding, 1, String.class);
+            RelDataTypeField field = operandType.getField(fieldName, false, false);
+            if (field == null) {
+                if (throwOnFailure) {
+                    throw callBinding.newValidationError(
+                            RESOURCE.unknownRowField(fieldName, operandType.toString()));
+                } else {
+                    return false;
+                }
+            }
+        } else if (SqlTypeUtil.isIntType(indexType)) {
+            Integer index = callBinding.getOperandLiteralValue(1, Integer.class);
+            if (index == null) {
+                if (throwOnFailure) {
+                    throw callBinding.newValidationError(RESOURCE.illegalRowIndex());
+                } else {
+                    return false;
+                }
+            }
+            if (index < 1 || index > operandType.getFieldCount()) {
+                if (throwOnFailure) {
+                    throw callBinding.newValidationError(
+                            RESOURCE.illegalRowIndexValue(index, operandType.getFieldCount()));
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override
@@ -125,6 +162,33 @@ public class SqlItemOperator extends SqlSpecialOperator {
                 RelDataType keyType =
                         requireNonNull(operandType.getKeyType(), "operandType.getKeyType()");
                 SqlTypeName sqlTypeName = keyType.getSqlTypeName();
+                if (sqlTypeName == SqlTypeName.VARIANT) {
+                    // Allow any key type to be used when the map keys have a VARIANT type
+                    return OperandTypes.family(SqlTypeFamily.ANY);
+                } else if (sqlTypeName == SqlTypeName.ROW) {
+                    // Check that the type of the argument is exactly the key type
+                    return new SqlSingleOperandTypeChecker() {
+                        @Override
+                        public boolean checkSingleOperandType(
+                                SqlCallBinding callBinding,
+                                SqlNode operand,
+                                int iFormalOperand,
+                                boolean throwOnFailure) {
+                            // operand 0 of ITEM is the indexed object, operand 1 is the key value
+                            RelDataType operandType = callBinding.getOperandType(1);
+                            boolean match = operandType.equals(keyType);
+                            if (!match && throwOnFailure) {
+                                throw callBinding.newValidationSignatureError();
+                            }
+                            return match;
+                        }
+
+                        @Override
+                        public String getAllowedSignatures(SqlOperator op, String opName) {
+                            return "[" + keyType.getSqlTypeName() + "]";
+                        }
+                    };
+                }
                 return OperandTypes.family(
                         requireNonNull(
                                 sqlTypeName.getFamily(),
@@ -145,12 +209,10 @@ public class SqlItemOperator extends SqlSpecialOperator {
     @Override
     public String getAllowedSignatures(String name) {
         if (name.equals("ITEM")) {
-            // FLINK MODIFICATION BEGIN
             return "<ARRAY>[<INTEGER>]\n"
                     + "<MAP>[<ANY>]\n"
                     + "<ROW>[<CHARACTER>|<INTEGER>]\n"
                     + "<VARIANT>[<CHARACTER>|<INTEGER>]";
-            // FLINK MODIFICATION END
         } else {
             return "<ARRAY>[" + name + "(<INTEGER>)]";
         }
@@ -207,7 +269,7 @@ public class SqlItemOperator extends SqlSpecialOperator {
                             "Unsupported field identifier type: '" + indexType + "'");
                 }
                 if (operandType.isNullable()) {
-                    fieldType = typeFactory.createTypeWithNullability(fieldType, true);
+                    fieldType = typeFactory.enforceTypeWithNullability(fieldType, true);
                 }
                 return fieldType;
             case ANY:

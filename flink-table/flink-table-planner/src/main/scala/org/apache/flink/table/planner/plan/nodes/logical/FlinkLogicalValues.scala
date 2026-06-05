@@ -91,11 +91,11 @@ object FlinkLogicalValues {
       // And PruneEmptyRules will remove sort rel node
       // So there will be a empty values with useless collation, in this case we need keep
       // original collation to make this conversion success.
-      newTraitSet = newTraitSet.replaceIf(
-        RelCollationTraitDef.INSTANCE.asInstanceOf[RelTraitDef[RelTrait]],
-        new Supplier[RelTrait]() {
-          def get: RelTrait = {
-            traitSet.getTrait(RelCollationTraitDef.INSTANCE)
+      newTraitSet = newTraitSet.replaceIfs(
+        RelCollationTraitDef.INSTANCE,
+        new Supplier[util.List[RelCollation]]() {
+          def get: util.List[RelCollation] = {
+            traitSet.getCollations
           }
         }
       )
