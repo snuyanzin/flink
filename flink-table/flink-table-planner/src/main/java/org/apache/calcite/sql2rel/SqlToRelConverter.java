@@ -2179,6 +2179,9 @@ public class SqlToRelConverter {
         }
         final SqlKind kind = node.getKind();
         switch (kind) {
+            // A lambda has its own scope, which is not part of the blackboard.
+            case LAMBDA:
+                return;
             case EXISTS:
             case UNIQUE:
             case SELECT:
@@ -2390,6 +2393,7 @@ public class SqlToRelConverter {
 
         final Blackboard lambdaBb = createBlackboard(scope, nameToNodeMap, false);
         lambdaBb.setRoot(castNonNull(bb.inputs));
+        replaceSubQueries(lambdaBb, call.getExpression(), RelOptUtil.Logic.TRUE_FALSE_UNKNOWN);
         final RexNode expr = lambdaBb.convertExpression(call.getExpression());
         return rexBuilder.makeLambdaCall(expr, parameters);
     }
@@ -2740,7 +2744,7 @@ public class SqlToRelConverter {
                 (node, i) -> {
                     final RexNode e = bb.convertExpression(node);
                     final String alias = SqlValidatorUtil.alias(node, i);
-                    exprs.add(relBuilder.alias(e, alias));
+                    exprs.add(relBuilder.alias(node.getParserPosition(), e, alias));
                 });
         RelNode child = (null != bb.root) ? bb.root : LogicalValues.createOneRow(cluster);
         RelNode uncollect;
@@ -4710,17 +4714,17 @@ public class SqlToRelConverter {
             targetColumnNameList.add(field.getName());
         }
 
-        // `sourceSelect` should contain target columns values plus source expressions
-        if (sourceSelect.getSelectList().size()
+        RelNode sourceRel = convertSelect(sourceSelect, false);
+        bb.setRoot(sourceRel, false);
+
+        // `sourceRel` should contain target columns values plus source expressions
+        if (sourceRel.getRowType().getFieldCount()
                 != targetTable.getRowType().getFieldCount()
                         + call.getSourceExpressionList().size()) {
             throw new AssertionError(
-                    "Unexpected select list size. Select list should contain both target table columns and "
-                            + "set expressions");
+                    "Unexpected source select row type. Select row type should contain both target table "
+                            + "columns and set expressions");
         }
-
-        RelNode sourceRel = convertSelect(sourceSelect, false);
-        bb.setRoot(sourceRel, false);
 
         // sourceRel already contains all source expressions. Only create references to those
         // fields.
@@ -6064,7 +6068,10 @@ public class SqlToRelConverter {
                     // "IS TRUE" check so that the result is "BOOLEAN NOT NULL".
                     if (fieldAccess.getType().isNullable() && kind == SqlKind.EXISTS) {
                         fieldAccess =
-                                rexBuilder.makeCall(SqlStdOperatorTable.IS_NOT_NULL, fieldAccess);
+                                rexBuilder.makeCall(
+                                        expr.getParserPosition(),
+                                        SqlStdOperatorTable.IS_NOT_NULL,
+                                        fieldAccess);
                     }
                     return fieldAccess;
 
