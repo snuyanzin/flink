@@ -80,13 +80,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.rel.type.RelDataType.PRECISION_NOT_SPECIFIED;
 
-/**
- * Default implementation of {@link org.apache.calcite.rex.RexUtil}, the class was copied over
- * because of current Calcite way of inferring constants from IS NOT DISTINCT FROM clashes with
- * filter push down.
- *
- * <p>FLINK modifications (backport of CALCITE-6764): Line 2489~2494
- */
+/** Utility methods concerning row-expressions. */
 public class RexUtil {
 
     /** Executor for a bit of constant reduction. The user can pass in another executor. */
@@ -2412,6 +2406,16 @@ public class RexUtil {
     }
 
     /**
+     * If the RexNode contains position information, return it. Otherwise, return SqlParserPos.ZERO.
+     */
+    public static SqlParserPos getPos(RexNode e) {
+        if (e instanceof RexCall) {
+            return ((RexCall) e).getParserPosition();
+        }
+        return SqlParserPos.ZERO;
+    }
+
+    /**
      * Applies NOT to an expression.
      *
      * <p>Unlike {@link #not}, may strengthen the type from {@code BOOLEAN} to {@code BOOLEAN NOT
@@ -2424,7 +2428,8 @@ public class RexUtil {
                         ? rexBuilder.makeLiteral(true)
                         : input.getKind() == SqlKind.NOT
                                 ? ((RexCall) input).operands.get(0)
-                                : rexBuilder.makeCall(SqlStdOperatorTable.NOT, input);
+                                : rexBuilder.makeCall(
+                                        getPos(input), SqlStdOperatorTable.NOT, input);
     }
 
     /** Returns whether an expression contains a {@link RexCorrelVariable}. */
