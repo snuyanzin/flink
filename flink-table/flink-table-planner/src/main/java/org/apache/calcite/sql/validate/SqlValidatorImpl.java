@@ -703,6 +703,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         final SqlNameMatcher nameMatcher = scope.validator.catalogReader.nameMatcher();
         final int originalSize = selectItems.size();
         final SqlParserPos startPosition = identifier.getParserPosition();
+        final int fieldsBeforeStar = fields.size();
         switch (identifier.names.size()) {
             case 1:
                 SqlNode from = scope.getNode().getFrom();
@@ -777,6 +778,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                     new Permute(from, offset).permute(selectItems, fields);
                 }
                 throwIfUnknownExcludeColumns(excludeIdentifiers, excludeMatched);
+                throwIfExcludeEliminatesAllColumns(
+                        excludeIdentifiers, fieldsBeforeStar, fields, identifier);
                 return true;
 
             default:
@@ -826,6 +829,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                     throw newValidationError(prefixId, RESOURCE.starRequiresRecordType());
                 }
                 throwIfUnknownExcludeColumns(excludeIdentifiers, excludeMatched);
+                throwIfExcludeEliminatesAllColumns(
+                        excludeIdentifiers, fieldsBeforeStar, fields, identifier);
                 return true;
         }
     }
@@ -924,6 +929,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                     excludeIdentifiers.get(firstUnknownIndex),
                     RESOURCE.selectStarExcludeListContainsUnknownColumns(
                             String.join(", ", unknownExcludeNames)));
+        }
+    }
+
+    private void throwIfExcludeEliminatesAllColumns(
+            List<SqlIdentifier> excludeIdentifiers,
+            int fieldsBeforeStar,
+            PairList<String, RelDataType> fields,
+            SqlIdentifier identifier) {
+        if (!excludeIdentifiers.isEmpty() && fields.size() == fieldsBeforeStar) {
+            throw newValidationError(
+                    identifier, RESOURCE.selectStarExcludeCannotExcludeAllColumns());
         }
     }
 
