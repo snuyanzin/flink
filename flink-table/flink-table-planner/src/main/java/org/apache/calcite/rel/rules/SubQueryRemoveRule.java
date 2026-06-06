@@ -24,6 +24,7 @@ import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelHomogeneousShuttle;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Collect;
+import org.apache.calcite.rel.core.Correlate;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Join;
@@ -33,6 +34,7 @@ import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.LogicVisitor;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
@@ -43,6 +45,7 @@ import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlQuantifyOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql2rel.RelDecorrelator;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.Pair;
@@ -57,10 +60,17 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.calcite.util.Util.last;
 
 /**
- * Default implementation of {@link org.apache.calcite.rel.rules.SubQueryRemoveRule}, the class was
- * copied over because of LITERAL_AGG function which should be implemented in Flink first.
+ * Transform that converts IN, EXISTS and scalar sub-queries into joins.
  *
- * <p>Lines 740 ~ 744, Use Calcite 1.34.0 behavior.
+ * <p>Sub-queries are represented by {@link RexSubQuery} expressions.
+ *
+ * <p>A sub-query may or may not be correlated. If a sub-query is correlated, the wrapped {@link
+ * RelNode} will contain a {@link RexCorrelVariable} before the rewrite, and the product of the
+ * rewrite will be a {@link Correlate}. The Correlate can be removed using {@link RelDecorrelator}.
+ *
+ * @see CoreRules#FILTER_SUB_QUERY_TO_CORRELATE
+ * @see CoreRules#PROJECT_SUB_QUERY_TO_CORRELATE
+ * @see CoreRules#JOIN_SUB_QUERY_TO_CORRELATE
  */
 @Value.Enclosing
 public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
@@ -356,7 +366,7 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
                     // from emp as e
                     // left outer join (
                     //   select name, max(deptno) as m, count(*) as c, count(deptno) as d,
-                    //       "alwaysTrue" as indicator
+                    //       LITERAL_AGG(true) as indicator
                     //   from emp group by name) as q on e.name = q.name
                     builder.push(e.rel)
                             .aggregate(
@@ -417,7 +427,7 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
                     // left outer join (
                     //   select name, count(*) as c, count(deptno) as d, count(distinct deptno) as
                     // dd,
-                    //       max(deptno) as m, "alwaysTrue" as indicator
+                    //       max(deptno) as m, LITERAL_AGG(true) as indicator
                     //   from emp group by name) as q on e.name = q.name
 
                     // Additional details on the `q.c <> q.d && q.dd <= 1` clause:
@@ -607,11 +617,11 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
         //
         // select e.deptno,
         //   case
-        //   when ct.c = 0 then false
-        //   when e.deptno is null then null
-        //   when dt.i is not null then true
-        //   when ct.ck < ct.c then null
-        //   else false
+        //   when ct.c = 0 then false              -- (1) empty subquery check
+        //   when e.deptno is null then null       -- (2) key NULL check
+        //   when dt.i is not null then true       -- (3) match found
+        //   when ct.ck < ct.c then null           -- (4) NULLs exist in subquery
+        //   else false                             -- (5) no match
         //   end
         // from emp as e
         // left join (
@@ -619,37 +629,32 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
         //   cross join (select distinct deptno, true as i from emp)) as dt
         //   on e.deptno = dt.deptno
         //
-        // If keys are not null we can remove "ct" and simplify to
+        // If both keys (e.deptno) and subquery columns (deptno) are NOT NULL,
+        // we can drop checks (1), (2), and (4), which eliminates the need for ct:
         //
         // select e.deptno,
         //   case
-        //   when dt.i is not null then true
-        //   else false
+        //   when dt.i is not null then true       -- (3) match found
+        //   else false                             -- (5) no match
         //   end
         // from emp as e
         // left join (select distinct deptno, true as i from emp) as dt
         //   on e.deptno = dt.deptno
         //
-        // We could further simplify to
+        // Check (1) is not needed: if the subquery is empty, all dt.i are NULL,
+        // and the LEFT JOIN pattern correctly returns FALSE for IN (TRUE for NOT IN).
         //
-        // select e.deptno,
-        //   dt.i is not null
-        // from emp as e
-        // left join (select distinct deptno, true as i from emp) as dt
-        //   on e.deptno = dt.deptno
+        // NULL-safety checks are required if either the keys or the subquery
+        // columns are nullable, due to SQL three-valued logic.
         //
-        // but have not yet.
-        //
-        // If the logic is TRUE we can just kill the record if the condition
-        // evaluates to FALSE or UNKNOWN. Thus the query simplifies to an inner
-        // join:
+        // If the logic is TRUE (as opposed to TRUE_FALSE_UNKNOWN), we only care about
+        // matches, so the query simplifies to an inner join regardless of nullability:
         //
         // select e.deptno,
         //   true
         // from emp as e
         // inner join (select distinct deptno from emp) as dt
         //   on e.deptno = dt.deptno
-        //
 
         builder.push(e.rel);
         final List<RexNode> fields = new ArrayList<>(builder.fields());
@@ -696,6 +701,7 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
         final RexLiteral falseLiteral = builder.literal(false);
         final RexLiteral unknownLiteral =
                 builder.getRexBuilder().makeNullLiteral(trueLiteral.getType());
+        boolean needsNullSafety = false;
         if (allLiterals) {
             final List<RexNode> conditions =
                     Pair.zip(expressionOperands, fields).stream()
@@ -738,44 +744,56 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
             expressionOperands.clear();
             fields.clear();
         } else {
+            boolean anyFieldNullable =
+                    fields.stream().anyMatch(field -> field.getType().isNullable());
+
+            // we can skip NULL-safety checks only if both keys
+            // and subquery columns are NOT NULL
+            needsNullSafety =
+                    (logic == RelOptUtil.Logic.TRUE_FALSE_UNKNOWN
+                                    || logic == RelOptUtil.Logic.UNKNOWN_AS_TRUE)
+                            && (!keyIsNulls.isEmpty() || anyFieldNullable);
+
             switch (logic) {
                 case TRUE:
                     builder.aggregate(builder.groupKey(fields));
                     break;
                 case TRUE_FALSE_UNKNOWN:
                 case UNKNOWN_AS_TRUE:
-                    // Builds the cross join
-                    // Some databases don't support use FILTER clauses for aggregate functions
-                    // like {@code COUNT(*) FILTER (WHERE not(a is null))}
-                    // So use count(*) when only one column
-                    if (builder.fields().size() <= 1) {
-                        builder.aggregate(
-                                builder.groupKey(),
-                                builder.count(false, "c"),
-                                builder.count(builder.fields()).as("ck"));
-                    } else {
-                        builder.aggregate(
-                                builder.groupKey(),
-                                builder.count(false, "c"),
-                                builder.count()
-                                        .filter(
-                                                builder.not(
-                                                        builder.and(
-                                                                builder.fields().stream()
-                                                                        .map(builder::isNull)
-                                                                        .collect(
-                                                                                Collectors
-                                                                                        .toList()))))
-                                        .as("ck"));
+                    if (needsNullSafety) {
+                        // Builds the cross join
+                        // Some databases don't support use FILTER clauses for aggregate functions
+                        // like {@code COUNT(*) FILTER (WHERE not(a is null))}
+                        // So use count(*) when only one column
+                        if (builder.fields().size() <= 1) {
+                            builder.aggregate(
+                                    builder.groupKey(),
+                                    builder.count(false, "c"),
+                                    builder.count(builder.fields()).as("ck"));
+                        } else {
+                            builder.aggregate(
+                                    builder.groupKey(),
+                                    builder.count(false, "c"),
+                                    builder.count()
+                                            .filter(
+                                                    builder.not(
+                                                            builder.and(
+                                                                    builder.fields().stream()
+                                                                            .map(builder::isNull)
+                                                                            .collect(
+                                                                                    Collectors
+                                                                                            .toList()))))
+                                            .as("ck"));
+                        }
+                        builder.as(ctAlias);
+                        if (!variablesSet.isEmpty()) {
+                            builder.join(JoinRelType.LEFT, trueLiteral, variablesSet);
+                        } else {
+                            builder.join(JoinRelType.INNER, trueLiteral, variablesSet);
+                        }
+                        offset += 2;
+                        builder.push(e.rel);
                     }
-                    builder.as(ctAlias);
-                    if (!variablesSet.isEmpty()) {
-                        builder.join(JoinRelType.LEFT, trueLiteral, variablesSet);
-                    } else {
-                        builder.join(JoinRelType.INNER, trueLiteral, variablesSet);
-                    }
-                    offset += 2;
-                    builder.push(e.rel);
                 // fall through
                 default:
                     // FLINK MODIFICATION BEGIN
@@ -824,9 +842,12 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
                     }
                     operands.add(builder.equals(builder.field(dtAlias, "cs"), falseLiteral), b);
                 } else {
-                    operands.add(
-                            builder.equals(builder.field(ctAlias, "c"), builder.literal(0)),
-                            falseLiteral);
+                    // only reference ctAlias if we created it
+                    if (needsNullSafety) {
+                        operands.add(
+                                builder.equals(builder.field(ctAlias, "c"), builder.literal(0)),
+                                falseLiteral);
+                    }
                 }
                 break;
             default:
@@ -847,17 +868,28 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
             switch (logic) {
                 case TRUE_FALSE_UNKNOWN:
                 case UNKNOWN_AS_TRUE:
-                    operands.add(
-                            builder.lessThan(
-                                    builder.field(ctAlias, "ck"), builder.field(ctAlias, "c")),
-                            b);
+                    // only reference ctAlias if we created it
+                    if (needsNullSafety) {
+                        operands.add(
+                                builder.lessThan(
+                                        builder.field(ctAlias, "ck"), builder.field(ctAlias, "c")),
+                                b);
+                    }
                     break;
                 default:
                     break;
             }
         }
         operands.add(falseLiteral);
-        return builder.call(SqlStdOperatorTable.CASE, operands.build());
+        RexNode result = builder.call(SqlStdOperatorTable.CASE, operands.build());
+
+        // When we skip NULL-safety checks, the result might be NOT NULL
+        // but the original IN expression was nullable, so we need to preserve that
+        if (e.getType().isNullable() && !result.getType().isNullable()) {
+            result = builder.getRexBuilder().makeCast(e.getType(), result, false, false);
+        }
+
+        return result;
     }
 
     /**
