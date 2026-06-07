@@ -114,7 +114,7 @@ runs:
         key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
         restore-keys: |
           ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-
-          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-
+          ${{ runner.os }}-ns-master-maven-
           ${{ runner.os }}-maven-
 
     - name: "Restore & save Maven package cache"
@@ -128,6 +128,7 @@ runs:
         restore-keys: |
           ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-
           ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-
+          ${{ runner.os }}-ns-master-maven-
           ${{ runner.os }}-maven-
 
     - name: "Moves checkout content from ${{ inputs.source_directory }} to ${{ inputs.target_directory }}."
