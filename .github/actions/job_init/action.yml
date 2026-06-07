@@ -26,6 +26,10 @@ inputs:
     description: "The location of the local Maven repository (not setting this parameter will omit the caching of Maven artifacts)."
     required: false
     default: ""
+  save_maven_cache:
+    description: "Whether this job should persist (save) the Maven repo cache. Only the compile job needs to; fan-out jobs restore read-only to avoid store churn and key collisions."
+    required: false
+    default: "false"
   source_directory:
     description: "Specifies the directory from which the code should be moved from (needed for containerized runs; not setting this parameter will omit moving the checkout)."
     required: false
@@ -95,11 +99,30 @@ runs:
         echo "namespace=${ns}" >> "${GITHUB_OUTPUT}"
         echo "Cache namespace: ${ns}"
 
-    - name: "Setup Maven package cache"
-      if: ${{ inputs.maven_repo_folder != '' }}
+    # Fan-out jobs (packaging/test/e2e) restore read-only; only the compile job persists the
+    # cache. This avoids concurrent writers clobbering one key per matrix run and keeps the warm
+    # restore base from being evicted. Flink's own artifacts are excluded: they are shipped via the
+    # flink_m2 artifact instead, so caching them would only bloat the store and risk stale SNAPSHOTs.
+    - name: "Restore Maven package cache (read-only)"
+      if: ${{ inputs.maven_repo_folder != '' && inputs.save_maven_cache != 'true' }}
+      uses: actions/cache/restore@v5
+      with:
+        path: |
+          ${{ inputs.maven_repo_folder }}
+          !${{ inputs.maven_repo_folder }}/org/apache/flink/**
+        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-
+          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-
+          ${{ runner.os }}-maven-
+
+    - name: "Restore & save Maven package cache"
+      if: ${{ inputs.maven_repo_folder != '' && inputs.save_maven_cache == 'true' }}
       uses: actions/cache@v5
       with:
-        path: ${{ inputs.maven_repo_folder }}
+        path: |
+          ${{ inputs.maven_repo_folder }}
+          !${{ inputs.maven_repo_folder }}/org/apache/flink/**
         key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
         restore-keys: |
           ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-

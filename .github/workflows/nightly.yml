@@ -73,6 +73,30 @@ jobs:
       s3_access_key: ${{ secrets.IT_CASE_S3_ACCESS_KEY }}
       s3_secret_key: ${{ secrets.IT_CASE_S3_SECRET_KEY }}
 
+  cleanup-intermediate-artifacts:
+    name: "Cleanup intermediate artifacts"
+    # Wait for every profile so the prefix match can't delete artifacts a still-running profile
+    # needs. always() so it also runs on failure/cancellation (best-effort; retention is backstop).
+    needs: [java11, java21, hadoop313, adaptive-scheduler]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: "Delete intermediate build/precompile artifacts for this run"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Delete the intra-run handoff artifacts across all profiles once they have all finished.
+          # Safe to match by prefix because this runs after every profile completes.
+          ids=$(gh api --paginate "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+                --jq '.artifacts[] | select(.name|test("^(build-artifacts|flink-m2|flink-dist)-")) | .id')
+          for id in ${ids}; do
+            echo "Deleting artifact id=${id}"
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${id}" || true
+          done
+
   build_python_wheels:
     name: "Build Python Wheels on ${{ matrix.os_name }}"
     runs-on: ${{ matrix.os }}

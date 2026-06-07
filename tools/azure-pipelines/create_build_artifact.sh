@@ -30,6 +30,14 @@ echo "Minimizing artifact files"
 # jars are re-built in subsequent stages, so no need to cache them (cannot be avoided)
 find "$FLINK_ARTIFACT_DIR" -maxdepth 8 -type f -name '*.jar' -exec rm -rf {} \;
 
+# GHA (SHIP_PRECOMPILED): the compile job runs `install`, so the shade plugin emits
+# dependency-reduced-pom.xml files next to module poms. They are generated (no license header)
+# and would fail the apache-rat license check in the packaging stage, which scans the unpacked
+# artifact tree. Drop them from the artifact. (Azure's compile does not run install, so none exist.)
+if [ "${SHIP_PRECOMPILED:-false}" == "true" ]; then
+  find "$FLINK_ARTIFACT_DIR" -type f -name 'dependency-reduced-pom.xml' -exec rm -f {} \;
+fi
+
 # .git directory
 # not deleting this can cause build stability issues
 # merging the cached version sometimes fails
@@ -50,4 +58,18 @@ if [ -n "${FLINK_ARTIFACT_FILENAME}" ]; then
   echo "Archives artifacts into ${FLINK_ARTIFACT_DIR}/${FLINK_ARTIFACT_FILENAME}"
   tar --create --gzip --exclude "${FLINK_ARTIFACT_DIR}/${FLINK_ARTIFACT_FILENAME}" --file "${FLINK_ARTIFACT_FILENAME}" -C "${FLINK_ARTIFACT_DIR}" .
   mv "${FLINK_ARTIFACT_FILENAME}" "${FLINK_ARTIFACT_DIR}"
+fi
+
+# GHA only (SHIP_PRECOMPILED=true): additionally pack Flink's own installed Maven artifacts
+# so downstream GHA test jobs can resolve them from the local repository and skip rebuilding
+# and re-installing Flink in every stage. This runs after the main archive, so flink_m2.tar.gz
+# is a separate payload (not nested in ${FLINK_ARTIFACT_FILENAME}). Azure leaves SHIP_PRECOMPILED
+# unset and keeps rebuilding per stage, so its artifact is unchanged.
+if [ "${SHIP_PRECOMPILED:-false}" == "true" ]; then
+  echo "Packing Flink Maven artifacts from ${MAVEN_REPO_FOLDER}/org/apache/flink into ${FLINK_ARTIFACT_DIR}/flink_m2.tar.gz"
+  tar --create --gzip --file "${FLINK_ARTIFACT_DIR}/flink_m2.tar.gz" -C "${MAVEN_REPO_FOLDER}" org/apache/flink
+  # Also pack the assembled distribution (jars intact) for the e2e job's build-target. Taken from
+  # the live working dir, since the copy in ${FLINK_ARTIFACT_DIR} had its jars stripped above.
+  echo "Packing Flink distribution flink-dist/target into ${FLINK_ARTIFACT_DIR}/flink_dist.tar.gz"
+  tar --create --gzip --file "${FLINK_ARTIFACT_DIR}/flink_dist.tar.gz" flink-dist/target
 fi

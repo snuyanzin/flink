@@ -85,14 +85,28 @@ MVN_COMPILE_OPTIONS="-DskipTests"
 MVN_COMPILE_MODULES=$(get_compile_modules_for_stage ${STAGE})
 
 CALLBACK_ON_TIMEOUT="print_stacktraces | tee ${DEBUG_FILES_OUTPUT_DIR}/jps-traces.out"
-run_with_watchdog "run_mvn $MVN_COMMON_OPTIONS $MVN_COMPILE_OPTIONS $PROFILE $MVN_COMPILE_MODULES install" $CALLBACK_ON_TIMEOUT
-EXIT_CODE=$?
 
-if [ $EXIT_CODE != 0 ]; then
-	echo "=============================================================================="
-	echo "Compilation failure detected, skipping test execution."
-	echo "=============================================================================="
-	exit $EXIT_CODE
+# In GHA the compile job ships pre-built jars and pre-installs Flink's Maven artifacts, so
+# test jobs can skip this rebuild/install by setting SKIP_REBUILD=true. Azure never sets
+# SKIP_REBUILD and always rebuilds.
+#
+# Only the *scoped* stages (core/table/connect/tests, which compile a -pl subset) can skip it:
+# their dependencies resolve from the pre-installed local repo. The *full-build* stages rebuild
+# regardless, because they assemble the distribution from sibling modules' target/ jars by path
+# (e.g. misc builds flink-dist) or need a full build (python) -- neither is satisfied by the
+# pre-installed Maven artifacts alone.
+if [ "${SKIP_REBUILD:-false}" != "true" ] || [ "$STAGE" == "$STAGE_PYTHON" ] || [ "$STAGE" == "$STAGE_MISC" ]; then
+	run_with_watchdog "run_mvn $MVN_COMMON_OPTIONS $MVN_COMPILE_OPTIONS $PROFILE $MVN_COMPILE_MODULES install" $CALLBACK_ON_TIMEOUT
+	EXIT_CODE=$?
+
+	if [ $EXIT_CODE != 0 ]; then
+		echo "=============================================================================="
+		echo "Compilation failure detected, skipping test execution."
+		echo "=============================================================================="
+		exit $EXIT_CODE
+	fi
+else
+	echo "SKIP_REBUILD=true: using pre-built jars and pre-installed Flink artifacts from the compile job; skipping Step 1 rebuild/install."
 fi
 
 

@@ -47,3 +47,27 @@ jobs:
       s3_bucket: ${{ secrets.IT_CASE_S3_BUCKET }}
       s3_access_key: ${{ secrets.IT_CASE_S3_ACCESS_KEY }}
       s3_secret_key: ${{ secrets.IT_CASE_S3_SECRET_KEY }}
+  cleanup-intermediate-artifacts:
+    name: "Cleanup intermediate artifacts"
+    needs: [ci]
+    # always() so it cleans up on failure/cancellation too (best-effort on cancel;
+    # retention-days is the backstop). Only this job needs write; reusable workflow keeps read-all.
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: "Delete intermediate build/precompile artifacts for this run"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Delete the intra-run handoff artifacts (build-artifacts/flink-m2/flink-dist) once the
+          # build that consumed them is done. Safe to match by prefix here because this runs after
+          # the only consumer (ci) completes.
+          ids=$(gh api --paginate "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+                --jq '.artifacts[] | select(.name|test("^(build-artifacts|flink-m2|flink-dist)-")) | .id')
+          for id in ${ids}; do
+            echo "Deleting artifact id=${id}"
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${id}" || true
+          done
