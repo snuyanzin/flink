@@ -94,6 +94,8 @@ jobs:
           maven_repo_folder: ${{ env.MAVEN_REPO_FOLDER }}
           source_directory: ${{ env.MOUNTED_WORKING_DIR }}
           target_directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
+          # Only the compile job persists the Maven cache; fan-out jobs restore read-only.
+          save_maven_cache: "true"
 
       - name: "Stringify workflow name"
         uses: "./.github/actions/stringify"
