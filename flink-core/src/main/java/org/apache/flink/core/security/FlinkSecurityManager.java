@@ -208,8 +208,21 @@ public class FlinkSecurityManager extends SecurityManager {
      * Runtime.getRuntime().halt().
      */
     public static void forceProcessExit(int exitCode) {
-        // Unset ourselves to allow exiting in any case.
-        System.setSecurityManager(null);
+        // Unset ourselves to allow exiting in any case. This is only needed - and only
+        // possible - when a FlinkSecurityManager was actually installed. Since JDK 24 the
+        // SecurityManager API is permanently disabled (JEP 486) and System.setSecurityManager
+        // throws UnsupportedOperationException even for a null argument. Calling it
+        // unconditionally would make this method throw before reaching the actual exit below,
+        // leaving the process running forever (e.g. the uncaught-exception handler would fail
+        // silently and never terminate the JVM).
+        if (flinkSecurityManager != null) {
+            try {
+                System.setSecurityManager(null);
+            } catch (UnsupportedOperationException ignored) {
+                // SecurityManager cannot be (un)set on this JVM (JEP 486, JDK 24+). There is
+                // nothing for us to unset, so we can safely fall through to the exit below.
+            }
+        }
         if (flinkSecurityManager != null && flinkSecurityManager.haltOnSystemExit) {
             Runtime.getRuntime().halt(exitCode);
         } else {
