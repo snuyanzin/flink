@@ -157,18 +157,7 @@ jobs:
       options: --init --privileged
 
     steps:
-      # Try to reuse the compile job's build artifact (source). Non-fatal: if it's gone, check out
-      # full source below so compile_ci.sh can build from scratch instead of failing.
-      - name: "Download build artifacts from compile job"
-        id: dl-build
-        continue-on-error: true
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
-          path: ${{ env.FLINK_ARTIFACT_DIR }}
-
-      - name: "Flink Checkout (sparse; reusing build artifact)"
-        if: ${{ steps.dl-build.outcome == 'success' }}
+      - name: "Flink Checkout"
         uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -178,12 +167,6 @@ jobs:
             .scalafmt.conf
             tools
 
-      - name: "Flink Checkout (full; build artifact unavailable)"
-        if: ${{ steps.dl-build.outcome != 'success' }}
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
       - name: "Initialize job"
         uses: "./.github/actions/job_init"
         with:
@@ -192,8 +175,13 @@ jobs:
           source_directory: ${{ env.MOUNTED_WORKING_DIR }}
           target_directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
 
+      - name: "Download build artifacts from compile job"
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}
+
       - name: "Unpack build artifact"
-        if: ${{ steps.dl-build.outcome == 'success' }}
         working-directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
         run: |
           ./tools/azure-pipelines/unpack_build_artifact.sh
@@ -236,19 +224,7 @@ jobs:
             stringified-module-name: misc
 
     steps:
-      # Try to reuse the compile job's build artifact (source + compiled classes). Non-fatal: if
-      # it's gone (e.g. cleaned up before a re-run), check out full source below and build from
-      # scratch instead of failing. Downloaded first so the checkout can be sparse-or-full.
-      - name: "Download build artifacts from compile job"
-        id: dl-build
-        continue-on-error: true
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
-          path: ${{ env.FLINK_ARTIFACT_DIR }}
-
-      - name: "Flink Checkout (sparse; reusing build artifact)"
-        if: ${{ steps.dl-build.outcome == 'success' }}
+      - name: "Flink Checkout"
         uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -257,12 +233,6 @@ jobs:
             .mvn
             .scalafmt.conf
             tools
-
-      - name: "Flink Checkout (full; build artifact unavailable)"
-        if: ${{ steps.dl-build.outcome != 'success' }}
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
 
       - name: "Initialize job"
         uses: "./.github/actions/job_init"
@@ -286,15 +256,20 @@ jobs:
         working-directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
         run: sudo sysctl -w kernel.core_pattern=core.%p
 
+      - name: "Download build artifacts from compile job"
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}
+
       - name: "Unpack build artifact"
-        if: ${{ steps.dl-build.outcome == 'success' }}
         working-directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
         run: |
           ./tools/azure-pipelines/unpack_build_artifact.sh
 
-      # Non-fatal: if the Maven artifacts are missing, build from scratch instead of failing.
+      # Non-fatal: if the artifact is missing (evicted/upload failed), fall back to a full rebuild
+      # in the test stage instead of failing the job (see next step).
       - name: "Download Flink Maven artifacts from compile job"
-        id: dl-m2
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -304,17 +279,50 @@ jobs:
       - name: "Install pre-built Flink Maven artifacts (or fall back to a rebuild)"
         shell: bash
         run: |
-          # Reuse pre-built classes + Flink artifacts only when BOTH the build artifact and the Maven
-          # artifacts were available; otherwise SKIP_REBUILD=false so test_controller.sh builds from
-          # the full source checked out above.
-          if [ "${{ steps.dl-build.outcome }}" = "success" ] && [ -f "${FLINK_ARTIFACT_DIR}/flink_m2.tar.gz" ]; then
-            echo "Reusing pre-built Flink artifacts; skipping rebuild."
+          # Flink's own artifacts are excluded from the Maven cache and instead come from the
+          # compile job. If present, extract them and let the test run skip the rebuild/install;
+          # if absent, signal SKIP_REBUILD=false so test_controller.sh rebuilds Flink itself.
+          if [ -f "${FLINK_ARTIFACT_DIR}/flink_m2.tar.gz" ]; then
+            echo "Pre-built Flink artifacts found; extracting and skipping the rebuild."
             mkdir -p "${MAVEN_REPO_FOLDER}"
             tar --extract --gzip --file "${FLINK_ARTIFACT_DIR}/flink_m2.tar.gz" -C "${MAVEN_REPO_FOLDER}"
             echo "SKIP_REBUILD=true" >> "${GITHUB_ENV}"
           else
-            echo "Build artifact and/or Maven artifacts unavailable; building from scratch."
+            echo "Pre-built Flink artifacts unavailable; falling back to a full rebuild."
             echo "SKIP_REBUILD=false" >> "${GITHUB_ENV}"
+          fi
+
+      # python and misc can't run from the Maven artifacts alone: python's lint-python.sh resolves
+      # FLINK_HOME from build-target, and misc's yarn/dist tests consume the assembled distribution.
+      # Restore it from the compile job (the same artifact the e2e job uses) so these two stages can
+      # also skip the full Flink rebuild. Only downloaded for the stages that need it; the scoped
+      # stages resolve everything from flink_m2.
+      - name: "Download Flink distribution from compile job"
+        if: ${{ matrix.module == 'python' || matrix.module == 'misc' }}
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: flink-dist-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}
+
+      - name: "Restore Flink distribution (python/misc)"
+        if: ${{ matrix.module == 'python' || matrix.module == 'misc' }}
+        working-directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
+        shell: bash
+        run: |
+          # If the Maven artifacts were restored (SKIP_REBUILD=true) and the distribution is present,
+          # restore flink-dist/target + the build-target symlink and signal DIST_PRECOMPILED=true so
+          # test_controller.sh skips the full rebuild for these stages. Otherwise leave it false and
+          # let test_controller.sh do a full build (which itself produces the distribution).
+          if [ "${SKIP_REBUILD:-false}" == "true" ] && [ -f "${FLINK_ARTIFACT_DIR}/flink_dist.tar.gz" ]; then
+            echo "Pre-built distribution found; restoring build-target and skipping the rebuild."
+            tar --extract --gzip --file "${FLINK_ARTIFACT_DIR}/flink_dist.tar.gz"
+            dist_dir="$(ls -d "$(pwd)"/flink-dist/target/flink-*-bin/flink-* 2>/dev/null | head -n1)"
+            ln -snf "${dist_dir}" build-target
+            echo "DIST_PRECOMPILED=true" >> "${GITHUB_ENV}"
+          else
+            echo "Pre-built distribution unavailable; falling back to a full rebuild."
+            echo "DIST_PRECOMPILED=false" >> "${GITHUB_ENV}"
           fi
 
       - name: "Try loading Docker images from Cache"
@@ -358,7 +366,7 @@ jobs:
           DOCKER_HOST: unix:///var/run/docker.sock
         timeout-minutes: ${{ fromJSON(env.GHA_JOB_TIMEOUT) }}
         run: |
-          runuser -u flink -- bash -c 'SKIP_REBUILD=${{ env.SKIP_REBUILD }} ${{ inputs.environment }} PROFILE="$PROFILE -Pgithub-actions" ./tools/azure-pipelines/uploading_watchdog.sh \
+          runuser -u flink -- bash -c 'SKIP_REBUILD=${{ env.SKIP_REBUILD }} DIST_PRECOMPILED=${{ env.DIST_PRECOMPILED }} ${{ inputs.environment }} PROFILE="$PROFILE -Pgithub-actions" ./tools/azure-pipelines/uploading_watchdog.sh \
               ./tools/ci/test_controller.sh ${{ matrix.module }}'
 
       - name: "Post-build Disk Info"
@@ -416,7 +424,7 @@ jobs:
       # run in containers.
       MAVEN_REPO_FOLDER: ${{ github.workspace }}/.m2/repository
       MAVEN_ARGS: -Dmaven.repo.local=${{ github.workspace }}/.m2/repository
-      FLINK_ARTIFACT_DIR: ${{ github.workspace }}/../flink-artifacts
+      FLINK_ARTIFACT_DIR: ${{ github.workspace }}
       DOCKER_IMAGES_CACHE_FOLDER: ${{ github.workspace }}/.docker-cache
     strategy:
       fail-fast: false
@@ -424,34 +432,14 @@ jobs:
         group: [1, 2, 3, 4]
 
     steps:
-      # Try to reuse the compile job's build artifact (source). Non-fatal: if it's gone, check out
-      # full source below and build from scratch (the full-build fallback) instead of failing.
-      - name: "Download build artifacts from compile job"
-        id: dl-build
-        continue-on-error: true
-        uses: actions/download-artifact@v8
-        with:
-          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
-          path: ${{ env.FLINK_ARTIFACT_DIR }}
-
-      - name: "Flink Checkout (sparse; reusing build artifact)"
-        if: ${{ steps.dl-build.outcome == 'success' }}
+      - name: "Flink Checkout"
         uses: actions/checkout@v5
         with:
           persist-credentials: false
-          # In the e2e job FLINK_ARTIFACT_DIR is the workspace, so the build artifact was downloaded
-          # here before this checkout; clean: false keeps checkout from deleting it (it's untracked).
-          clean: false
           sparse-checkout: |
             .github
             .mvn
             tools
-
-      - name: "Flink Checkout (full; build artifact unavailable)"
-        if: ${{ steps.dl-build.outcome != 'success' }}
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
 
       - name: "Initialize job"
         uses: "./.github/actions/job_init"
@@ -476,8 +464,13 @@ jobs:
           wget -r --no-parent -nd --accept=libssl1.0.0_*ubuntu5.*_amd64.deb http://security.ubuntu.com/ubuntu/pool/main/o/openssl1.0/
           sudo apt install ./libssl1.0.0_*.deb
 
+      - name: "Download build artifacts from compile job"
+        uses: actions/download-artifact@v8
+        with:
+          name: build-artifacts-${{ needs.compile.outputs.stringified-workflow-name }}-${{ github.run_number }}
+          path: ${{ env.FLINK_ARTIFACT_DIR }}
+
       - name: "Unpack build artifact"
-        if: ${{ steps.dl-build.outcome == 'success' }}
         run: ./tools/azure-pipelines/unpack_build_artifact.sh
 
       # Non-fatal: both artifacts are needed for the scoped build; if either is missing we fall
