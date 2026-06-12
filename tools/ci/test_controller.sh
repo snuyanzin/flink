@@ -90,12 +90,15 @@ CALLBACK_ON_TIMEOUT="print_stacktraces | tee ${DEBUG_FILES_OUTPUT_DIR}/jps-trace
 # test jobs can skip this rebuild/install by setting SKIP_REBUILD=true. Azure never sets
 # SKIP_REBUILD and always rebuilds.
 #
-# Only the *scoped* stages (core/table/connect/tests, which compile a -pl subset) can skip it:
-# their dependencies resolve from the pre-installed local repo. The *full-build* stages rebuild
-# regardless, because they assemble the distribution from sibling modules' target/ jars by path
-# (e.g. misc builds flink-dist) or need a full build (python) -- neither is satisfied by the
-# pre-installed Maven artifacts alone.
-if [ "${SKIP_REBUILD:-false}" != "true" ] || [ "$STAGE" == "$STAGE_PYTHON" ] || [ "$STAGE" == "$STAGE_MISC" ]; then
+# The *scoped* stages (core/table/connect/tests, which compile a -pl subset) skip it with just the
+# pre-installed Maven artifacts. python and misc additionally need the assembled distribution on
+# disk -- python's lint-python.sh resolves FLINK_HOME from build-target, and misc's yarn/dist tests
+# consume the distribution -- because flink-dist assembles from sibling modules' target/ jars by
+# path, which are stripped from the shipped artifact. When the compile job's distribution has been
+# restored (DIST_PRECOMPILED=true; build-target in place) they skip the rebuild too; otherwise they
+# fall back to a full build that reassembles the distribution itself.
+if [ "${SKIP_REBUILD:-false}" != "true" ] \
+	|| { { [ "$STAGE" == "$STAGE_PYTHON" ] || [ "$STAGE" == "$STAGE_MISC" ]; } && [ "${DIST_PRECOMPILED:-false}" != "true" ]; }; then
 	run_with_watchdog "run_mvn $MVN_COMMON_OPTIONS $MVN_COMPILE_OPTIONS $PROFILE $MVN_COMPILE_MODULES install" $CALLBACK_ON_TIMEOUT
 	EXIT_CODE=$?
 
@@ -121,6 +124,18 @@ if [ $STAGE == $STAGE_PYTHON ]; then
 else
 	MVN_TEST_OPTIONS="-Dflink.tests.with-openssl -Dflink.tests.check-segment-multiple-free -Darchunit.freeze.store.default.allowStoreUpdate=false -Dpekko.rpc.force-invocation-serialization"
 	MVN_TEST_MODULES=$(get_test_modules_for_stage ${STAGE})
+
+	# When misc skips the rebuild and runs against the restored distribution, flink-dist must not
+	# re-run its bin/opt/plugins assembly: those read sibling modules' target/ jars by path, which
+	# are stripped from the shipped artifact. Skipping only the assembly still lets flink-dist's
+	# shade build its jars (flink-dist*.jar, bash-java-utils.jar) from the pre-installed Maven
+	# artifacts, so BashJavaUtilsITCase still runs; the assembled distribution that downstream misc
+	# tests (e.g. yarn) consume was restored from the compile job. flink-dist is the only module in
+	# misc's scope that binds the assembly plugin. DIST_PRECOMPILED=true is only set alongside
+	# SKIP_REBUILD=true, so the full-build fallback assembles the distribution as before.
+	if [ "$STAGE" == "$STAGE_MISC" ] && [ "${DIST_PRECOMPILED:-false}" == "true" ]; then
+		MVN_TEST_OPTIONS="$MVN_TEST_OPTIONS -Dassembly.skipAssembly=true"
+	fi
 
 	run_with_watchdog "run_mvn $MVN_COMMON_OPTIONS $MVN_TEST_OPTIONS $PROFILE $MVN_TEST_MODULES verify" $CALLBACK_ON_TIMEOUT
 	EXIT_CODE=$?
