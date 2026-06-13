@@ -48,6 +48,7 @@ class JsonBatchFileSystemITCase extends BatchFileSystemITCaseBase {
     private final EachCallbackWrapper<LegacyRowExtension> legacyRowExtension =
             new EachCallbackWrapper<>(new LegacyRowExtension());
 
+    // test in formats
     @Override
     public String[] formatProperties() {
         List<String> ret = new ArrayList<>();

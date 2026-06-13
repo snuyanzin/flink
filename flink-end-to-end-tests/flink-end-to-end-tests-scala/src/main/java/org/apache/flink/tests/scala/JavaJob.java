@@ -21,6 +21,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 /** Simple batch job in pure Java. */
 public class JavaJob {
+    // e2e
     public static void main(String[] args) throws Exception {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
