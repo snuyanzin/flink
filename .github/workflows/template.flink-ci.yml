@@ -183,6 +183,11 @@ jobs:
     env:
       # timeout in minutes - this environment variable is required by uploading_watchdog.sh
       GHA_JOB_TIMEOUT: 240
+      # Build the multi-module reactor in parallel (one thread per core) for the test stages only.
+      # maven-utils.sh prepends $MAVEN_ARGS to every run_mvn invocation, so this applies to both the
+      # compile (install) and test (verify) steps in test_controller.sh. It overrides the workflow-level
+      # MAVEN_ARGS, so the maven.repo.local path must be repeated here.
+      MAVEN_ARGS: -Dmaven.repo.local=/root/.m2/repository -T 1C
     strategy:
       fail-fast: false
       matrix:
