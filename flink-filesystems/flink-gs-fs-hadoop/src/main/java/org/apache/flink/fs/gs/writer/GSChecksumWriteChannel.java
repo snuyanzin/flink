@@ -34,6 +34,7 @@ import java.util.Optional;
 /** A wrapper for a blob storage write channel that computes a checksum. */
 class GSChecksumWriteChannel {
 
+    // non test
     private static final Logger LOGGER = LoggerFactory.getLogger(GSChecksumWriteChannel.class);
 
     /** The blob storage instance. */
