@@ -43,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** Tests for {@link org.apache.flink.table.api.TableEnvironment#fromValues}. */
 class ValuesTest extends TableTestBase {
 
+    // change in test
     @Test
     void testValuesAllEqualTypes() {
         JavaStreamTableTestUtil util = javaStreamTestUtil();
