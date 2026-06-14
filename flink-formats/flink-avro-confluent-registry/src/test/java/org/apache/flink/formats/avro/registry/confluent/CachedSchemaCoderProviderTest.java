@@ -48,6 +48,7 @@ class CachedSchemaCoderProviderTest {
         assertThat(sslSocketFactory).isNull();
     }
 
+    // sadf
     @Test
     void testThatSslIsInitializedForSslProperties() throws URISyntaxException {
         String keystoreFile = getAbsolutePath("/test-keystore.jks");

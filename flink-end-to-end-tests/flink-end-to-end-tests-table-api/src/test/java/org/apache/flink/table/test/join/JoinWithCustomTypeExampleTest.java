@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 public class JoinWithCustomTypeExampleTest {
 
+    // asdasd
     @Test
     void testJoinWithCustomTypeExample() throws Exception {
         JoinWithCustomTypeExample.main(new String[0]);

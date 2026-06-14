@@ -40,6 +40,7 @@ class JoinTest extends TableTestBase {
     util.verifyExecPlan("SELECT a1, b1 FROM A JOIN B ON (a1 = 1 AND b1 = 1) OR (a2 = 2 AND b2 = 2)")
   }
 
+  // asda
   @Test
   def testDependentConditionDerivationInnerJoinWithTrue(): Unit = {
     util.verifyExecPlan("SELECT a1, b1 FROM A JOIN B ON (a1 = 1 AND b1 = 1) OR (a2 = 2 AND true)")
