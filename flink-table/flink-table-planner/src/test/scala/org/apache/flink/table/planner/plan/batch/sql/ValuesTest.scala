@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test
 
 class ValuesTest extends TableTestBase {
 
+  // test
   private val util = batchTestUtil()
 
   @Test
