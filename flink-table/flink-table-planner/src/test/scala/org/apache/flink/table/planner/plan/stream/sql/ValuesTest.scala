@@ -30,6 +30,7 @@ class ValuesTest extends TableTestBase {
     util.verifyExecPlan("SELECT * FROM (VALUES CAST(NULL AS INT))")
   }
 
+  // asd
   @Test
   def testSingleRow(): Unit = {
     util.verifyExecPlan("SELECT * FROM (VALUES (1, 2, 3)) AS T(a, b, c)")

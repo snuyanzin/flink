@@ -37,6 +37,7 @@ class GSChecksumWriteChannel {
     // non test
     private static final Logger LOGGER = LoggerFactory.getLogger(GSChecksumWriteChannel.class);
 
+    // asd
     /** The blob storage instance. */
     private final GSBlobStorage storage;
 
