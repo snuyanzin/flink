@@ -25,6 +25,7 @@ class ValuesTest extends TableTestBase {
 
   private val util = batchTestUtil()
 
+  // asd
   @Test
   def testNullValues(): Unit = {
     util.verifyExecPlan("SELECT * FROM (VALUES CAST(NULL AS INT))")

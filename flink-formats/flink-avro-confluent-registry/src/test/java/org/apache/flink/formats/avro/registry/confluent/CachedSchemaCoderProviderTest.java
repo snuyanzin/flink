@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CachedSchemaCoderProviderTest {
 
+    // asd
     @Test
     void testThatSslIsNotInitializedForNoSslProperties() {
         CachedSchemaCoderProvider provider = initCachedSchemaCoderProvider(new HashMap<>());
