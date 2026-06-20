@@ -20,7 +20,9 @@ package org.apache.flink.table.api.runtime.types
 import com.esotericsoftware.kryo.{Kryo, Serializer}
 import com.esotericsoftware.kryo.io.{Input => KryoInput, Output => KryoOutput}
 
-import java.{lang, util}
+import java.lang
+
+import scala.collection.JavaConverters._
 
 /*
 This code was copied as is from Twitter Chill 0.7.4 and modified to use Kryo 5.x
@@ -56,7 +58,7 @@ private class JavaIterableWrapperSerializer extends Serializer[lang.Iterable[_]]
       aClass: Class[_ <: lang.Iterable[_]]): lang.Iterable[_] = {
     kryo.readClassAndObject(input) match {
       case scalaIterable: Iterable[_] =>
-        scala.collection.JavaConversions.asJavaIterable(scalaIterable)
+        scalaIterable.asJava
       case javaIterable: lang.Iterable[_] =>
         javaIterable
     }
@@ -65,7 +67,7 @@ private class JavaIterableWrapperSerializer extends Serializer[lang.Iterable[_]]
 
 private object JavaIterableWrapperSerializer {
   // The class returned by asJavaIterable (scala.collection.convert.Wrappers$IterableWrapper).
-  val wrapperClass = scala.collection.JavaConversions.asJavaIterable(Seq(1)).getClass
+  val wrapperClass = (Seq(1): Iterable[Int]).asJava.getClass
 
   // Get the underlying method so we can use it to get the Scala collection for serialization.
   private val underlyingMethodOpt = {

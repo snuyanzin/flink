@@ -19,7 +19,7 @@ package org.apache.flink.table.api.codegen
 
 import org.apache.flink.annotation.Internal
 import org.apache.flink.api.common.serialization.SerializerConfig
-import org.apache.flink.api.common.typeinfo._
+import org.apache.flink.api.common.typeinfo.{BasicArrayTypeInfo, BasicTypeInfo, PrimitiveArrayTypeInfo, TypeInformation}
 import org.apache.flink.api.common.typeutils._
 import org.apache.flink.api.java.typeutils._
 import org.apache.flink.table.api.typeutils.{CaseClassTypeInfo, ScalaCaseClassSerializer, ScalaNothingTypeInfo, UnitTypeInfo}

@@ -47,7 +47,7 @@ import scala.language.experimental.macros
  */
 package object api extends ImplicitExpressionConversions with ImplicitTypeConversions {
 
-  val FLIP_265_WARNING: String = "All Flink Scala APIs are deprecated and will be removed in a " +
+  final val FLIP_265_WARNING = "All Flink Scala APIs are deprecated and will be removed in a " +
     "future Flink version. You can still build your application in Scala, but you should move " +
     "to the Java version of either the DataStream and/or Table API."
 

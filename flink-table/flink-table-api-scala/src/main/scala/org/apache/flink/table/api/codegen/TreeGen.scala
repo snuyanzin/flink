@@ -219,7 +219,7 @@ private[flink] trait TreeGen[C <: Context] { this: MacroContextHolder[C] with Ty
     Apply(Select(Super(This(tpnme.EMPTY), tpnme.EMPTY), nme.CONSTRUCTOR), args)
 
   def mkWhile(cond: Tree)(body: Tree): Tree = {
-    val lblName = c.fresh[TermName]("while")
+    val lblName = c.freshName(TermName("while"))
     val jump = Apply(Ident(lblName), Nil)
     val block = body match {
       case Block(stats, expr) => Block(stats :+ expr, jump)
