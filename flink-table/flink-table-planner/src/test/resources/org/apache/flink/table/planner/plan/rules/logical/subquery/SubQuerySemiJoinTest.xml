@@ -1104,6 +1104,43 @@ LogicalProject(a=[$0])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testExistsWithCorrelatedOnWhere_UnsupportedCondition2">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM l WHERE EXISTS  (SELECT * FROM (SELECT * FROM r WHERE r.d = l.a AND r.e > 100) s LEFT JOIN t ON s.f = t.k AND l.b = t.j)]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1], c=[$2])
++- LogicalFilter(condition=[EXISTS({
+LogicalJoin(condition=[AND(=($2, $5), =($cor1.b, $4))], joinType=[left])
+  LogicalProject(d=[$0], e=[$1], f=[$2])
+    LogicalFilter(condition=[AND(=($0, $cor1.a), >($1, 100))])
+      LogicalTableScan(table=[[default_catalog, default_database, r]])
+  LogicalTableScan(table=[[default_catalog, default_database, t]])
+})], variablesSet=[[$cor1]])
+   +- LogicalTableScan(table=[[default_catalog, default_database, l]])
+]]>
+    </Resource>
+    <Resource name="optimized rel plan">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1], c=[$2])
++- LogicalJoin(condition=[AND(IS NOT DISTINCT FROM($0, $3), =($1, $4))], joinType=[inner])
+   :- LogicalTableScan(table=[[default_catalog, default_database, l]])
+   +- LogicalProject(a=[$0], b=[$1], $f2=[true])
+      +- LogicalAggregate(group=[{0, 1}])
+         +- LogicalProject(a=[$4], b=[$5])
+            +- LogicalJoin(condition=[AND(=($2, $8), =($5, $7))], joinType=[left])
+               :- LogicalJoin(condition=[true], joinType=[inner])
+               :  :- LogicalProject(d=[$0], e=[$1], f=[$2], d3=[$0])
+               :  :  +- LogicalFilter(condition=[AND(>($1, 100), IS NOT NULL($0))])
+               :  :     +- LogicalTableScan(table=[[default_catalog, default_database, r]])
+               :  +- LogicalAggregate(group=[{0, 1}])
+               :     +- LogicalProject(a=[$0], b=[$1])
+               :        +- LogicalTableScan(table=[[default_catalog, default_database, l]])
+               +- LogicalTableScan(table=[[default_catalog, default_database, t]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testExistsWithUncorrelatedOnLateralTable1">
     <Resource name="sql">
       <![CDATA[SELECT * FROM l WHERE EXISTS (SELECT * FROM r, LATERAL TABLE(table_func(f)) AS T(f1))]]>
@@ -4495,6 +4532,43 @@ LogicalProject(b=[$1])
          +- LogicalAggregate(group=[{0}], EXPR$0=[SUM($1)])
             +- LogicalProject(e1=[$0], e=[$0])
                +- LogicalFilter(condition=[AND(<($1, 100), IS NOT NULL($0))])
+                  +- LogicalTableScan(table=[[default_catalog, default_database, z]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testInWithUncorrelatedOnWhere_UnsupportedCondition1">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM x WHERE a IN (SELECT c FROM y WHERE x.b IN (SELECT e FROM z))]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1])
++- LogicalFilter(condition=[IN($0, {
+LogicalProject(c=[$0])
+  LogicalFilter(condition=[IN($cor0.b, {
+LogicalProject(e=[$0])
+  LogicalTableScan(table=[[default_catalog, default_database, z]])
+})])
+    LogicalTableScan(table=[[default_catalog, default_database, y]])
+})], variablesSet=[[$cor0]])
+   +- LogicalTableScan(table=[[default_catalog, default_database, x]])
+]]>
+    </Resource>
+    <Resource name="optimized rel plan">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1])
++- LogicalJoin(condition=[AND(=($1, $3), =($0, $2))], joinType=[inner])
+   :- LogicalTableScan(table=[[default_catalog, default_database, x]])
+   +- LogicalAggregate(group=[{0, 1}])
+      +- LogicalProject(c=[$0], b=[$2])
+         +- LogicalJoin(condition=[=($2, $3)], joinType=[inner])
+            :- LogicalJoin(condition=[true], joinType=[inner])
+            :  :- LogicalTableScan(table=[[default_catalog, default_database, y]])
+            :  +- LogicalAggregate(group=[{0}])
+            :     +- LogicalProject(b=[$1])
+            :        +- LogicalTableScan(table=[[default_catalog, default_database, x]])
+            +- LogicalAggregate(group=[{0}])
+               +- LogicalProject(e=[$0])
                   +- LogicalTableScan(table=[[default_catalog, default_database, z]])
 ]]>
     </Resource>
