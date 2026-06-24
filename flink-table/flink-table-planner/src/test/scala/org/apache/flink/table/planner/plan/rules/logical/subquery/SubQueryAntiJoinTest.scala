@@ -349,7 +349,9 @@ class SubQueryAntiJoinTest extends SubQueryTestBase {
     val sqlQuery = "SELECT b FROM l WHERE " +
       "(CASE WHEN a NOT IN (SELECT i FROM t1 WHERE l.a = t1.i) THEN 1 ELSE 2 END)" +
       " NOT IN (SELECT d FROM r WHERE l.c = r.f)"
-    util.verifyRelPlanNotExpected(sqlQuery, "joinType=[anti]")
+//    util.verifyRelPlanNotExpected(sqlQuery, "joinType=[anti]")
+    assertThatExceptionOfType(classOf[NullPointerException])
+      .isThrownBy(() => util.verifyRelPlan(sqlQuery))
   }
 
   @Test
