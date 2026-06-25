@@ -3340,8 +3340,21 @@ public class SqlToRelConverter {
                     leftRel, innerRel, ImmutableList.of(), p.id, requiredCols, joinType);
         }
 
-        final RelNode node =
-                relBuilder.push(leftRel).push(rightRel).join(joinType, joinCond).build();
+        RelNode node = relBuilder.push(leftRel).push(rightRel).join(joinType, joinCond).build();
+
+        final CorrelationUse correlationUseInJoin = getCorrelationUse(bb, node);
+        if (correlationUseInJoin != null) {
+            assert correlationUseInJoin.r instanceof Join;
+            Join joinRelTemp = (Join) correlationUseInJoin.r;
+            node =
+                    LogicalJoin.create(
+                            joinRelTemp.getLeft(),
+                            joinRelTemp.getRight(),
+                            joinRelTemp.getHints(),
+                            joinRelTemp.getCondition(),
+                            ImmutableSet.of(correlationUseInJoin.id),
+                            joinRelTemp.getJoinType());
+        }
 
         // If join conditions are pushed down, update the leaves.
         if (node instanceof Project) {
@@ -4218,6 +4231,9 @@ public class SqlToRelConverter {
     }
 
     protected RelNode decorrelateQuery(RelNode rootRel) {
+        if (config.isTopDownGeneralDecorrelationEnabled()) {
+            return TopDownGeneralDecorrelator.decorrelateQuery(rootRel, relBuilder);
+        }
         return RelDecorrelator.decorrelateQuery(rootRel, relBuilder);
     }
 
@@ -6861,6 +6877,15 @@ public class SqlToRelConverter {
 
         /** Sets {@link #isDecorrelationEnabled()}. */
         Config withDecorrelationEnabled(boolean decorrelationEnabled);
+
+        /** Returns whether to use the top-down general decorrelator. */
+        @Value.Default
+        default boolean isTopDownGeneralDecorrelationEnabled() {
+            return false;
+        }
+
+        /** Sets {@link #isTopDownGeneralDecorrelationEnabled()}. */
+        Config withTopDownGeneralDecorrelationEnabled(boolean topDownGeneralDecorrelationEnabled);
 
         /**
          * Returns the {@code trimUnusedFields} option. Controls whether to trim unused fields as
