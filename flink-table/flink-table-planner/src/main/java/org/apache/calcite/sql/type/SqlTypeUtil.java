@@ -82,6 +82,7 @@ import static org.apache.calcite.util.Static.RESOURCE;
  *   <li>Should be removed after fixing CALCITE-7062: Lines 1336
  * </ol>
  */
+/** Contains utility methods used during SQL validation or type derivation. */
 public abstract class SqlTypeUtil {
     // ~ Methods ----------------------------------------------------------------
 
@@ -1083,6 +1084,36 @@ public abstract class SqlTypeUtil {
                     || fromType.getSqlTypeName() == SqlTypeName.UUID
                     || fromType.getFamily() == SqlTypeFamily.CHARACTER
                     || fromType.getFamily() == SqlTypeFamily.BINARY;
+        } else if (toType.getSqlTypeName() == SqlTypeName.ARRAY) {
+            if (fromType.getSqlTypeName() == SqlTypeName.ARRAY
+                    || fromType.getSqlTypeName() == SqlTypeName.MULTISET) {
+                return canCastFrom(
+                        requireNonNull(toType.getComponentType(), "componentType"),
+                        requireNonNull(fromType.getComponentType(), "componentType"),
+                        typeMappingRule);
+            } else if (fromType.getFamily() == SqlTypeFamily.CHARACTER
+                    || fromType.getSqlTypeName() == SqlTypeName.NULL) {
+                // Cast from NULL or string to array is legal
+                return true;
+            }
+            return false;
+        } else if (toType.getSqlTypeName() == SqlTypeName.MAP) {
+            if (fromType.getSqlTypeName() == SqlTypeName.MAP) {
+                // It is not clear whether this is sufficient, but it is clearly necessary
+                return canCastFrom(
+                                requireNonNull(toType.getKeyType(), "keyType"),
+                                requireNonNull(fromType.getKeyType(), "keyType"),
+                                typeMappingRule)
+                        && canCastFrom(
+                                requireNonNull(toType.getValueType(), "valueType"),
+                                requireNonNull(fromType.getValueType(), "valueType"),
+                                typeMappingRule);
+            } else if (fromType.getFamily() == SqlTypeFamily.CHARACTER
+                    || fromType.getSqlTypeName() == SqlTypeName.NULL) {
+                // Cast from NULL or string to map is legal
+                return true;
+            }
+            return false;
         }
         if (toType.isStruct() || fromType.isStruct()) {
             if (toTypeName == SqlTypeName.DISTINCT) {
