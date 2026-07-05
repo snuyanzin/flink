@@ -2064,7 +2064,7 @@ SqlNodeList StarExcludeList() :
     SqlIdentifier id;
 }
 {
-    <EXCLUDE> <LPAREN> { s = span(); }
+    ( <EXCLUDE> | <EXCEPT> ) <LPAREN> { s = span(); }
     id = CompoundIdentifier() {
         list.add(id);
     }
