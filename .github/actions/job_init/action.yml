@@ -114,9 +114,8 @@ runs:
       uses: actions/cache@v5
       with:
         path: ${{ inputs.maven_repo_folder }}
-        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
+        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
-          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-${{ hashFiles('**/pom.xml') }}-
           ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-
           ${{ runner.os }}-maven-
 
