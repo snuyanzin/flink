@@ -38,6 +38,10 @@ inputs:
     description: "Runs tools/azure-pipelines/free_disk_space.sh to remove unneeded pre-installed software from the runner (only works for jobs that run directly on the host, not in a container)."
     required: false
     default: "false"
+  web_dashboard_directory:
+    description: "Absolute path to flink-runtime-web's web-dashboard directory as it will exist once the job runs (i.e. under target_directory, if set); not setting this parameter will omit caching of its Node.js/npm toolchain and dependencies."
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
@@ -128,3 +132,18 @@ runs:
           ${{ inputs.source_directory }}/.scalafmt.conf \
           ${{ inputs.source_directory }}/.mvn \
           ${{ inputs.target_directory }}
+
+    # Must run after the checkout is moved: this action's post-job save step re-resolves
+    # `path` once the job finishes, so it needs to point at web_dashboard_directory's final,
+    # already-moved location rather than its pre-move one.
+    - name: "Setup web-dashboard Node/npm cache"
+      if: ${{ inputs.web_dashboard_directory != '' }}
+      uses: actions/cache@v5
+      with:
+        path: |
+          ${{ inputs.web_dashboard_directory }}/node
+          ${{ inputs.web_dashboard_directory }}/node_modules
+        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-webui-${{ hashFiles(format('{0}/package-lock.json', inputs.web_dashboard_directory)) }}
+        restore-keys: |
+          ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-webui-
+          ${{ runner.os }}-webui-
