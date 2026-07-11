@@ -39,7 +39,7 @@ inputs:
     required: false
     default: "false"
   web_dashboard_directory:
-    description: "Absolute path to flink-runtime-web's web-dashboard directory as it will exist once the job runs (i.e. under target_directory, if set); not setting this parameter will omit caching of its Node.js/npm toolchain and dependencies."
+    description: "Path (relative to the checkout root) to flink-runtime-web's web-dashboard directory; not setting this parameter will omit caching of its Node.js/npm toolchain and dependencies. Requires target_directory to also be set."
     required: false
     default: ""
 runs:
@@ -120,6 +120,15 @@ runs:
           ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-maven-
           ${{ runner.os }}-maven-
 
+    # hashFiles() is evaluated by the runner outside the container and can only see the
+    # bind-mounted checkout (source_directory), not container-local paths. It must run here,
+    # before the checkout is moved into the container's own filesystem below.
+    - name: "Hash web-dashboard lockfile"
+      if: ${{ inputs.web_dashboard_directory != '' }}
+      id: webui-hash
+      shell: bash
+      run: echo "hash=${{ hashFiles(format('{0}/package-lock.json', inputs.web_dashboard_directory)) }}" >> "${GITHUB_OUTPUT}"
+
     - name: "Moves checkout content from ${{ inputs.source_directory }} to ${{ inputs.target_directory }}."
       if: ${{ inputs.source_directory != '' && inputs.target_directory != '' }}
       shell: bash
@@ -133,17 +142,17 @@ runs:
           ${{ inputs.source_directory }}/.mvn \
           ${{ inputs.target_directory }}
 
-    # Must run after the checkout is moved: this action's post-job save step re-resolves
-    # `path` once the job finishes, so it needs to point at web_dashboard_directory's final,
-    # already-moved location rather than its pre-move one.
+    # Must run after the checkout is moved: restoring into web_dashboard_directory's pre-move
+    # location and then `mv`-ing the checkout over it would nest the restored directory instead
+    # of merging (mv's behavior when the destination name already exists), corrupting the tree.
     - name: "Setup web-dashboard Node/npm cache"
       if: ${{ inputs.web_dashboard_directory != '' }}
       uses: actions/cache@v5
       with:
         path: |
-          ${{ inputs.web_dashboard_directory }}/node
-          ${{ inputs.web_dashboard_directory }}/node_modules
-        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-webui-${{ hashFiles(format('{0}/package-lock.json', inputs.web_dashboard_directory)) }}
+          ${{ inputs.target_directory }}/${{ inputs.web_dashboard_directory }}/node
+          ${{ inputs.target_directory }}/${{ inputs.web_dashboard_directory }}/node_modules
+        key: ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-webui-${{ steps.webui-hash.outputs.hash }}
         restore-keys: |
           ${{ runner.os }}-ns-${{ steps.cache-ns.outputs.namespace }}-webui-
           ${{ runner.os }}-webui-
