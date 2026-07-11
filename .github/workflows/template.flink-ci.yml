@@ -94,6 +94,7 @@ jobs:
           maven_repo_folder: ${{ env.MAVEN_REPO_FOLDER }}
           source_directory: ${{ env.MOUNTED_WORKING_DIR }}
           target_directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}
+          web_dashboard_directory: ${{ env.CONTAINER_LOCAL_WORKING_DIR }}/flink-runtime-web/web-dashboard
 
       - name: "Stringify workflow name"
         uses: "./.github/actions/stringify"
