@@ -126,8 +126,15 @@ jobs:
 
       # Only saves when the restore in job_init wasn't an exact hit, i.e. pom.xml actually
       # changed since the last save for this namespace - avoids re-uploading an unchanged cache.
-      - name: "Save Maven package cache"
+      - name: "Check if Maven cache already exists"
+        id: maven-cache-exists
         if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' }}
+        uses: "./.github/actions/cache_exists"
+        with:
+          key: ${{ steps.job-init.outputs.maven-cache-key }}
+
+      - name: "Save Maven package cache"
+        if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' && steps.maven-cache-exists.outputs.exists != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ env.MAVEN_REPO_FOLDER }}
@@ -179,8 +186,15 @@ jobs:
         run: |
           ${{ inputs.environment }} ./tools/ci/compile_ci.sh -Dmaven.clean.skip=true || exit $?
 
-      - name: "Save Maven package cache"
+      - name: "Check if Maven cache already exists"
+        id: maven-cache-exists
         if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' }}
+        uses: "./.github/actions/cache_exists"
+        with:
+          key: ${{ steps.job-init.outputs.maven-cache-key }}
+
+      - name: "Save Maven package cache"
+        if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' && steps.maven-cache-exists.outputs.exists != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ env.MAVEN_REPO_FOLDER }}
@@ -334,8 +348,15 @@ jobs:
         if: ${{ !cancelled() && (failure() || steps.docker-cache.outputs.cache-hit != 'true') }}
         run: ./tools/azure-pipelines/cache_docker_images.sh save
 
-      - name: "Save Maven package cache"
+      - name: "Check if Maven cache already exists"
+        id: maven-cache-exists
         if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' }}
+        uses: "./.github/actions/cache_exists"
+        with:
+          key: ${{ steps.job-init.outputs.maven-cache-key }}
+
+      - name: "Save Maven package cache"
+        if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' && steps.maven-cache-exists.outputs.exists != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ env.MAVEN_REPO_FOLDER }}
@@ -474,8 +495,15 @@ jobs:
         if: ${{ !cancelled() && (failure() || steps.docker-cache.outputs.cache-hit != 'true') }}
         run: ./tools/azure-pipelines/cache_docker_images.sh save
 
-      - name: "Save Maven package cache"
+      - name: "Check if Maven cache already exists"
+        id: maven-cache-exists
         if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' }}
+        uses: "./.github/actions/cache_exists"
+        with:
+          key: ${{ steps.job-init.outputs.maven-cache-key }}
+
+      - name: "Save Maven package cache"
+        if: ${{ !cancelled() && steps.job-init.outputs.maven-cache-hit != 'true' && steps.maven-cache-exists.outputs.exists != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ env.MAVEN_REPO_FOLDER }}

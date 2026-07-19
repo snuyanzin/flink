@@ -1,0 +1,40 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+---
+name: "Checks whether a cache key already exists"
+description: "Queries the GitHub Actions cache API for an exact key match, to skip save attempts that are certain to be rejected."
+inputs:
+  key:
+    description: "The exact cache key to check for."
+    required: true
+outputs:
+  exists:
+    description: "'true' if a cache with this exact key is already stored."
+    value: ${{ steps.check.outputs.exists }}
+runs:
+  using: "composite"
+  steps:
+    - name: "Check for an existing cache under this key"
+      id: check
+      shell: bash
+      env:
+        CACHE_KEY: ${{ inputs.key }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        exists=$(gh api "repos/${{ github.repository }}/actions/caches" -f key="${CACHE_KEY}" --jq '[.actions_caches[] | select(.key == env.CACHE_KEY)] | length > 0')
+        echo "exists=${exists}" >> "${GITHUB_OUTPUT}"
