@@ -3966,6 +3966,9 @@ public class RelDecorrelator implements ReflectiveVisitor {
             }
         }
 
+        // FLINK MODIFICATION BEGIN CALCITE-7698
+        corDefOutputs.putAll(frame.corDefOutputs);
+        // FLINK MODIFICATION END
         return createFrameWithValueGenerator(oldInput, frame, miss, corDefOutputs);
     }
 
