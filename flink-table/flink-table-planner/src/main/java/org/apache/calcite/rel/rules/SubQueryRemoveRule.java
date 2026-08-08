@@ -924,6 +924,7 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
 
     private static void matchProject(SubQueryRemoveRule rule, RelOptRuleCall call) {
         final Project project = call.rel(0);
+        final Set<CorrelationId> projectVariablesSet = project.getVariablesSet();
         final RelBuilder builder = call.builder();
         final RexSubQuery e = requireNonNull(RexUtil.SubQueryFinder.find(project.getProjects()));
         final RelOptUtil.Logic logic =
@@ -931,6 +932,10 @@ public class SubQueryRemoveRule extends RelRule<SubQueryRemoveRule.Config>
         builder.push(project.getInput());
         final int fieldCount = builder.peek().getRowType().getFieldCount();
         final Set<CorrelationId> variablesSet = RelOptUtil.getVariablesUsed(e.rel);
+        if (!projectVariablesSet.isEmpty()) {
+            // Only consider the correlated variables which originated from this sub-query level.
+            variablesSet.retainAll(projectVariablesSet);
+        }
         final RexNode target = rule.apply(e, variablesSet, logic, builder, 1, fieldCount, 0);
         final RexShuttle shuttle = new ReplaceSubQueryShuttle(e, target);
         builder.project(shuttle.apply(project.getProjects()), project.getRowType().getFieldNames());
