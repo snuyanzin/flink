@@ -66,7 +66,6 @@ import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.language.Soundex;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -6530,7 +6529,7 @@ public class SqlFunctions {
 
     /** SQL {@code TRANSLATE(string, search_chars, replacement_chars)} function. */
     public static String translate3(String s, String search, String replacement) {
-        return org.apache.commons.lang3.StringUtils.replaceChars(s, search, replacement);
+        return Util.replaceChars(s, search, replacement);
     }
 
     /** SQL {@code REPLACE(string, search, replacement)} function. */
@@ -6543,7 +6542,7 @@ public class SqlFunctions {
             return s.replace(search, replacement);
         }
         // for MSSQL's REPLACE function, search pattern is case-insensitive during matching
-        return org.apache.commons.lang3.Strings.CI.replace(s, search, replacement);
+        return Util.replaceIgnoreCase(s, search, replacement);
     }
 
     /**
@@ -7745,11 +7744,7 @@ public class SqlFunctions {
                             minutes,
                             seconds,
                             millisString));
-        } else if (ObjectUtils.isNotEmpty(sb)
-                && hours == 0
-                && minutes == 0
-                && seconds == 0
-                && millis == 0) {
+        } else if (sb.length() != 0 && hours == 0 && minutes == 0 && seconds == 0 && millis == 0) {
             return sb.toString().trim();
         } else {
             sb.append(String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds));
