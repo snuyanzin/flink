@@ -943,7 +943,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
      *
      * <p>Rewrite Aggregate as: SELECT d.deptno FROM dept d JOIN ( SELECT true AS cs, deptno FROM (
      * SELECT d2.deptno, CASE WHEN cnt0 IS NOT NULL THEN cnt0 ELSE 0 END AS cnt FROM (SELECT deptno
-     * FROM dept GROUP BY deptno) d2 LEFT JOIN ( SELECT deptno, COUNT(e.empno) cnt0 FROM emp WHERE
+     * FROM dept GROUP BY deptno) d2 LEFT JOIN ( SELECT deptno, COUNT(emp.empno) cnt0 FROM emp WHERE
      * deptno IS NOT NULL GROUP BY deptno) e ON d2.deptno IS NOT DISTINCT FROM e.deptno ) AS
      * case_count WHERE cnt = 0 ) AS d0 ON d.deptno = d0.deptno Corresponding plan: [01]
      * LogicalProject(DEPTNO=[$0]) [02] LogicalJoin(condition=[=($0, $2)], joinType=[inner]) [03]
@@ -1265,6 +1265,10 @@ public class RelDecorrelator implements ReflectiveVisitor {
         }
 
         final List<CorRef> corVarList = collectExternalCorVars(rel);
+        if (corVarList.isEmpty()) {
+            return decorrelateRel((RelNode) rel, true, parentPropagatesNullValues);
+        }
+
         final NavigableMap<CorDef, Integer> valueGenCorDefOutputs = new TreeMap<>();
         final RelNode valueGen =
                 requireNonNull(createValueGenerator(corVarList, 0, valueGenCorDefOutputs));
@@ -1441,7 +1445,8 @@ public class RelDecorrelator implements ReflectiveVisitor {
         for (CorRef corVar : correlations) {
             final int oldCorVarOffset = corVar.field;
 
-            final RelNode oldInput = requireNonNull(getCorRel(corVar));
+            final RelNode oldInput = findInputRel(corVar);
+
             final Frame frame = requireNonNull(getOrCreateFrame(oldInput));
             final RelNode newInput = frame.r;
 
@@ -1472,7 +1477,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
 
         RelNode r = null;
         for (CorRef corVar : correlations) {
-            final RelNode oldInput = requireNonNull(getCorRel(corVar));
+            final RelNode oldInput = findInputRel(corVar);
             final RelNode newInput = requireNonNull(getOrCreateFrame(oldInput).r);
 
             if (!joinedInputs.contains(newInput)) {
@@ -1515,7 +1520,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
         for (CorRef corRef : correlations) {
             // The first input of a Correlate is always the rel defining
             // the correlated variables.
-            final RelNode oldInput = requireNonNull(getCorRel(corRef));
+            final RelNode oldInput = findInputRel(corRef);
             final Frame frame = getOrCreateFrame(oldInput);
             final RelNode newInput = requireNonNull(frame.r);
 
@@ -1561,6 +1566,39 @@ public class RelDecorrelator implements ReflectiveVisitor {
                         cm.mapCorToCorRel.get(corVar.corr),
                         () -> "cm.mapCorToCorRel.get(" + corVar.corr + ")");
         return requireNonNull(r.getInput(0), () -> "r.getInput(0) is null for " + r);
+    }
+
+    /**
+     * Finds the RelNode that produces the given correlation variable.
+     *
+     * <p>This method resolves correlation variables by inspecting the {@link #frameStack}, which
+     * maintains the active correlation contexts during the top-down traversal.
+     *
+     * <p>The lookup logic implements <b>Lexical Scoping</b> (with Shadowing):
+     *
+     * <ul>
+     *   <li>The {@code frameStack} is traversed from top to bottom (most recently pushed to least
+     *       recently pushed). This ensures that if multiple nested queries use the same {@link
+     *       CorrelationId}, the innermost definition takes precedence, shadowing outer ones.
+     * </ul>
+     *
+     * <p>If the variable is not found in the {@code frameStack} (e.g., it might be defined outside
+     * the current traversal path or in a global context), the method falls back to looking it up in
+     * the global {@link #cm} (CorelMap).
+     *
+     * @param corVar The correlation variable reference to resolve.
+     * @return The {@link RelNode} that produces the correlation variable.
+     */
+    private RelNode findInputRel(CorRef corVar) {
+        final int oldCorVarOffset = corVar.field;
+        for (Pair<CorrelationId, Frame> pair : frameStack) {
+            if (pair.left.equals(corVar.corr)) {
+                if (oldCorVarOffset < pair.right.oldRel.getRowType().getFieldCount()) {
+                    return pair.right.oldRel;
+                }
+            }
+        }
+        return getCorRel(corVar);
     }
 
     /**
@@ -3848,6 +3886,9 @@ public class RelDecorrelator implements ReflectiveVisitor {
      * fields and correlation variables among its output fields.
      */
     static class Frame {
+        // The original relational expression before decorrelation
+        final RelNode oldRel;
+        // The decorrelated relational expression
         final RelNode r;
         final ImmutableSortedMap<CorDef, Integer> corDefOutputs;
         final ImmutableSortedMap<Integer, Integer> oldToNewOutputs;
@@ -3857,6 +3898,7 @@ public class RelDecorrelator implements ReflectiveVisitor {
                 RelNode r,
                 NavigableMap<CorDef, Integer> corDefOutputs,
                 Map<Integer, Integer> oldToNewOutputs) {
+            this.oldRel = requireNonNull(oldRel, "oldRel");
             this.r = requireNonNull(r, "r");
             this.corDefOutputs = ImmutableSortedMap.copyOf(corDefOutputs);
             this.oldToNewOutputs = ImmutableSortedMap.copyOf(oldToNewOutputs);
