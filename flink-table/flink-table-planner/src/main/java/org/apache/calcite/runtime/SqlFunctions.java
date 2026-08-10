@@ -202,20 +202,22 @@ public class SqlFunctions {
             a0 -> a0 == null ? Linq4j.emptyEnumerable() : Linq4j.asEnumerable(a0);
 
     @SuppressWarnings("unused")
-    private static final Function1<Object[], Enumerable<Object[]>> ARRAY_CARTESIAN_PRODUCT =
-            lists -> {
-                final List<Enumerator<Object>> enumerators = new ArrayList<>();
-                for (Object list : lists) {
-                    enumerators.add(Linq4j.enumerator((List) list));
-                }
-                final Enumerator<List<Object>> product = Linq4j.product(enumerators);
-                return new AbstractEnumerable<Object[]>() {
-                    @Override
-                    public Enumerator<Object[]> enumerator() {
-                        return Linq4j.transform(product, List::toArray);
-                    }
-                };
-            };
+    private static final Function1<Object[], Enumerable<@Nullable Object[]>>
+            ARRAY_CARTESIAN_PRODUCT =
+                    lists -> {
+                        final List<Enumerator<@Nullable Object>> enumerators = new ArrayList<>();
+                        for (Object list : lists) {
+                            enumerators.add(Linq4j.enumerator((List) list));
+                        }
+                        final Enumerator<List<@Nullable Object>> product =
+                                Linq4j.product(enumerators);
+                        return new AbstractEnumerable<@Nullable Object[]>() {
+                            @Override
+                            public Enumerator<@Nullable Object[]> enumerator() {
+                                return Linq4j.transform(product, List::toArray);
+                            }
+                        };
+                    };
 
     /**
      * Holds, for each thread, a map from sequence name to sequence current value.
@@ -2987,8 +2989,12 @@ public class SqlFunctions {
         if ((b0 & b1 & q) >= 0) {
             return q;
         } else {
-            throw new ArithmeticException("integer overflow");
+            throw new ArithmeticException("long overflow");
         }
+    }
+
+    public static double checkedDivide(int b0, double b1) {
+        return b0 / b1;
     }
 
     public static UByte checkedDivide(UByte b0, UByte b1) {
@@ -3005,6 +3011,15 @@ public class SqlFunctions {
 
     public static ULong checkedDivide(ULong b0, ULong b1) {
         return ULong.valueOf(UnsignedType.toBigInteger(b0).divide(UnsignedType.toBigInteger(b1)));
+    }
+
+    // The definition of this function must match the divide function with the same signature
+    public static int checkedDivide(int b0, BigDecimal b1) {
+        return BigDecimal.valueOf(b0).divide(b1, RoundingMode.HALF_DOWN).intValueExact();
+    }
+
+    public static BigDecimal checkedDivide(BigDecimal b0, BigDecimal b1) {
+        return b0.divide(b1, RoundingMode.HALF_DOWN);
     }
 
     // *
@@ -3118,6 +3133,10 @@ public class SqlFunctions {
 
     public static ULong checkedMultiply(ULong b0, ULong b1) {
         return ULong.valueOf(UnsignedType.toBigInteger(b0).multiply(UnsignedType.toBigInteger(b1)));
+    }
+
+    public static BigDecimal checkedMultiply(BigDecimal b0, long b1) {
+        return b0.multiply(BigDecimal.valueOf(b1));
     }
 
     /** SQL <code>SAFE_ADD</code> function applied to long values. */
