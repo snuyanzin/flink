@@ -58,9 +58,18 @@ echo "==========================================================================
 
 EXIT_CODE=0
 
-# run with -T1 because our maven output parsers don't support multi-threaded builds
-$MVN clean deploy -DaltDeploymentRepository=validation_repository::default::file:$MVN_VALIDATION_DIR -Dflink.convergence.phase=install -Pcheck-convergence \
-    -Dmaven.javadoc.skip=true -U -DskipTests -Dorg.slf4j.simpleLogger.log.org.apache.maven.plugins.shade=DEBUG "${@}" -T1 | tee $MVN_CLEAN_COMPILE_OUT
+# SKIP_CONVERGENCE_AND_LICENSE=true builds fast (install, no convergence) and skips the license check below; default (local) does the full deploy + convergence + license.
+if [[ "${SKIP_CONVERGENCE_AND_LICENSE:-false}" == "true" ]]; then
+    DEPLOY_ARGS="install"
+    CONVERGENCE_ARGS=""
+else
+    DEPLOY_ARGS="deploy -DaltDeploymentRepository=validation_repository::default::file:$MVN_VALIDATION_DIR"
+    CONVERGENCE_ARGS="-Dflink.convergence.phase=install -Pcheck-convergence"
+fi
+
+# Default -T1 because our output parsers (bundled-optional/shade) don't support multi-threaded builds; the fast compile job sets MVN_COMPILE_THREADS=1C and skips those parsing checks via SKIP_STRUCTURAL_QA.
+$MVN clean ${DEPLOY_ARGS} ${CONVERGENCE_ARGS} \
+    -Dmaven.javadoc.skip=true -U -DskipTests -Dorg.slf4j.simpleLogger.log.org.apache.maven.plugins.shade=DEBUG "${@}" -T${MVN_COMPILE_THREADS:-1} | tee $MVN_CLEAN_COMPILE_OUT
 
 EXIT_CODE=${PIPESTATUS[0]}
 
@@ -78,6 +87,9 @@ if [ $EXIT_CODE != 0 ]; then
 
     exit $EXIT_CODE
 fi
+
+# Structural QA (javadoc/scala/shaded/bundled) stays in the compile job; the convergence+license job skips it via SKIP_STRUCTURAL_QA=true.
+if [[ "${SKIP_STRUCTURAL_QA:-false}" != "true" ]]; then
 
 echo "============ Checking Javadocs ============"
 
@@ -111,10 +123,17 @@ EXIT_CODE=$(($EXIT_CODE+$?))
 check_shaded_artifacts_s3_fs presto
 EXIT_CODE=$(($EXIT_CODE+$?))
 
+fi
+
+# License check needs the staged deploy dir; skipped when the fast compile job did not deploy.
+if [[ "${SKIP_CONVERGENCE_AND_LICENSE:-false}" != "true" ]]; then
+
 echo "============ Run license check ============"
 
 find $MVN_VALIDATION_DIR
 MVN=$MVN ${CI_DIR}/license_check.sh $MVN_CLEAN_COMPILE_OUT $MVN_VALIDATION_DIR || exit $?
+
+fi
 
 exit $EXIT_CODE
 
