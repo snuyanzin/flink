@@ -58,18 +58,17 @@ echo "==========================================================================
 
 EXIT_CODE=0
 
-# SKIP_CONVERGENCE_AND_LICENSE=true builds fast (install, no convergence) and skips the license check below; default (local) does the full deploy + convergence + license.
-if [[ "${SKIP_CONVERGENCE_AND_LICENSE:-false}" == "true" ]]; then
-    DEPLOY_ARGS="install"
-    CONVERGENCE_ARGS=""
+# Maven QA-check args: dependency convergence, the deploy that stages jars for the license check, and the shade DEBUG log the bundled-optional check parses. Default runs full QA; the fast compile job and e2e pass MVN_QA_CHECK_ARGS="" to build only (QA runs in the qa_check job). Non-empty also enables the structural QA + license blocks below.
+MVN_QA_CHECK_ARGS="${MVN_QA_CHECK_ARGS-deploy -DaltDeploymentRepository=validation_repository::default::file:$MVN_VALIDATION_DIR -Dflink.convergence.phase=install -Pcheck-convergence -Dorg.slf4j.simpleLogger.log.org.apache.maven.plugins.shade=DEBUG}"
+if [[ -n "$MVN_QA_CHECK_ARGS" ]]; then
+    BUILD_GOAL_ARGS="$MVN_QA_CHECK_ARGS"
 else
-    DEPLOY_ARGS="deploy -DaltDeploymentRepository=validation_repository::default::file:$MVN_VALIDATION_DIR"
-    CONVERGENCE_ARGS="-Dflink.convergence.phase=install -Pcheck-convergence"
+    BUILD_GOAL_ARGS="install"
 fi
 
-# Default -T1 because our output parsers (bundled-optional/shade) don't support multi-threaded builds; the fast compile job sets MVN_COMPILE_THREADS=1C and skips those parsing checks via SKIP_STRUCTURAL_QA.
-$MVN clean ${DEPLOY_ARGS} ${CONVERGENCE_ARGS} \
-    -Dmaven.javadoc.skip=true -U -DskipTests -Dorg.slf4j.simpleLogger.log.org.apache.maven.plugins.shade=DEBUG "${@}" -T${MVN_COMPILE_THREADS:-1} | tee $MVN_CLEAN_COMPILE_OUT
+# Default -T1 because our output parsers (bundled-optional/shade) don't support multi-threaded builds; the fast compile job sets MVN_COMPILE_THREADS=1C together with MVN_QA_CHECK_ARGS="" so those parsing checks are skipped.
+$MVN clean ${BUILD_GOAL_ARGS} \
+    -Dmaven.javadoc.skip=true -U -DskipTests "${@}" -T${MVN_COMPILE_THREADS:-1} | tee $MVN_CLEAN_COMPILE_OUT
 
 EXIT_CODE=${PIPESTATUS[0]}
 
@@ -88,8 +87,8 @@ if [ $EXIT_CODE != 0 ]; then
     exit $EXIT_CODE
 fi
 
-# Structural QA (javadoc/scala/shaded/bundled) stays in the compile job; the convergence+license job skips it via SKIP_STRUCTURAL_QA=true.
-if [[ "${SKIP_STRUCTURAL_QA:-false}" != "true" ]]; then
+# Structural QA (javadoc/scala/shaded/bundled) runs only in QA mode (MVN_QA_CHECK_ARGS non-empty); the fast compile job and e2e skip it.
+if [[ -n "$MVN_QA_CHECK_ARGS" ]]; then
 
 echo "============ Checking Javadocs ============"
 
@@ -125,8 +124,8 @@ EXIT_CODE=$(($EXIT_CODE+$?))
 
 fi
 
-# License check needs the staged deploy dir; skipped when the fast compile job did not deploy.
-if [[ "${SKIP_CONVERGENCE_AND_LICENSE:-false}" != "true" ]]; then
+# License check needs the staged deploy dir; runs only in QA mode (MVN_QA_CHECK_ARGS non-empty).
+if [[ -n "$MVN_QA_CHECK_ARGS" ]]; then
 
 echo "============ Run license check ============"
 
