@@ -2694,9 +2694,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         enclosingNode,
                         alias,
                         forceNullable);
-                // ----- FLINK MODIFICATION BEGIN -----
                 return newNode;
-            // ----- FLINK MODIFICATION END -----
 
             case PIVOT:
                 registerPivot(
@@ -6485,9 +6483,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             setValidatedNodeType(measure, type);
 
             fields.add(alias, type);
-            // ----- FLINK MODIFICATION BEGIN -----
             sqlNodes.add(expand);
-            // ----- FLINK MODIFICATION END -----
         }
 
         SqlNodeList list = new SqlNodeList(sqlNodes, measures.getParserPosition());
@@ -6539,11 +6535,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             inferUnknownTypes(booleanType, scope, expand);
             expand.validate(this, scope);
 
-            // Some extra work need required here.
             // In PREV, NEXT, FINAL and LAST, only one pattern variable is allowed.
-            // ----- FLINK MODIFICATION BEGIN -----
+            // It is already parsed into AS operator, see PatternDefinition in Parser.jj
             sqlNodes.add(expand);
-            // ----- FLINK MODIFICATION END -----
 
             final RelDataType type = deriveType(scope, expand);
             if (!SqlTypeUtil.inBooleanFamily(type)) {
