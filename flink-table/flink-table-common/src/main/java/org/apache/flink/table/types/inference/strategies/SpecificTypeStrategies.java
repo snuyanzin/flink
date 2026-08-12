@@ -32,6 +32,8 @@ import org.apache.flink.table.types.utils.TypeConversions;
 import java.util.List;
 import java.util.Optional;
 
+import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDataType;
+
 /**
  * Entry point for specific type strategies not covered in {@link TypeStrategies}.
  *

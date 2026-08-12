@@ -266,7 +266,8 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("haystack", "needle"),
-                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
+                                    Arrays.asList(
+                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
                     .outputTypeStrategy(
                             nullableIfArgs(
                                     ConstantArgumentCount.of(0), explicit(DataTypes.BOOLEAN())))
@@ -313,7 +314,8 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("haystack", "needle"),
-                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
+                                    Arrays.asList(
+                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
                     .outputTypeStrategy(nullableIfArgs(explicit(DataTypes.INT())))
                     .runtimeClass(
                             "org.apache.flink.table.runtime.functions.scalar.ArrayPositionFunction")
@@ -339,9 +341,9 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("haystack", "needle"),
-                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
-                    .outputTypeStrategy(
-                            nullableIfArgs(ConstantArgumentCount.of(0), ARRAY_WITH_COMMON_ELEMENT))
+                                    Arrays.asList(
+                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
+                    .outputTypeStrategy(nullableIfArgs(ConstantArgumentCount.of(0), argument(0)))
                     .runtimeClass(
                             "org.apache.flink.table.runtime.functions.scalar.ArrayRemoveFunction")
                     .build();

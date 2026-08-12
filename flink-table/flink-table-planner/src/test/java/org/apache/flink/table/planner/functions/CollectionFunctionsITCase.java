@@ -477,37 +477,103 @@ class CollectionFunctionsITCase extends BuiltInFunctionTestBase {
     }
 
     private Stream<TestSetSpec> arrayElementCommonTypeTestCases() {
-        // When the needle type is wider than the array element type, both the array and the needle
-        // must be widened to their common type. Previously only the array element type was used, so
-        // a wider needle was silently narrowed (losing data) instead of widening the array.
+        // The needle is reconciled with the array element type to their common type instead of
+        // being
+        // narrowed to the array element type (which silently lost data). ARRAY_APPEND/ARRAY_PREPEND
+        // store the needle, so the array widens to the common type; ARRAY_REMOVE only compares it,
+        // so
+        // it keeps the array's own type and returns a subset.
         return Stream.of(
                 TestSetSpec.forFunction(
                                 BuiltInFunctionDefinitions.ARRAY_APPEND,
                                 "widen array and needle to common element type")
-                        .onFieldsWithData(0)
-                        .andDataTypes(DataTypes.INT())
+                        .onFieldsWithData(
+                                new BigDecimal[] {new BigDecimal("1.2")},
+                                new String[] {"ab"},
+                                new LocalDateTime[] {LocalDateTime.of(2020, 1, 1, 0, 0, 0)})
+                        .andDataTypes(
+                                DataTypes.ARRAY(DataTypes.DECIMAL(2, 1).notNull()).notNull(),
+                                DataTypes.ARRAY(DataTypes.CHAR(2).notNull()).notNull(),
+                                DataTypes.ARRAY(DataTypes.TIMESTAMP(0).notNull()).notNull())
                         // DECIMAL(2,1) array element vs DECIMAL(4,3) needle -> DECIMAL(4,3)
-                        .testSqlResult(
-                                "ARRAY_APPEND(ARRAY[CAST(1.2 AS DECIMAL(2,1))], "
-                                        + "CAST(1.123 AS DECIMAL(4,3)))",
+                        .testResult(
+                                $("f0").arrayAppend(
+                                                lit(new BigDecimal("1.123"))
+                                                        .cast(DataTypes.DECIMAL(4, 3))),
+                                "ARRAY_APPEND(f0, CAST(1.123 AS DECIMAL(4,3)))",
                                 new BigDecimal[] {new BigDecimal("1.200"), new BigDecimal("1.123")},
                                 DataTypes.ARRAY(DataTypes.DECIMAL(4, 3).notNull()).notNull())
                         // CHAR(2) array element vs CHAR(5) needle -> VARCHAR(5)
-                        .testSqlResult(
-                                "ARRAY_APPEND(ARRAY[CAST('ab' AS CHAR(2))], "
-                                        + "CAST('abcde' AS CHAR(5)))",
+                        .testResult(
+                                $("f1").arrayAppend(lit("abcde").cast(DataTypes.CHAR(5))),
+                                "ARRAY_APPEND(f1, CAST('abcde' AS CHAR(5)))",
                                 new String[] {"ab", "abcde"},
                                 DataTypes.ARRAY(DataTypes.VARCHAR(5).notNull()).notNull())
                         // TIMESTAMP(0) array element vs TIMESTAMP(9) needle -> TIMESTAMP(9)
-                        .testSqlResult(
-                                "ARRAY_APPEND("
-                                        + "ARRAY[CAST('2020-01-01 00:00:00' AS TIMESTAMP(0))], "
+                        .testResult(
+                                $("f2").arrayAppend(
+                                                lit(LocalDateTime.of(2020, 1, 1, 0, 0, 0, 123456789))
+                                                        .cast(DataTypes.TIMESTAMP(9))),
+                                "ARRAY_APPEND(f2, "
                                         + "CAST('2020-01-01 00:00:00.123456789' AS TIMESTAMP(9)))",
                                 new LocalDateTime[] {
                                     LocalDateTime.of(2020, 1, 1, 0, 0, 0),
                                     LocalDateTime.of(2020, 1, 1, 0, 0, 0, 123456789)
                                 },
-                                DataTypes.ARRAY(DataTypes.TIMESTAMP(9).notNull()).notNull()));
+                                DataTypes.ARRAY(DataTypes.TIMESTAMP(9).notNull()).notNull()),
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.ARRAY_REMOVE,
+                                "keep array type, compare needle at the common type")
+                        .onFieldsWithData(
+                                new Integer[] {1, 2}, new BigDecimal[] {new BigDecimal("1.1")})
+                        .andDataTypes(
+                                DataTypes.ARRAY(DataTypes.INT().notNull()).notNull(),
+                                DataTypes.ARRAY(DataTypes.DECIMAL(2, 1).notNull()).notNull())
+                        // needle DECIMAL cannot equal any INT, so nothing is removed and the result
+                        // keeps ARRAY<INT> instead of widening to DECIMAL
+                        .testResult(
+                                $("f0").arrayRemove(
+                                                lit(new BigDecimal("1.12"))
+                                                        .cast(DataTypes.DECIMAL(3, 2))),
+                                "ARRAY_REMOVE(f0, CAST(1.12 AS DECIMAL(3,2)))",
+                                new Integer[] {1, 2},
+                                DataTypes.ARRAY(DataTypes.INT().notNull()).notNull())
+                        // needle is compared without narrowing, so 1.123 does not match 1.1
+                        .testResult(
+                                $("f1").arrayRemove(
+                                                lit(new BigDecimal("1.123"))
+                                                        .cast(DataTypes.DECIMAL(4, 3))),
+                                "ARRAY_REMOVE(f1, CAST(1.123 AS DECIMAL(4,3)))",
+                                new BigDecimal[] {new BigDecimal("1.1")},
+                                DataTypes.ARRAY(DataTypes.DECIMAL(2, 1).notNull()).notNull()),
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.ARRAY_CONTAINS,
+                                "keep array type, compare needle at the common type")
+                        .onFieldsWithData(new BigDecimal[] {new BigDecimal("1.1")})
+                        .andDataTypes(
+                                DataTypes.ARRAY(DataTypes.DECIMAL(2, 1).notNull()).notNull())
+                        // needle compared without narrowing, so 1.123 does not match 1.1
+                        .testResult(
+                                $("f0").arrayContains(
+                                                lit(new BigDecimal("1.123"))
+                                                        .cast(DataTypes.DECIMAL(4, 3))),
+                                "ARRAY_CONTAINS(f0, CAST(1.123 AS DECIMAL(4,3)))",
+                                false,
+                                DataTypes.BOOLEAN().notNull()),
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.ARRAY_POSITION,
+                                "keep array type, compare needle at the common type")
+                        .onFieldsWithData(new BigDecimal[] {new BigDecimal("1.1")})
+                        .andDataTypes(
+                                DataTypes.ARRAY(DataTypes.DECIMAL(2, 1).notNull()).notNull())
+                        // needle compared without narrowing, so 1.123 does not match 1.1
+                        .testResult(
+                                $("f0").arrayPosition(
+                                                lit(new BigDecimal("1.123"))
+                                                        .cast(DataTypes.DECIMAL(4, 3))),
+                                "ARRAY_POSITION(f0, CAST(1.123 AS DECIMAL(4,3)))",
+                                0,
+                                DataTypes.INT().notNull()));
     }
 
     private Stream<TestSetSpec> arrayReverseTestCases() {

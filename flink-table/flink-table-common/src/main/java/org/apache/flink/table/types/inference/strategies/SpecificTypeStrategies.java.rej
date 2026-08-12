@@ -1,0 +1,18 @@
+diff a/flink-table/flink-table-common/src/main/java/org/apache/flink/table/types/inference/strategies/SpecificTypeStrategies.java b/flink-table/flink-table-common/src/main/java/org/apache/flink/table/types/inference/strategies/SpecificTypeStrategies.java	(rejected hunks)
+@@ -69,9 +71,14 @@ public final class SpecificTypeStrategies {
+ 
+     public static final TypeStrategy ITEM_AT = new ItemAtTypeStrategy();
+ 
+-    /** See {@link ArrayWithCommonElementTypeStrategy}. */
++    /**
++     * Output type for functions taking an array and an element: {@code ARRAY} of the common element
++     * type.
++     */
+     public static final TypeStrategy ARRAY_WITH_COMMON_ELEMENT =
+-            new ArrayWithCommonElementTypeStrategy();
++            callContext ->
++                    ArrayElementArgumentTypeStrategy.findCommonElementType(callContext)
++                            .map(commonType -> DataTypes.ARRAY(fromLogicalToDataType(commonType)));
+ 
+     /** See {@link GetTypeStrategy}. */
+     public static final TypeStrategy GET = new GetTypeStrategy();

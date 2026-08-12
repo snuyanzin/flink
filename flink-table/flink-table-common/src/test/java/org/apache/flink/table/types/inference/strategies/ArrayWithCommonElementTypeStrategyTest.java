@@ -23,7 +23,7 @@ import org.apache.flink.table.types.inference.TypeStrategiesTestBase;
 
 import java.util.stream.Stream;
 
-/** Tests for {@link ArrayWithCommonElementTypeStrategy}. */
+/** Tests for {@link SpecificTypeStrategies#ARRAY_WITH_COMMON_ELEMENT}. */
 public class ArrayWithCommonElementTypeStrategyTest extends TypeStrategiesTestBase {
     @Override
     protected Stream<TestSpec> testData() {
