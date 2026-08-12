@@ -26,7 +26,9 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CollectionUtil;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -48,6 +50,7 @@ class CollectionFunctionsITCase extends BuiltInFunctionTestBase {
                         arrayPositionTestCases(),
                         arrayArrayPrependTestCases(),
                         arrayRemoveTestCases(),
+                        arrayElementCommonTypeTestCases(),
                         arrayReverseTestCases(),
                         arrayUnionTestCases(),
                         arrayConcatTestCases(),
@@ -471,6 +474,40 @@ class CollectionFunctionsITCase extends BuiltInFunctionTestBase {
                                 $("f0").arrayRemove(true),
                                 "Invalid input arguments. Expected signatures are:\n"
                                         + "ARRAY_REMOVE(haystack <ARRAY>, needle <ARRAY ELEMENT>)"));
+    }
+
+    private Stream<TestSetSpec> arrayElementCommonTypeTestCases() {
+        // When the needle type is wider than the array element type, both the array and the needle
+        // must be widened to their common type. Previously only the array element type was used, so
+        // a wider needle was silently narrowed (losing data) instead of widening the array.
+        return Stream.of(
+                TestSetSpec.forFunction(
+                                BuiltInFunctionDefinitions.ARRAY_APPEND,
+                                "widen array and needle to common element type")
+                        .onFieldsWithData(0)
+                        .andDataTypes(DataTypes.INT())
+                        // DECIMAL(2,1) array element vs DECIMAL(4,3) needle -> DECIMAL(4,3)
+                        .testSqlResult(
+                                "ARRAY_APPEND(ARRAY[CAST(1.2 AS DECIMAL(2,1))], "
+                                        + "CAST(1.123 AS DECIMAL(4,3)))",
+                                new BigDecimal[] {new BigDecimal("1.200"), new BigDecimal("1.123")},
+                                DataTypes.ARRAY(DataTypes.DECIMAL(4, 3).notNull()).notNull())
+                        // CHAR(2) array element vs CHAR(5) needle -> VARCHAR(5)
+                        .testSqlResult(
+                                "ARRAY_APPEND(ARRAY[CAST('ab' AS CHAR(2))], "
+                                        + "CAST('abcde' AS CHAR(5)))",
+                                new String[] {"ab", "abcde"},
+                                DataTypes.ARRAY(DataTypes.VARCHAR(5).notNull()).notNull())
+                        // TIMESTAMP(0) array element vs TIMESTAMP(9) needle -> TIMESTAMP(9)
+                        .testSqlResult(
+                                "ARRAY_APPEND("
+                                        + "ARRAY[CAST('2020-01-01 00:00:00' AS TIMESTAMP(0))], "
+                                        + "CAST('2020-01-01 00:00:00.123456789' AS TIMESTAMP(9)))",
+                                new LocalDateTime[] {
+                                    LocalDateTime.of(2020, 1, 1, 0, 0, 0),
+                                    LocalDateTime.of(2020, 1, 1, 0, 0, 0, 123456789)
+                                },
+                                DataTypes.ARRAY(DataTypes.TIMESTAMP(9).notNull()).notNull()));
     }
 
     private Stream<TestSetSpec> arrayReverseTestCases() {

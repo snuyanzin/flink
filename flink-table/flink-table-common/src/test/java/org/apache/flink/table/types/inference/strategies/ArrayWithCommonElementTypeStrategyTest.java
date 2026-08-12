@@ -23,31 +23,31 @@ import org.apache.flink.table.types.inference.TypeStrategiesTestBase;
 
 import java.util.stream.Stream;
 
-/** Tests for {@link ArrayAppendPrependTypeStrategy}. */
-public class ArrayAppendPrependTypeStrategyTest extends TypeStrategiesTestBase {
+/** Tests for {@link ArrayWithCommonElementTypeStrategy}. */
+public class ArrayWithCommonElementTypeStrategyTest extends TypeStrategiesTestBase {
     @Override
     protected Stream<TestSpec> testData() {
         return Stream.of(
                 TestSpec.forStrategy(
                                 "Array element is nullable, element to add is nullable",
-                                SpecificTypeStrategies.ARRAY_APPEND_PREPEND)
+                                SpecificTypeStrategies.ARRAY_WITH_COMMON_ELEMENT)
                         .inputTypes(DataTypes.ARRAY(DataTypes.BIGINT()), DataTypes.BIGINT())
                         .expectDataType(DataTypes.ARRAY(DataTypes.BIGINT())),
                 TestSpec.forStrategy(
                                 "Array element type is non null, element to add is nullable",
-                                SpecificTypeStrategies.ARRAY_APPEND_PREPEND)
+                                SpecificTypeStrategies.ARRAY_WITH_COMMON_ELEMENT)
                         .inputTypes(
                                 DataTypes.ARRAY(DataTypes.BIGINT().notNull()), DataTypes.BIGINT())
                         .expectDataType(DataTypes.ARRAY(DataTypes.BIGINT())),
                 TestSpec.forStrategy(
                                 "Array element type is nullable, element to add is non null",
-                                SpecificTypeStrategies.ARRAY_APPEND_PREPEND)
+                                SpecificTypeStrategies.ARRAY_WITH_COMMON_ELEMENT)
                         .inputTypes(
                                 DataTypes.ARRAY(DataTypes.BIGINT()), DataTypes.BIGINT().notNull())
                         .expectDataType(DataTypes.ARRAY(DataTypes.BIGINT())),
                 TestSpec.forStrategy(
                                 "Array element type is non null, element to add is non null",
-                                SpecificTypeStrategies.ARRAY_APPEND_PREPEND)
+                                SpecificTypeStrategies.ARRAY_WITH_COMMON_ELEMENT)
                         .inputTypes(
                                 DataTypes.ARRAY(DataTypes.BIGINT().notNull()),
                                 DataTypes.BIGINT().notNull())

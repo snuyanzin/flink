@@ -635,7 +635,7 @@ class InputTypeStrategiesTest extends InputTypeStrategiesTestBase {
                 TestSpec.forStrategy(
                                 "ArrayElement argument type strategy",
                                 sequence(
-                                        logical(LogicalTypeRoot.ARRAY),
+                                        SpecificInputTypeStrategies.ARRAY_ELEMENT_ARG,
                                         SpecificInputTypeStrategies.ARRAY_ELEMENT_ARG))
                         .calledWithArgumentTypes(
                                 DataTypes.ARRAY(DataTypes.INT().notNull()).notNull(),
@@ -644,6 +644,19 @@ class InputTypeStrategiesTest extends InputTypeStrategiesTestBase {
                         .expectArgumentTypes(
                                 DataTypes.ARRAY(DataTypes.INT().notNull()).notNull(),
                                 DataTypes.INT()),
+                TestSpec.forStrategy(
+                                "ArrayElement argument type strategy widens both array and "
+                                        + "element to their common type",
+                                sequence(
+                                        SpecificInputTypeStrategies.ARRAY_ELEMENT_ARG,
+                                        SpecificInputTypeStrategies.ARRAY_ELEMENT_ARG))
+                        .calledWithArgumentTypes(
+                                DataTypes.ARRAY(DataTypes.DECIMAL(2, 1).notNull()).notNull(),
+                                DataTypes.DECIMAL(4, 3).notNull())
+                        .expectSignature("f(<ARRAY>, <ARRAY ELEMENT>)")
+                        .expectArgumentTypes(
+                                DataTypes.ARRAY(DataTypes.DECIMAL(4, 3).notNull()).notNull(),
+                                DataTypes.DECIMAL(4, 3).notNull()),
                 TestSpec.forStrategy(sequence(SpecificInputTypeStrategies.ARRAY_FULLY_COMPARABLE))
                         .expectSignature("f(<ARRAY<COMPARABLE>>)")
                         .calledWithArgumentTypes(DataTypes.ARRAY(DataTypes.ROW()))

@@ -119,7 +119,7 @@ import static org.apache.flink.table.types.inference.strategies.SpecificInputTyp
 import static org.apache.flink.table.types.inference.strategies.SpecificInputTypeStrategies.TWO_FULLY_COMPARABLE;
 import static org.apache.flink.table.types.inference.strategies.SpecificInputTypeStrategies.percentage;
 import static org.apache.flink.table.types.inference.strategies.SpecificInputTypeStrategies.percentageArray;
-import static org.apache.flink.table.types.inference.strategies.SpecificTypeStrategies.ARRAY_APPEND_PREPEND;
+import static org.apache.flink.table.types.inference.strategies.SpecificTypeStrategies.ARRAY_WITH_COMMON_ELEMENT;
 import static org.apache.flink.table.types.inference.strategies.SpecificTypeStrategies.FROM_CHANGELOG_OUTPUT_TYPE_STRATEGY;
 import static org.apache.flink.table.types.inference.strategies.SpecificTypeStrategies.LATERAL_SNAPSHOT_OUTPUT_TYPE_STRATEGY;
 import static org.apache.flink.table.types.inference.strategies.SpecificTypeStrategies.ML_PREDICT_OUTPUT_TYPE_STRATEGY;
@@ -253,9 +253,8 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("array", "element"),
-                                    Arrays.asList(
-                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
-                    .outputTypeStrategy(nullableIfArgs(nullableIfArgs(ARRAY_APPEND_PREPEND)))
+                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
+                    .outputTypeStrategy(nullableIfArgs(ARRAY_WITH_COMMON_ELEMENT))
                     .runtimeClass(
                             "org.apache.flink.table.runtime.functions.scalar.ArrayAppendFunction")
                     .build();
@@ -267,8 +266,7 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("haystack", "needle"),
-                                    Arrays.asList(
-                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
+                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
                     .outputTypeStrategy(
                             nullableIfArgs(
                                     ConstantArgumentCount.of(0), explicit(DataTypes.BOOLEAN())))
@@ -315,8 +313,7 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("haystack", "needle"),
-                                    Arrays.asList(
-                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
+                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
                     .outputTypeStrategy(nullableIfArgs(explicit(DataTypes.INT())))
                     .runtimeClass(
                             "org.apache.flink.table.runtime.functions.scalar.ArrayPositionFunction")
@@ -329,9 +326,8 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("array", "element"),
-                                    Arrays.asList(
-                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
-                    .outputTypeStrategy(nullableIfArgs(ARRAY_APPEND_PREPEND))
+                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
+                    .outputTypeStrategy(nullableIfArgs(ARRAY_WITH_COMMON_ELEMENT))
                     .runtimeClass(
                             "org.apache.flink.table.runtime.functions.scalar.ArrayPrependFunction")
                     .build();
@@ -343,9 +339,9 @@ public final class BuiltInFunctionDefinitions {
                     .inputTypeStrategy(
                             sequence(
                                     Arrays.asList("haystack", "needle"),
-                                    Arrays.asList(
-                                            logical(LogicalTypeRoot.ARRAY), ARRAY_ELEMENT_ARG)))
-                    .outputTypeStrategy(nullableIfArgs(ConstantArgumentCount.of(0), argument(0)))
+                                    Arrays.asList(ARRAY_ELEMENT_ARG, ARRAY_ELEMENT_ARG)))
+                    .outputTypeStrategy(
+                            nullableIfArgs(ConstantArgumentCount.of(0), ARRAY_WITH_COMMON_ELEMENT))
                     .runtimeClass(
                             "org.apache.flink.table.runtime.functions.scalar.ArrayRemoveFunction")
                     .build();

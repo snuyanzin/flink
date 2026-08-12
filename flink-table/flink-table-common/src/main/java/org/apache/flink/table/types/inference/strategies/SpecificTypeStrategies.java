@@ -27,6 +27,7 @@ import org.apache.flink.table.types.KeyValueDataType;
 import org.apache.flink.table.types.inference.TypeStrategies;
 import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
+import org.apache.flink.table.types.utils.TypeConversions;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,8 +70,14 @@ public final class SpecificTypeStrategies {
 
     public static final TypeStrategy ITEM_AT = new ItemAtTypeStrategy();
 
-    /** See {@link ArrayAppendPrependTypeStrategy}. */
-    public static final TypeStrategy ARRAY_APPEND_PREPEND = new ArrayAppendPrependTypeStrategy();
+    public static final TypeStrategy ARRAY_WITH_COMMON_ELEMENT =
+            callContext ->
+                    ArrayElementArgumentTypeStrategy.findCommonElementType(callContext)
+                            .map(
+                                    commonType ->
+                                            DataTypes.ARRAY(
+                                                    TypeConversions.fromLogicalToDataType(
+                                                            commonType)));
 
     /** See {@link GetTypeStrategy}. */
     public static final TypeStrategy GET = new GetTypeStrategy();

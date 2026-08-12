@@ -28,36 +28,70 @@ import org.apache.flink.table.types.inference.CallContext;
 import org.apache.flink.table.types.inference.Signature.Argument;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.LogicalTypeRoot;
+import org.apache.flink.table.types.logical.utils.LogicalTypeMerging;
 
+import java.util.Arrays;
 import java.util.Optional;
 
-import static org.apache.flink.table.types.logical.utils.LogicalTypeCasts.supportsImplicitCast;
-
-/** Specific {@link ArgumentTypeStrategy} for {@link BuiltInFunctionDefinitions#ARRAY_CONTAINS}. */
+/**
+ * Argument strategy for functions taking an array (argument 0) and an element (argument 1), e.g.
+ * {@link BuiltInFunctionDefinitions#ARRAY_CONTAINS}. Widens both to the common element type so a
+ * wider element (e.g. a higher-precision {@code DECIMAL}) is not narrowed: returns the widened
+ * {@link ArrayType} for the array and the common type for the element.
+ */
 @Internal
 class ArrayElementArgumentTypeStrategy implements ArgumentTypeStrategy {
+
+    /** The array argument always precedes the element argument. */
+    private static final int ARRAY_POS = 0;
+
+    private static final int ELEMENT_POS = 1;
 
     @Override
     public Optional<DataType> inferArgumentType(
             CallContext callContext, int argumentPos, boolean throwOnFailure) {
-        final ArrayType haystackType =
-                (ArrayType) callContext.getArgumentDataTypes().get(0).getLogicalType();
-        final LogicalType needleType =
-                callContext.getArgumentDataTypes().get(argumentPos).getLogicalType();
-        LogicalType haystackElementType = haystackType.getElementType();
+        // empty unless arg 0 is an array, so the ArrayType cast below is safe
+        return findCommonElementType(callContext)
+                .map(
+                        commonType -> {
+                            final LogicalType argType =
+                                    callContext
+                                            .getArgumentDataTypes()
+                                            .get(argumentPos)
+                                            .getLogicalType();
+                            if (argumentPos == ARRAY_POS) {
+                                final LogicalType arrayElementType =
+                                        ((ArrayType) argType).getElementType();
+                                return new ArrayType(
+                                        argType.isNullable(),
+                                        commonType.copy(arrayElementType.isNullable()));
+                            }
+                            return commonType.copy(argType.isNullable());
+                        })
+                .map(DataTypes::of);
+    }
 
-        if (!haystackElementType.isNullable() && needleType.isNullable()) {
-            haystackElementType = haystackElementType.copy(true);
+    /**
+     * Common type of the array element and the element argument; empty if arg 0 is not an array.
+     */
+    static Optional<LogicalType> findCommonElementType(CallContext callContext) {
+        final LogicalType arrayType =
+                callContext.getArgumentDataTypes().get(ARRAY_POS).getLogicalType();
+        if (!arrayType.is(LogicalTypeRoot.ARRAY)) {
+            return Optional.empty();
         }
-
-        if (supportsImplicitCast(needleType, haystackElementType)) {
-            return Optional.of(DataTypes.of(haystackElementType));
-        }
-        return Optional.empty();
+        final LogicalType arrayElementType = ((ArrayType) arrayType).getElementType();
+        final LogicalType elementType =
+                callContext.getArgumentDataTypes().get(ELEMENT_POS).getLogicalType();
+        return LogicalTypeMerging.findCommonType(Arrays.asList(arrayElementType, elementType));
     }
 
     @Override
     public Argument getExpectedArgument(FunctionDefinition functionDefinition, int argumentPos) {
+        if (argumentPos == ARRAY_POS) {
+            return Argument.ofGroup(LogicalTypeRoot.ARRAY);
+        }
         return Argument.of("<ARRAY ELEMENT>");
     }
 }
