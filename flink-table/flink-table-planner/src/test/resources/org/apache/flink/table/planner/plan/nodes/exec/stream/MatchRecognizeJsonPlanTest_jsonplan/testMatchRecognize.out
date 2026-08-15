@@ -157,7 +157,7 @@
             "internalName" : "$LAST$1",
             "operands" : [ {
               "kind" : "PATTERN_INPUT_REF",
-              "alpha" : "*",
+              "alpha" : "MyTable",
               "inputIndex" : 1,
               "type" : "VARCHAR(2147483647)"
             }, {
@@ -182,7 +182,7 @@
             "internalName" : "$LAST$1",
             "operands" : [ {
               "kind" : "PATTERN_INPUT_REF",
-              "alpha" : "*",
+              "alpha" : "MyTable",
               "inputIndex" : 1,
               "type" : "VARCHAR(2147483647)"
             }, {
@@ -207,7 +207,7 @@
             "internalName" : "$LAST$1",
             "operands" : [ {
               "kind" : "PATTERN_INPUT_REF",
-              "alpha" : "*",
+              "alpha" : "MyTable",
               "inputIndex" : 1,
               "type" : "VARCHAR(2147483647)"
             }, {
@@ -293,7 +293,7 @@
       "priority" : 0
     } ],
     "outputType" : "ROW<`aid` BIGINT, `bid` BIGINT, `cid` BIGINT>",
-    "description" : "Match(orderBy=[proctime ASC], measures=[FINAL(A.id) AS aid, FINAL(B.id) AS bid, FINAL(C.id) AS cid], rowsPerMatch=[ONE ROW PER MATCH], after=[SKIP TO NEXT ROW], pattern=[((_UTF-16LE'A', _UTF-16LE'B'), _UTF-16LE'C')], define=[{A==(LAST(*.$1, 0), _UTF-16LE'a'), B==(LAST(*.$1, 0), _UTF-16LE'b'), C==(LAST(*.$1, 0), _UTF-16LE'c')}])"
+    "description" : "Match(orderBy=[proctime ASC], measures=[FINAL(A.id) AS aid, FINAL(B.id) AS bid, FINAL(C.id) AS cid], rowsPerMatch=[ONE ROW PER MATCH], after=[SKIP TO NEXT ROW], pattern=[((_UTF-16LE'A', _UTF-16LE'B'), _UTF-16LE'C')], define=[{A==(LAST(MyTable.$1, 0), _UTF-16LE'a'), B==(LAST(MyTable.$1, 0), _UTF-16LE'b'), C==(LAST(MyTable.$1, 0), _UTF-16LE'c')}])"
   }, {
     "id" : 5,
     "type" : "stream-exec-sink_2",
