@@ -2052,15 +2052,15 @@ SqlNode SelectExpression() :
                 throw SqlUtil.newContextException(excludeList.getParserPosition(),
                     RESOURCE.selectExcludeRequiresStar());
             }
-            final SqlIdentifier sqlIdentifier = (SqlIdentifier) e;
-            if (!sqlIdentifier.isStar()) {
+            final SqlIdentifier excludeIdentifier = (SqlIdentifier) e;
+            if (!excludeIdentifier.isStar()) {
                 throw SqlUtil.newContextException(excludeList.getParserPosition(),
                     RESOURCE.selectExcludeRequiresStar());
             }
-            final SqlParserPos pos = SqlParserPos.sum(
-                ImmutableList.of(sqlIdentifier.getParserPosition(),
+            final SqlParserPos excludePos = SqlParserPos.sum(
+                ImmutableList.of(excludeIdentifier.getParserPosition(),
                     excludeList.getParserPosition()));
-            return new SqlStarExclude(pos, sqlIdentifier, excludeList);
+            return new SqlStarExclude(excludePos, excludeIdentifier, excludeList);
         }
     |
 </#if>
@@ -2070,15 +2070,15 @@ SqlNode SelectExpression() :
                 throw SqlUtil.newContextException(replaceList.getParserPosition(),
                     RESOURCE.selectReplaceRequiresStar());
             }
-            final SqlIdentifier sqlIdentifier = (SqlIdentifier) e;
-            if (!sqlIdentifier.isStar()) {
+            final SqlIdentifier replaceIdentifier = (SqlIdentifier) e;
+            if (!replaceIdentifier.isStar()) {
                 throw SqlUtil.newContextException(replaceList.getParserPosition(),
                     RESOURCE.selectReplaceRequiresStar());
             }
-            final SqlParserPos pos = SqlParserPos.sum(
-                ImmutableList.of(sqlIdentifier.getParserPosition(),
+            final SqlParserPos replacePos = SqlParserPos.sum(
+                ImmutableList.of(replaceIdentifier.getParserPosition(),
                     replaceList.getParserPosition()));
-            return new SqlStarReplace(pos, sqlIdentifier, replaceList);
+            return new SqlStarReplace(replacePos, replaceIdentifier, replaceList);
         }
     |
 </#if>
