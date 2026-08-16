@@ -8329,8 +8329,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         int firstLastCount;
         int prevNextCount;
         int aggregateCount;
-        // ----- FLINK MODIFICATION BEGIN -----
-        int index;
+        int argIndex;
         int argCount;
 
         PatternValidator(boolean isMeasure) {
@@ -8348,11 +8347,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             this.firstLastCount = firstLastCount;
             this.prevNextCount = prevNextCount;
             this.aggregateCount = aggregateCount;
-            this.index = index;
+            this.argIndex = index;
             this.argCount = argCount;
         }
-
-        // ----- FLINK MODIFICATION END -----
 
         @Override
         public Set<String> visit(SqlCall call) {
@@ -8399,7 +8396,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         call, Static.RESOURCE.patternRunningFunctionInDefine(call.toString()));
             }
 
-            // ----- FLINK MODIFICATION BEGIN -----
             for (int i = 0; i < operands.size(); i++) {
                 SqlNode node = operands.get(i);
                 if (node != null) {
@@ -8416,7 +8412,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                                     () -> "node.accept(PatternValidator) for node " + node));
                 }
             }
-            // ----- FLINK MODIFICATION END -----
 
             if (isSingle) {
                 switch (kind) {
@@ -8461,15 +8456,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         @Override
         public Set<String> visit(SqlLiteral literal) {
-            // ----- FLINK MODIFICATION BEGIN -----
-            if ((this.argCount == 1 || this.index < this.argCount - 1)
+            if ((this.argCount == 1 || this.argIndex < this.argCount - 1)
                     && (this.firstLastCount > 0 || this.prevNextCount > 0)
                     && !SqlUtil.isNull(literal)) {
-                return ImmutableSet.of(literal.toValue());
+                return ImmutableSet.of(requireNonNull(literal.toValue()));
             } else {
                 return ImmutableSet.of();
             }
-            // ----- FLINK MODIFICATION END -----
         }
 
         @Override
