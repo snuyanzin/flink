@@ -4990,6 +4990,16 @@ public class SqlToRelConverter {
         String pv = null;
         if (bb.isPatternVarRef && identifier.names.size() > 1) {
             pv = identifier.names.get(0);
+            if (bb.isPatternVarRef && identifier.names.size() > 1) {
+                pv = identifier.names.get(0);
+                // A qualifier that is not a declared pattern variable (for example the
+                // table name or alias that MatchRecognizeScope adds while expanding an
+                // unqualified column) denotes the universal row pattern variable "*".
+                if (bb.scope instanceof MatchRecognizeScope
+                        && !((MatchRecognizeScope) bb.scope).getPatternVars().contains(pv)) {
+                    pv = "*";
+                }
+            }
         }
 
         final @Nullable SqlNode measure = bb.lookupMeasure(identifier);
