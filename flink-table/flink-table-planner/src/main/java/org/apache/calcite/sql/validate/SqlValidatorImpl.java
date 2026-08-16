@@ -21,7 +21,6 @@ import org.apache.flink.table.planner.calcite.FlinkSqlCallBinding;
 import org.apache.flink.table.planner.functions.sql.ml.SqlVectorSearchTableFunction;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.calcite.linq4j.Ord;
@@ -600,8 +599,8 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         return false;
     }
 
-    private static Map<String, String> getFieldAliases(final SelectScope scope) {
-        final ImmutableMap.Builder<String, String> fieldAliases = new ImmutableMap.Builder<>();
+    private static ImmutableSet<String> getFieldsAliased(final SelectScope scope) {
+        final ImmutableSet.Builder<String> result = new ImmutableSet.Builder<>();
 
         for (SqlNode selectItem : scope.getNode().getSelectList()) {
             if (selectItem instanceof SqlCall) {
@@ -612,12 +611,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 }
 
                 final SqlIdentifier fieldIdentifier = call.operand(0);
-                fieldAliases.put(
-                        fieldIdentifier.getSimple(), ((SqlIdentifier) call.operand(1)).getSimple());
+                result.add(fieldIdentifier.names.get(fieldIdentifier.names.size() - 1));
             }
         }
 
-        return fieldAliases.build();
+        return result.build();
     }
 
     /**
@@ -7615,7 +7613,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             }
 
             final SqlNameMatcher matcher = validator.getCatalogReader().nameMatcher();
-            final Map<String, String> fieldAliases = getFieldAliases(scope);
+            final Set<String> fieldAliases = getFieldsAliased(scope);
 
             for (String name : commonColumnNames) {
                 if (matcher.matches(identifier.getSimple(), name)) {
@@ -7633,14 +7631,13 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
                     assert qualifiedNode.size() == 2;
 
-                    // If there is an alias for the column, no need to wrap the coalesce with an AS
-                    // operator
-                    boolean haveAlias = fieldAliases.containsKey(name);
-
                     final SqlCall coalesceCall =
                             SqlStdOperatorTable.COALESCE.createCall(
                                     SqlParserPos.ZERO, qualifiedNode.get(0), qualifiedNode.get(1));
 
+                    // If there is an alias for the column, no need to wrap the coalesce with an AS
+                    // operator
+                    boolean haveAlias = fieldAliases.contains(name);
                     if (haveAlias) {
                         return coalesceCall;
                     } else {

@@ -1275,9 +1275,14 @@ void AddKeyValueOption(List<SqlNode> list) :
         key = StringLiteral()
     )
     <EQ>
-    value = StringLiteral() {
-        list.add(key);
-        list.add(value);
+    (
+        value = StringLiteral()
+    |
+        value = SimpleIdentifier()
+    )
+    {
+         list.add(key);
+         list.add(value);
     }
 }
 
@@ -4611,6 +4616,7 @@ SqlCreate SqlCreate() :
 {
     <CREATE> { s = span(); }
     [
+        // Allow downstream projects implement different syntax, for instance CREATE OR REPLACE
         LOOKAHEAD(2)
         <OR> <REPLACE> {
             replace = true;

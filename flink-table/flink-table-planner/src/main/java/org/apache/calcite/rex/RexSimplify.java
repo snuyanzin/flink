@@ -1434,7 +1434,7 @@ public class RexSimplify {
             case 0:
                 return rexBuilder.makeNullLiteral(call.type);
             case 1:
-                return operands.get(0);
+                return rexBuilder.ensureType(call.type, operands.get(0), true);
             default:
                 if (operands.equals(call.operands)) {
                     return call;
