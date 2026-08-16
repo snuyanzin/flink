@@ -21,7 +21,9 @@ import org.apache.flink.table.planner.calcite.FlinkSqlCallBinding;
 import org.apache.flink.table.planner.functions.sql.ml.SqlVectorSearchTableFunction;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.linq4j.function.Functions;
@@ -87,6 +89,7 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSelectKeyword;
 import org.apache.calcite.sql.SqlSnapshot;
 import org.apache.calcite.sql.SqlStarExclude;
+import org.apache.calcite.sql.SqlStarReplace;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.SqlTableFunction;
 import org.apache.calcite.sql.SqlUnknownLiteral;
@@ -675,6 +678,33 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
     }
 
+    /**
+     * Validates that a SQL node tree does not contain qualified references to common columns in a
+     * JOIN USING or NATURAL JOIN context. This is called before identifier expansion to catch
+     * user-written qualified common columns in conformances where they are disallowed (e.g. Oracle,
+     * Presto).
+     *
+     * @param nodeList The list of SQL nodes to check
+     * @param join The JOIN node containing USING/NATURAL condition
+     * @param scope The select scope for resolving identifiers
+     */
+    private void validateNoQualifiedCommonColumns(
+            SqlNodeList nodeList, SqlJoin join, SelectScope scope) {
+        for (SqlNode item : nodeList) {
+            item.accept(
+                    new SqlShuttle() {
+                        @Override
+                        public SqlNode visit(SqlIdentifier id) {
+                            if (!id.isSimple()) {
+                                validateQualifiedCommonColumn(
+                                        join, id, scope, SqlValidatorImpl.this);
+                            }
+                            return id;
+                        }
+                    });
+        }
+    }
+
     private boolean expandStar(
             List<SqlNode> selectItems,
             Set<String> aliases,
@@ -684,13 +714,21 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             SqlNode node) {
         final SqlIdentifier identifier;
         final SqlNodeList excludeList;
+        final SqlNodeList replaceList;
         if (node instanceof SqlStarExclude) {
             final SqlStarExclude starExclude = (SqlStarExclude) node;
             identifier = starExclude.getStarIdentifier();
             excludeList = starExclude.getExcludeList();
+            replaceList = null;
+        } else if (node instanceof SqlStarReplace) {
+            final SqlStarReplace starReplace = (SqlStarReplace) node;
+            identifier = starReplace.getStarIdentifier();
+            excludeList = null;
+            replaceList = starReplace.getReplaceList();
         } else if (node instanceof SqlIdentifier) {
             identifier = (SqlIdentifier) node;
             excludeList = null;
+            replaceList = null;
         } else {
             return false;
         }
@@ -703,6 +741,42 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         : extractExcludeIdentifiers(excludeList);
         final boolean[] excludeMatched = new boolean[excludeIdentifiers.size()];
         final SqlNameMatcher nameMatcher = scope.validator.catalogReader.nameMatcher();
+        if (replaceList != null) {
+            final Set<String> replaceSeen = new HashSet<>();
+            for (SqlNode replaceNode : replaceList) {
+                final SqlCall call = (SqlCall) replaceNode;
+                final SqlIdentifier aliasId = (SqlIdentifier) call.operand(1);
+                final String aliasName =
+                        aliasId.isSimple()
+                                ? aliasId.getSimple()
+                                : aliasId.names.get(aliasId.names.size() - 1);
+                if (!replaceSeen.add(aliasName.toUpperCase(Locale.ROOT))) {
+                    throw newValidationError(
+                            aliasId,
+                            RESOURCE.selectStarReplaceListContainsDuplicateColumns(aliasName));
+                }
+                if (!aliasId.isSimple()) {
+                    final int starPrefixSize = identifier.names.size() - 1;
+                    final int aliasPrefixSize = aliasId.names.size() - 1;
+                    if (aliasPrefixSize != starPrefixSize) {
+                        throw newValidationError(
+                                aliasId,
+                                RESOURCE.selectStarReplaceListContainsUnknownColumns(aliasName));
+                    }
+                    for (int i = 0; i < starPrefixSize; i++) {
+                        if (!nameMatcher.matches(identifier.names.get(i), aliasId.names.get(i))) {
+                            throw newValidationError(
+                                    aliasId,
+                                    RESOURCE.selectStarReplaceListContainsUnknownColumns(
+                                            aliasName));
+                        }
+                    }
+                }
+            }
+        }
+        final Map<String, SqlNode> replaceMap = extractReplaceMap(replaceList);
+        final boolean[] replaceMatched =
+                replaceMap.isEmpty() ? new boolean[0] : new boolean[replaceMap.size()];
         final int originalSize = selectItems.size();
         final SqlParserPos startPosition = identifier.getParserPosition();
         final int fieldsBeforeStar = fields.size();
@@ -745,6 +819,29 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                             if (shouldExcludeField(excludeList, exp, nameMatcher)) {
                                 continue;
                             }
+                            final SqlNode replacement =
+                                    findReplacement(columnName, replaceMap, nameMatcher);
+                            if (replacement != null) {
+                                recordReplaceMatch(
+                                        columnName, replaceMap, nameMatcher, replaceMatched);
+                                final SqlNode aliasedReplacement =
+                                        SqlStdOperatorTable.AS.createCall(
+                                                SqlParserPos.sum(
+                                                        ImmutableList.of(
+                                                                replacement.getParserPosition(),
+                                                                exp.getParserPosition())),
+                                                replacement,
+                                                new SqlIdentifier(
+                                                        columnName, exp.getParserPosition()));
+                                addToSelectList(
+                                        selectItems,
+                                        aliases,
+                                        fields,
+                                        aliasedReplacement,
+                                        scope,
+                                        includeSystemVars);
+                                continue;
+                            }
                             // Don't add expanded rolled up columns
                             if (!isRolledUpColumn(exp, scope)) {
                                 addOrExpandField(
@@ -782,6 +879,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 throwIfUnknownExcludeColumns(excludeIdentifiers, excludeMatched);
                 throwIfExcludeEliminatesAllColumns(
                         excludeIdentifiers, fieldsBeforeStar, fields, identifier);
+                throwIfUnknownReplaceColumns(replaceMap, replaceMatched);
                 return true;
 
             default:
@@ -817,6 +915,32 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         if (shouldExcludeField(excludeList, columnId, resolvedNameMatcher)) {
                             continue;
                         }
+                        final SqlNode replacement =
+                                findReplacement(columnName, replaceMap, resolvedNameMatcher);
+                        if (replacement != null) {
+                            recordReplaceMatch(
+                                    columnName, replaceMap, resolvedNameMatcher, replaceMatched);
+                            final SqlNode aliasedReplacement =
+                                    SqlStdOperatorTable.AS.createCall(
+                                            SqlParserPos.sum(
+                                                    ImmutableList.of(
+                                                            replacement.getParserPosition(),
+                                                            columnId.getParserPosition())),
+                                            replacement,
+                                            new SqlIdentifier(
+                                                    columnName, columnId.getParserPosition()));
+                            addToSelectList(
+                                    selectItems,
+                                    aliases,
+                                    fields,
+                                    aliasedReplacement,
+                                    scope,
+                                    includeSystemVars);
+                            continue;
+                        }
+                        // No replacement for this column; keep the original field.
+                        // If the REPLACE list contains unknown columns, they will be
+                        // reported by throwIfUnknownReplaceColumns after the loop.
                         // TODO: do real implicit collation here
                         addOrExpandField(
                                 selectItems,
@@ -833,6 +957,7 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 throwIfUnknownExcludeColumns(excludeIdentifiers, excludeMatched);
                 throwIfExcludeEliminatesAllColumns(
                         excludeIdentifiers, fieldsBeforeStar, fields, identifier);
+                throwIfUnknownReplaceColumns(replaceMap, replaceMatched);
                 return true;
         }
     }
@@ -942,6 +1067,82 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         if (!excludeIdentifiers.isEmpty() && fields.size() == fieldsBeforeStar) {
             throw newValidationError(
                     identifier, RESOURCE.selectStarExcludeCannotExcludeAllColumns());
+        }
+    }
+
+    private static Map<String, SqlNode> extractReplaceMap(@Nullable SqlNodeList replaceList) {
+        if (replaceList == null) {
+            return ImmutableMap.of();
+        }
+        final ImmutableMap.Builder<String, SqlNode> builder = ImmutableMap.builder();
+        for (SqlNode node : replaceList) {
+            assert node instanceof SqlCall;
+            final SqlCall call = (SqlCall) node;
+            assert call.getOperator() == SqlStdOperatorTable.AS && call.operandCount() == 2;
+            final SqlNode nameNode = call.operand(1);
+            assert nameNode instanceof SqlIdentifier;
+            final SqlIdentifier nameId = (SqlIdentifier) nameNode;
+            builder.put(
+                    nameId.isSimple()
+                            ? nameId.getSimple()
+                            : nameId.names.get(nameId.names.size() - 1),
+                    call);
+        }
+        return builder.build();
+    }
+
+    private static @Nullable SqlNode findReplacement(
+            String columnName, Map<String, SqlNode> replaceMap, SqlNameMatcher nameMatcher) {
+        for (Map.Entry<String, SqlNode> entry : replaceMap.entrySet()) {
+            if (nameMatcher.matches(entry.getKey(), columnName)) {
+                final SqlNode value = entry.getValue();
+                return value instanceof SqlCall ? ((SqlCall) value).operand(0) : value;
+            }
+        }
+        return null;
+    }
+
+    private static void recordReplaceMatch(
+            String columnName,
+            Map<String, SqlNode> replaceMap,
+            SqlNameMatcher nameMatcher,
+            boolean[] matched) {
+        int i = 0;
+        for (Map.Entry<String, SqlNode> entry : replaceMap.entrySet()) {
+            if (!matched[i] && nameMatcher.matches(entry.getKey(), columnName)) {
+                matched[i] = true;
+            }
+            i++;
+        }
+    }
+
+    private void throwIfUnknownReplaceColumns(
+            Map<String, SqlNode> replaceMap, boolean[] replaceMatched) {
+        if (replaceMap.isEmpty()) {
+            return;
+        }
+        final List<String> unknownReplaceNames = new ArrayList<>();
+        int firstUnknownIndex = -1;
+        int i = 0;
+        for (Map.Entry<String, SqlNode> entry : replaceMap.entrySet()) {
+            if (!replaceMatched[i]) {
+                if (firstUnknownIndex < 0) {
+                    firstUnknownIndex = i;
+                }
+                unknownReplaceNames.add(entry.getKey());
+            }
+            i++;
+        }
+        if (firstUnknownIndex >= 0) {
+            final SqlNode firstUnknownExpr = Iterables.get(replaceMap.values(), firstUnknownIndex);
+            final SqlNode errorNode =
+                    firstUnknownExpr instanceof SqlCall
+                            ? ((SqlCall) firstUnknownExpr).operand(1)
+                            : firstUnknownExpr;
+            throw newValidationError(
+                    errorNode,
+                    RESOURCE.selectStarReplaceListContainsUnknownColumns(
+                            String.join(", ", unknownReplaceNames)));
         }
     }
 
@@ -2367,6 +2568,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                 scope = getMeasureScope(((SelectScope) scope).getNode());
             }
             inferUnknownTypes(inferredType, scope, ((SqlCall) node).operand(0));
+        } else if (node.isA(SqlKind.QUERY)) {
+            // Do not descend into subqueries. Each query (SELECT, VALUES,
+            // etc.) calls inferUnknownTypes during its own validation.
         } else if (node instanceof SqlCall) {
             final SqlCall call = (SqlCall) node;
             final SqlOperandTypeInference operandTypeInference =
@@ -5142,6 +5346,17 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
         // expand the expression in group list.
         List<SqlNode> expandedList = new ArrayList<>();
+        // Validate that GROUP BY items do not qualify common columns
+        // in conformances where it is disallowed (e.g. Oracle, Presto).
+        // This must run before expansion, because expansion generates
+        // qualified identifiers that should not trigger this validation.
+        if (!config.conformance().allowQualifyingCommonColumn()) {
+            final SqlNode from = select.getFrom();
+            if (from instanceof SqlJoin) {
+                validateNoQualifiedCommonColumns(
+                        groupList, (SqlJoin) from, getRawSelectScopeNonNull(select));
+            }
+        }
         for (SqlNode groupItem : groupList) {
             SqlNode expandedItem = extendedExpand(groupItem, groupScope, select, Clause.GROUP_BY);
             expandedList.add(expandedItem);
@@ -5288,6 +5503,20 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         }
     }
 
+    /**
+     * Validates that SELECT items do not qualify common columns in conformances where it is
+     * disallowed (e.g. Oracle, Presto).
+     */
+    private void validateSelectCommonColumns(SqlNodeList selectItems, SqlSelect select) {
+        if (!config().conformance().allowQualifyingCommonColumn()) {
+            final SqlNode from = select.getFrom();
+            if (from instanceof SqlJoin) {
+                validateNoQualifiedCommonColumns(
+                        selectItems, (SqlJoin) from, getRawSelectScopeNonNull(select));
+            }
+        }
+    }
+
     protected RelDataType validateSelectList(
             final SqlNodeList selectItems, SqlSelect select, RelDataType targetRowType) {
         // First pass, ensure that aliases are unique. "*" and "TABLE.*" items
@@ -5300,6 +5529,12 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
         final PairList<String, RelDataType> fieldList = PairList.of();
         // Populated during select expansion when SqlConformance.isSelectAlias != UNSUPPORTED
         final Map<String, SqlNode> expansions = new HashMap<>();
+
+        // Validate that SELECT items do not qualify common columns
+        // in conformances where it is disallowed (e.g. Oracle, Presto).
+        // This must run before expansion, because expansion generates
+        // qualified identifiers that should not trigger this validation.
+        validateSelectCommonColumns(selectItems, select);
 
         for (SqlNode selectItem : selectItems) {
             if (selectItem instanceof SqlSelect) {
@@ -6039,13 +6274,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                         Static.RESOURCE.illegalExpressionForTemporal(
                                 dataType.getSqlTypeName().getName()));
             }
-            // ----- FLINK MODIFICATION BEGIN -----
             if (ns instanceof IdentifierNamespace && ns.resolve() instanceof WithItemNamespace) {
                 // If the snapshot is used over a CTE, then we don't have a concrete underlying
                 // table to operate on. This will be rechecked later in the planner rules.
                 return;
             }
-            // ----- FLINK MODIFICATION END -----
             SqlValidatorTable table = getTable(ns);
             if (!table.isTemporal()) {
                 List<String> qualifiedName = table.getQualifiedName();
@@ -6461,7 +6694,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
     private PairList<String, RelDataType> validateMeasure(
             SqlMatchRecognize mr, MatchRecognizeScope scope, boolean allRows) {
-        // FLINK MODIFICATION BEGIN
         final Set<String> aliases = new HashSet<>();
         final List<SqlNode> sqlNodes = new ArrayList<>();
         final SqlNodeList measures = mr.getMeasureList();
@@ -6471,12 +6703,9 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
             assert measure instanceof SqlCall;
             final String alias = SqlValidatorUtil.alias(measure, aliases.size());
             if (!aliases.add(alias)) {
-                throw new CalciteException(
-                        String.format(
-                                "Duplicate name '%s' in MATCH_RECOGNIZE MEASURE alias list", alias),
-                        null);
+                throw RESOURCE.measureAliasDuplicate(alias).ex();
             }
-            // FLINK MODIFICATION END
+
             SqlNode expand = expand(measure, scope);
             expand = navigationInMeasure(expand, allRows);
             setOriginal(expand, measure);
@@ -7595,9 +7824,10 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
 
             final SqlIdentifier identifier = (SqlIdentifier) selectItem;
             if (!identifier.isSimple()) {
-                if (!validator.config().conformance().allowQualifyingCommonColumn()) {
-                    validateQualifiedCommonColumn((SqlJoin) from, identifier, scope, validator);
-                }
+                // Qualified identifiers (e.g. t1.col) are returned unchanged.
+                // Validation of qualified common columns is performed before expansion,
+                // in validateSelectCommonColumns, where the original user-written
+                // identifier (with its source position) is still available.
                 return selectItem;
             }
 
