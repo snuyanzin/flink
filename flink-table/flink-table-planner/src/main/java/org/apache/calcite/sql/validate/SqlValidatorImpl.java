@@ -6262,6 +6262,11 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
     }
 
     @Override
+    public boolean isInWindow() {
+        return inWindow;
+    }
+
+    @Override
     public void validateWindow(
             SqlNode windowOrId, SqlValidatorScope scope, @Nullable SqlCall call) {
         // Enable nested aggregates with window aggregates (OVER operator)
@@ -6909,7 +6914,6 @@ public class SqlValidatorImpl implements SqlValidatorWithHints {
                     break;
                 case 2:
                     assert op.allowsNullTreatment();
-                    assert op.requiresOver();
                     assert op.requiresGroupOrder() == Optionality.FORBIDDEN;
                     break;
                 default:
