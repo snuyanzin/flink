@@ -3247,6 +3247,41 @@ LogicalProject(a=[$0])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testInWithCorrelatedOnWhere_UnsupportedCondition2">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM l WHERE a IN (SELECT d FROM r WHERE l.b IN (SELECT j FROM t) AND l.c = r.f)]]>
+    </Resource>
+    <Resource name="ast">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1], c=[$2])
++- LogicalFilter(condition=[IN($0, {
+LogicalProject(d=[$0])
+  LogicalFilter(condition=[AND(IN($cor0.b, {
+LogicalProject(j=[$1])
+  LogicalTableScan(table=[[default_catalog, default_database, t]])
+}), =($cor0.c, $2))])
+    LogicalTableScan(table=[[default_catalog, default_database, r]])
+})], variablesSet=[[$cor0]])
+   +- LogicalTableScan(table=[[default_catalog, default_database, l]])
+]]>
+    </Resource>
+    <Resource name="optimized rel plan">
+      <![CDATA[
+LogicalProject(a=[$0], b=[$1], c=[$2])
++- LogicalJoin(condition=[AND(=($1, $4), =($2, $5), =($0, $3))], joinType=[inner])
+   :- LogicalTableScan(table=[[default_catalog, default_database, l]])
+   +- LogicalAggregate(group=[{0, 1, 2}])
+      +- LogicalProject(d=[$0], j=[$3], f4=[$2])
+         +- LogicalJoin(condition=[true], joinType=[inner])
+            :- LogicalFilter(condition=[IS NOT NULL($2)])
+            :  +- LogicalTableScan(table=[[default_catalog, default_database, r]])
+            +- LogicalFilter(condition=[IS NOT NULL($0)])
+               +- LogicalAggregate(group=[{0}])
+                  +- LogicalProject(j=[$1])
+                     +- LogicalTableScan(table=[[default_catalog, default_database, t]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testInWithUncorrelatedOnHaving1">
     <Resource name="sql">
       <![CDATA[SELECT SUM(a) AS s FROM x GROUP BY b HAVING COUNT(*) > 2 AND b IN (SELECT d FROM y)]]>

@@ -471,13 +471,11 @@ class SubQuerySemiJoinTest extends SubQueryTestBase {
 
   @Test
   def testInWithCorrelatedOnWhere_UnsupportedCondition2(): Unit = {
-    // TODO java.lang.RuntimeException: While invoking method
     // 'public RelDecorrelator$Frame RelDecorrelator.decorrelateRel(LogicalProject)'
     val sqlQuery = "SELECT * FROM l WHERE a IN (SELECT d FROM r WHERE l.b IN (SELECT j FROM t) " +
       "AND l.c = r.f)"
 
-    assertThatExceptionOfType(classOf[AssertionError])
-      .isThrownBy(() => util.verifyRelPlanNotExpected(sqlQuery, "joinType=[semi]"))
+    util.verifyRelPlan(sqlQuery)
   }
 
   @Test

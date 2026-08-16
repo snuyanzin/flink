@@ -69,6 +69,7 @@ import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.rules.FilterCorrelateRule;
+import org.apache.calcite.rel.rules.FilterFlattenCorrelatedConditionRule;
 import org.apache.calcite.rel.rules.FilterJoinRule;
 import org.apache.calcite.rel.rules.FilterProjectTransposeRule;
 import org.apache.calcite.rel.type.RelDataType;
@@ -372,13 +373,10 @@ public class RelDecorrelator implements ReflectiveVisitor {
                                     FilterCorrelateRule.Config.DEFAULT
                                             .withRelBuilderFactory(f)
                                             .toRule())
-                            /* ----- FLINK MODIFICATION BEGIN -----
-                            This is commented as a workaround for https://issues.apache.org/jira/browse/FLINK-29540
                             .addRuleInstance(
-                                     FilterFlattenCorrelatedConditionRule.Config.DEFAULT
-                                             .withRelBuilderFactory(f)
-                                             .toRule())
-                                             ----- FLINK MODIFICATION END -----*/
+                                    FilterFlattenCorrelatedConditionRule.Config.DEFAULT
+                                            .withRelBuilderFactory(f)
+                                            .toRule())
                             .build();
         }
 
@@ -388,13 +386,10 @@ public class RelDecorrelator implements ReflectiveVisitor {
                     "Plan before extracting correlated computations:\n"
                             + RelOptUtil.toString(root));
         }
-        /* ----- FLINK MODIFICATION BEGIN -----
-        This is commented as a workaround for https://issues.apache.org/jira/browse/FLINK-29540
         root = root.accept(new CorrelateProjectExtractor(f));
         // Necessary to update cm (CorrelMap) since CorrelateProjectExtractor above may modify the
         // plan
         this.cm = new CorelMapBuilder().build(root);
-         ----- FLINK MODIFICATION END ----- */
         if (SQL2REL_LOGGER.isDebugEnabled()) {
             SQL2REL_LOGGER.debug(
                     "Plan after extracting correlated computations:\n" + RelOptUtil.toString(root));
