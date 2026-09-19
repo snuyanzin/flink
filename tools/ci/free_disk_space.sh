@@ -49,7 +49,7 @@ sudo apt-get remove -y '^gfortran-.*' '^libruby.*' || true
 sudo apt-get remove -y temurin-8-jdk || true
 sudo apt-get remove -y '^libllvm.*' '^libclang1.*' snapd python3-botocore podman buildah skopeo mecab-ipadic gh git-lfs || true
 sudo apt-get remove -y azure-cli google-cloud-sdk google-chrome-stable google-cloud-cli firefox microsoft-edge-stable powershell mono-devel libgl1-mesa-dri || true
-sudo apt-get autoremove -ysudo apt-get autoremove -y || true
+sudo apt-get autoremove -y || true
 sudo apt-get clean || true
 df -h
 echo "Removing large directories"
