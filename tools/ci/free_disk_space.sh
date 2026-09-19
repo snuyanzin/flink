@@ -43,8 +43,12 @@ sudo apt-get remove -y '^llvm-.*'
 sudo apt-get remove -y 'php.*'
 sudo apt-get remove -y '^mongodb-.*'
 sudo apt-get remove -y '^mysql-.*'
-sudo apt-get remove -y azure-cli google-cloud-sdk hhvm google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri
-sudo apt-get autoremove -y
+sudo apt-get remove -y '^postgresql-.*'
+sudo apt-get remove -y '^g\+\+-.*' '^clang-.*' '^libclang-.*'
+sudo apt-get remove -y '^gfortran-.*' '^libruby.*'
+sudo apt-get remove -y '^libllvm.*' '^libclang1.*' snapd python3-botocore podman buildah skopeo mecab-ipadic gh git-lfs
+sudo apt-get remove -y azure-cli google-cloud-sdk hhvm google-chrome-stable google-cloud-cli firefox microsoft-edge-stable powershell mono-devel libgl1-mesa-dri
+sudo apt-get autoremove -ysudo apt-get autoremove -y
 sudo apt-get clean
 df -h
 echo "Removing large directories"
