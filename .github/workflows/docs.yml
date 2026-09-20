@@ -70,7 +70,7 @@ jobs:
           docker run --rm \
             --volume "$PWD:/root/flink" \
             --volume "$HOME/.m2/repository:/root/.m2/repository" \
-            snuyanzin/flink-ci-docker:test2 \
+            snuyanzin/flink-ci-docker:test \
             bash -c "cd /root/flink && ./.github/workflows/docs.sh"
 
       - name: Upload documentation
