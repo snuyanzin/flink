@@ -19,6 +19,7 @@
 package org.apache.flink.table.planner.plan.nodes.exec.stream;
 
 import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.planner.factories.TestValuesTableFactory;
 import org.apache.flink.table.planner.plan.nodes.exec.testutils.SemanticTestBase;
 import org.apache.flink.table.test.program.SinkTestStep;
 import org.apache.flink.table.test.program.TableTestProgram;
@@ -40,16 +41,21 @@ public class SinkSemanticTests extends SemanticTestBase {
     }
 
     @Override
-    protected void runStep(TestStep testStep, TableEnvironment env) throws Exception {
+    protected void runStep(TestStep testStep, TableEnvironment env, RunContext ctx)
+            throws Exception {
         if (testStep.getKind() == TestKind.SINK_WITHOUT_DATA) {
             final SinkTestStep sinkTestStep = (SinkTestStep) testStep;
+            final String resultId = TestValuesTableFactory.reserveResultId();
+            ctx.registeredIds.add(resultId);
+            ctx.sinkResultIds.put(sinkTestStep.name, resultId);
             sinkTestStep.apply(
                     env,
                     Map.ofEntries(
                             Map.entry("connector", "values"),
-                            Map.entry("sink-insert-only", "false")));
+                            Map.entry("sink-insert-only", "false"),
+                            Map.entry("result-id", resultId)));
         } else {
-            super.runStep(testStep, env);
+            super.runStep(testStep, env, ctx);
         }
     }
 
