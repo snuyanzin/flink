@@ -40,12 +40,14 @@ import org.apache.flink.table.test.program.TestStep;
 import org.apache.flink.table.test.program.TestStep.TestKind;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -58,8 +60,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  * whether the execution result is semantically correct.
  */
 @ExtendWith(MiniClusterExtension.class)
+@Execution(ExecutionMode.CONCURRENT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class CommonSemanticTestBase implements TableTestProgramRunner {
+
+    /**
+     * Per-invocation bookkeeping. Sinks/sources get a globally-unique id so concurrent tests
+     * reusing the same table name don't collide; ids are read back and cleared per invocation.
+     */
+    protected static final class RunContext {
+        // sink table name -> unique result id used as its result-storage key
+        public final Map<String, String> sinkResultIds = new HashMap<>();
+        // all ids (source data, source, sink result) minted this run, cleared at the end
+        public final List<String> registeredIds = new ArrayList<>();
+    }
 
     @Override
     public EnumSet<TestKind> supportedSetupSteps() {
@@ -78,11 +92,6 @@ public abstract class CommonSemanticTestBase implements TableTestProgramRunner {
                 TestKind.SQL, TestKind.FAILING_SQL, TestKind.TABLE_API, TestKind.FAILING_TABLE_API);
     }
 
-    @AfterEach
-    public void clearData() {
-        TestValuesTableFactory.clearAllData();
-    }
-
     @ParameterizedTest
     @MethodSource("supportedPrograms")
     void runSteps(TableTestProgram program) throws Exception {
@@ -93,27 +102,36 @@ public abstract class CommonSemanticTestBase implements TableTestProgramRunner {
 
         applyDefaultEnvironmentOptions(env.getConfig());
 
-        for (TestStep testStep : program.setupSteps) {
-            runStep(testStep, env);
-        }
+        final RunContext ctx = new RunContext();
+        try {
+            for (TestStep testStep : program.setupSteps) {
+                runStep(testStep, env, ctx);
+            }
 
-        for (TestStep testStep : program.runSteps) {
-            runStep(testStep, env);
-        }
+            for (TestStep testStep : program.runSteps) {
+                runStep(testStep, env, ctx);
+            }
 
-        for (SinkTestStep sinkTestStep : program.getSetupSinkTestSteps()) {
-            List<String> actualResults = getActualResults(sinkTestStep, sinkTestStep.name);
-            assertThat(actualResults)
-                    .as("%s", program.id)
-                    .containsExactlyInAnyOrder(
-                            sinkTestStep.getExpectedAsStrings().toArray(new String[0]));
+            for (SinkTestStep sinkTestStep : program.getSetupSinkTestSteps()) {
+                final String resultKey =
+                        ctx.sinkResultIds.getOrDefault(sinkTestStep.name, sinkTestStep.name);
+                List<String> actualResults = getActualResults(sinkTestStep, resultKey);
+                assertThat(actualResults)
+                        .as("%s", program.id)
+                        .containsExactlyInAnyOrder(
+                                sinkTestStep.getExpectedAsStrings().toArray(new String[0]));
+            }
+        } finally {
+            // Clear only this invocation's ids so concurrent tests keep their state.
+            TestValuesTableFactory.clearData(ctx.registeredIds);
         }
     }
 
     /** Returns whether the test is running in bounded (batch) mode. */
     protected abstract boolean isBounded();
 
-    protected void runStep(TestStep testStep, TableEnvironment env) throws Exception {
+    protected void runStep(TestStep testStep, TableEnvironment env, RunContext ctx)
+            throws Exception {
         switch (testStep.getKind()) {
             case CONFIG:
                 {
@@ -127,15 +145,21 @@ public abstract class CommonSemanticTestBase implements TableTestProgramRunner {
                     final SourceTestStep sourceTestStep = (SourceTestStep) testStep;
                     final String id =
                             TestValuesTableFactory.registerData(sourceTestStep.dataBeforeRestore);
+                    ctx.registeredIds.add(id);
+                    final String sourceId = TestValuesTableFactory.reserveResultId();
+                    ctx.registeredIds.add(sourceId);
                     final Map<String, String> options = createSourceOptions(sourceTestStep, id);
+                    options.put("source-id", sourceId);
                     sourceTestStep.apply(env, options);
                 }
                 break;
             case SINK_WITH_DATA:
                 {
                     final SinkTestStep sinkTestStep = (SinkTestStep) testStep;
-                    final Map<String, String> options = createSinkOptions();
-                    sinkTestStep.apply(env, options);
+                    final String resultId = TestValuesTableFactory.reserveResultId();
+                    ctx.registeredIds.add(resultId);
+                    ctx.sinkResultIds.put(sinkTestStep.name, resultId);
+                    sinkTestStep.apply(env, createSinkOptions(resultId));
                 }
                 break;
             case FUNCTION:
@@ -213,9 +237,11 @@ public abstract class CommonSemanticTestBase implements TableTestProgramRunner {
         return options;
     }
 
-    private static Map<String, String> createSinkOptions() {
+    private static Map<String, String> createSinkOptions(String resultId) {
         return Map.ofEntries(
-                Map.entry("connector", "values"), Map.entry("sink-insert-only", "false"));
+                Map.entry("connector", "values"),
+                Map.entry("sink-insert-only", "false"),
+                Map.entry("result-id", resultId));
     }
 
     private static List<String> getActualResults(SinkTestStep sinkTestStep, String tableName) {

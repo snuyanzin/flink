@@ -159,6 +159,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -194,12 +195,21 @@ public final class TestValuesTableFactory
     // --------------------------------------------------------------------------------------------
 
     private static final AtomicInteger idCounter = new AtomicInteger(0);
-    private static final Map<String, Collection<Row>> registeredData = new HashMap<>();
-    private static final Map<String, Collection<RowData>> registeredRowData = new HashMap<>();
+    private static final Map<String, Collection<Row>> registeredData = new ConcurrentHashMap<>();
+    private static final Map<String, Collection<RowData>> registeredRowData =
+            new ConcurrentHashMap<>();
     // The difference between registeredConsumedData and `registeredData` is that
     // `registeredData` is used for data delivered from the source to downstream, while the rows in
     // `registeredConsumedData` will not be sent to downstream and are only used for lookup.
-    private static final Map<String, Collection<Row>> registeredConsumedData = new HashMap<>();
+    private static final Map<String, Collection<Row>> registeredConsumedData =
+            new ConcurrentHashMap<>();
+
+    /**
+     * Reserves a fresh globally-unique id (shared counter with data ids), e.g. for sink results.
+     */
+    public static String reserveResultId() {
+        return String.valueOf(idCounter.incrementAndGet());
+    }
 
     /**
      * Register the given data into the data factory context and return the data id. The data id can
@@ -302,12 +312,12 @@ public final class TestValuesTableFactory
      * Registers an observer for a table that gets notified of each incoming raw data for every
      * subtask. It gets all rows seen so far, by a given task.
      *
-     * @param tableName the table name of the registered table sink.
+     * @param resultKey the sink's result-id if it was created with one, otherwise its table name.
      * @param observer the observer to be notified
      */
     public static void registerLocalRawResultsObserver(
-            String tableName, BiConsumer<Integer, List<Row>> observer) {
-        TestValuesRuntimeFunctions.registerLocalRawResultsObserver(tableName, observer);
+            String resultKey, BiConsumer<Integer, List<Row>> observer) {
+        TestValuesRuntimeFunctions.registerLocalRawResultsObserver(resultKey, observer);
     }
 
     /**
@@ -324,12 +334,27 @@ public final class TestValuesTableFactory
         return TestValuesRuntimeFunctions.getWatermarks(tableName);
     }
 
-    /** Removes the registered data under the given data id. */
+    /** Removes all registered data and results. */
     public static void clearAllData() {
         registeredData.clear();
         registeredRowData.clear();
         registeredConsumedData.clear();
         TestValuesRuntimeFunctions.clearResults();
+    }
+
+    /**
+     * Removes only the state tied to the given ids (data ids and/or sink result ids). Unlike {@link
+     * #clearAllData()} this is safe under concurrent tests: each id is unique, so a test only
+     * clears its own registered data and results.
+     */
+    public static void clearData(Iterable<String> ids) {
+        for (String id : ids) {
+            registeredData.remove(id);
+            registeredRowData.remove(id);
+            registeredConsumedData.remove(id);
+        }
+        TestValuesRuntimeFunctions.clearResultsByKeys(ids);
+        TestValuesRuntimeFunctions.clearSourceStateByKeys(ids);
     }
 
     /** Creates a changelog row from the given RowKind short string and value objects. */
@@ -365,6 +390,12 @@ public final class TestValuesTableFactory
 
     private static final ConfigOption<String> DATA_ID =
             ConfigOptions.key("data-id").stringType().noDefaultValue();
+
+    private static final ConfigOption<String> RESULT_ID =
+            ConfigOptions.key("result-id").stringType().noDefaultValue();
+
+    private static final ConfigOption<String> SOURCE_ID =
+            ConfigOptions.key("source-id").stringType().noDefaultValue();
 
     private static final ConfigOption<Boolean> BOUNDED =
             ConfigOptions.key("bounded").booleanType().defaultValue(false);
@@ -642,7 +673,8 @@ public final class TestValuesTableFactory
                         dataId, isBounded, sleepAfterElements, sleepTimeMillis);
             }
 
-            Collection<Row> data = registeredData.getOrDefault(dataId, Collections.emptyList());
+            Collection<Row> data =
+                    dataId == null ? List.of() : registeredData.getOrDefault(dataId, List.of());
             List<Map<String, String>> partitions =
                     parsePartitionList(helper.getOptions().get(PARTITION_LIST));
             DataType producedDataType = context.getPhysicalRowDataType();
@@ -653,7 +685,7 @@ public final class TestValuesTableFactory
                 partition2Rows = mapPartitionToRow(producedDataType, data, partitions);
             } else {
                 // put all data into one partition
-                partitions = Collections.emptyList();
+                partitions = List.of();
                 partition2Rows = new HashMap<>();
                 partition2Rows.put(Collections.emptyMap(), data);
             }
@@ -669,7 +701,7 @@ public final class TestValuesTableFactory
                         partition2Rows,
                         nestedProjectionSupported,
                         null,
-                        Collections.emptyList(),
+                        List.of(),
                         filterableFieldsSet,
                         dynamicFilteringFieldsSet,
                         numElementToSkip,
@@ -692,7 +724,7 @@ public final class TestValuesTableFactory
                         partition2Rows,
                         nestedProjectionSupported,
                         null,
-                        Collections.emptyList(),
+                        List.of(),
                         filterableFieldsSet,
                         dynamicFilteringFieldsSet,
                         numElementToSkip,
@@ -717,9 +749,10 @@ public final class TestValuesTableFactory
                                     failingSource,
                                     partition2Rows,
                                     context.getObjectIdentifier().getObjectName(),
+                                    helper.getOptions().get(SOURCE_ID),
                                     nestedProjectionSupported,
                                     null,
-                                    Collections.emptyList(),
+                                    List.of(),
                                     filterableFieldsSet,
                                     dynamicFilteringFieldsSet,
                                     numElementToSkip,
@@ -744,7 +777,7 @@ public final class TestValuesTableFactory
                                     partition2Rows,
                                     nestedProjectionSupported,
                                     null,
-                                    Collections.emptyList(),
+                                    List.of(),
                                     filterableFieldsSet,
                                     dynamicFilteringFieldsSet,
                                     numElementToSkip,
@@ -758,7 +791,9 @@ public final class TestValuesTableFactory
                 }
             } else {
                 Collection<Row> consumedData =
-                        registeredConsumedData.getOrDefault(dataId, Collections.emptyList());
+                        dataId == null
+                                ? List.of()
+                                : registeredConsumedData.getOrDefault(dataId, List.of());
                 if (enableCustomShuffle) {
                     return new TestValuesScanLookupTableSourceWithCustomShuffle(
                             context.getCatalogTable().getResolvedSchema().toPhysicalRowDataType(),
@@ -774,7 +809,7 @@ public final class TestValuesTableFactory
                             lookupFunctionClass,
                             nestedProjectionSupported,
                             null,
-                            Collections.emptyList(),
+                            List.of(),
                             filterableFieldsSet,
                             dynamicFilteringFieldsSet,
                             numElementToSkip,
@@ -804,7 +839,7 @@ public final class TestValuesTableFactory
                             lookupFunctionClass,
                             nestedProjectionSupported,
                             null,
-                            Collections.emptyList(),
+                            List.of(),
                             filterableFieldsSet,
                             dynamicFilteringFieldsSet,
                             numElementToSkip,
@@ -868,6 +903,7 @@ public final class TestValuesTableFactory
                     consumedType,
                     primaryKeyIndices,
                     context.getObjectIdentifier().getObjectName(),
+                    helper.getOptions().get(RESULT_ID),
                     isInsertOnly,
                     runtimeSink,
                     expectedNum,
@@ -901,6 +937,8 @@ public final class TestValuesTableFactory
         return new HashSet<>(
                 Arrays.asList(
                         DATA_ID,
+                        RESULT_ID,
+                        SOURCE_ID,
                         CHANGELOG_MODE,
                         BOUNDED,
                         TERMINATING,
@@ -1158,7 +1196,7 @@ public final class TestValuesTableFactory
             this.readableMetadata = readableMetadata;
             this.projectedMetadataFields = projectedMetadataFields;
             this.groupingSet = null;
-            this.aggregateExpressions = Collections.emptyList();
+            this.aggregateExpressions = List.of();
             this.parallelism = parallelism;
             this.enableAggregatePushDown = enableAggregatePushDown;
         }
@@ -1549,10 +1587,10 @@ public final class TestValuesTableFactory
                                     data.get(Collections.EMPTY_MAP),
                                     remainingPartitions);
                 } else {
-                    // we will read data from Collections.emptyList() if allPartitions is empty.
+                    // we will read data from List.of() if allPartitions is empty.
                     // therefore, we should clear all data manually.
                     remainingPartitions = Collections.singletonList(Collections.emptyMap());
-                    this.data.put(Collections.emptyMap(), Collections.emptyList());
+                    this.data.put(Collections.emptyMap(), List.of());
                 }
 
             } else {
@@ -1570,9 +1608,7 @@ public final class TestValuesTableFactory
                 Map<Map<String, String>, Collection<Row>> allData) {
             Map<Map<String, String>, Collection<Row>> result = new HashMap<>();
             for (Map<String, String> remainingPartition : remainingPartitions) {
-                result.put(
-                        remainingPartition,
-                        allData.getOrDefault(remainingPartition, Collections.emptyList()));
+                result.put(remainingPartition, allData.getOrDefault(remainingPartition, List.of()));
             }
             return result;
         }
@@ -1653,8 +1689,7 @@ public final class TestValuesTableFactory
         @Override
         public SupportsReadingMetadata.MetadataFilterResult applyMetadataFilters(
                 List<ResolvedExpression> metadataFilters) {
-            return SupportsReadingMetadata.MetadataFilterResult.of(
-                    metadataFilters, Collections.emptyList());
+            return SupportsReadingMetadata.MetadataFilterResult.of(metadataFilters, List.of());
         }
 
         void setEnableMetadataFilterPushDown(boolean enable) {
@@ -1763,6 +1798,8 @@ public final class TestValuesTableFactory
             extends TestValuesScanTableSource
             implements SupportsWatermarkPushDown, SupportsSourceWatermark {
         private final String tableName;
+        // Unique per test; when set, source bookkeeping is keyed by it instead of the table name.
+        @Nullable private final String sourceId;
         private final int sleepAfterElements;
         private final long sleepTimeMillis;
 
@@ -1776,6 +1813,7 @@ public final class TestValuesTableFactory
                 boolean failingSource,
                 Map<Map<String, String>, Collection<Row>> data,
                 String tableName,
+                @Nullable String sourceId,
                 boolean nestedProjectionSupported,
                 @Nullable int[][] projectedPhysicalFields,
                 List<ResolvedExpression> filterPredicates,
@@ -1809,6 +1847,7 @@ public final class TestValuesTableFactory
                     projectedMetadataFields,
                     enableAggregatePushDown);
             this.tableName = tableName;
+            this.sourceId = sourceId;
             this.sleepAfterElements = sleepAfterElements;
             this.sleepTimeMillis = sleepTimeMillis;
         }
@@ -1837,6 +1876,7 @@ public final class TestValuesTableFactory
                 return SourceFunctionProvider.of(
                         new TestValuesRuntimeFunctions.FromElementSourceFunctionWithWatermark(
                                 tableName,
+                                sourceId,
                                 serializer,
                                 values,
                                 watermarkStrategy,
@@ -1860,6 +1900,7 @@ public final class TestValuesTableFactory
                             failingSource,
                             data,
                             tableName,
+                            sourceId,
                             nestedProjectionSupported,
                             projectedPhysicalFields,
                             filterPredicates,
@@ -2324,7 +2365,7 @@ public final class TestValuesTableFactory
                     new VectorSearchFunction() {
                         @Override
                         public Collection<RowData> vectorSearch(int topK, RowData queryData) {
-                            return Collections.emptyList();
+                            return List.of();
                         }
                     });
         }
@@ -2448,8 +2489,7 @@ public final class TestValuesTableFactory
             }
             int[] searchColumns =
                     Arrays.stream(context.getSearchColumns()).mapToInt(k -> k[0]).toArray();
-            Collection<Row> rows =
-                    data.getOrDefault(Collections.emptyMap(), Collections.emptyList());
+            Collection<Row> rows = data.getOrDefault(Collections.emptyMap(), List.of());
             TestValuesRuntimeFunctions.TestValueVectorSearchFunction searchFunction =
                     new TestValuesRuntimeFunctions.TestValueVectorSearchFunction(
                             new ArrayList<>(rows), searchColumns, producedDataType);
@@ -2531,6 +2571,8 @@ public final class TestValuesTableFactory
         private int[][] targetColumns;
         private int[] primaryKeyIndices;
         private final String tableName;
+        // Unique per test; when set, sink results are stored under it instead of the table name.
+        @Nullable private final String resultId;
         private final boolean isInsertOnly;
         private final String runtimeSink;
         private final int expectedNum;
@@ -2546,6 +2588,7 @@ public final class TestValuesTableFactory
                 DataType consumedDataType,
                 int[] primaryKeyIndices,
                 String tableName,
+                @Nullable String resultId,
                 boolean isInsertOnly,
                 String runtimeSink,
                 int expectedNum,
@@ -2560,6 +2603,7 @@ public final class TestValuesTableFactory
             this.consumedDataType = consumedDataType;
             this.primaryKeyIndices = primaryKeyIndices;
             this.tableName = tableName;
+            this.resultId = resultId;
             this.isInsertOnly = isInsertOnly;
             this.runtimeSink = runtimeSink;
             this.expectedNum = expectedNum;
@@ -2627,14 +2671,18 @@ public final class TestValuesTableFactory
                             @Override
                             public SinkFunction<RowData> createSinkFunction() {
                                 return new AppendingSinkFunction(
-                                        tableName, consumedDataType, converter, rowtimeIndex);
+                                        tableName,
+                                        resultId,
+                                        consumedDataType,
+                                        converter,
+                                        rowtimeIndex);
                             }
                         };
                     case "OutputFormat":
                         return new OutputFormatProvider() {
                             @Override
                             public OutputFormat<RowData> createOutputFormat() {
-                                return new AppendingOutputFormat(tableName, converter);
+                                return new AppendingOutputFormat(tableName, resultId, converter);
                             }
 
                             @Override
@@ -2652,6 +2700,7 @@ public final class TestValuesTableFactory
                                         dataStream.addSink(
                                                 new AppendingSinkFunction(
                                                         tableName,
+                                                        resultId,
                                                         consumedDataType,
                                                         converter,
                                                         rowtimeIndex));
@@ -2688,6 +2737,7 @@ public final class TestValuesTableFactory
                     sinkFunction =
                             new KeyedUpsertingSinkFunction(
                                     tableName,
+                                    resultId,
                                     consumedDataType,
                                     converter,
                                     primaryKeyIndices,
@@ -2701,7 +2751,8 @@ public final class TestValuesTableFactory
                                     + SINK_EXPECTED_MESSAGES_NUM.key()
                                     + "' yet.");
                     sinkFunction =
-                            new RetractingSinkFunction(tableName, consumedDataType, converter);
+                            new RetractingSinkFunction(
+                                    tableName, resultId, consumedDataType, converter);
                 }
                 return SinkFunctionProvider.of(sinkFunction, this.parallelism);
             }
@@ -2713,6 +2764,7 @@ public final class TestValuesTableFactory
                     consumedDataType,
                     primaryKeyIndices,
                     tableName,
+                    resultId,
                     isInsertOnly,
                     runtimeSink,
                     expectedNum,
@@ -2833,7 +2885,7 @@ public final class TestValuesTableFactory
         @Override
         public void run(SourceContext<RowData> ctx) throws Exception {
             Collection<RowData> values =
-                    registeredRowData.getOrDefault(dataId, Collections.emptyList());
+                    dataId == null ? List.of() : registeredRowData.getOrDefault(dataId, List.of());
             Iterator<RowData> valueIter = values.iterator();
 
             while (isRunning && valueIter.hasNext()) {

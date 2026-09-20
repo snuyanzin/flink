@@ -77,7 +77,8 @@ public class QueryOperationSqlSemanticTest extends SemanticTestBase {
     }
 
     @Override
-    protected void runStep(TestStep testStep, TableEnvironment env) throws Exception {
+    protected void runStep(TestStep testStep, TableEnvironment env, RunContext ctx)
+            throws Exception {
         if (testStep instanceof TableApiTestStep) {
             final TableApiTestStep tableApiStep = (TableApiTestStep) testStep;
             tableApiStep.applyAsSql(env).await();
@@ -85,7 +86,7 @@ public class QueryOperationSqlSemanticTest extends SemanticTestBase {
             final FailingTableApiTestStep failingTableApiStep = (FailingTableApiTestStep) testStep;
             failingTableApiStep.applyAsSql(env);
         } else {
-            super.runStep(testStep, env);
+            super.runStep(testStep, env, ctx);
         }
     }
 

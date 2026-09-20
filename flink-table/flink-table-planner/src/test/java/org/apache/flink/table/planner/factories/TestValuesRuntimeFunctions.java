@@ -83,7 +83,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -110,23 +109,22 @@ public final class TestValuesRuntimeFunctions {
 
     static final Object LOCK = TestValuesTableFactory.class;
 
-    // [table_name, [task_id, List[value]]]
+    // Result maps keyed by result-id (unique per test) when the sink has one, else the table name.
+    // [result-key, [task_id, List[value]]]
     private static final Map<String, Map<Integer, List<Row>>> globalRawResult = new HashMap<>();
-    // [table_name, [task_id, Map[key, value]]]
+    // [result-key, [task_id, Map[key, value]]]
     private static final Map<String, Map<Integer, Map<Row, Row>>> globalUpsertResult =
             new HashMap<>();
-    // [table_name, [task_id, List[value]]]
+    // [result-key, [task_id, List[value]]]
     private static final Map<String, Map<Integer, List<Row>>> globalRetractResult = new HashMap<>();
-    // [table_name, [watermark]]
+    // [source-key, [watermark]]
     private static final Map<String, List<Watermark>> watermarkHistory = new HashMap<>();
-
-    // [table_name, [List[observer]]
+    // [result-key, [List[observer]]
     private static final Map<String, List<BiConsumer<Integer, List<Row>>>>
             localRawResultsObservers = new HashMap<>();
-
-    // [table_name, cumulative number of rows emitted by all subtasks of the source]
+    // [source-key, cumulative number of rows emitted by all subtasks of the source]
     private static final Map<String, Integer> sourceEmittedCounts = new HashMap<>();
-    // [table_name, [pending emission barriers]]
+    // [source-key, [pending emission barriers]]
     private static final Map<String, List<SourceEmissionBarrier>> sourceEmissionBarriers =
             new HashMap<>();
 
@@ -145,11 +143,11 @@ public final class TestValuesRuntimeFunctions {
      * Records that a source emitted a row and completes any barrier whose target row count has been
      * reached. Called by the source runtime after every emitted element.
      */
-    static void notifySourceEmitted(String tableName) {
+    static void notifySourceEmitted(String sourceKey) {
         final List<CompletableFuture<Void>> toComplete = new ArrayList<>();
         synchronized (LOCK) {
-            final int count = sourceEmittedCounts.merge(tableName, 1, Integer::sum);
-            final List<SourceEmissionBarrier> barriers = sourceEmissionBarriers.get(tableName);
+            final int count = sourceEmittedCounts.merge(sourceKey, 1, Integer::sum);
+            final List<SourceEmissionBarrier> barriers = sourceEmissionBarriers.get(sourceKey);
             if (barriers != null) {
                 barriers.removeIf(
                         barrier -> {
@@ -166,17 +164,17 @@ public final class TestValuesRuntimeFunctions {
     }
 
     /**
-     * Returns a future that completes once source {@code tableName} has emitted at least {@code
+     * Returns a future that completes once source {@code sourceKey} has emitted at least {@code
      * targetCount} rows (cumulative across all subtasks).
      */
-    static CompletableFuture<Void> awaitSourceEmitted(String tableName, int targetCount) {
+    static CompletableFuture<Void> awaitSourceEmitted(String sourceKey, int targetCount) {
         final CompletableFuture<Void> future = new CompletableFuture<>();
         synchronized (LOCK) {
-            if (sourceEmittedCounts.getOrDefault(tableName, 0) >= targetCount) {
+            if (sourceEmittedCounts.getOrDefault(sourceKey, 0) >= targetCount) {
                 future.complete(null);
             } else {
                 sourceEmissionBarriers
-                        .computeIfAbsent(tableName, n -> new ArrayList<>())
+                        .computeIfAbsent(sourceKey, n -> new ArrayList<>())
                         .add(new SourceEmissionBarrier(targetCount, future));
             }
         }
@@ -189,15 +187,16 @@ public final class TestValuesRuntimeFunctions {
                 .collect(Collectors.toList());
     }
 
-    static List<Row> getRawResults(String tableName) {
+    static List<Row> getRawResults(String resultKey) {
         synchronized (LOCK) {
-            if (globalRawResult.containsKey(tableName)) {
-                return globalRawResult.get(tableName).values().stream()
+            final Map<Integer, List<Row>> rawResult = globalRawResult.get(resultKey);
+            if (rawResult != null) {
+                return rawResult.values().stream()
                         .flatMap(List::stream)
                         .collect(Collectors.toList());
             }
         }
-        return Collections.emptyList();
+        return List.of();
     }
 
     /** Returns raw results if there was only one table with results, throws otherwise. */
@@ -221,12 +220,12 @@ public final class TestValuesRuntimeFunctions {
         }
     }
 
-    static List<Watermark> getWatermarks(String tableName) {
+    static List<Watermark> getWatermarks(String sourceKey) {
         synchronized (LOCK) {
-            if (watermarkHistory.containsKey(tableName)) {
-                return new ArrayList<>(watermarkHistory.get(tableName));
+            if (watermarkHistory.containsKey(sourceKey)) {
+                return new ArrayList<>(watermarkHistory.get(sourceKey));
             } else {
-                return Collections.emptyList();
+                return List.of();
             }
         }
     }
@@ -235,26 +234,30 @@ public final class TestValuesRuntimeFunctions {
         return getResults(tableName).stream().map(Row::toString).collect(Collectors.toList());
     }
 
-    static List<Row> getResults(String tableName) {
+    static List<Row> getResults(String resultKey) {
         synchronized (LOCK) {
-            if (globalUpsertResult.containsKey(tableName)) {
-                return globalUpsertResult.get(tableName).values().stream()
+            if (globalUpsertResult.containsKey(resultKey)) {
+                return globalUpsertResult.get(resultKey).values().stream()
                         .flatMap(map -> map.values().stream())
                         .collect(Collectors.toList());
-            } else if (globalRetractResult.containsKey(tableName)) {
-                return globalRetractResult.get(tableName).values().stream()
+            } else if (globalRetractResult.containsKey(resultKey)) {
+                return globalRetractResult.get(resultKey).values().stream()
                         .flatMap(Collection::stream)
                         .collect(Collectors.toList());
-            } else if (globalRawResult.containsKey(tableName)) {
-                return getRawResults(tableName);
+            } else if (globalRawResult.containsKey(resultKey)) {
+                return getRawResults(resultKey);
             }
         }
-        return Collections.emptyList();
+        return List.of();
     }
 
     static void registerLocalRawResultsObserver(
-            String tableName, BiConsumer<Integer, List<Row>> observer) {
-        localRawResultsObservers.computeIfAbsent(tableName, n -> new ArrayList<>()).add(observer);
+            String resultKey, BiConsumer<Integer, List<Row>> observer) {
+        synchronized (LOCK) {
+            localRawResultsObservers
+                    .computeIfAbsent(resultKey, n -> new ArrayList<>())
+                    .add(observer);
+        }
     }
 
     static void clearResults() {
@@ -269,12 +272,34 @@ public final class TestValuesRuntimeFunctions {
         }
     }
 
+    /** Removes only the results/observers stored under the given result keys (unique per test). */
+    static void clearResultsByKeys(Iterable<String> resultKeys) {
+        synchronized (LOCK) {
+            for (String key : resultKeys) {
+                globalRawResult.remove(key);
+                globalUpsertResult.remove(key);
+                globalRetractResult.remove(key);
+                localRawResultsObservers.remove(key);
+            }
+        }
+    }
+
+    static void clearSourceStateByKeys(Iterable<String> sourceKeys) {
+        synchronized (LOCK) {
+            for (String key : sourceKeys) {
+                sourceEmittedCounts.remove(key);
+                sourceEmissionBarriers.remove(key);
+                watermarkHistory.remove(key);
+            }
+        }
+    }
+
     static LineageVertex createLineageVertex(String name, String namespace) {
         return new LineageVertex() {
 
             @Override
             public List<LineageDataset> datasets() {
-                return Arrays.asList(new DefaultLineageDataset(name, namespace, new HashMap<>()));
+                return List.of(new DefaultLineageDataset(name, namespace, new HashMap<>()));
             }
         };
     }
@@ -316,6 +341,8 @@ public final class TestValuesRuntimeFunctions {
 
         private final String tableName;
 
+        private final String sourceKey;
+
         private final TerminatingLogic terminating;
 
         /** Sleep for {@link #sleepTimeMillis} after emitting every {@code sleepAfterElements}. */
@@ -325,6 +352,7 @@ public final class TestValuesRuntimeFunctions {
 
         public FromElementSourceFunctionWithWatermark(
                 String tableName,
+                String sourceId,
                 TypeSerializer<RowData> serializer,
                 Iterable<RowData> elements,
                 WatermarkStrategy<RowData> watermarkStrategy,
@@ -333,6 +361,7 @@ public final class TestValuesRuntimeFunctions {
                 long sleepTimeMillis)
                 throws IOException {
             this.tableName = tableName;
+            this.sourceKey = sourceId != null ? sourceId : tableName;
             this.terminating = terminating;
             this.sleepAfterElements = sleepAfterElements;
             this.sleepTimeMillis = sleepTimeMillis;
@@ -395,7 +424,7 @@ public final class TestValuesRuntimeFunctions {
                     generator.onEvent(next, Long.MIN_VALUE, output);
                     generator.onPeriodicEmit(output);
                 }
-                notifySourceEmitted(tableName);
+                notifySourceEmitted(sourceKey);
 
                 // If enabled, throttle emission of values
                 if (sleepAfterElements > 0
@@ -428,7 +457,7 @@ public final class TestValuesRuntimeFunctions {
 
                 @Override
                 public List<LineageDataset> datasets() {
-                    return Arrays.asList(
+                    return List.of(
                             new DefaultLineageDataset(
                                     tableName, LINEAGE_NAMESPACE, new HashMap<>()));
                 }
@@ -449,7 +478,7 @@ public final class TestValuesRuntimeFunctions {
                                 watermark.getTimestamp()));
                 synchronized (LOCK) {
                     watermarkHistory
-                            .computeIfAbsent(tableName, k -> new LinkedList<>())
+                            .computeIfAbsent(sourceKey, k -> new LinkedList<>())
                             .add(watermark);
                 }
             }
@@ -475,14 +504,20 @@ public final class TestValuesRuntimeFunctions {
         private static final long serialVersionUID = 1L;
 
         protected final String tableName;
+        // Storage key: result-id if the sink has one, else the table name.
+        protected final String resultKey;
         protected final DataType consumedDataType;
         protected final DataStructureConverter converter;
         protected transient ListState<Row> rawResultState;
         protected transient List<Row> localRawResult;
 
         protected AbstractExactlyOnceSink(
-                String tableName, DataType consumedDataType, DataStructureConverter converter) {
+                String tableName,
+                String resultId,
+                DataType consumedDataType,
+                DataStructureConverter converter) {
             this.tableName = tableName;
+            this.resultKey = resultId != null ? resultId : tableName;
             this.consumedDataType = consumedDataType;
             this.converter = converter;
         }
@@ -504,7 +539,7 @@ public final class TestValuesRuntimeFunctions {
             int taskId = getRuntimeContext().getTaskInfo().getIndexOfThisSubtask();
             synchronized (LOCK) {
                 globalRawResult
-                        .computeIfAbsent(tableName, k -> new HashMap<>())
+                        .computeIfAbsent(resultKey, k -> new HashMap<>())
                         .put(taskId, localRawResult);
             }
         }
@@ -525,8 +560,8 @@ public final class TestValuesRuntimeFunctions {
 
         protected void addLocalRawResult(Row row) {
             localRawResult.add(row);
-            Optional.ofNullable(localRawResultsObservers.get(tableName))
-                    .orElse(Collections.emptyList())
+            Optional.ofNullable(localRawResultsObservers.get(resultKey))
+                    .orElse(List.of())
                     .forEach(
                             c ->
                                     c.accept(
@@ -544,10 +579,11 @@ public final class TestValuesRuntimeFunctions {
 
         protected AppendingSinkFunction(
                 String tableName,
+                String resultId,
                 DataType consumedDataType,
                 DataStructureConverter converter,
                 int rowtimeIndex) {
-            super(tableName, consumedDataType, converter);
+            super(tableName, resultId, consumedDataType, converter);
             this.rowtimeIndex = rowtimeIndex;
         }
 
@@ -596,13 +632,14 @@ public final class TestValuesRuntimeFunctions {
 
         protected KeyedUpsertingSinkFunction(
                 String tableName,
+                String resultId,
                 DataType consumedDataType,
                 DataStructureConverter converter,
                 int[] keyIndices,
                 int[] targetColumnIndices,
                 int expectedSize,
                 int totalColumns) {
-            super(tableName, consumedDataType, converter);
+            super(tableName, resultId, consumedDataType, converter);
             this.keyIndices = keyIndices;
             this.targetColumnIndices = targetColumnIndices;
             this.expectedSize = expectedSize;
@@ -617,10 +654,10 @@ public final class TestValuesRuntimeFunctions {
                 // always store in a single map, global upsert similar to external database
                 this.localUpsertResult =
                         globalUpsertResult
-                                .computeIfAbsent(tableName, k -> new HashMap<>())
+                                .computeIfAbsent(resultKey, k -> new HashMap<>())
                                 .computeIfAbsent(0, k -> new HashMap<>());
                 // load all data from global raw result
-                globalRawResult.computeIfAbsent(tableName, k -> new HashMap<>()).values().stream()
+                globalRawResult.computeIfAbsent(resultKey, k -> new HashMap<>()).values().stream()
                         .flatMap(List::stream)
                         .forEach(
                                 row -> {
@@ -713,8 +750,11 @@ public final class TestValuesRuntimeFunctions {
         protected transient List<Row> localRetractResult;
 
         protected RetractingSinkFunction(
-                String tableName, DataType consumedDataType, DataStructureConverter converter) {
-            super(tableName, consumedDataType, converter);
+                String tableName,
+                String resultId,
+                DataType consumedDataType,
+                DataStructureConverter converter) {
+            super(tableName, resultId, consumedDataType, converter);
         }
 
         @Override
@@ -737,7 +777,7 @@ public final class TestValuesRuntimeFunctions {
             int taskId = getRuntimeContext().getTaskInfo().getIndexOfThisSubtask();
             synchronized (LOCK) {
                 globalRetractResult
-                        .computeIfAbsent(tableName, k -> new HashMap<>())
+                        .computeIfAbsent(resultKey, k -> new HashMap<>())
                         .put(taskId, localRetractResult);
             }
         }
@@ -786,12 +826,16 @@ public final class TestValuesRuntimeFunctions {
         private static final String LINEAGE_NAMESPACE = "values://AppendingOutputFormat";
         private static final long serialVersionUID = 1L;
         private final String tableName;
+        // Storage key: result-id if the sink has one, else the table name.
+        private final String resultKey;
         private final DataStructureConverter converter;
 
         protected transient List<Row> localRawResult;
 
-        protected AppendingOutputFormat(String tableName, DataStructureConverter converter) {
+        protected AppendingOutputFormat(
+                String tableName, String resultId, DataStructureConverter converter) {
             this.tableName = tableName;
+            this.resultKey = resultId != null ? resultId : tableName;
             this.converter = converter;
         }
 
@@ -805,7 +849,7 @@ public final class TestValuesRuntimeFunctions {
             this.localRawResult = new ArrayList<>();
             synchronized (LOCK) {
                 globalRawResult
-                        .computeIfAbsent(tableName, k -> new HashMap<>())
+                        .computeIfAbsent(resultKey, k -> new HashMap<>())
                         .put(context.getTaskNumber(), localRawResult);
             }
         }
@@ -817,8 +861,8 @@ public final class TestValuesRuntimeFunctions {
                 assertThat(row).isNotNull();
                 synchronized (LOCK) {
                     localRawResult.add(row);
-                    Optional.ofNullable(localRawResultsObservers.get(tableName))
-                            .orElse(Collections.emptyList())
+                    Optional.ofNullable(localRawResultsObservers.get(resultKey))
+                            .orElse(List.of())
                             .forEach(
                                     c ->
                                             c.accept(
@@ -1120,7 +1164,7 @@ public final class TestValuesRuntimeFunctions {
     public static class TestNoLookupUntilNthAccessAsyncLookupFunction
             extends AsyncTestValueLookupFunction {
         private static final long serialVersionUID = 1L;
-        private static Collection<RowData> emptyResult = Collections.emptyList();
+        private static Collection<RowData> emptyResult = List.of();
 
         /** The threshold that a real lookup can happen, otherwise no lookup at all. */
         private final int lookupThreshold;
