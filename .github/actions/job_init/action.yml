@@ -58,11 +58,21 @@ runs:
     - name: "Pre-cleanup Disk Info"
       shell: bash
       run: df -h
-
+      
     - name: "Free up disk space"
       if: ${{ inputs.free_disk_space == 'true' }}
-      shell: bash
-      run: ./tools/ci/free_disk_space.sh
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        # the apt-get purge of large packages is the slow part — skip it;
+        # the rm -rf of android/dotnet/haskell/docker/swap already frees enough
+        large-packages: false
+        # keep the hosted tool cache; setup-python (a later e2e step) relies on it
+        tool-cache: false
+        android: true          # ~9 GB, rm -rf
+        dotnet: true           # ~1.6 GB, rm -rf
+        haskell: true          # ~5 GB, rm -rf
+        docker-images: true    # prune preloaded images
+        swap-storage: true     # ~4 GBg
 
     - name: "Delete unused binaries"
       if: ${{ inputs.free_disk_space != 'true' }}
