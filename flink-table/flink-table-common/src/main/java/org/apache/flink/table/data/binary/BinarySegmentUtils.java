@@ -1005,6 +1005,23 @@ public final class BinarySegmentUtils {
             int scale) {
         final int size = ((int) offsetAndSize);
         int subOffset = (int) (offsetAndSize >> 32);
+        if (size > 0 && size <= 8) {
+            final int pos = baseOffset + subOffset;
+            final int shift = 64 - 8 * size;
+            long unscaled;
+            if (inFirstSegment(segments, pos, 8)) {
+                // the value is in the high bytes; trailing bytes are shifted out
+                unscaled = segments[0].getLongBigEndian(pos) >> shift;
+            } else {
+                unscaled = 0;
+                for (int i = 0; i < size; i++) {
+                    unscaled = (unscaled << 8) | (getByte(segments, pos + i) & 0xFF);
+                }
+                unscaled = (unscaled << shift) >> shift;
+            }
+            // stored value was range-checked on write
+            return DecimalData.fromUnscaledLong(unscaled, precision, scale);
+        }
         byte[] bytes = new byte[size];
         copyToBytes(segments, baseOffset + subOffset, bytes, 0, size);
         return DecimalData.fromUnscaledBytes(bytes, precision, scale);

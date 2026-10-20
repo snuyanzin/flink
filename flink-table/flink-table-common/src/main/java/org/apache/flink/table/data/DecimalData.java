@@ -66,7 +66,8 @@ public final class DecimalData implements Comparable<DecimalData> {
     //
     // Note that the (precision, scale) must be correct.
     // if precision > MAX_COMPACT_PRECISION,
-    //   `decimalVal` represents the value. `longVal` is undefined
+    //   if `decimalVal` is set, it represents the value and `longVal` is undefined
+    //   otherwise, (longVal, scale) represents the value
     // otherwise, (longVal, scale) represents the value
     //   `decimalVal` may be set and cached
 
@@ -117,7 +118,7 @@ public final class DecimalData implements Comparable<DecimalData> {
      * @throws ArithmeticException if this {@link DecimalData} does not exactly fit in a long.
      */
     public long toUnscaledLong() {
-        if (isCompact()) {
+        if (hasLongVal()) {
             return longVal;
         } else {
             return toBigDecimal().unscaledValue().longValueExact();
@@ -130,12 +131,29 @@ public final class DecimalData implements Comparable<DecimalData> {
      * @return the unscaled byte array of this {@link DecimalData}.
      */
     public byte[] toUnscaledBytes() {
+        if (hasLongVal()) {
+            final int length = unscaledLongByteLength(longVal);
+            final byte[] bytes = new byte[length];
+            for (int i = 0; i < length; i++) {
+                bytes[length - 1 - i] = (byte) (longVal >> (8 * i));
+            }
+            return bytes;
+        }
         return toBigDecimal().unscaledValue().toByteArray();
     }
 
     /** Returns whether the decimal value is small enough to be stored in a long. */
     public boolean isCompact() {
         return precision <= MAX_COMPACT_PRECISION;
+    }
+
+    // length of BigInteger#toByteArray: minimal big-endian two's complement
+    static int unscaledLongByteLength(long v) {
+        return (64 - Long.numberOfLeadingZeros(v ^ (v >> 63))) / 8 + 1;
+    }
+
+    boolean hasLongVal() {
+        return isCompact() || decimalVal == null;
     }
 
     /** Returns a copy of this {@link DecimalData} object. */
@@ -150,7 +168,7 @@ public final class DecimalData implements Comparable<DecimalData> {
 
     @Override
     public int compareTo(@Nonnull DecimalData that) {
-        if (this.isCompact() && that.isCompact() && this.scale == that.scale) {
+        if (this.hasLongVal() && that.hasLongVal() && this.scale == that.scale) {
             return Long.compare(this.longVal, that.longVal);
         }
         return this.toBigDecimal().compareTo(that.toBigDecimal());
@@ -227,7 +245,7 @@ public final class DecimalData implements Comparable<DecimalData> {
      * precision and scale.
      */
     public static DecimalData fromUnscaledLong(long unscaledLong, int precision, int scale) {
-        checkArgument(precision > 0 && precision <= MAX_LONG_DIGITS);
+        checkArgument(precision > 0 && precision <= DecimalType.MAX_PRECISION);
         return new DecimalData(precision, scale, unscaledLong, null);
     }
 
