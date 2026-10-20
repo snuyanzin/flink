@@ -46,7 +46,7 @@ public final class DecimalDataUtils {
         if (decimal.isCompact()) {
             return ((double) decimal.longVal) / POW10[decimal.scale];
         } else {
-            return decimal.decimalVal.doubleValue();
+            return decimal.toBigDecimal().doubleValue();
         }
     }
 
@@ -69,7 +69,7 @@ public final class DecimalDataUtils {
             return new DecimalData(decimal.precision, decimal.scale, -decimal.longVal, null);
         } else {
             return new DecimalData(
-                    decimal.precision, decimal.scale, -1, decimal.decimalVal.negate());
+                    decimal.precision, decimal.scale, -1, decimal.toBigDecimal().negate());
         }
     }
 
@@ -81,11 +81,11 @@ public final class DecimalDataUtils {
                 return new DecimalData(decimal.precision, decimal.scale, -decimal.longVal, null);
             }
         } else {
-            if (decimal.decimalVal.signum() >= 0) {
+            if (decimal.toBigDecimal().signum() >= 0) {
                 return decimal;
             } else {
                 return new DecimalData(
-                        decimal.precision, decimal.scale, -1, decimal.decimalVal.negate());
+                        decimal.precision, decimal.scale, -1, decimal.toBigDecimal().negate());
             }
         }
     }
@@ -226,7 +226,7 @@ public final class DecimalDataUtils {
 
     public static int compare(DecimalData b1, long n2) {
         if (!b1.isCompact()) {
-            return b1.decimalVal.compareTo(BigDecimal.valueOf(n2));
+            return b1.toBigDecimal().compareTo(BigDecimal.valueOf(n2));
         }
         if (b1.scale == 0) {
             return Long.compare(b1.longVal, n2);

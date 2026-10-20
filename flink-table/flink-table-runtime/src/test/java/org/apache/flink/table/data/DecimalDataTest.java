@@ -105,6 +105,43 @@ class DecimalDataTest {
         assertCastMatches(actual, expected);
     }
 
+    private static Stream<Arguments> unscaledLongCases() {
+        return Stream.of(
+                arguments(0L),
+                arguments(1L),
+                arguments(-1L),
+                arguments(127L),
+                arguments(128L),
+                arguments(-128L),
+                arguments(-129L),
+                arguments(1234L),
+                arguments(Long.MAX_VALUE),
+                arguments(Long.MIN_VALUE));
+    }
+
+    @ParameterizedTest(name = "unscaled={0}")
+    @MethodSource("unscaledLongCases")
+    void testNonCompactLongBackedMatchesBigDecimal(long unscaled) {
+        final DecimalData longBacked = DecimalData.fromUnscaledLong(unscaled, 38, 2);
+        final DecimalData bigBacked =
+                DecimalData.fromBigDecimal(BigDecimal.valueOf(unscaled, 2), 38, 2);
+
+        assertThat(longBacked.toUnscaledBytes()).isEqualTo(bigBacked.toUnscaledBytes());
+        assertThat(longBacked.toUnscaledLong()).isEqualTo(unscaled);
+        assertThat(longBacked.compareTo(bigBacked)).isZero();
+        assertThat(doubleValue(longBacked)).isEqualTo(doubleValue(bigBacked));
+        assertCastMatches(negate(longBacked), negate(bigBacked));
+        assertCastMatches(abs(longBacked), abs(bigBacked));
+
+        final DecimalData one = DecimalData.fromUnscaledLong(1, 38, 2);
+        assertCastMatches(add(longBacked, one, 38, 2), add(bigBacked, one, 38, 2));
+        assertCastMatches(subtract(longBacked, one, 38, 2), subtract(bigBacked, one, 38, 2));
+        assertCastMatches(
+                add(longBacked, longBacked, 38, 2),
+                DecimalData.fromBigDecimal(
+                        bigBacked.toBigDecimal().add(bigBacked.toBigDecimal()), 38, 2));
+    }
+
     private static void assertCastMatches(DecimalData actual, DecimalData expected) {
         if (expected == null) {
             assertThat(actual).isNull();

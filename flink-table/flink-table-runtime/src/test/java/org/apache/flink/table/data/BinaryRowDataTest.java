@@ -453,6 +453,37 @@ class BinaryRowDataTest {
             row.setDecimal(0, decimal2, precision);
             assertThat(row.getDecimal(0, precision, scale).toString()).isEqualTo("6.55000");
         }
+
+        // 3.not compact, values around the 8-byte boundary
+        {
+            int precision = 38;
+            int scale = 2;
+            for (String value :
+                    new String[] {
+                        "0.00",
+                        "-0.01",
+                        "1.28",
+                        "-1.29",
+                        "92233720368547758.07",
+                        "-92233720368547758.08",
+                        "92233720368547758.08",
+                        "-92233720368547758.09",
+                        "123456789012345678901234567890.12"
+                    }) {
+                DecimalData decimal =
+                        DecimalData.fromBigDecimal(new BigDecimal(value), precision, scale);
+                BinaryRowData row = new BinaryRowData(1);
+                BinaryRowWriter writer = new BinaryRowWriter(row);
+                writer.writeDecimal(0, decimal, precision);
+                writer.complete();
+
+                assertThat(row.getDecimal(0, precision, scale).toBigDecimal())
+                        .isEqualTo(decimal.toBigDecimal());
+                row.setDecimal(0, row.getDecimal(0, precision, scale), precision);
+                assertThat(row.getDecimal(0, precision, scale).toBigDecimal())
+                        .isEqualTo(decimal.toBigDecimal());
+            }
+        }
     }
 
     @Test
