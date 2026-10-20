@@ -86,6 +86,14 @@ public final class DecimalDataSerializer extends TypeSerializer<DecimalData> {
             return DecimalData.fromUnscaledLong(longVal, precision, scale);
         } else {
             int length = source.readInt();
+            if (length > 0 && length <= 8) {
+                // signed first byte sign-extends
+                long unscaled = source.readByte();
+                for (int i = 1; i < length; i++) {
+                    unscaled = (unscaled << 8) | source.readUnsignedByte();
+                }
+                return DecimalData.fromUnscaledLong(unscaled, precision, scale);
+            }
             byte[] bytes = new byte[length];
             source.readFully(bytes);
             return DecimalData.fromUnscaledBytes(bytes, precision, scale);

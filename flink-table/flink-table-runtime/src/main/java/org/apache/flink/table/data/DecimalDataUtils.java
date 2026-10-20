@@ -115,6 +115,18 @@ public final class DecimalDataUtils {
             } catch (ArithmeticException e) {
                 // overflow, fall through
             }
+        } else if (!DecimalData.isCompact(precision)
+                && v1.hasLongVal()
+                && v2.hasLongVal()
+                && v1.scale == scale
+                && v2.scale == scale) {
+            try {
+                // a long has at most 19 digits, so it fits any non-compact precision
+                long ls = Math.addExact(v1.longVal, v2.longVal);
+                return new DecimalData(precision, scale, ls, null);
+            } catch (ArithmeticException e) {
+                // overflow, fall through
+            }
         }
         BigDecimal bd = v1.toBigDecimal().add(v2.toBigDecimal());
         return fromBigDecimal(bd, precision, scale);
@@ -128,6 +140,18 @@ public final class DecimalDataUtils {
             assert scale == v1.scale; // no need to rescale
             try {
                 long ls = Math.subtractExact(v1.longVal, v2.longVal); // checks overflow
+                return new DecimalData(precision, scale, ls, null);
+            } catch (ArithmeticException e) {
+                // overflow, fall through
+            }
+        } else if (!DecimalData.isCompact(precision)
+                && v1.hasLongVal()
+                && v2.hasLongVal()
+                && v1.scale == scale
+                && v2.scale == scale) {
+            try {
+                // a long has at most 19 digits, so it fits any non-compact precision
+                long ls = Math.subtractExact(v1.longVal, v2.longVal);
                 return new DecimalData(precision, scale, ls, null);
             } catch (ArithmeticException e) {
                 // overflow, fall through
@@ -183,7 +207,27 @@ public final class DecimalDataUtils {
         if (dec.isCompact() && precision <= DecimalData.MAX_COMPACT_PRECISION) {
             return DecimalData.fromCompactRescale(dec.longVal, dec.scale, precision, scale);
         }
+        if (dec.hasLongVal() && !DecimalData.isCompact(precision)) {
+            final DecimalData scaled = scaleUpLong(dec.longVal, dec.scale, precision, scale);
+            if (scaled != null) {
+                return scaled;
+            }
+        }
         return fromBigDecimal(dec.toBigDecimal(), precision, scale);
+    }
+
+    // keeps a non-compact result long-backed; null means fall back to BigDecimal
+    private static DecimalData scaleUpLong(long unscaled, int fromScale, int precision, int scale) {
+        final int scaleDiff = scale - fromScale;
+        if (scaleDiff < 0 || scaleDiff > DecimalData.MAX_COMPACT_PRECISION) {
+            return null;
+        }
+        try {
+            return new DecimalData(
+                    precision, scale, Math.multiplyExact(unscaled, POW10[scaleDiff]), null);
+        } catch (ArithmeticException e) {
+            return null;
+        }
     }
 
     public static DecimalData castFrom(DecimalData dec, int precision, int scale) {
@@ -201,6 +245,10 @@ public final class DecimalDataUtils {
     public static DecimalData castFrom(long val, int p, int s) {
         if (p <= DecimalData.MAX_COMPACT_PRECISION) {
             return DecimalData.fromCompactRescale(val, 0, p, s);
+        }
+        final DecimalData scaled = scaleUpLong(val, 0, p, s);
+        if (scaled != null) {
+            return scaled;
         }
         return fromBigDecimal(BigDecimal.valueOf(val), p, s);
     }

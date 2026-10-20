@@ -140,6 +140,50 @@ class DecimalDataTest {
                 add(longBacked, longBacked, 38, 2),
                 DecimalData.fromBigDecimal(
                         bigBacked.toBigDecimal().add(bigBacked.toBigDecimal()), 38, 2));
+        assertCastMatches(
+                subtract(longBacked, negate(longBacked), 38, 2),
+                DecimalData.fromBigDecimal(
+                        bigBacked.toBigDecimal().subtract(bigBacked.toBigDecimal().negate()),
+                        38,
+                        2));
+    }
+
+    private static Stream<Arguments> unscaledLongWithTargetCases() {
+        final int[][] targets = {{38, 2}, {38, 4}, {38, 20}, {38, 1}, {19, 0}, {20, 2}, {18, 2}};
+        return unscaledLongCases()
+                .flatMap(
+                        value ->
+                                Stream.of(targets).map(t -> arguments(value.get()[0], t[0], t[1])));
+    }
+
+    @ParameterizedTest(name = "unscaled={0} -> DECIMAL({1},{2})")
+    @MethodSource("unscaledLongWithTargetCases")
+    void testCastLongBackedMatchesBigDecimal(long unscaled, int precision, int scale) {
+        final DecimalData longBacked = DecimalData.fromUnscaledLong(unscaled, 38, 2);
+        final DecimalData bigBacked =
+                DecimalData.fromBigDecimal(BigDecimal.valueOf(unscaled, 2), 38, 2);
+
+        assertCastMatches(
+                castToDecimal(longBacked, precision, scale),
+                castToDecimal(bigBacked, precision, scale));
+    }
+
+    @ParameterizedTest(name = "unscaled={0} -> DECIMAL({1},{2})")
+    @MethodSource("unscaledLongWithTargetCases")
+    void testCastCompactMatchesBigDecimal(long unscaled, int precision, int scale) {
+        final DecimalData compact = DecimalData.fromUnscaledLong(unscaled % 10_000_000_000L, 10, 2);
+
+        assertCastMatches(
+                castToDecimal(compact, precision, scale),
+                DecimalData.fromBigDecimal(compact.toBigDecimal(), precision, scale));
+    }
+
+    @ParameterizedTest(name = "{0} -> DECIMAL({1},{2})")
+    @MethodSource("unscaledLongWithTargetCases")
+    void testCastFromLongMatchesBigDecimal(long val, int precision, int scale) {
+        assertCastMatches(
+                castFrom(val, precision, scale),
+                DecimalData.fromBigDecimal(BigDecimal.valueOf(val), precision, scale));
     }
 
     private static void assertCastMatches(DecimalData actual, DecimalData expected) {
