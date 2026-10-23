@@ -29,7 +29,6 @@ jobs:
       - script: ./tools/azure-pipelines/free_disk_space.sh
         target: host
         displayName: Free up disk space
-      - template: tmp-on-disk.yml
       - task: Cache@2
         displayName: Cache Maven local repo
         inputs:
@@ -88,7 +87,6 @@ jobs:
       - script: ./tools/azure-pipelines/free_disk_space.sh
         target: host
         displayName: Free up disk space
-      - template: tmp-on-disk.yml
       - task: Cache@2
         displayName: Cache Maven local repo
         inputs:
