@@ -98,3 +98,13 @@ sudo rm -rf /opt/microsoft
 cat "${LOG_DIR}"/*.log
 rm -rf "${LOG_DIR}"
 df -h
+
+# Not disk cleanup, but this script runs on the host before any cache or test step in both CIs:
+# Ubuntu 26.04 mounts /tmp as a ~4 GB tmpfs, too small for cache archives and e2e state.
+if findmnt -n -o FSTYPE /tmp | grep -q tmpfs; then
+  echo "Moving /tmp to disk"
+  sudo mkdir -p /var/tmp/ci-tmp
+  sudo chmod 1777 /var/tmp/ci-tmp
+  sudo mount --bind /var/tmp/ci-tmp /tmp
+fi
+df -h /tmp
