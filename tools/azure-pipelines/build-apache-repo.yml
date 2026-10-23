@@ -71,14 +71,14 @@ stages:
           test_pool_definition:
             name: Default
           e2e_pool_definition:
-            vmImage: 'ubuntu-24.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2"
+            vmImage: 'ubuntu-26.04'
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk17 -Pjava17-target"
           run_end_to_end: false
           container: flink-build-container
           jdk: 8
       - job: docs_404_check # run on a MSFT provided machine
         pool:
-          vmImage: 'ubuntu-24.04'
+          vmImage: 'ubuntu-26.04'
         steps:
           # Skip docs check if this is a pull request that doesn't contain a documentation change
           - task: GoTool@0
@@ -113,10 +113,10 @@ stages:
         parameters:
           stage_name: cron_azure
           test_pool_definition:
-            vmImage: 'ubuntu-24.04'
+            vmImage: 'ubuntu-26.04'
           e2e_pool_definition:
-            vmImage: 'ubuntu-24.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2"
+            vmImage: 'ubuntu-26.04'
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk17 -Pjava17-target"
           run_end_to_end: true
           container: flink-build-container
           jdk: 8
@@ -126,8 +126,8 @@ stages:
           test_pool_definition:
             name: Default
           e2e_pool_definition:
-            vmImage: 'ubuntu-24.04'
-          environment: PROFILE="-Dflink.hadoop.version=3.2.3 -Phadoop3-tests,hive3"
+            vmImage: 'ubuntu-26.04'
+          environment: PROFILE="-Dflink.hadoop.version=3.2.3 -Phadoop3-tests,hive3 -Djdk17 -Pjava17-target"
           run_end_to_end: true
           container: flink-build-container
           jdk: 8
@@ -137,7 +137,7 @@ stages:
           test_pool_definition:
             name: Default
           e2e_pool_definition:
-            vmImage: 'ubuntu-24.04'
+            vmImage: 'ubuntu-26.04'
           environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk11 -Pjava11-target"
           run_end_to_end: true
           container: flink-build-container
@@ -159,8 +159,8 @@ stages:
           test_pool_definition:
             name: Default
           e2e_pool_definition:
-            vmImage: 'ubuntu-24.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk11 -Djdk17 -Djdk21 -Pjava21-target"
+            vmImage: 'ubuntu-26.04'
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk21 -Pjava21-target"
           run_end_to_end: true
           container: flink-build-container
           jdk: 21
@@ -170,14 +170,14 @@ stages:
           test_pool_definition:
             name: Default
           e2e_pool_definition:
-            vmImage: 'ubuntu-24.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Penable-adaptive-scheduler"
+            vmImage: 'ubuntu-26.04'
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Penable-adaptive-scheduler -Djdk17 -Pjava17-target"
           run_end_to_end: true
           container: flink-build-container
           jdk: 8
       - job: docs_404_check # run on a MSFT provided machine
         pool:
-          vmImage: 'ubuntu-24.04'
+          vmImage: 'ubuntu-26.04'
         steps:
           - task: GoTool@0
             inputs:
