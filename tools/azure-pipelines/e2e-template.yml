@@ -123,6 +123,12 @@ jobs:
         echo "##vso[task.setvariable variable=PATH]$JAVA_HOME_${{parameters.jdk}}_X64/bin:$PATH"
       displayName: "Set JDK"
     - script: |
+        # Ubuntu 26.04 mounts /tmp as a ~4 GB tmpfs; e2e tests (e.g. RocksDB state) need more
+        echo "Moving /tmp to disk"
+        sudo mkdir -p /var/tmp/e2e-tmp
+        sudo chmod 1777 /var/tmp/e2e-tmp
+        sudo mount --bind /var/tmp/e2e-tmp /tmp
+
         echo "Setting up Maven"
         source ./tools/ci/maven-utils.sh
 
