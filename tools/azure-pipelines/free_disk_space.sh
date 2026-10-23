@@ -38,6 +38,8 @@ echo "Listing 100 largest packages"
 dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -n | tail -n 100
 df -h
 echo "Removing large packages"
+# apt-get aborts the whole command on an unknown package name, so only pass names present on this image
+remove_pkgs() { sudo apt-get remove -y $(dpkg-query -W -f='${Package}\n' "$@" 2>/dev/null) || true; }
 sudo apt-get remove -y '^dotnet-.*' || true
 sudo apt-get remove -y '^llvm-.*' || true
 sudo apt-get remove -y 'php.*' || true
@@ -46,9 +48,10 @@ sudo apt-get remove -y '^mysql-.*' || true
 sudo apt-get remove -y '^postgresql-.*' || true
 sudo apt-get remove -y '^g\+\+-.*' '^clang-.*' '^libclang-.*' || true
 sudo apt-get remove -y '^gfortran-.*' '^libruby.*' || true
-sudo apt-get remove -y temurin-8-jdk || true
-sudo apt-get remove -y '^libllvm.*' '^libclang1.*' snapd python3-botocore podman buildah skopeo mecab-ipadic gh git-lfs || true
-sudo apt-get remove -y azure-cli google-cloud-sdk google-chrome-stable google-cloud-cli firefox microsoft-edge-stable powershell mono-devel libgl1-mesa-dri || true
+remove_pkgs temurin-8-jdk
+sudo apt-get remove -y '^libllvm.*' '^libclang1.*' || true
+remove_pkgs snapd python3-botocore podman buildah skopeo mecab-ipadic gh git-lfs
+remove_pkgs azure-cli google-cloud-sdk google-chrome-stable google-cloud-cli firefox microsoft-edge-stable powershell mono-devel libgl1-mesa-dri
 sudo apt-get autoremove -y || true
 sudo apt-get clean || true
 df -h
