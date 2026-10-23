@@ -48,7 +48,6 @@ jobs:
     - script: ./tools/azure-pipelines/free_disk_space.sh
       target: host
       displayName: Free up disk space
-    - template: tmp-on-disk.yml
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.12'
