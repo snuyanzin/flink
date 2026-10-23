@@ -84,7 +84,7 @@ jobs:
           docker run --rm \
             --volume "$PWD:/root/flink" \
             --volume "$HOME/.m2/repository:/root/.m2/repository" \
-            snuyanzin/26 \
+            snuyanzin/flink-ci-docker:26 \
             bash -c "apt-get update && apt-get install -y rsync && cd /root/flink && ./.github/workflows/docs.sh && chmod -R a+rX docs/target"
 
       - name: Upload documentation
