@@ -42,7 +42,6 @@ jobs:
     target: host
     condition: not(eq('${{parameters.test_pool_definition.name}}', 'Default'))
     displayName: Free up disk space
-  - template: tmp-on-disk.yml
   # The cache task is persisting the .m2 directory between builds, so that
   # we do not have to re-download all dependencies from maven central for
   # each build. The hope is that downloading the cache is faster than
@@ -98,7 +97,6 @@ jobs:
     target: host
     condition: not(eq('${{parameters.test_pool_definition.name}}', 'Default'))
     displayName: Free up disk space
-  - template: tmp-on-disk.yml
   - task: Cache@2
     inputs:
       key: $(PIPELINE_START_YEAR) | $(CACHE_KEY)
@@ -145,7 +143,6 @@ jobs:
     target: host
     condition: not(eq('${{parameters.test_pool_definition.name}}', 'Default'))
     displayName: Free up disk space
-  - template: tmp-on-disk.yml
 
   # Ensure Python devel headers for Python tests
   - script: |
