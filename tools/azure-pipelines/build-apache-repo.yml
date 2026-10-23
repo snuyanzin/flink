@@ -72,7 +72,7 @@ stages:
             name: Default
           e2e_pool_definition:
             vmImage: 'ubuntu-26.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk17 -Pjava17-target"
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2"
           run_end_to_end: false
           container: flink-build-container
           jdk: 8
@@ -116,7 +116,7 @@ stages:
             vmImage: 'ubuntu-26.04'
           e2e_pool_definition:
             vmImage: 'ubuntu-26.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Djdk17 -Pjava17-target"
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2"
           run_end_to_end: true
           container: flink-build-container
           jdk: 8
@@ -127,7 +127,7 @@ stages:
             name: Default
           e2e_pool_definition:
             vmImage: 'ubuntu-26.04'
-          environment: PROFILE="-Dflink.hadoop.version=3.2.3 -Phadoop3-tests,hive3 -Djdk17 -Pjava17-target"
+          environment: PROFILE="-Dflink.hadoop.version=3.2.3 -Phadoop3-tests,hive3"
           run_end_to_end: true
           container: flink-build-container
           jdk: 8
@@ -171,7 +171,7 @@ stages:
             name: Default
           e2e_pool_definition:
             vmImage: 'ubuntu-26.04'
-          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Penable-adaptive-scheduler -Djdk17 -Pjava17-target"
+          environment: PROFILE="-Dflink.hadoop.version=2.10.2 -Penable-adaptive-scheduler"
           run_end_to_end: true
           container: flink-build-container
           jdk: 8
