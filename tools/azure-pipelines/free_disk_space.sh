@@ -85,7 +85,7 @@ echo "Pruning preloaded Docker images"
 # Flink restores its cached testcontainers images later in the pipeline, so the
 # preloaded base images shipped with the runner image can be removed here.
 if command -v docker >/dev/null 2>&1; then
-  sudo docker system prune --all --force || true
+  sudo docker image prune --all --force || true
 fi
 df -h
 
