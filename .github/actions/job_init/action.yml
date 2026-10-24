@@ -68,6 +68,18 @@ runs:
           fi
         done
 
+    # Ubuntu 26.04 mounts /tmp as a ~4 GB tmpfs, too small for cache archives and e2e state.
+    - name: "Move /tmp to disk"
+      shell: bash
+      run: |
+        if findmnt -n -o FSTYPE /tmp | grep -q tmpfs; then
+          echo "Moving /tmp to disk"
+          sudo mkdir -p /var/tmp/ci-tmp
+          sudo chmod 1777 /var/tmp/ci-tmp
+          sudo mount --bind /var/tmp/ci-tmp /tmp
+        fi
+        df -h /tmp
+
     - name: "Set JDK version to ${{ inputs.jdk_version }}"
       shell: bash
       run: |
