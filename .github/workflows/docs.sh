@@ -92,8 +92,8 @@ if [ -f  ./flink-python/dev/lint-python.sh ]; then
     # Set base URL for cross-references to main Flink docs (used by sphinx extlinks)
     export FLINK_DOCS_BASE_URL="https://nightlies.apache.org/flink/flink-docs-${BRANCH}"
 
-    # build English python docs, and Chinese into the zh/ subdirectory
-    ./flink-python/dev/lint-python.sh -i "sphinx"
+    # build English python docs, and Chinese into the zh/ subdirectory, with the full sidebar
+    SPHINX_CHECK_OPTS="" ./flink-python/dev/lint-python.sh -i "sphinx"
 
     # move python docs (English at root, Chinese at zh/)
     mv flink-python/docs/_build/html docs/target/api/python

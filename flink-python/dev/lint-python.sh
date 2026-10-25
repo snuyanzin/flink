@@ -627,8 +627,9 @@ function sphinx_check() {
     set -o pipefail
     # disable the gateway, because otherwise it tries to find FLINK_HOME to access Java classes.
     # Not exported: the tox check runs after this one and needs the gateway.
+    # A collapsed sidebar renders much faster; docs.sh clears this to publish the full sidebar.
     (PYFLINK_GATEWAY_DISABLED=1 SPHINXBUILD="$SPHINX_PATH" SPHINXINTL="$DOCS_ENV/bin/sphinx-intl" \
-        SPHINXOPTS="-a -W" make html-zh) 2>&1 | tee -a $LOG_FILE
+        SPHINXOPTS="-a -W ${SPHINX_CHECK_OPTS--D html_theme_options.collapse_navigation=1}" make html-zh) 2>&1 | tee -a $LOG_FILE
 
     SPHINXBUILD_STATUS=$?
     if [ $SPHINXBUILD_STATUS -ne 0 ]; then
