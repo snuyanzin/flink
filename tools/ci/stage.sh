@@ -150,8 +150,9 @@ function get_compile_modules_for_stage() {
             echo ""
         ;;
         (${STAGE_PYTHON})
-            # compile everything for PyFlink.
-            echo ""
+            # PyFlink needs the flink-dist build target and the flink-python (test) jars;
+            # flink-dist declares every module its assemblies copy as a dependency.
+            echo "-pl flink-python,flink-dist -am"
         ;;
     esac
 }
