@@ -34,9 +34,23 @@ jobs:
     clean: all # this cleans the entire workspace directory before running a new job
     # It is necessary because the custom build machines are reused for tests.
     # See also https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#workspace
+  # On the "Default" queue the Cache task is not used. Instead, a local Maven repo (M2_SEED) is kept on the
+  # agent outside of the cleaned workspace. Only master builds write to it; all other builds use a fresh
+  # local repo and read M2_SEED as a read-only tail, so artifacts of one PR never leak into another build.
+  # ignoreAvailability=false keeps checking that the repository an artifact came from is declared in the build.
+  ${{ if eq(parameters.test_pool_definition.name, 'Default') }}:
+    variables:
+      M2_SEED: $(Pipeline.Workspace)/../m2-cache/$(PIPELINE_START_YEAR)/repository
+      ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+        MAVEN_ARGS: '-C -Dmaven.repo.local=$(M2_SEED)'
+      ${{ else }}:
+        MAVEN_ARGS: '-C -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.repo.local.tail=$(M2_SEED) -Dmaven.repo.local.tail.ignoreAvailability=false'
 
   steps:
   - template: checkout-single-branch.yml
+  - template: prune-local-maven-repo.yml
+    parameters:
+      test_pool_definition: ${{parameters.test_pool_definition}}
   # if on Azure, free up disk space
   - script: ./tools/ci/free_disk_space.sh
     target: host
@@ -73,12 +87,23 @@ jobs:
       MVN_LICENSE_CHECK_ARGS="" ${{parameters.environment}} ./tools/ci/compile_ci.sh -Dfast || exit $?
       ./tools/ci/create_build_artifact.sh
     displayName: Compile
+  - script: |
+      if grep -qE "Could not resolve dependencies|Could not transfer artifact|Checksum validation failed|invalid LOC header|zip END header not found|error in opening zip file" /tmp/clean_compile.out 2>/dev/null; then
+        echo "Dependency resolution failure detected, wiping local Maven repo $(M2_SEED)"
+        rm -rf "$(M2_SEED)"
+      fi
+    condition: and(failed(), eq('${{parameters.test_pool_definition.name}}', 'Default'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    displayName: Reset local Maven repo on resolution failure
 
   # upload artifacts for next stage
   - task: PublishPipelineArtifact@1
     inputs:
       targetPath: $(FLINK_ARTIFACT_DIR)
       artifact: FlinkCompileArtifact-${{parameters.stage_name}}
+  - template: prune-local-maven-repo.yml
+    parameters:
+      test_pool_definition: ${{parameters.test_pool_definition}}
+      condition: always()
 
 # All QA (structural + convergence + license) runs single-threaded here, off the critical path (no dependsOn), so the compile job can build fast with -Dfast -T1C.
 - job: license_check_${{parameters.stage_name}}
@@ -90,8 +115,19 @@ jobs:
   cancelTimeoutInMinutes: 1
   workspace:
     clean: all
+  # see compile job
+  ${{ if eq(parameters.test_pool_definition.name, 'Default') }}:
+    variables:
+      M2_SEED: $(Pipeline.Workspace)/../m2-cache/$(PIPELINE_START_YEAR)/repository
+      ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+        MAVEN_ARGS: '-C -Dmaven.repo.local=$(M2_SEED)'
+      ${{ else }}:
+        MAVEN_ARGS: '-C -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.repo.local.tail=$(M2_SEED) -Dmaven.repo.local.tail.ignoreAvailability=false'
   steps:
   - template: checkout-single-branch.yml
+  - template: prune-local-maven-repo.yml
+    parameters:
+      test_pool_definition: ${{parameters.test_pool_definition}}
   # if on Azure, free up disk space
   - script: ./tools/ci/free_disk_space.sh
     target: host
@@ -112,6 +148,17 @@ jobs:
   # Full single-threaded build (deploy + -Pcheck-convergence) running every structural QA check and the license check.
   - script: ${{parameters.environment}} ./tools/ci/compile_ci.sh
     displayName: QA checks
+  - script: |
+      if grep -qE "Could not resolve dependencies|Could not transfer artifact|Checksum validation failed|invalid LOC header|zip END header not found|error in opening zip file" /tmp/clean_compile.out 2>/dev/null; then
+        echo "Dependency resolution failure detected, wiping local Maven repo $(M2_SEED)"
+        rm -rf "$(M2_SEED)"
+      fi
+    condition: and(failed(), eq('${{parameters.test_pool_definition.name}}', 'Default'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    displayName: Reset local Maven repo on resolution failure
+  - template: prune-local-maven-repo.yml
+    parameters:
+      test_pool_definition: ${{parameters.test_pool_definition}}
+      condition: always()
 
 - job: test_${{parameters.stage_name}}
   dependsOn: compile_${{parameters.stage_name}}
@@ -122,6 +169,14 @@ jobs:
   cancelTimeoutInMinutes: 1
   workspace:
     clean: all
+  # see compile job
+  ${{ if eq(parameters.test_pool_definition.name, 'Default') }}:
+    variables:
+      M2_SEED: $(Pipeline.Workspace)/../m2-cache/$(PIPELINE_START_YEAR)/repository
+      ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+        MAVEN_ARGS: '-C -Dmaven.repo.local=$(M2_SEED)'
+      ${{ else }}:
+        MAVEN_ARGS: '-C -Dmaven.repo.local=$(MAVEN_CACHE_FOLDER) -Dmaven.repo.local.tail=$(M2_SEED) -Dmaven.repo.local.tail.ignoreAvailability=false'
   strategy:
     matrix:
       core:
@@ -138,6 +193,9 @@ jobs:
         module: misc
   steps:
   - template: checkout-single-branch.yml
+  - template: prune-local-maven-repo.yml
+    parameters:
+      test_pool_definition: ${{parameters.test_pool_definition}}
   # if on Azure, free up disk space
   - script: ./tools/ci/free_disk_space.sh
     target: host
@@ -216,6 +274,11 @@ jobs:
     displayName: Save docker images
     condition: and(not(canceled()), or(failed(), ne(variables.DOCKER_IMAGES_CACHE_HIT, 'true')))
     continueOnError: true
+
+  - template: prune-local-maven-repo.yml
+    parameters:
+      test_pool_definition: ${{parameters.test_pool_definition}}
+      condition: always()
 
 - template: e2e-template.yml
   parameters:
