@@ -24,6 +24,7 @@ steps:
       find "$(Pipeline.Workspace)/../m2-cache" -mindepth 1 -maxdepth 1 ! -name "$(PIPELINE_START_YEAR)" -exec rm -rf {} + 2>/dev/null
       find "$(M2_SEED)/org/apache/flink" -type d -name '*-SNAPSHOT' -prune -exec rm -rf {} + 2>/dev/null
       find "$(M2_SEED)" -name '*.lastUpdated' -delete 2>/dev/null
+      du -sh "$(M2_SEED)" 2>/dev/null || echo "$(M2_SEED) does not exist"
       true
-    condition: and(${{parameters.condition}}, eq('${{parameters.test_pool_definition.name}}', 'Default'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(${{parameters.condition}}, eq('${{parameters.test_pool_definition.name}}', 'Default'), or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/ci_')))
     displayName: Prune local Maven repo
