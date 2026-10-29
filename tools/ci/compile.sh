@@ -63,17 +63,27 @@ MVN_LICENSE_CHECK_ARGS="${MVN_LICENSE_CHECK_ARGS-deploy -DaltDeploymentRepositor
 MVN_COMPILE_THREADS="${MVN_COMPILE_THREADS:-1C}"
 
 if [[ -n "$MVN_LICENSE_CHECK_ARGS" ]]; then
-    # Our output parsers (bundled-optional/shade/deploy) don't support multi-threaded builds.
-    # So build and run all QA plugins multi-threaded first, then re-run only packaging, shading and deploy
-    # single-threaded on top of it: no clean, compilation is up to date (non-incremental staleness check), QA plugins and web UI are skipped.
-    $MVN clean install -Dflink.convergence.phase=install -Pcheck-convergence \
-        -Dmaven.javadoc.skip=true -U -DskipTests "${@}" -T${MVN_COMPILE_THREADS} | tee $MVN_CLEAN_COMPILE_OUT
+    # Our output parsers (bundled-optional/shade/deploy) need each module's plugin output contiguous.
+    # Log the thread name, then regroup the multi-threaded output per thread (a thread builds one module at a time) and drop the thread name again.
+    MVN_RAW_OUT="/tmp/clean_compile_raw.out"
+    $MVN clean ${MVN_LICENSE_CHECK_ARGS} -Dorg.slf4j.simpleLogger.showThreadName=true \
+        -Dmaven.javadoc.skip=true -U -DskipTests "${@}" -T${MVN_COMPILE_THREADS} | tee $MVN_RAW_OUT
     EXIT_CODE=${PIPESTATUS[0]}
-    if [ $EXIT_CODE == 0 ]; then
-        $MVN ${MVN_LICENSE_CHECK_ARGS} -Dfast -Pskip-webui-build -Dmaven.compiler.useIncrementalCompilation=false \
-            -Dmaven.javadoc.skip=true -DskipTests "${@}" -T1 | tee $MVN_CLEAN_COMPILE_OUT
-        EXIT_CODE=${PIPESTATUS[0]}
-    fi
+    awk '
+        match($0, /^[0-9:.]+ \[[^]]*\] \[/) {
+            prefix = substr($0, 1, RLENGTH - 1)
+            thread = substr(prefix, index(prefix, "[") + 1)
+            sub(/\] $/, "", thread)
+            $0 = substr(prefix, 1, index(prefix, "[") - 1) substr($0, RLENGTH)
+        }
+        {
+            if (!(thread in count)) { order[++threads] = thread; count[thread] = 0 }
+            lines[thread, ++count[thread]] = $0
+        }
+        END {
+            for (t = 1; t <= threads; t++)
+                for (i = 1; i <= count[order[t]]; i++) print lines[order[t], i]
+        }' $MVN_RAW_OUT > $MVN_CLEAN_COMPILE_OUT
 else
     $MVN clean install \
         -Dmaven.javadoc.skip=true -U -DskipTests "${@}" -T${MVN_COMPILE_THREADS} | tee $MVN_CLEAN_COMPILE_OUT
