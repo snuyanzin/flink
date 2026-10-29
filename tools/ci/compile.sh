@@ -60,19 +60,25 @@ EXIT_CODE=0
 
 # Maven QA-check args: dependency convergence, the deploy that stages jars for the license check, and the shade DEBUG log the bundled-optional check parses. Default runs full QA; the fast compile job and e2e pass MVN_LICENSE_CHECK_ARGS="" to build only (QA runs in the license_check job). Non-empty also enables the structural QA + license blocks below.
 MVN_LICENSE_CHECK_ARGS="${MVN_LICENSE_CHECK_ARGS-deploy -DaltDeploymentRepository=validation_repository::default::file:$MVN_VALIDATION_DIR -Dflink.convergence.phase=install -Pcheck-convergence -Dorg.slf4j.simpleLogger.log.org.apache.maven.plugins.shade=DEBUG}"
+MVN_COMPILE_THREADS="${MVN_COMPILE_THREADS:-1C}"
+
 if [[ -n "$MVN_LICENSE_CHECK_ARGS" ]]; then
-    BUILD_GOAL_ARGS="$MVN_LICENSE_CHECK_ARGS"
-    MVN_COMPILE_THREADS="${MVN_COMPILE_THREADS:-1}"
+    # Our output parsers (bundled-optional/shade/deploy) don't support multi-threaded builds.
+    # So build and run all QA plugins multi-threaded first, then re-run only packaging, shading and deploy
+    # single-threaded on top of it: no clean, compilation is up to date (non-incremental staleness check), QA plugins and web UI are skipped.
+    $MVN clean install -Dflink.convergence.phase=install -Pcheck-convergence \
+        -Dmaven.javadoc.skip=true -U -DskipTests "${@}" -T${MVN_COMPILE_THREADS} | tee $MVN_CLEAN_COMPILE_OUT
+    EXIT_CODE=${PIPESTATUS[0]}
+    if [ $EXIT_CODE == 0 ]; then
+        $MVN ${MVN_LICENSE_CHECK_ARGS} -Dfast -Pskip-webui-build -Dmaven.compiler.useIncrementalCompilation=false \
+            -Dmaven.javadoc.skip=true -DskipTests "${@}" -T1 | tee $MVN_CLEAN_COMPILE_OUT
+        EXIT_CODE=${PIPESTATUS[0]}
+    fi
 else
-    BUILD_GOAL_ARGS="install"
-    MVN_COMPILE_THREADS="${MVN_COMPILE_THREADS:-1C}"
+    $MVN clean install \
+        -Dmaven.javadoc.skip=true -U -DskipTests "${@}" -T${MVN_COMPILE_THREADS} | tee $MVN_CLEAN_COMPILE_OUT
+    EXIT_CODE=${PIPESTATUS[0]}
 fi
-
-# Default -T1 because our output parsers (bundled-optional/shade) don't support multi-threaded builds; the fast compile job sets MVN_COMPILE_THREADS=1C together with MVN_LICENSE_CHECK_ARGS="" so those parsing checks are skipped.
-$MVN clean ${BUILD_GOAL_ARGS} \
-    -Dmaven.javadoc.skip=true -U -DskipTests "${@}" -T${MVN_COMPILE_THREADS} | tee $MVN_CLEAN_COMPILE_OUT
-
-EXIT_CODE=${PIPESTATUS[0]}
 
 if [ $EXIT_CODE != 0 ]; then
     echo "=============================================================================="
