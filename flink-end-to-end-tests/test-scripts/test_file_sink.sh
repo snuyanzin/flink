@@ -212,7 +212,10 @@ function run_file_sink_test_with_linkage {
 
   run_test_with_timeout 900 run_file_sink_test
 
+  # stops the JM and only one TM (the workers entry)
   stop_cluster
+  # stop the extra TMs too, otherwise the next linkage may kill a stale TM and wait for a restart that never happens
+  "$FLINK_DIR"/bin/taskmanager.sh stop-all
   # set_conf_ssl moves netty libraries into FLINK_DIR which we want to rollback before the next
   # linkage is set up
   rollback_openssl_lib
