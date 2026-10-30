@@ -540,18 +540,25 @@ function check_logs_for_non_empty_out_files {
 }
 
 function shutdown_all {
-  stop_cluster
-  stop_sql_gateway
-  # stop TMs which started by command: bin/taskmanager.sh start
-  "$FLINK_DIR"/bin/taskmanager.sh stop-all
-  tm_kill_all
-  jm_kill_all
-  gw_kill_all
+  # logs are already checked at this point, so kill all daemons at once instead of a graceful stop
+  kill_all 'ClusterEntrypoint|TaskManagerRunner|TaskManager|SqlGateway' -9
+
+  # drop pid files which bin/*.sh stop would have cleaned up
+  local pid_dir=${FLINK_PID_DIR:-$(sed -n -e 's/^env\.pid\.dir: //p' $FLINK_CONF | tail -n 1)}
+  local daemon
+  for daemon in standalonesession standalonejob taskexecutor sql-gateway; do
+    rm -f "${pid_dir:-/tmp}/flink-${FLINK_IDENT_STRING:-$USER}-${daemon}.pid"
+  done
+
+  stop_zookeeper
 }
 
 function stop_cluster {
   "$FLINK_DIR"/bin/stop-cluster.sh
+  stop_zookeeper
+}
 
+function stop_zookeeper {
   # stop zookeeper only if there are processes running
   zookeeper_process_count=$(jps | grep -c 'FlinkZooKeeperQuorumPeer' || true)
   if [[ ${zookeeper_process_count} -gt 0 ]]; then
@@ -697,10 +704,10 @@ function gw_kill_all {
   kill_all 'SqlGateway'
 }
 
-# Kills all processes that match the given name.
+# Kills all processes that match the given name, optionally with the given signal (e.g. -9).
 function kill_all {
   local pid=`jps | grep -E "${1}" | cut -d " " -f 1 || true`
-  kill ${pid} 2> /dev/null || true
+  kill ${2:-} ${pid} 2> /dev/null || true
   wait ${pid} 2> /dev/null || true
 }
 
