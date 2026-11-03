@@ -29,8 +29,10 @@ jobs:
 # Runs on every stage_name but no-ops on master/release/cron branches.
 # Requires the Build Service identity to have the "Stop builds" permission on the pipeline.
 - job: cancel_superseded_${{parameters.stage_name}}
-  pool: ${{parameters.test_pool_definition}}
-  container: ${{parameters.container}}
+  # Run on a Microsoft-hosted agent (always available, ships curl + jq) rather than the self-hosted
+  # test pool: that pool is busy running the very build this job cancels, so it would just queue behind it.
+  pool:
+    vmImage: 'ubuntu-24.04'
   timeoutInMinutes: 5
   cancelTimeoutInMinutes: 1
   steps:
@@ -43,7 +45,7 @@ jobs:
       esac
       api="$(System.CollectionUri)$(System.TeamProject)/_apis/build/builds"
       ids=$(curl -sf -H "Authorization: Bearer $AZP_TOKEN" \
-        "$api?definitions=$(System.DefinitionId)&branchName=$(Build.SourceBranch)&statusFilter=inProgress&api-version=7.1" \
+        "$api?definitions=$(System.DefinitionId)&branchName=$(Build.SourceBranch)&statusFilter=inProgress,notStarted&api-version=7.1" \
         | jq -r '.value[].id')
       for id in $ids; do
         if [ "$id" -lt "$(Build.BuildId)" ]; then
@@ -55,6 +57,9 @@ jobs:
     env:
       AZP_TOKEN: $(System.AccessToken)
     displayName: "Cancel older in-flight runs on this branch"
+    # Best-effort: a cancellation failure (e.g. missing "Stop builds" permission, transient API
+    # error, or a build finishing between list and PATCH) must not skip the downstream build.
+    continueOnError: true
 
 - job: compile_${{parameters.stage_name}}
   dependsOn: cancel_superseded_${{parameters.stage_name}}
@@ -104,7 +109,7 @@ jobs:
   # Compile
   # Fast multi-threaded build that only produces the test artifact; all QA (structural + convergence + license) runs single-threaded in the license_check job (MVN_LICENSE_CHECK_ARGS="" disables it here).
   - script: |
-      MVN_LICENSE_CHECK_ARGS="" ${{parameters.environment}} ./tools/ci/compile_ci.sh -Dfast -Dmaven.source.skip=true || exit $?
+      MVN_LICENSE_CHECK_ARGS="" ${{parameters.environment}} ./tools/ci/compile_ci.sh -Dfast || exit $?
       ./tools/ci/create_build_artifact.sh
     displayName: Compile
 
@@ -114,7 +119,7 @@ jobs:
       targetPath: $(FLINK_ARTIFACT_DIR)
       artifact: FlinkCompileArtifact-${{parameters.stage_name}}
 
-# All QA (structural + convergence + license) runs single-threaded here, off the critical path (no dependsOn), so the compile job can build fast with -Dfast -T1C.
+# All QA (structural + convergence + license) runs single-threaded here, off the critical path (independent of compile), so the compile job can build fast with -Dfast -T1C.
 - job: license_check_${{parameters.stage_name}}
   dependsOn: cancel_superseded_${{parameters.stage_name}}
   # succeeded() is needed to allow job cancellation
