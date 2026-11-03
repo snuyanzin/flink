@@ -24,9 +24,9 @@ parameters:
 
 jobs:
 # Emulates GitHub Actions' cancel-in-progress for Azure CI (push) triggers, which have no native
-# equivalent: on a PR branch (ci_<PR_ID>, force-pushed by the ci-bot on each update) cancel any
-# older in-flight run of this pipeline on the same branch so a new push supersedes the previous one.
-# Runs on every stage_name but no-ops on master/release/cron branches.
+# equivalent: cancel any older in-flight run of this pipeline on the same branch so a new push
+# supersedes the previous one. Covers PR branches (ci_<PR_ID> on the apache ci-bot, or any branch
+# name on forks). Protected branches (master, release-*) are excluded to keep per-commit coverage.
 # Requires the Build Service identity to have the "Stop builds" permission on the pipeline.
 - job: cancel_superseded_${{parameters.stage_name}}
   # Run on a Microsoft-hosted agent (always available, ships curl + jq) rather than the self-hosted
@@ -40,8 +40,7 @@ jobs:
   - bash: |
       set -euo pipefail
       case "$(Build.SourceBranchName)" in
-        ci_*) ;;
-        *) echo "Not a PR branch; skipping cancellation."; exit 0 ;;
+        master|release-*) echo "Protected branch; skipping cancellation."; exit 0 ;;
       esac
       api="$(System.CollectionUri)$(System.TeamProject)/_apis/build/builds"
       ids=$(curl -sf -H "Authorization: Bearer $AZP_TOKEN" \
