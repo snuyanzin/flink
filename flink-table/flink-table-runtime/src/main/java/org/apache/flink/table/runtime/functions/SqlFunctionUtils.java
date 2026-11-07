@@ -478,17 +478,23 @@ public class SqlFunctionUtils {
             return null;
         }
         try {
-            final Matcher m = REGEXP_PATTERN_CACHE.get(regex).matcher(str);
-            if (m.groupCount() < extractIndex) {
-                return null;
-            }
-            if (m.find()) {
-                return m.group(extractIndex);
-            }
+            return regexpExtract(str, REGEXP_PATTERN_CACHE.get(regex), extractIndex);
         } catch (PatternSyntaxException e) {
             // non-literal invalid regex returns null.
         }
         return null;
+    }
+
+    /** Like {@link #regexpExtract(String, String, int)} with a pattern compiled at codegen. */
+    public static String regexpExtract(String str, Pattern pattern, int extractIndex) {
+        if (extractIndex < 0) {
+            return null;
+        }
+        final Matcher m = pattern.matcher(str);
+        if (m.groupCount() < extractIndex) {
+            return null;
+        }
+        return m.find() ? m.group(extractIndex) : null;
     }
 
     public static String regexpExtract(String str, String regex, long extractIndex) {

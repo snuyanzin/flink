@@ -33,6 +33,9 @@ import org.apache.calcite.sql.SqlOperator
 import org.apache.calcite.sql.fun.SqlTrimFunction.Flag.{BOTH, LEADING, TRAILING}
 
 import java.lang.reflect.Method
+import java.util.regex.{Matcher, Pattern}
+
+import scala.util.Try
 
 /**
  * Code generator for call with string parameters or return value.
@@ -370,8 +373,15 @@ object StringCallGen {
       operands: Seq[GeneratedExpression],
       resultType: LogicalType): GeneratedExpression = {
     val className = classOf[SqlFunctionUtils].getCanonicalName
+    val patternTerm = literalPatternTerm(ctx, operands(1))
     generateStringResultCallIfArgsNotNull(ctx, operands, resultType) {
-      terms => s"$className.regexpExtract(${safeToStringTerms(terms, operands)})"
+      terms =>
+        patternTerm match {
+          case Some(pattern) =>
+            val index = if (terms.size > 2) s"(int) ${terms(2)}" else "0"
+            s"$className.regexpExtract(${terms.head}.toString(), $pattern, $index)"
+          case None => s"$className.regexpExtract(${safeToStringTerms(terms, operands)})"
+        }
     }
   }
 
@@ -380,8 +390,16 @@ object StringCallGen {
       operands: Seq[GeneratedExpression],
       resultType: LogicalType): GeneratedExpression = {
     val className = classOf[SqlFunctionUtils].getCanonicalName
+    val matcherClass = classOf[Matcher].getCanonicalName
+    val patternTerm = literalPatternTerm(ctx, operands(1))
     generateStringResultCallIfArgsNotNull(ctx, operands, resultType) {
-      terms => s"$className.regexpReplace(${toStringTerms(terms, operands)})"
+      terms =>
+        patternTerm match {
+          case Some(pattern) =>
+            s"$pattern.matcher(${terms.head}.toString())" +
+              s".replaceAll($matcherClass.quoteReplacement(${terms(2)}.toString()))"
+          case None => s"$className.regexpReplace(${toStringTerms(terms, operands)})"
+        }
     }
   }
 
@@ -704,9 +722,33 @@ object StringCallGen {
       operands: Seq[GeneratedExpression],
       returnType: LogicalType): GeneratedExpression = {
     val className = classOf[SqlFunctionUtils].getCanonicalName
+    // an empty regex keeps the runtime path, which returns false for it
+    val patternTerm =
+      if (operands(1).literalValue.exists(v => v != null && v.toString.nonEmpty)) {
+        literalPatternTerm(ctx, operands(1))
+      } else {
+        None
+      }
     generateCallIfArgsNotNull(ctx, returnType, operands) {
-      terms => s"$className.regExp(${toStringTerms(terms, operands)})"
+      terms =>
+        patternTerm match {
+          case Some(pattern) => s"$pattern.matcher(${terms.head}.toString()).find(0)"
+          case None => s"$className.regExp(${toStringTerms(terms, operands)})"
+        }
     }
+  }
+
+  /**
+   * Compiles a literal regex once instead of a pattern cache lookup per record. A literal that does
+   * not compile, e.g. one folded from an expression after validation, keeps the runtime path.
+   */
+  private def literalPatternTerm(
+      ctx: CodeGeneratorContext,
+      regex: GeneratedExpression): Option[String] = {
+    regex.literalValue
+      .filter(_ != null)
+      .flatMap(value => Try(Pattern.compile(value.toString)).toOption)
+      .map(pattern => ctx.addReusableObject(pattern, "pattern"))
   }
 
   def generateJsonValue(
