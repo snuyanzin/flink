@@ -22,13 +22,13 @@ import org.apache.flink.annotation.Internal;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.atn.PredictionMode;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Split long functions into several smaller functions.
@@ -122,7 +122,7 @@ public class FunctionSplitter implements CodeRewriter {
     private class FunctionSplitVisitor extends JavaParserBaseVisitor<Void> {
 
         private final CommonTokenStream tokenStream;
-        private final TokenStreamRewriter rewriter;
+        private final TokenEdits rewriter;
 
         private final List<Map<String, String>> boolVarNames;
 
@@ -130,7 +130,7 @@ public class FunctionSplitter implements CodeRewriter {
 
         private FunctionSplitVisitor(List<Map<String, String>> boolVarNames) {
             this.tokenStream = new CommonTokenStream(new JavaLexer(CharStreams.fromString(code)));
-            this.rewriter = new TokenStreamRewriter(tokenStream);
+            this.rewriter = new TokenEdits(tokenStream);
 
             this.boolVarNames = boolVarNames;
 
@@ -225,44 +225,67 @@ public class FunctionSplitter implements CodeRewriter {
                         blockContext.start, String.format("\n%s = false;", hasReturnedVarName));
             }
 
+            final String finalMethodQualifier = methodQualifier;
+            Function<String, String> addSplitMethod =
+                    methodBody -> {
+                        long counter = CodeSplitUtil.getCounter().getAndIncrement();
+
+                        // void f_splitXX(int x, String y)
+                        String splitMethodDef =
+                                returnType
+                                        + " "
+                                        + functionName
+                                        + "_split"
+                                        + counter
+                                        + parameters
+                                        + finalMethodQualifier;
+
+                        String newSplitMethod = splitMethodDef + " {\n" + methodBody + "\n}\n";
+
+                        String newSplitMethodCall =
+                                functionName
+                                        + "_split"
+                                        + counter
+                                        + "("
+                                        + String.join(", ", declarations)
+                                        + ");\n";
+                        if (hasReturnedVarName != null
+                                && newSplitMethod.contains(hasReturnedVarName)) {
+                            newSplitMethodCall +=
+                                    String.format("if (%s) { return; }\n", hasReturnedVarName);
+                        }
+
+                        newSplitMethods.add(newSplitMethod);
+                        return newSplitMethodCall;
+                    };
+
             for (String methodBody : mergedCodeBlocks) {
-                long counter = CodeSplitUtil.getCounter().getAndIncrement();
-
-                // void f_splitXX(int x, String y)
-                String splitMethodDef =
-                        returnType
-                                + " "
-                                + functionName
-                                + "_split"
-                                + counter
-                                + parameters
-                                + methodQualifier;
-
-                String newSplitMethod = splitMethodDef + " {\n" + methodBody + "\n}\n";
-
-                String newSplitMethodCall =
-                        functionName
-                                + "_split"
-                                + counter
-                                + "("
-                                + String.join(", ", declarations)
-                                + ");\n";
-                if (hasReturnedVarName != null && newSplitMethod.contains(hasReturnedVarName)) {
-                    newSplitMethodCall +=
-                            String.format("if (%s) { return; }\n", hasReturnedVarName);
-                }
-
-                newSplitMethods.add(newSplitMethod);
-                newSplitMethodCalls.add(newSplitMethodCall);
+                newSplitMethodCalls.add(addSplitMethod.apply(methodBody));
             }
 
+            // group the calls into further methods while they do not fit into one method, so the
+            // method stays small enough to be JIT compiled
+            List<String> calls = newSplitMethodCalls;
+            while (calls.size() > 1 && String.join("", calls).length() > maxMethodLength) {
+                List<String> mergedCalls = getMergedCodeBlocks(calls);
+                if (mergedCalls.size() == calls.size()) {
+                    break;
+                }
+                calls = new ArrayList<>();
+                for (String methodBody : mergedCalls) {
+                    calls.add(addSplitMethod.apply(methodBody));
+                }
+            }
+
+            for (String newSplitMethod : newSplitMethods) {
+                rewriter.insertAfter(ctx.getParent().stop, "\n" + newSplitMethod);
+            }
             for (int i = 0; i < blockStatementContexts.size(); i++) {
-                if (i < newSplitMethods.size()) {
+                if (i < calls.size()) {
                     rewriter.replace(
                             blockStatementContexts.get(i).start,
                             blockStatementContexts.get(i).stop,
-                            newSplitMethodCalls.get(i));
-                    rewriter.insertAfter(ctx.getParent().stop, "\n" + newSplitMethods.get(i));
+                            calls.get(i));
                 } else {
                     rewriter.delete(
                             blockStatementContexts.get(i).start,
