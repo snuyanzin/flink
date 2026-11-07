@@ -468,13 +468,7 @@ class ExprCodeGenerator(
         full.literalValue)
     }
 
-    generateInputAccess(
-      ctx,
-      input1Type,
-      input1Term,
-      localRef.getIndex,
-      nullableInput,
-      deepCopy = true)
+    generateInputAccess(ctx, input1Type, input1Term, localRef.getIndex, nullableInput)
   }
 
   def visitRexFieldVariable(variable: RexFieldVariable): GeneratedExpression = {
