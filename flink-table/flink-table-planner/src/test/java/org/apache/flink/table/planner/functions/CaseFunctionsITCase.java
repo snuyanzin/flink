@@ -45,6 +45,47 @@ class CaseFunctionsITCase extends BuiltInFunctionTestBase {
                         .testSqlResult(caseStatement, 110, DataTypes.INT().notNull()),
                 TestSetSpec.forExpression("CASE WHEN ELSE")
                         .onFieldsWithData(450)
-                        .testSqlResult(caseStatement, 9999, DataTypes.INT().notNull()));
+                        .testSqlResult(caseStatement, 9999, DataTypes.INT().notNull()),
+                TestSetSpec.forExpression("CASE WHEN nullable")
+                        .onFieldsWithData(110)
+                        .andDataTypes(DataTypes.INT())
+                        .testSqlResult(caseStatement, 110, DataTypes.INT().notNull()),
+                TestSetSpec.forExpression("CASE WHEN ELSE on NULL")
+                        .onFieldsWithData((Integer) null)
+                        .andDataTypes(DataTypes.INT())
+                        .testSqlResult(caseStatement, 9999, DataTypes.INT().notNull()),
+                // conditions and other operators on NULL operands, whose result is computed
+                // without an if block
+                TestSetSpec.forExpression("operators on NULL operands")
+                        .onFieldsWithData(null, 1, 0, null, null, false, null)
+                        .andDataTypes(
+                                DataTypes.INT(),
+                                DataTypes.INT(),
+                                DataTypes.INT(),
+                                DataTypes.BIGINT(),
+                                DataTypes.DOUBLE(),
+                                DataTypes.BOOLEAN().notNull(),
+                                DataTypes.TINYINT())
+                        // the operator must not run for a NULL operand: no division by zero
+                        .testSqlResult("f0 / f2", null, DataTypes.INT())
+                        .testSqlResult("MOD(f0, f2)", null, DataTypes.INT())
+                        // primitive results other than BOOLEAN
+                        .testSqlResult("f0 + 1", null, DataTypes.INT())
+                        .testSqlResult("f3 * 2", null, DataTypes.BIGINT())
+                        .testSqlResult("f4 - 1", null, DataTypes.DOUBLE())
+                        .testSqlResult("f6 + CAST(1 AS TINYINT)", null, DataTypes.TINYINT())
+                        // BOOLEAN results
+                        .testSqlResult("f0 = 1", null, DataTypes.BOOLEAN())
+                        .testSqlResult("(f0 = 1) IS NULL", true, DataTypes.BOOLEAN().notNull())
+                        .testSqlResult("NOT (f0 = 1)", null, DataTypes.BOOLEAN())
+                        .testSqlResult("f0 < 5", null, DataTypes.BOOLEAN())
+                        .testSqlResult(
+                                "CASE WHEN f0 = 1 THEN 'a' ELSE 'b' END",
+                                "b",
+                                DataTypes.CHAR(1).notNull())
+                        // operands that are never null
+                        .testSqlResult("f5 = FALSE", true, DataTypes.BOOLEAN().notNull())
+                        .testSqlResult("f1 + 1", 2, DataTypes.INT())
+                        .testSqlResult("f1 * 5", 5, DataTypes.INT()));
     }
 }
