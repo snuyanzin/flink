@@ -45,6 +45,14 @@ class CaseFunctionsITCase extends BuiltInFunctionTestBase {
                         .testSqlResult(caseStatement, 110, DataTypes.INT().notNull()),
                 TestSetSpec.forExpression("CASE WHEN ELSE")
                         .onFieldsWithData(450)
+                        .testSqlResult(caseStatement, 9999, DataTypes.INT().notNull()),
+                TestSetSpec.forExpression("CASE WHEN nullable")
+                        .onFieldsWithData(110)
+                        .andDataTypes(DataTypes.INT())
+                        .testSqlResult(caseStatement, 110, DataTypes.INT().notNull()),
+                TestSetSpec.forExpression("CASE WHEN ELSE on NULL")
+                        .onFieldsWithData((Integer) null)
+                        .andDataTypes(DataTypes.INT())
                         .testSqlResult(caseStatement, 9999, DataTypes.INT().notNull()));
     }
 }

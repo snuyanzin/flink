@@ -1078,47 +1078,69 @@ object ScalarOperatorGens {
   def generateIfElse(
       ctx: CodeGeneratorContext,
       operands: Seq[GeneratedExpression],
-      resultType: LogicalType,
-      i: Int = 0): GeneratedExpression = {
-    // else part
-    if (i == operands.size - 1) {
-      generateCast(ctx, operands(i), resultType, nullOnFailure = true)
-    } else {
-      // check that the condition is boolean
-      // we do not check for null instead we use the default value
-      // thus null is false
-      requireBoolean(operands(i))
-      val condition = operands(i)
-      val trueAction = generateCast(ctx, operands(i + 1), resultType, nullOnFailure = true)
-      val falseAction = generateIfElse(ctx, operands, resultType, i + 2)
+      resultType: LogicalType): GeneratedExpression = {
+    if (operands.size == 1) {
+      return generateCast(ctx, operands.head, resultType, nullOnFailure = true)
+    }
+    val Seq(resultTerm, nullTerm) = newNames(ctx, "result", "isNull")
+    val resultTypeTerm = primitiveTypeTermForType(resultType)
+    val defaultValue = primitiveDefaultValue(resultType)
 
-      val Seq(resultTerm, nullTerm) = newNames(ctx, "result", "isNull")
-      val resultTypeTerm = primitiveTypeTermForType(resultType)
-      val defaultValue = primitiveDefaultValue(resultType)
+    def assign(action: GeneratedExpression): String =
+      s"""
+         |${action.code}
+         |$nullTerm = ${action.nullTerm};
+         |if (!$nullTerm) {
+         |  $resultTerm = ${action.resultTerm};
+         |}
+         |""".stripMargin
 
-      val operatorCode =
+    // a null condition is false via its default value
+    val whens = (0 until operands.size - 1 by 2).map {
+      j =>
+        requireBoolean(operands(j))
+        (operands(j), generateCast(ctx, operands(j + 1), resultType, nullOnFailure = true))
+    }
+    val elseAction = generateCast(ctx, operands.last, resultType, nullOnFailure = true)
+
+    val code = whens match {
+      case Seq((condition, trueAction)) =>
         s"""
-           |${condition.code}
            |$resultTypeTerm $resultTerm = $defaultValue;
            |boolean $nullTerm;
+           |${condition.code}
            |if (${condition.resultTerm}) {
-           |  ${trueAction.code}
-           |  $nullTerm = ${trueAction.nullTerm};
-           |  if (!$nullTerm) {
-           |    $resultTerm = ${trueAction.resultTerm};
-           |  }
-           |}
-           |else {
-           |  ${falseAction.code}
-           |  $nullTerm = ${falseAction.nullTerm};
-           |  if (!$nullTerm) {
-           |    $resultTerm = ${falseAction.resultTerm};
-           |  }
+           |  ${assign(trueAction)}
+           |} else {
+           |  ${assign(elseAction)}
            |}
            |""".stripMargin.trim
-
-      GeneratedExpression(resultTerm, nullTerm, operatorCode, resultType)
+      case _ =>
+        // flat guarded blocks instead of nested else keep the splitter output flat
+        val doneTerm = newName(ctx, "done")
+        val branches = whens.zipWithIndex.map {
+          case ((condition, trueAction), i) =>
+            val branch =
+              s"""
+                 |${condition.code}
+                 |if (${condition.resultTerm}) {
+                 |  ${assign(trueAction)}
+                 |  $doneTerm = true;
+                 |}
+                 |""".stripMargin
+            if (i == 0) branch else s"if (!$doneTerm) {\n$branch\n}"
+        }
+        s"""
+           |$resultTypeTerm $resultTerm = $defaultValue;
+           |boolean $nullTerm = true;
+           |boolean $doneTerm = false;
+           |${branches.mkString("\n")}
+           |if (!$doneTerm) {
+           |  ${assign(elseAction)}
+           |}
+           |""".stripMargin.trim
     }
+    GeneratedExpression(resultTerm, nullTerm, code, resultType)
   }
 
   def generateDot(
