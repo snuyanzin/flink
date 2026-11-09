@@ -212,6 +212,27 @@ class FlinkCalciteSqlValidatorTest {
         assertDoesNotThrow(() -> plannerMocks.getParser().parse(sql));
     }
 
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "SELECT a FROM t1 JOIN t2 USING (a) JOIN t2_copy USING (a)",
+                "SELECT a FROM t1 NATURAL JOIN t2 NATURAL JOIN t2_copy"
+            })
+    void testCommonColumnInThreeWayJoin(String sql) {
+        assertDoesNotThrow(() -> plannerMocks.getParser().parse(sql));
+    }
+
+    @Test
+    void testAmbiguousCommonColumnInThreeWayJoin() {
+        assertThatThrownBy(
+                        () ->
+                                plannerMocks
+                                        .getParser()
+                                        .parse(
+                                                "SELECT a FROM t1 JOIN t2 USING (a) JOIN t2_copy USING (b)"))
+                .isInstanceOf(ValidationException.class);
+    }
+
     /** Scalar function with named arguments for the mixed-argument validation test. */
     public static class NamedArgsScalarFunction extends ScalarFunction {
         @FunctionHint(

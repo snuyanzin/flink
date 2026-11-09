@@ -89,6 +89,21 @@ class ConstructedAccessFunctionsITCase {
     }
 
     @Test
+    public void testSqlInvalidRowItemAccess() {
+        final TableEnvironment env = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
+        final String from = " FROM (SELECT CAST(ROW(1, 2) AS ROW<a INT, b INT>) AS f)";
+
+        assertThatThrownBy(() -> env.executeSql("SELECT f['c']" + from))
+                .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> env.executeSql("SELECT f[3]" + from))
+                .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> env.executeSql("SELECT f[0]" + from))
+                .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> env.executeSql("SELECT f[f.a]" + from))
+                .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
     public void testSqlAccessingNullableRowWithAlias() throws Exception {
         final TableEnvironment env = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
         env.createTemporarySystemFunction("RowTableFunction", RowTableFunction.class);
