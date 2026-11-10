@@ -80,7 +80,15 @@ public class JavaCodeSplitter {
                 .map(text -> new BlockStatementRewriter(text, maxMethodLength).rewrite())
                 .map(text -> new FunctionSplitter(text, maxMethodLength).rewrite())
                 .map(text -> new MemberFieldRewriter(text, maxClassMemberCount).rewrite())
+                .map(JavaCodeSplitter::removeBlankLines)
                 .orElse(code);
+    }
+
+    /** The rewriters leave blank lines behind; a text block keeps them in its value, so skip it. */
+    private static String removeBlankLines(String code) {
+        // For now, we do not have text blocks in generated code, this is a guard for future just in
+        // case
+        return code.contains("\"\"\"") ? code : code.replaceAll("\n(\\s*\n)+", "\n");
     }
 
     private static final class SplitKey {
