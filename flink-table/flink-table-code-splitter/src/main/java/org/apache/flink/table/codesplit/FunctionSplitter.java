@@ -232,9 +232,9 @@ public class FunctionSplitter implements CodeRewriter {
             while (true) {
                 newSplitMethodCalls.clear();
                 for (String methodBody : blocks) {
-                    if (singleCalls.contains(methodBody.trim())) {
+                    if (singleCalls.contains(methodBody)) {
                         // a call that is alone in its group stays a call
-                        newSplitMethodCalls.add(methodBody.trim() + "\n");
+                        newSplitMethodCalls.add(methodBody);
                         continue;
                     }
                     long counter = CodeSplitUtil.getCounter().getAndIncrement();
@@ -276,9 +276,7 @@ public class FunctionSplitter implements CodeRewriter {
                     break;
                 }
                 singleCalls.clear();
-                for (String call : newSplitMethodCalls) {
-                    singleCalls.add(call.trim());
-                }
+                singleCalls.addAll(newSplitMethodCalls);
                 blocks = merged;
             }
 
