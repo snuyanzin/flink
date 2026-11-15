@@ -349,7 +349,40 @@ class TimeFunctionsITCase extends BuiltInFunctionTestBase {
                                 "EXTRACT requires 2nd argument to be a temporal type, but type is BOOLEAN")
                         .testTableApiValidationError(
                                 call("EXTRACT", JsonExistsOnError.ERROR, $("f2")),
-                                "EXTRACT requires 1st argument to be a TimeIntervalUnit literal"));
+                                "EXTRACT requires 1st argument to be a TimeIntervalUnit literal"),
+                TestSetSpec.forFunction(BuiltInFunctionDefinitions.EXTRACT, "TIMESTAMP before 1970")
+                        .onFieldsWithData(LocalDateTime.of(1969, 12, 31, 10, 30, 15))
+                        .andDataTypes(TIMESTAMP(3))
+                        .testResult(
+                                $("f0").extract(TimeIntervalUnit.YEAR),
+                                "EXTRACT(YEAR FROM f0)",
+                                1969L,
+                                BIGINT().nullable())
+                        .testResult(
+                                $("f0").extract(TimeIntervalUnit.MONTH),
+                                "EXTRACT(MONTH FROM f0)",
+                                12L,
+                                BIGINT().nullable())
+                        .testResult(
+                                $("f0").extract(TimeIntervalUnit.DAY),
+                                "EXTRACT(DAY FROM f0)",
+                                31L,
+                                BIGINT().nullable())
+                        .testResult(
+                                $("f0").extract(TimeIntervalUnit.HOUR),
+                                "EXTRACT(HOUR FROM f0)",
+                                10L,
+                                BIGINT().nullable())
+                        .testResult(
+                                $("f0").extract(TimeIntervalUnit.MINUTE),
+                                "EXTRACT(MINUTE FROM f0)",
+                                30L,
+                                BIGINT().nullable())
+                        .testResult(
+                                $("f0").extract(TimeIntervalUnit.SECOND),
+                                "EXTRACT(SECOND FROM f0)",
+                                15L,
+                                BIGINT().nullable()));
     }
 
     private Stream<TestSetSpec> temporalOverlapsTestCases() {
