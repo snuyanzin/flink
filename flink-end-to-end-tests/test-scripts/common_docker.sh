@@ -59,6 +59,9 @@ function build_image() {
     if [[ ${PROFILE} == *"jdk25"* ]]; then
         java_version=25
     fi
+    if [[ ${PROFILE} == *"jdk27"* ]]; then
+        java_version=27
+    fi
 
     cd flink-docker
     ./add-custom.sh -u ${file_server_address}:9999/flink.tgz -n ${image_name} -j ${java_version}
