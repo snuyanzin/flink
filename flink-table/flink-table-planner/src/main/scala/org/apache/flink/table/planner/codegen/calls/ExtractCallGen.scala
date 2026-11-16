@@ -44,8 +44,7 @@ class ExtractCallGen(method: Method) extends MethodCallGen(method) {
               (terms) =>
                 s"""
                    |${qualifyMethod(method)}(${terms.head},
-                   |    java.lang.Math.floorDiv(${terms(1)}.getMillisecond(),
-                   |        ${TimeUnit.DAY.multiplier.longValue()}L))
+                   |    ${terms(1)}.getMillisecond() / ${TimeUnit.DAY.multiplier.intValue()})
                    |""".stripMargin
             }
 
@@ -96,7 +95,7 @@ class ExtractCallGen(method: Method) extends MethodCallGen(method) {
                 case LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE =>
                   val nanoOfMilliTerm = s"${terms(1)}.getNanoOfMillisecond()"
                   s"""
-                     |java.lang.Math.floorMod($longTerm, ${factor}L) * 1000 + $nanoOfMilliTerm / 1000
+                     |($longTerm % $factor) * 1000 + $nanoOfMilliTerm / 1000
                  """.stripMargin
                 case _ =>
                   throw new ValidationException(
@@ -107,7 +106,7 @@ class ExtractCallGen(method: Method) extends MethodCallGen(method) {
                 case LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE =>
                   val nanoOfMilliTerm = s"${terms(1)}.getNanoOfMillisecond()"
                   s"""
-                     |java.lang.Math.floorMod($longTerm, ${factor}L) * 1000000 + $nanoOfMilliTerm
+                     |($longTerm % $factor) * 1000000 + $nanoOfMilliTerm
                  """.stripMargin
                 case _ =>
                   throw new ValidationException(
@@ -119,14 +118,8 @@ class ExtractCallGen(method: Method) extends MethodCallGen(method) {
                    |$longTerm / ${unit.multiplier.intValue()}
                    |""".stripMargin
               } else {
-                // a TIMESTAMP before 1970 is negative, an interval keeps its sign
-                val modTerm = tpe.getTypeRoot match {
-                  case LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE =>
-                    s"java.lang.Math.floorMod($longTerm, ${factor}L)"
-                  case _ => s"($longTerm % $factor)"
-                }
                 s"""
-                   |$modTerm / ${unit.multiplier.intValue()}
+                   |($longTerm % $factor) / ${unit.multiplier.intValue()}
                    |""".stripMargin
               }
           }

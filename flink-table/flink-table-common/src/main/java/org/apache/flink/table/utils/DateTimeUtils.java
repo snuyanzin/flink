@@ -153,19 +153,6 @@ public class DateTimeUtils {
     private static final int MIN_PRECISION = 0;
     private static final int MAX_PRECISION = 9;
 
-    private static final long[] POWERS_OF_TEN = {
-        1L,
-        10L,
-        100L,
-        1_000L,
-        10_000L,
-        100_000L,
-        1_000_000L,
-        10_000_000L,
-        100_000_000L,
-        1_000_000_000L
-    };
-
     /**
      * A ThreadLocal cache map for SimpleDateFormat, because SimpleDateFormat is not thread-safe.
      * (string_format) => formatter
@@ -368,7 +355,7 @@ public class DateTimeUtils {
      */
     public static TimestampData toTimestampData(double epoch, int precision) {
         validatePrecision(precision);
-        double factor = POWERS_OF_TEN[precision];
+        double factor = Math.pow(10, precision);
         double epochSeconds = epoch / factor;
         if (epochSeconds < MIN_EPOCH_SECONDS || epochSeconds > MAX_EPOCH_SECONDS) {
             return null;
@@ -376,9 +363,7 @@ public class DateTimeUtils {
         long seconds = (long) epochSeconds;
         double fractionalSeconds = epochSeconds - seconds;
         long nanoAdjustment = (long) (fractionalSeconds * 1_000_000_000L);
-        return TimestampData.fromEpochMillis(
-                seconds * 1_000 + Math.floorDiv(nanoAdjustment, 1_000_000),
-                (int) Math.floorMod(nanoAdjustment, 1_000_000));
+        return TimestampData.fromInstant(Instant.ofEpochSecond(seconds, nanoAdjustment));
     }
 
     /** See {@link #toTimestampData(long, int)}. The decimal value is truncated to a long. */
@@ -389,15 +374,7 @@ public class DateTimeUtils {
 
     private static TimestampData epochToTimestampData(long epoch, int precision) {
         validatePrecision(precision);
-        if (precision == DEFAULT_PRECISION) {
-            // the epoch already is in milliseconds
-            if (epoch < MIN_EPOCH_SECONDS * 1_000 || epoch > MAX_EPOCH_SECONDS * 1_000 + 999) {
-                return null;
-            }
-            return TimestampData.fromEpochMillis(epoch);
-        }
-
-        long factor = POWERS_OF_TEN[precision];
+        long factor = (long) Math.pow(10, precision);
         long epochSeconds = Math.floorDiv(epoch, factor);
 
         if (epochSeconds < MIN_EPOCH_SECONDS || epochSeconds > MAX_EPOCH_SECONDS) {
@@ -405,11 +382,10 @@ public class DateTimeUtils {
         }
 
         long remainder = Math.floorMod(epoch, factor);
-        long nanoAdjustment = remainder * POWERS_OF_TEN[MAX_PRECISION - precision];
+        long nanoMultiplier = (long) Math.pow(10, 9 - precision);
+        long nanoAdjustment = remainder * nanoMultiplier;
 
-        return TimestampData.fromEpochMillis(
-                epochSeconds * 1_000 + nanoAdjustment / 1_000_000,
-                (int) (nanoAdjustment % 1_000_000));
+        return TimestampData.fromInstant(Instant.ofEpochSecond(epochSeconds, nanoAdjustment));
     }
 
     private static void validatePrecision(int precision) {
@@ -1233,10 +1209,10 @@ public class DateTimeUtils {
             case ISOYEAR:
             case WEEK:
                 if (type.is(LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE)) {
-                    long d = Math.floorDiv(utcTs, MILLIS_PER_DAY);
+                    long d = divide(utcTs, TimeUnit.DAY.multiplier);
                     return extractFromDate(range, d);
                 } else if (type.is(LogicalTypeRoot.DATE)) {
-                    return Math.floorDiv(utcTs, MILLIS_PER_DAY);
+                    return divide(utcTs, TimeUnit.DAY.multiplier);
                 } else {
                     // TODO support it
                     throw new TableException(startUnit + " for " + type + " is unsupported now.");
@@ -1251,10 +1227,7 @@ public class DateTimeUtils {
                 }
             case MICROSECOND:
                 if (type.is(LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE)) {
-                    long millis =
-                            divide(
-                                    Math.floorMod(utcTs, getFactor(startUnit).longValue()),
-                                    startUnit.multiplier);
+                    long millis = divide(mod(utcTs, getFactor(startUnit)), startUnit.multiplier);
                     int micros = nanoOfMillisecond / 1000;
                     return millis + micros;
                 } else {
@@ -1262,10 +1235,7 @@ public class DateTimeUtils {
                 }
             case NANOSECOND:
                 if (type.is(LogicalTypeRoot.TIMESTAMP_WITHOUT_TIME_ZONE)) {
-                    long millis =
-                            divide(
-                                    Math.floorMod(utcTs, getFactor(startUnit).longValue()),
-                                    startUnit.multiplier);
+                    long millis = divide(mod(utcTs, getFactor(startUnit)), startUnit.multiplier);
                     return millis + nanoOfMillisecond;
                 } else {
                     throw new TableException(startUnit + " for " + type + " is unsupported now.");
@@ -1274,7 +1244,7 @@ public class DateTimeUtils {
                 // fall through
         }
 
-        long res = Math.floorMod(utcTs, getFactor(startUnit).longValue());
+        long res = mod(utcTs, getFactor(startUnit));
         res = divide(res, startUnit.multiplier);
         return res;
     }
@@ -1287,6 +1257,14 @@ public class DateTimeUtils {
             return reciprocal.multiply(BigDecimal.valueOf(res)).longValue();
         } else {
             return res / value.longValue();
+        }
+    }
+
+    private static long mod(long res, BigDecimal value) {
+        if (value.equals(BigDecimal.ONE)) {
+            return res;
+        } else {
+            return res % value.longValue();
         }
     }
 
