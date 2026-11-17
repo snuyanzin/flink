@@ -93,6 +93,7 @@ import org.junit.jupiter.api.Assertions.{assertEquals, assertTrue}
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.{BeforeEachCallback, ExtendWith, ExtensionContext, RegisterExtension}
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.api.parallel.{Execution, ExecutionMode}
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.platform.commons.support.AnnotationSupport
 
@@ -106,6 +107,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /** Test base for testing Table API / SQL plans. */
+@Execution(ExecutionMode.CONCURRENT)
 abstract class TableTestBase {
 
   // used for get test case method name
