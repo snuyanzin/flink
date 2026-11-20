@@ -852,7 +852,23 @@ public class BinaryStringDataUtil {
         if (trimStr == null) {
             return null;
         }
-        return trimRight(trimLeft(str, trimStr), trimStr);
+        // both sides are trimmed with one copy, which str.trim() does for spaces
+        if (isSpaceString(trimStr)) {
+            return str.trim();
+        }
+        str.ensureMaterialized();
+        trimStr.ensureMaterialized();
+        if (!str.inFirstSegment()) {
+            return trimRight(trimLeft(str, trimStr), trimStr);
+        }
+        final int start = trimLeftIndex(str, trimStr);
+        final int end = trimRightIndex(str, trimStr, start);
+        if (end == start) {
+            // empty string
+            return EMPTY_UTF8;
+        } else {
+            return str.copyBinaryStringInOneSeg(start, end - start);
+        }
     }
 
     public static BinaryStringData trimLeft(BinaryStringData str) {
@@ -927,19 +943,9 @@ public class BinaryStringDataUtil {
             return trimLeft(str);
         }
         if (str.inFirstSegment()) {
-            int searchIdx = 0;
-            while (searchIdx < str.getSizeInBytes()) {
-                int charBytes = numBytesForFirstByte(str.getByteOneSegment(searchIdx));
-                BinaryStringData currentChar = str.copyBinaryStringInOneSeg(searchIdx, charBytes);
-                // try to find the matching for the character in the trimString characters.
-                if (trimStr.contains(currentChar)) {
-                    searchIdx += charBytes;
-                } else {
-                    break;
-                }
-            }
+            final int searchIdx = trimLeftIndex(str, trimStr);
             // empty string
-            if (searchIdx >= str.getSizeInBytes()) {
+            if (searchIdx == str.getSizeInBytes()) {
                 return EMPTY_UTF8;
             } else {
                 return str.copyBinaryStringInOneSeg(searchIdx, str.getSizeInBytes() - searchIdx);
@@ -954,7 +960,8 @@ public class BinaryStringDataUtil {
         int segSize = str.getSegments()[0].size();
         BinaryStringData.SegmentAndOffset front = str.firstSegmentAndOffset(segSize);
         while (searchIdx < str.getSizeInBytes()) {
-            int charBytes = numBytesForFirstByte(front.value());
+            int charBytes =
+                    Math.min(numBytesForFirstByte(front.value()), str.getSizeInBytes() - searchIdx);
             BinaryStringData currentChar =
                     str.copyBinaryString(searchIdx, searchIdx + charBytes - 1);
             if (trimStr.contains(currentChar)) {
@@ -1028,41 +1035,74 @@ public class BinaryStringDataUtil {
             return trimRight(str);
         }
         if (str.inFirstSegment()) {
-            int charIdx = 0;
-            int byteIdx = 0;
-            // each element in charLens is length of character in the source string
-            int[] charLens = new int[str.getSizeInBytes()];
-            // each element in charStartPos is start position of first byte in the source string
-            int[] charStartPos = new int[str.getSizeInBytes()];
-            while (byteIdx < str.getSizeInBytes()) {
-                charStartPos[charIdx] = byteIdx;
-                charLens[charIdx] = numBytesForFirstByte(str.getByteOneSegment(byteIdx));
-                byteIdx += charLens[charIdx];
-                charIdx++;
-            }
-            // searchIdx points to the first character which is not in trim string from the right
-            // end.
-            int searchIdx = str.getSizeInBytes() - 1;
-            charIdx -= 1;
-            while (charIdx >= 0) {
-                BinaryStringData currentChar =
-                        str.copyBinaryStringInOneSeg(charStartPos[charIdx], charLens[charIdx]);
-                if (trimStr.contains(currentChar)) {
-                    searchIdx -= charLens[charIdx];
-                } else {
-                    break;
-                }
-                charIdx--;
-            }
-            if (searchIdx < 0) {
+            final int end = trimRightIndex(str, trimStr, 0);
+            if (end == 0) {
                 // empty string
                 return EMPTY_UTF8;
             } else {
-                return str.copyBinaryStringInOneSeg(0, searchIdx + 1);
+                return str.copyBinaryStringInOneSeg(0, end);
             }
         } else {
             return trimRightSlow(str, trimStr);
         }
+    }
+
+    /**
+     * The index of the first byte not trimmed from the left of a string in one segment. A character
+     * cut off by the end of invalid UTF-8 is read only up to the end.
+     */
+    private static int trimLeftIndex(BinaryStringData str, BinaryStringData trimStr) {
+        int searchIdx = 0;
+        while (searchIdx < str.getSizeInBytes()) {
+            int charBytes =
+                    Math.min(
+                            numBytesForFirstByte(str.getByteOneSegment(searchIdx)),
+                            str.getSizeInBytes() - searchIdx);
+            BinaryStringData currentChar = str.copyBinaryStringInOneSeg(searchIdx, charBytes);
+            // try to find the matching for the character in the trimString characters.
+            if (trimStr.contains(currentChar)) {
+                searchIdx += charBytes;
+            } else {
+                break;
+            }
+        }
+        return searchIdx;
+    }
+
+    /**
+     * The end, exclusive, of the part not trimmed from the right of a string in one segment. The
+     * characters are read from {@code from}, which must be the start of a character. A character
+     * cut off by the end of invalid UTF-8 is read only up to the end.
+     */
+    private static int trimRightIndex(BinaryStringData str, BinaryStringData trimStr, int from) {
+        int charIdx = 0;
+        int byteIdx = from;
+        // each element in charLens is length of character in the source string
+        int[] charLens = new int[str.getSizeInBytes() - from];
+        // each element in charStartPos is start position of first byte in the source string
+        int[] charStartPos = new int[str.getSizeInBytes() - from];
+        while (byteIdx < str.getSizeInBytes()) {
+            charStartPos[charIdx] = byteIdx;
+            charLens[charIdx] =
+                    Math.min(
+                            numBytesForFirstByte(str.getByteOneSegment(byteIdx)),
+                            str.getSizeInBytes() - byteIdx);
+            byteIdx += charLens[charIdx];
+            charIdx++;
+        }
+        int end = str.getSizeInBytes();
+        charIdx -= 1;
+        while (charIdx >= 0) {
+            BinaryStringData currentChar =
+                    str.copyBinaryStringInOneSeg(charStartPos[charIdx], charLens[charIdx]);
+            if (trimStr.contains(currentChar)) {
+                end -= charLens[charIdx];
+            } else {
+                break;
+            }
+            charIdx--;
+        }
+        return end;
     }
 
     private static BinaryStringData trimRightSlow(BinaryStringData str, BinaryStringData trimStr) {
@@ -1076,7 +1116,8 @@ public class BinaryStringDataUtil {
         int[] charStartPos = new int[str.getSizeInBytes()];
         while (byteIdx < str.getSizeInBytes()) {
             charStartPos[charIdx] = byteIdx;
-            int charBytes = numBytesForFirstByte(index.value());
+            int charBytes =
+                    Math.min(numBytesForFirstByte(index.value()), str.getSizeInBytes() - byteIdx);
             charLens[charIdx] = charBytes;
             byteIdx += charBytes;
             charIdx++;
@@ -1097,7 +1138,7 @@ public class BinaryStringDataUtil {
             }
             charIdx--;
         }
-        if (searchIdx < 0) {
+        if (searchIdx == -1) {
             // empty string
             return EMPTY_UTF8;
         } else {

@@ -509,6 +509,36 @@ class BinaryStringDataTest {
             assertThat(fromString(mode, "ߵ梷").substring(0, 2)).isEqualTo(fromString(mode, "ߵ梷"));
         }
 
+        @ParameterizedTest(name = "twoSegments={0}")
+        @ValueSource(booleans = {false, true})
+        void trimsCutOffCharacter(boolean twoSegments) {
+            // the last character of the string is cut off by its end, and the bytes after the end
+            // aren't read
+            final MemorySegment[] segments =
+                    twoSegments
+                            ? new MemorySegment[] {
+                                MemorySegmentFactory.wrap(new byte[] {'a', 'b'}),
+                                MemorySegmentFactory.wrap(new byte[] {(byte) 0xE4, 'y'})
+                            }
+                            : new MemorySegment[] {
+                                MemorySegmentFactory.wrap(new byte[] {'a', 'b', (byte) 0xE4, 'y'})
+                            };
+            final BinaryStringData str = BinaryStringData.fromAddress(segments, 0, 3);
+            final BinaryStringData whole = fromBytes(new byte[] {'a', 'b', (byte) 0xE4});
+            // trim strings
+            final BinaryStringData noneOfChars = BinaryStringData.fromString("x");
+            final BinaryStringData allButA = fromBytes(new byte[] {'b', (byte) 0xE4, 'y'});
+            final BinaryStringData allChars = fromBytes(new byte[] {'a', 'b', (byte) 0xE4});
+
+            assertThat(trim(str, noneOfChars)).isEqualTo(whole);
+            assertThat(trimLeft(str, noneOfChars)).isEqualTo(whole);
+            assertThat(trimRight(str, noneOfChars)).isEqualTo(whole);
+
+            assertThat(trim(str, allButA)).isEqualTo(BinaryStringData.fromString("a"));
+            assertThat(trimRight(str, allButA)).isEqualTo(BinaryStringData.fromString("a"));
+            assertThat(trimLeft(str, allChars)).isEqualTo(BinaryStringData.EMPTY_UTF8);
+        }
+
         @ParameterizedTest(name = "{0}")
         @EnumSource(Mode.class)
         void trims(Mode mode) {
@@ -534,6 +564,7 @@ class BinaryStringDataTest {
 
             assertThat(trim(fromString(mode, "xxxhellox"), fromString(mode, "xoh")))
                     .isEqualTo(fromString(mode, "ell"));
+            assertThat(trim(fromString(mode, "xohx"), fromString(mode, "xoh"))).isEqualTo(empty);
 
             assertThat(trimLeft(fromString(mode, "xxxhellox"), fromString(mode, "xoh")))
                     .isEqualTo(fromString(mode, "ellox"));
