@@ -140,10 +140,16 @@ public class BinaryVariantInternalBuilder {
         }
     }
 
+    /** A parser of UTF-8 encoded JSON bytes, as {@link #parseJson(byte[], boolean)} uses. */
+    public static JsonParser createParser(byte[] bytes) throws IOException {
+        return JSON_FACTORY.createParser(bytes);
+    }
+
     /**
      * Similar {@link #parseJson(String, boolean)}, but takes a JSON parser instead of string input.
+     * Builds the value that starts at the current token, and leaves the parser at its last token.
      */
-    private static BinaryVariant parseJson(JsonParser parser, boolean allowDuplicateKeys)
+    public static BinaryVariant parseJson(JsonParser parser, boolean allowDuplicateKeys)
             throws IOException {
         BinaryVariantInternalBuilder builder = new BinaryVariantInternalBuilder(allowDuplicateKeys);
         builder.buildJson(parser);
@@ -856,38 +862,66 @@ public class BinaryVariantInternalBuilder {
         return U24_SIZE;
     }
 
-    private void parseFloatingPoint(JsonParser parser) throws IOException {
-        if (!tryParseDecimal(parser.getText())) {
-            final double d = parser.getDoubleValue();
-            // Jackson coerces out-of-range numbers like 1e400 to +/-Infinity. Reject them instead
-            // of storing a non-finite double that toJson() could not render as valid JSON.
-            if (Double.isInfinite(d) || Double.isNaN(d)) {
-                throw new JsonParseException(
-                        parser,
-                        String.format(
-                                "Numeric value '%s' is out of the range of double precision and cannot be stored as a Variant.",
-                                parser.getText()));
+    /**
+     * Throws what {@link #parseJson(JsonParser, boolean)} throws for the number at the current
+     * token, without building it, for a reader that skips values.
+     */
+    public static void checkJsonNumber(JsonParser parser) throws IOException {
+        if (parser.currentToken() == JsonToken.VALUE_NUMBER_INT) {
+            try {
+                parser.getLongValue();
+                return;
+            } catch (InputCoercionException ignored) {
+                // parsed as decimal or floating, as in buildJson
             }
-            appendDouble(d);
+        }
+        if (decimalOf(parser.getText()) == null) {
+            finiteDouble(parser);
         }
     }
 
-    // Try to parse a JSON number as a decimal. Return whether the parsing succeeds. The input must
-    // only use the decimal format (an integer value with an optional '.' in it) and must not use
-    // scientific notation. It also must fit into the precision limitation of decimal types.
-    private boolean tryParseDecimal(String input) {
-        for (int i = 0; i < input.length(); ++i) {
-            char ch = input.charAt(i);
-            if (ch != '-' && ch != '.' && !(ch >= '0' && ch <= '9')) {
-                return false;
-            }
+    private void parseFloatingPoint(JsonParser parser) throws IOException {
+        if (!tryParseDecimal(parser.getText())) {
+            appendDouble(finiteDouble(parser));
         }
-        BigDecimal d = new BigDecimal(input);
-        if (fitsVariantDecimal(d, MAX_DECIMAL16_PRECISION)) {
+    }
+
+    private static double finiteDouble(JsonParser parser) throws IOException {
+        final double d = parser.getDoubleValue();
+        // Jackson coerces out-of-range numbers like 1e400 to +/-Infinity. Reject them instead
+        // of storing a non-finite double that toJson() could not render as valid JSON.
+        if (Double.isInfinite(d) || Double.isNaN(d)) {
+            throw new JsonParseException(
+                    parser,
+                    String.format(
+                            "Numeric value '%s' is out of the range of double precision and cannot be stored as a Variant.",
+                            parser.getText()));
+        }
+        return d;
+    }
+
+    // Try to parse a JSON number as a decimal. Return whether the parsing succeeds.
+    private boolean tryParseDecimal(String input) {
+        final BigDecimal d = decimalOf(input);
+        if (d != null) {
             appendDecimal(d);
             return true;
         }
         return false;
+    }
+
+    // The JSON number as a decimal, or null. The input must only use the decimal format (an integer
+    // value with an optional '.' in it) and must not use scientific notation. It also must fit into
+    // the precision limitation of decimal types.
+    private static BigDecimal decimalOf(String input) {
+        for (int i = 0; i < input.length(); ++i) {
+            char ch = input.charAt(i);
+            if (ch != '-' && ch != '.' && !(ch >= '0' && ch <= '9')) {
+                return null;
+            }
+        }
+        BigDecimal d = new BigDecimal(input);
+        return fitsVariantDecimal(d, MAX_DECIMAL16_PRECISION) ? d : null;
     }
 
     // The write buffer in building the variant value. Its first `writePos` bytes has been written.

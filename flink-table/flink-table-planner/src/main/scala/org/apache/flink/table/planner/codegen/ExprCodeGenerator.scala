@@ -173,6 +173,11 @@ class ExprCodeGenerator(
    */
   private lazy val rootAlwaysEvaluatedRefs: Set[Int] = roots.flatMap(alwaysEvaluatedRefs).toSet
 
+  /** PARSE_JSON calls read only at literal paths, see [[SelectiveParseJsonCodeGen]]. */
+  private lazy val selectiveParseJson: SelectiveParseJsonCodeGen =
+    if (rexProgram == null || input1Type == null) null
+    else new SelectiveParseJsonCodeGen(ctx, rexProgram, this)
+
   /** The projection columns and the filter. */
   private lazy val roots: Seq[RexNode] =
     rexProgram.getProjectList.toSeq ++ Option(rexProgram.getCondition).toSeq
@@ -563,6 +568,12 @@ class ExprCodeGenerator(
         throw new CodeGenException(s"RexLocalRef(${localRef.getIndex}) requires a RexProgram.")
       }
       val idx = localRef.getIndex
+      if (selectiveParseJson != null) {
+        val selective = selectiveParseJson.generate(idx)
+        if (selective.isPresent) {
+          return selective.get
+        }
+      }
       val target = rexProgram.getExprList.get(idx)
       if (!isDeterministicThroughProgram(target)) {
         return target.accept(this)
