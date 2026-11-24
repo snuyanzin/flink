@@ -18,7 +18,7 @@
 package org.apache.flink.table.planner.codegen.calls
 
 import org.apache.flink.table.api.JsonValueOnEmptyOrError
-import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenException, CodeGenUtils, GeneratedExpression}
+import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenException, CodeGenUtils, GeneratedExpression, JsonCodeGenUtils}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.{isPrimitiveNullable, primitiveDefaultValue, primitiveTypeTermForType, qualifyEnum, qualifyMethod, BINARY_STRING}
 import org.apache.flink.table.planner.codegen.GenerateUtils.generateCallWithStmtIfArgsNotNull
 import org.apache.flink.table.runtime.functions.SqlJsonUtils
@@ -78,7 +78,7 @@ class JsonValueCallGen(jsonPathReader: String = null) extends CallGenerator {
 
             val terms = Seq(
               parsed.resultTerm,
-              s"${argTerms(1)}.toString()",
+              JsonCodeGenUtils.jsonPathArgument(ctx, operands(1), argTerms(1)),
               qualifyEnum(emptyBehavior._1),
               emptyBehavior._2,
               qualifyEnum(errorBehavior._1),

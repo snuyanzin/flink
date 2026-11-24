@@ -21,6 +21,7 @@ package org.apache.flink.table.planner.codegen;
 import org.apache.flink.table.api.JsonExistsOnError;
 import org.apache.flink.table.planner.codegen.calls.BuiltInMethods;
 import org.apache.flink.table.planner.codegen.calls.JsonParseReuse;
+import org.apache.flink.table.runtime.functions.JsonPathSpec;
 import org.apache.flink.table.runtime.functions.SqlJsonUtils;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.types.variant.Variant;
@@ -250,6 +251,20 @@ public final class JsonCodeGenUtils {
     }
 
     /**
+     * The path argument of {@code JSON_VALUE}, {@code JSON_QUERY} or {@code JSON_EXISTS}: a {@link
+     * JsonPathSpec} for a literal path, which splits off the mode once, or the path as a string.
+     */
+    public static String jsonPathArgument(
+            CodeGeneratorContext ctx, GeneratedExpression path, String pathTerm) {
+        final Option<Object> literal = path.literalValue();
+        if (literal.isDefined() && literal.get() != null) {
+            return ctx.addReusableObject(
+                    new JsonPathSpec(literal.get().toString()), "jsonPathSpec", null);
+        }
+        return pathTerm + ".toString()";
+    }
+
+    /**
      * Generates {@code JSON_EXISTS(jsonValue, path [, onError])}.
      *
      * <p>The parsed context is shared with the other JSON functions over the same input, so the
@@ -276,8 +291,8 @@ public final class JsonCodeGenUtils {
                             + JsonParseReuse.parseSharedInput(ctx, operands, jsonPathReader)
                                     .resultTerm()
                             + ", "
-                            + argTerms.apply(1)
-                            + ".toString(), "
+                            + jsonPathArgument(ctx, operands.apply(1), argTerms.apply(1))
+                            + ", "
                             + errorBehavior
                             + ")";
                 });

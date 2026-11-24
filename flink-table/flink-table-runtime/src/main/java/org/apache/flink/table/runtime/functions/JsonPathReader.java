@@ -19,6 +19,10 @@
 package org.apache.flink.table.runtime.functions;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.core.memory.MemorySegment;
+import org.apache.flink.table.data.StringData;
+import org.apache.flink.table.data.binary.BinaryStringData;
+import org.apache.flink.table.data.binary.StringUtf8Utils;
 import org.apache.flink.table.runtime.functions.SqlJsonUtils.JsonValueContext;
 
 import org.apache.flink.shaded.com.jayway.jsonpath.JsonPath;
@@ -109,23 +113,70 @@ public final class JsonPathReader implements Serializable {
         return steps(matcher.matches() ? matcher.group(2) : pathSpec);
     }
 
+    /**
+     * Parses {@code json} for the paths, from its UTF-8 bytes unless it has a Java string already.
+     */
+    public JsonValueContext parse(StringData json) {
+        final BinaryStringData string = (BinaryStringData) json;
+        if (string.getJavaObject() != null) {
+            // a lone surrogate of the string is encoded as '?', so the string is read as it is
+            return parse(string.toString());
+        }
+        final MemorySegment[] segments = string.getSegments();
+        final int offset;
+        final byte[] bytes;
+        final int size = string.getSizeInBytes();
+        // null off the heap
+        final byte[] heap = segments[0].getHeapMemory();
+        if (heap != null && string.getOffset() + size <= segments[0].size()) {
+            bytes = heap;
+            offset = string.getOffset();
+        } else {
+            bytes = string.toBytes();
+            offset = 0;
+        }
+        // bytes the decoder of the full parse replaces by U+FFFD may be read differently here
+        if (!exceedsStringLength(size)
+                && StringUtf8Utils.firstInvalidUtf8ByteIndex(bytes, offset, size) < 0) {
+            try (JsonParser parser = SqlJsonUtils.JSON_FACTORY.createParser(bytes, offset, size)) {
+                final JsonValueContext parsed = read(parser);
+                if (parsed != null) {
+                    return parsed;
+                }
+            } catch (Exception e) {
+                // reported by the full parse
+            }
+        }
+        return SqlJsonUtils.jsonParse(string.toString());
+    }
+
     /** Parses {@code json} for the paths. */
     public JsonValueContext parse(String json) {
-        // a string this long may be skipped here, while the whole document fails on it
-        if (json.length()
-                > SqlJsonUtils.JSON_FACTORY.streamReadConstraints().getMaxStringLength()) {
-            return SqlJsonUtils.jsonParse(json);
-        }
-        try (JsonParser parser = SqlJsonUtils.JSON_FACTORY.createParser(json)) {
-            final JsonToken token = parser.nextToken();
-            if (token != null) {
-                // like the full parse, what follows the root value isn't read
-                return JsonValueContext.withJavaObj(read(parser, token, root));
+        if (!exceedsStringLength(json.length())) {
+            try (JsonParser parser = SqlJsonUtils.JSON_FACTORY.createParser(json)) {
+                final JsonValueContext parsed = read(parser);
+                if (parsed != null) {
+                    return parsed;
+                }
+            } catch (Exception e) {
+                // reported by the full parse
             }
-        } catch (Exception e) {
-            // reported by the full parse
         }
         return SqlJsonUtils.jsonParse(json);
+    }
+
+    // a string this long may be skipped here, while the whole document fails on it; a document
+    // has no more characters than bytes
+    private static boolean exceedsStringLength(int length) {
+        return length > SqlJsonUtils.JSON_FACTORY.streamReadConstraints().getMaxStringLength();
+    }
+
+    // null for a document without content
+    @Nullable
+    private JsonValueContext read(JsonParser parser) throws Exception {
+        final JsonToken token = parser.nextToken();
+        // like the full parse, what follows the root value isn't read
+        return token == null ? null : JsonValueContext.withJavaObj(read(parser, token, root));
     }
 
     @Nullable

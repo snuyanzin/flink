@@ -24,6 +24,7 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.types.variant.BinaryVariant;
 import org.apache.flink.types.variant.BinaryVariantInternalBuilder;
 import org.apache.flink.types.variant.Variant;
+import org.apache.flink.util.SwarUtils;
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonParseException;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.JsonParser;
@@ -103,13 +104,7 @@ public final class VariantPathReader implements Serializable {
         }
         root.clear(this);
         final byte[] bytes = json.toBytes();
-        hasEscapes = false;
-        for (byte b : bytes) {
-            if (b == '\\') {
-                hasEscapes = true;
-                break;
-            }
-        }
+        hasEscapes = SwarUtils.contains(bytes, 0, bytes.length, (byte) '\\');
         try (JsonParser parser = BinaryVariantInternalBuilder.createParser(bytes)) {
             parser.nextToken();
             if (parser.currentToken() == null) {

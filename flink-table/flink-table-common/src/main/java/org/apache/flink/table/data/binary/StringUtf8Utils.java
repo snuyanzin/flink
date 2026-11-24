@@ -206,16 +206,13 @@ public final class StringUtf8Utils {
         int sp = offset;
         final int sl = sp + numBytes;
 
-        // ASCII fast-path
-        while (sp < sl && isAsciiByte(bytes[sp])) {
-            sp++;
-        }
-
         while (sp < sl) {
             final int start = sp;
             final int b1 = bytes[sp++];
 
             if (isAsciiByte(b1)) {
+                // the rest of the ASCII run a word at a time, also between non-ASCII characters
+                sp += SwarUtils.getAsciiPrefixLength(bytes, sp, sl - sp);
                 continue;
             }
 

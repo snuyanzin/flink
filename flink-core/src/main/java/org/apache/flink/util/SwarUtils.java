@@ -57,6 +57,19 @@ public final class SwarUtils {
         return true;
     }
 
+    /** The number of leading ASCII bytes of {@code bytes[offset, offset + len)}. */
+    public static int getAsciiPrefixLength(byte[] bytes, int offset, int len) {
+        int i = offset;
+        final int end = offset + len;
+        while (end - i >= Long.BYTES && (readWord(bytes, i) & HIGH_BITS) == 0) {
+            i += Long.BYTES;
+        }
+        while (i < end && bytes[i] >= 0) {
+            i++;
+        }
+        return i - offset;
+    }
+
     /**
      * Whether {@code bytes[offset, offset + len)} contains {@code b1}, {@code b2} or a byte below
      * {@code lessThan}, comparing bytes unsigned.
@@ -76,6 +89,12 @@ public final class SwarUtils {
      */
     public static boolean containsLessThan(byte[] bytes, int offset, int len, int lessThan) {
         return containsLessThanOrAny(bytes, offset, len, false, (byte) 0, (byte) 0, lessThan);
+    }
+
+    /** Whether {@code bytes[offset, offset + len)} contains {@code b}. */
+    public static boolean contains(byte[] bytes, int offset, int len, byte b) {
+        // lessThan 0 matches nothing: hasByteLessThan(word, 0) is word & ~word
+        return containsLessThanOrAny(bytes, offset, len, true, b, b, 0);
     }
 
     private static boolean containsLessThanOrAny(

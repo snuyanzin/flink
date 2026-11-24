@@ -19,7 +19,7 @@ package org.apache.flink.table.planner.codegen.calls
 
 import org.apache.flink.table.api.{JsonQueryOnEmptyOrError, JsonQueryWrapper}
 import org.apache.flink.table.api.ValidationException
-import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenException, CodeGenUtils, GeneratedExpression}
+import org.apache.flink.table.planner.codegen.{CodeGeneratorContext, CodeGenException, CodeGenUtils, GeneratedExpression, JsonCodeGenUtils}
 import org.apache.flink.table.planner.codegen.CodeGenUtils.{qualifyEnum, qualifyMethod, BINARY_STRING, GENERIC_ARRAY}
 import org.apache.flink.table.planner.codegen.GenerateUtils.generateCallWithStmtIfArgsNotNull
 import org.apache.flink.table.runtime.functions.SqlJsonUtils
@@ -94,7 +94,7 @@ class JsonQueryCallGen(jsonPathReader: String = null) extends CallGenerator {
 
           val terms = Seq(
             parsed.resultTerm,
-            s"${argTerms(1)}.toString()",
+            JsonCodeGenUtils.jsonPathArgument(ctx, operands(1), argTerms(1)),
             qualifyEnum(jsonQueryReturnType),
             qualifyEnum(wrapperBehavior),
             qualifyEnum(emptyBehavior),

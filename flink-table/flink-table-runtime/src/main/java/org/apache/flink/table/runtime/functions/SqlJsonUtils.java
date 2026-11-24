@@ -124,6 +124,20 @@ public class SqlJsonUtils {
     private static final String JSON_VALUE_FUNCTION_NAME = "JSON_VALUE";
     private static final String JSON_EXISTS_FUNCTION_NAME = "JSON_EXISTS";
 
+    // the 'strict' and 'lax' path modes of jsonApiCommonSyntax
+    private static final Configuration JSON_PATH_STRICT_CONFIG =
+            Configuration.builder()
+                    .jsonProvider(JSON_PATH_JSON_PROVIDER)
+                    .mappingProvider(JSON_PATH_MAPPING_PROVIDER)
+                    .build();
+
+    private static final Configuration JSON_PATH_LAX_CONFIG =
+            Configuration.builder()
+                    .options(Option.SUPPRESS_EXCEPTIONS)
+                    .jsonProvider(JSON_PATH_JSON_PROVIDER)
+                    .mappingProvider(JSON_PATH_MAPPING_PROVIDER)
+                    .build();
+
     private static final Configuration JSON_PATH_TYPE_CONFIG =
             Configuration.builder()
                     .jsonProvider(JSON_PATH_JSON_PROVIDER)
@@ -198,6 +212,12 @@ public class SqlJsonUtils {
         return jsonExists(jsonApiCommonSyntax(parsedInput, pathSpec), errorBehavior);
     }
 
+    /** Like the overload with a {@code String} path, for a literal path. */
+    public static Boolean jsonExists(
+            JsonValueContext parsedInput, JsonPathSpec path, JsonExistsOnError errorBehavior) {
+        return jsonExists(jsonApiCommonSyntax(parsedInput, path), errorBehavior);
+    }
+
     private static Boolean jsonExists(JsonPathContext context, JsonExistsOnError errorBehavior) {
         if (context.hasException()) {
             switch (errorBehavior) {
@@ -243,6 +263,22 @@ public class SqlJsonUtils {
             Object defaultValueOnError) {
         return jsonValue(
                 jsonApiCommonSyntax(parsedInput, pathSpec),
+                emptyBehavior,
+                defaultValueOnEmpty,
+                errorBehavior,
+                defaultValueOnError);
+    }
+
+    /** Like the overload with a {@code String} path, for a literal path. */
+    public static Object jsonValue(
+            JsonValueContext parsedInput,
+            JsonPathSpec path,
+            JsonValueOnEmptyOrError emptyBehavior,
+            Object defaultValueOnEmpty,
+            JsonValueOnEmptyOrError errorBehavior,
+            Object defaultValueOnError) {
+        return jsonValue(
+                jsonApiCommonSyntax(parsedInput, path),
                 emptyBehavior,
                 defaultValueOnEmpty,
                 errorBehavior,
@@ -321,6 +357,22 @@ public class SqlJsonUtils {
             JsonQueryOnEmptyOrError errorBehavior) {
         return jsonQuery(
                 jsonApiCommonSyntax(parsedInput, pathSpec),
+                returnType,
+                wrapperBehavior,
+                emptyBehavior,
+                errorBehavior);
+    }
+
+    /** Like the overload with a {@code String} path, for a literal path. */
+    public static Object jsonQueryParsed(
+            JsonValueContext parsedInput,
+            JsonPathSpec path,
+            JsonQueryReturnType returnType,
+            JsonQueryWrapper wrapperBehavior,
+            JsonQueryOnEmptyOrError emptyBehavior,
+            JsonQueryOnEmptyOrError errorBehavior) {
+        return jsonQuery(
+                jsonApiCommonSyntax(parsedInput, path),
                 returnType,
                 wrapperBehavior,
                 emptyBehavior,
@@ -726,44 +778,78 @@ public class SqlJsonUtils {
                 mode = PathMode.valueOf(matcher.group(1).toUpperCase(Locale.ROOT));
                 pathStr = matcher.group(2);
             }
-            DocumentContext ctx;
+        } catch (Exception e) {
+            return JsonPathContext.withUnknownException(e);
+        }
+        return jsonApiCommonSyntax(input, pathSpec, mode, pathStr, null);
+    }
+
+    private static JsonPathContext jsonApiCommonSyntax(JsonValueContext input, JsonPathSpec path) {
+        return jsonApiCommonSyntax(input, path.pathSpec, path.mode, path.path, path);
+    }
+
+    private static JsonPathContext jsonApiCommonSyntax(
+            JsonValueContext input,
+            String pathSpec,
+            PathMode mode,
+            String pathStr,
+            @Nullable JsonPathSpec literal) {
+        try {
+            final Configuration configuration;
             switch (mode) {
                 case STRICT:
                     if (input.hasException()) {
                         return JsonPathContext.withStrictException(pathSpec, input.exc);
                     }
-                    ctx =
-                            JsonPath.parse(
-                                    input.obj,
-                                    Configuration.builder()
-                                            .jsonProvider(JSON_PATH_JSON_PROVIDER)
-                                            .mappingProvider(JSON_PATH_MAPPING_PROVIDER)
-                                            .build());
+                    configuration = JSON_PATH_STRICT_CONFIG;
                     break;
                 case LAX:
                     if (input.hasException()) {
                         return JsonPathContext.withJavaObj(PathMode.LAX, null);
                     }
-                    ctx =
-                            JsonPath.parse(
-                                    input.obj,
-                                    Configuration.builder()
-                                            .options(Option.SUPPRESS_EXCEPTIONS)
-                                            .jsonProvider(JSON_PATH_JSON_PROVIDER)
-                                            .mappingProvider(JSON_PATH_MAPPING_PROVIDER)
-                                            .build());
+                    configuration = JSON_PATH_LAX_CONFIG;
                     break;
                 default:
                     throw illegalJsonPathModeInPathSpec(mode.toString(), pathSpec);
             }
+            if (literal != null && literal.steps != null) {
+                // JsonPath reads a found value the same way; anything else is left to it
+                final Object value = valueAt(input.obj, literal.steps);
+                if (value != null) {
+                    return JsonPathContext.withJavaObj(mode, value);
+                }
+            }
+            final DocumentContext ctx = JsonPath.parse(input.obj, configuration);
             try {
-                return JsonPathContext.withJavaObj(mode, ctx.read(pathStr));
+                final JsonPath compiled = literal == null ? null : literal.compiled();
+                return JsonPathContext.withJavaObj(
+                        mode, compiled == null ? ctx.read(pathStr) : ctx.read(compiled));
             } catch (Exception e) {
                 return JsonPathContext.withStrictException(pathSpec, e);
             }
         } catch (Exception e) {
             return JsonPathContext.withUnknownException(e);
         }
+    }
+
+    // the value at the steps, as JsonPath reads properties and indices, or null if missing
+    @Nullable
+    private static Object valueAt(@Nullable Object value, Object[] steps) {
+        for (Object step : steps) {
+            if (step instanceof String) {
+                if (!(value instanceof Map)) {
+                    return null;
+                }
+                value = ((Map<?, ?>) value).get(step);
+            } else {
+                final int index = (Integer) step;
+                if (!(value instanceof List) || index >= ((List<?>) value).size()) {
+                    return null;
+                }
+                value = ((List<?>) value).get(index);
+            }
+        }
+        return value;
     }
 
     private static TableRuntimeException toUnchecked(Exception e) {

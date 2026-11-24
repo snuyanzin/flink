@@ -69,15 +69,16 @@ object JsonParseReuse {
         // the input may be a reused instance with new content, so the parse is valid for one record
         ctx.addReusablePerRecordStatement(s"$lastInputName = null;")
 
+        // the reader parses the bytes of the input, see JsonPathReader#parse(StringData)
         val parse =
-          if (jsonPathReader == null) qualifyMethod(BuiltInMethods.JSON_PARSE)
-          else s"$jsonPathReader.parse"
+          if (jsonPathReader == null) s"${qualifyMethod(BuiltInMethods.JSON_PARSE)}(in.toString())"
+          else s"$jsonPathReader.parse(in)"
         // keyed on the input instance to share one parse between calls within a record
         ctx.addReusableMember(s"""
                                  |private $typeName $methodName($inputType in) {
                                  |  if (in != $lastInputName) {
                                  |    $lastInputName = in;
-                                 |    $varName = $parse(in.toString());
+                                 |    $varName = $parse;
                                  |  }
                                  |  return $varName;
                                  |}
