@@ -54,6 +54,7 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.core.io.JsonString
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.DeserializationFeature;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -90,12 +91,12 @@ public class SqlJsonUtils {
     private static final char QUOTE = '"';
     private static final char BACKSLASH = '\\';
 
-    private static final JsonFactory JSON_FACTORY = new JsonFactory();
+    static final JsonFactory JSON_FACTORY = new JsonFactory();
     private static final ObjectMapper MAPPER =
             new ObjectMapper(JSON_FACTORY)
                     .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
                     .configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
-    private static final Pattern JSON_PATH_BASE =
+    static final Pattern JSON_PATH_BASE =
             Pattern.compile(
                     "^\\s*(?<mode>strict|lax)\\s+(?<spec>.+)$",
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.MULTILINE);
@@ -103,6 +104,8 @@ public class SqlJsonUtils {
             new JacksonJsonProvider(MAPPER);
     private static final MappingProvider JSON_PATH_MAPPING_PROVIDER =
             new JacksonMappingProvider(MAPPER);
+    // builds values as JSON_PATH_JSON_PROVIDER does, see JsonPathReader
+    static final ObjectReader VALUE_READER = MAPPER.reader().forType(Object.class);
 
     /**
      * Configuration for JSON_LENGTH, which evaluates plain paths only and therefore does not need
@@ -187,6 +190,12 @@ public class SqlJsonUtils {
     public static Boolean jsonExists(
             String input, String pathSpec, JsonExistsOnError errorBehavior) {
         return jsonExists(jsonApiCommonSyntax(input, pathSpec), errorBehavior);
+    }
+
+    /** Accepts a pre-parsed context from {@link #jsonParse}. */
+    public static Boolean jsonExists(
+            JsonValueContext parsedInput, String pathSpec, JsonExistsOnError errorBehavior) {
+        return jsonExists(jsonApiCommonSyntax(parsedInput, pathSpec), errorBehavior);
     }
 
     private static Boolean jsonExists(JsonPathContext context, JsonExistsOnError errorBehavior) {

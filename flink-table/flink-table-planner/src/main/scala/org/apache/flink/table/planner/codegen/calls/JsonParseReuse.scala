@@ -43,10 +43,16 @@ object JsonParseReuse {
    * }}}
    * the NULL path makes the first call short-circuit while the second one still needs the parse.
    * Conversely, when no call runs, no parse happens at all.
+   *
+   * With a `jsonPathReader`, the term of a
+   * [[org.apache.flink.table.runtime.functions.JsonPathReader]] for this input, the input is parsed
+   * by it instead, see [[org.apache.flink.table.planner.codegen.SelectiveJsonFunctionCodeGen]].
+   * Every call on an input gets the same reader or none.
    */
   def parseSharedInput(
       ctx: CodeGeneratorContext,
-      operands: Seq[GeneratedExpression]): GeneratedExpression = {
+      operands: Seq[GeneratedExpression],
+      jsonPathReader: String = null): GeneratedExpression = {
     val input = operands.head
     val inputTerm = s"${input.resultTerm}.toString()"
 
@@ -63,17 +69,19 @@ object JsonParseReuse {
         // the input may be a reused instance with new content, so the parse is valid for one record
         ctx.addReusablePerRecordStatement(s"$lastInputName = null;")
 
+        val parse =
+          if (jsonPathReader == null) qualifyMethod(BuiltInMethods.JSON_PARSE)
+          else s"$jsonPathReader.parse"
         // keyed on the input instance to share one parse between calls within a record
-        ctx.addReusableMember(
-          s"""
-             |private $typeName $methodName($inputType in) {
-             |  if (in != $lastInputName) {
-             |    $lastInputName = in;
-             |    $varName = ${qualifyMethod(BuiltInMethods.JSON_PARSE)}(in.toString());
-             |  }
-             |  return $varName;
-             |}
-             |""".stripMargin)
+        ctx.addReusableMember(s"""
+                                 |private $typeName $methodName($inputType in) {
+                                 |  if (in != $lastInputName) {
+                                 |    $lastInputName = in;
+                                 |    $varName = $parse(in.toString());
+                                 |  }
+                                 |  return $varName;
+                                 |}
+                                 |""".stripMargin)
 
         val parsed =
           GeneratedExpression(s"$methodName(${input.resultTerm})", "false", "", null)

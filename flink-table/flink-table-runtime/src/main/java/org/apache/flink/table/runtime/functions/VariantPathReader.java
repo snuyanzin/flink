@@ -68,7 +68,7 @@ public final class VariantPathReader implements Serializable {
 
     private transient Variant[] values;
     private transient String[] errors;
-    // An unpaired surrogate in a key can only come from a \u escape, so without a backslash in the
+    // An unpaired surrogate in a key can only come from a \\u escape, so without a backslash in the
     // document the keys are compared as they are.
     private transient boolean hasEscapes;
     // the keys of the objects being read, by depth, to find duplicates without a set per object
@@ -184,8 +184,7 @@ public final class VariantPathReader implements Serializable {
     }
 
     // reads the value at the parser without building it, and fails where building it fails
-    private void skip(JsonParser parser, boolean allowDuplicateKeys, int depth)
-            throws IOException {
+    private void skip(JsonParser parser, boolean allowDuplicateKeys, int depth) throws IOException {
         final JsonToken token = parser.currentToken();
         switch (token) {
             case START_OBJECT:

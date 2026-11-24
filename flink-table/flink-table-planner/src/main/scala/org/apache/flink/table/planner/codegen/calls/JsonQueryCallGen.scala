@@ -57,14 +57,16 @@ import org.apache.flink.table.types.logical.{ArrayType, DecimalType, LogicalType
  * Object rawResult$3 = SqlJsonUtils.jsonValue(parseJson$2(field$0), "$.type", ...);
  * Object rawResult$4 = SqlJsonUtils.jsonQuery(parseJson$2(field$0), "$.address", ...);
  * }}}
+ *
+ * With a `jsonPathReader`, the input is parsed by it, see [[JsonParseReuse]].
  */
-class JsonQueryCallGen extends CallGenerator {
+class JsonQueryCallGen(jsonPathReader: String = null) extends CallGenerator {
   override def generate(
       ctx: CodeGeneratorContext,
       operands: Seq[GeneratedExpression],
       returnType: LogicalType): GeneratedExpression = {
 
-    val parsed = JsonParseReuse.parseSharedInput(ctx, operands)
+    val parsed = JsonParseReuse.parseSharedInput(ctx, operands, jsonPathReader)
 
     generateCallWithStmtIfArgsNotNull(ctx, returnType, operands, resultNullable = true) {
       argTerms =>

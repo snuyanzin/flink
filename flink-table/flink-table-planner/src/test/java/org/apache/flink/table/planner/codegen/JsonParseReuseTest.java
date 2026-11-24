@@ -50,8 +50,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /** Tests that multiple JSON function calls on the same input reuse the parsed JSON. */
 class JsonParseReuseTest {
 
+    // the shared parse of an input, in full or by a JsonPathReader
     private static final Pattern JSON_PARSE_PATTERN =
-            Pattern.compile("\\b" + Pattern.quote(BuiltInMethods.JSON_PARSE().getName()) + "\\(");
+            Pattern.compile(
+                    "\\b(?:"
+                            + Pattern.quote(BuiltInMethods.JSON_PARSE().getName())
+                            + "|jsonPathReader\\$i?\\d+\\.parse)\\(");
 
     private static final Pattern PARSE_JSON_PATTERN =
             Pattern.compile("\\b" + Pattern.quote(BuiltInMethods.PARSE_JSON().getName()) + "\\(");
@@ -62,6 +66,14 @@ class JsonParseReuseTest {
 
     private static final Pattern JSON_VALUE_PATTERN =
             Pattern.compile("\\b" + Pattern.quote(BuiltInMethods.JSON_VALUE().getName()) + "\\(");
+
+    // one per PARSE_JSON or TRY_PARSE_JSON call read by a VariantPathReader
+    private static final Pattern PATH_READ_PATTERN =
+            Pattern.compile("\\bvariantPathReader\\$i?\\d+\\.read\\(");
+
+    // one per input parsed by a JsonPathReader
+    private static final Pattern SELECTIVE_READ_PATTERN =
+            Pattern.compile("\\bjsonPathReader\\$i?\\d+\\.parse\\(");
 
     static final String LIKE_X = "other_json LIKE '%x%'";
 
@@ -464,6 +476,70 @@ class JsonParseReuseTest {
     }
 
     @Test
+    void testSimplePathsReadSelectively() {
+        final String sql =
+                "SELECT JSON_VALUE(json_data, '$.address.city'), JSON_QUERY(json_data, '$.roles'), "
+                        + "JSON_TYPE(json_data, '$.age'), JSON_LENGTH(json_data) FROM json_src";
+        assertThat(collect(sql))
+                .containsExactlyInAnyOrder(
+                        Row.of("Munich", "[\"user\",\"viewer\"]", "number", 4),
+                        Row.of("Berlin", "[\"admin\"]", "number", 4));
+        final String code = extractGeneratedCode(sql);
+        assertThat(count(SELECTIVE_READ_PATTERN, code)).isOne();
+        assertThat(countJsonParse(code)).isOne();
+    }
+
+    @Test
+    void testPathThatIsNotSimpleParsesFully() {
+        // a wildcard makes every call on the input use the full parse
+        final String sql =
+                "SELECT JSON_VALUE(json_data, '$.type'), JSON_QUERY(json_data, '$.roles[*]') "
+                        + "FROM json_src";
+        assertThat(collect(sql))
+                .containsExactlyInAnyOrder(
+                        Row.of("account", "[\"user\",\"viewer\"]"), Row.of("admin", "[\"admin\"]"));
+        final String code = extractGeneratedCode(sql);
+        assertThat(count(SELECTIVE_READ_PATTERN, code)).isZero();
+        assertThat(countJsonParse(code)).isOne();
+    }
+
+    @Test
+    void testMissingPathInStrictMode() {
+        final String sql =
+                "SELECT JSON_VALUE(json_data, 'strict $.missing' NULL ON ERROR), "
+                        + "JSON_VALUE(json_data, 'lax $.missing' DEFAULT 'd' ON EMPTY) FROM json_src";
+        assertThat(collect(sql)).containsExactlyInAnyOrder(Row.of(null, "d"), Row.of(null, "d"));
+        assertThat(count(SELECTIVE_READ_PATTERN, extractGeneratedCode(sql))).isOne();
+    }
+
+    @Test
+    void testJsonExistsReadsSelectively() {
+        final String sql =
+                "SELECT JSON_EXISTS(json_data, '$.address.city'), "
+                        + "JSON_EXISTS(json_data, 'strict $.missing'), "
+                        + "JSON_EXISTS(json_data, 'lax $.missing'), "
+                        + "JSON_VALUE(json_data, '$.type') FROM json_src";
+        assertThat(collect(sql))
+                .containsExactlyInAnyOrder(
+                        Row.of(true, false, false, "account"), Row.of(true, false, false, "admin"));
+        final String code = extractGeneratedCode(sql);
+        assertThat(count(SELECTIVE_READ_PATTERN, code)).isOne();
+        assertThat(countJsonParse(code)).isOne();
+    }
+
+    @Test
+    void testJsonExistsSharesFullParse() {
+        final String sql =
+                "SELECT JSON_EXISTS(json_data, '$.roles[*]'), JSON_VALUE(json_data, '$.type') "
+                        + "FROM json_src";
+        assertThat(collect(sql))
+                .containsExactlyInAnyOrder(Row.of(true, "account"), Row.of(true, "admin"));
+        final String code = extractGeneratedCode(sql);
+        assertThat(count(SELECTIVE_READ_PATTERN, code)).isZero();
+        assertThat(countJsonParse(code)).isOne();
+    }
+
+    @Test
     void testTwoJsonLengthCalls() {
         final String sql =
                 "SELECT JSON_LENGTH(json_data), JSON_LENGTH(json_data, '$.address') FROM json_src";
@@ -627,37 +703,44 @@ class JsonParseReuseTest {
                         "JSON_VALUE(<input>, '$.address.city')",
                         "Munich",
                         "admin",
-                        JSON_PARSE_PATTERN),
+                        JSON_PARSE_PATTERN,
+                        1),
                 Arguments.of(
                         "JSON_TYPE(<input>)",
                         "JSON_TYPE(<input>, '$.roles')",
                         "array",
                         "object",
-                        JSON_PARSE_PATTERN),
+                        JSON_PARSE_PATTERN,
+                        1),
                 Arguments.of(
                         "JSON_LENGTH(<input>)",
                         "JSON_LENGTH(<input>, '$.roles')",
                         2,
                         4,
-                        JSON_PARSE_PATTERN),
+                        JSON_PARSE_PATTERN,
+                        1),
                 Arguments.of(
                         "CAST(PARSE_JSON(<input>)['type'] AS STRING)",
                         "CAST(TRY_PARSE_JSON(<input>)['address']['city'] AS STRING)",
                         "Munich",
                         "admin",
-                        PARSE_JSON_PATTERN),
+                        // one reader each for PARSE_JSON and TRY_PARSE_JSON
+                        PATH_READ_PATTERN,
+                        2),
                 Arguments.of(
                         "JSON_TYPE(<input>)",
                         "JSON_VALUE(<input>, '$.address.city')",
                         "Munich",
                         "object",
-                        JSON_PARSE_PATTERN),
+                        JSON_PARSE_PATTERN,
+                        1),
                 Arguments.of(
                         "CAST(JSON_LENGTH(<input>) AS STRING)",
                         "JSON_QUERY(<input>, '$.roles')",
                         "[\"user\",\"viewer\"]",
                         "4",
-                        JSON_PARSE_PATTERN));
+                        JSON_PARSE_PATTERN,
+                        1));
     }
 
     @ParameterizedTest(name = "{0} | {1}")
@@ -667,7 +750,8 @@ class JsonParseReuseTest {
             final String secondBranch,
             final Object expectedRow1,
             final Object expectedRow2,
-            final Pattern parsePattern) {
+            final Pattern parsePattern,
+            final int parses) {
         // <input> is a computed input that both branches use
         final String sql =
                 ("SELECT CASE WHEN CHARACTER_LENGTH(other_json) > 3 THEN "
@@ -679,8 +763,8 @@ class JsonParseReuseTest {
         assertThat(collect(sql))
                 .containsExactlyInAnyOrder(Row.of(expectedRow1), Row.of(expectedRow2));
         assertThat(count(parsePattern, extractGeneratedCode(sql)))
-                .as("Calls on the same computed input in different CASE branches share one parse")
-                .isOne();
+                .as("Calls on the same computed input in different CASE branches share parses")
+                .isEqualTo(parses);
     }
 
     @Test
@@ -802,7 +886,10 @@ class JsonParseReuseTest {
         assertThat(collect(sql))
                 .containsExactlyInAnyOrder(
                         Row.of("x", null, null), Row.of("y", "Q", null), Row.of("z", "R", "R"));
-        assertThat(countParseJson(extractGeneratedCode(sql))).isOne();
+        final String code = extractGeneratedCode(sql);
+        // read at paths: one reader each for PARSE_JSON and TRY_PARSE_JSON, no full parse
+        assertThat(count(PATH_READ_PATTERN, code)).isEqualTo(2);
+        assertThat(countParseJson(code)).isZero();
     }
 
     @Test

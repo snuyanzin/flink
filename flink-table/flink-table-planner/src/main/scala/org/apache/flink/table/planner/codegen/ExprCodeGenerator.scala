@@ -178,6 +178,15 @@ class ExprCodeGenerator(
     if (rexProgram == null || input1Type == null) null
     else new SelectiveParseJsonCodeGen(ctx, rexProgram, this)
 
+  /** JSON function calls read only at simple paths, see [[SelectiveJsonFunctionCodeGen]]. */
+  private lazy val selectiveJsonFunctions: SelectiveJsonFunctionCodeGen =
+    if (rexProgram == null || input1Type == null) null
+    else new SelectiveJsonFunctionCodeGen(ctx, rexProgram)
+
+  /** The term of the reader that parses the input of a JSON function call, or null. */
+  private def jsonRead(call: RexCall): String =
+    if (selectiveJsonFunctions == null) null else selectiveJsonFunctions.readerOf(call)
+
   /** The projection columns and the filter. */
   private lazy val roots: Seq[RexNode] =
     rexProgram.getProjectList.toSeq ++ Option(rexProgram.getCondition).toSeq
@@ -1204,9 +1213,12 @@ class ExprCodeGenerator(
       case STREAMRECORD_TIMESTAMP =>
         generateRowtimeAccess(ctx, contextTerm, false)
 
-      case JSON_VALUE => new JsonValueCallGen().generate(ctx, operands, resultType)
+      case JSON_EXISTS =>
+        JsonCodeGenUtils.generateJsonExists(ctx, resultType, operands, jsonRead(call))
 
-      case JSON_QUERY => new JsonQueryCallGen().generate(ctx, operands, resultType)
+      case JSON_VALUE => new JsonValueCallGen(jsonRead(call)).generate(ctx, operands, resultType)
+
+      case JSON_QUERY => new JsonQueryCallGen(jsonRead(call)).generate(ctx, operands, resultType)
 
       case JSON_OBJECT =>
         new JsonObjectCallGen(call, rexProgram).generate(ctx, operands, resultType)
@@ -1260,10 +1272,10 @@ class ExprCodeGenerator(
             JsonCodeGenUtils.generateParseJson(ctx, resultType, operands, true)
 
           case BuiltInFunctionDefinitions.JSON_LENGTH =>
-            JsonCodeGenUtils.generateJsonLength(ctx, resultType, operands)
+            JsonCodeGenUtils.generateJsonLength(ctx, resultType, operands, jsonRead(call))
 
           case BuiltInFunctionDefinitions.JSON_TYPE =>
-            JsonCodeGenUtils.generateJsonType(ctx, resultType, operands)
+            JsonCodeGenUtils.generateJsonType(ctx, resultType, operands, jsonRead(call))
 
           case BuiltInFunctionDefinitions.PARSE_XML =>
             XmlCodeGenUtils.generateParseXml(ctx, resultType, operands)

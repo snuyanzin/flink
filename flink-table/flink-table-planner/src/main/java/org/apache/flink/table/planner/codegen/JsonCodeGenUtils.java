@@ -18,11 +18,14 @@
 
 package org.apache.flink.table.planner.codegen;
 
+import org.apache.flink.table.api.JsonExistsOnError;
 import org.apache.flink.table.planner.codegen.calls.BuiltInMethods;
 import org.apache.flink.table.planner.codegen.calls.JsonParseReuse;
 import org.apache.flink.table.runtime.functions.SqlJsonUtils;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.types.variant.Variant;
+
+import javax.annotation.Nullable;
 
 import java.lang.reflect.Method;
 
@@ -247,13 +250,50 @@ public final class JsonCodeGenUtils {
     }
 
     /**
+     * Generates {@code JSON_EXISTS(jsonValue, path [, onError])}.
+     *
+     * <p>The parsed context is shared with the other JSON functions over the same input, so the
+     * input is parsed only once per record.
+     */
+    public static GeneratedExpression generateJsonExists(
+            CodeGeneratorContext ctx,
+            LogicalType returnType,
+            Seq<GeneratedExpression> operands,
+            @Nullable String jsonPathReader) {
+        return GenerateUtils.generateCallIfArgsNotNull(
+                ctx,
+                returnType,
+                operands,
+                true,
+                false,
+                argTerms -> {
+                    final String errorBehavior =
+                            argTerms.length() > 2
+                                    ? argTerms.apply(2)
+                                    : CodeGenUtils.qualifyEnum(JsonExistsOnError.FALSE);
+                    return CodeGenUtils.className(SqlJsonUtils.class)
+                            + ".jsonExists("
+                            + JsonParseReuse.parseSharedInput(ctx, operands, jsonPathReader)
+                                    .resultTerm()
+                            + ", "
+                            + argTerms.apply(1)
+                            + ".toString(), "
+                            + errorBehavior
+                            + ")";
+                });
+    }
+
+    /**
      * Generates {@code JSON_TYPE(jsonValue)} or {@code JSON_TYPE(jsonValue, path)}.
      *
      * <p>The parsed context is shared with the other JSON functions over the same input, so the
      * input is parsed only once per record.
      */
     public static GeneratedExpression generateJsonType(
-            CodeGeneratorContext ctx, LogicalType returnType, Seq<GeneratedExpression> operands) {
+            CodeGeneratorContext ctx,
+            LogicalType returnType,
+            Seq<GeneratedExpression> operands,
+            @Nullable String jsonPathReader) {
         return GenerateUtils.generateCallIfArgsNotNull(
                 ctx,
                 returnType,
@@ -267,7 +307,8 @@ public final class JsonCodeGenUtils {
                                     operands,
                                     argTerms,
                                     BuiltInMethods.JSON_TYPE(),
-                                    BuiltInMethods.JSON_TYPE_PATH());
+                                    BuiltInMethods.JSON_TYPE_PATH(),
+                                    jsonPathReader);
                     return CodeGenUtils.BINARY_STRING() + ".fromString(" + call + ")";
                 });
     }
@@ -279,7 +320,10 @@ public final class JsonCodeGenUtils {
      * input is parsed only once per record.
      */
     public static GeneratedExpression generateJsonLength(
-            CodeGeneratorContext ctx, LogicalType returnType, Seq<GeneratedExpression> operands) {
+            CodeGeneratorContext ctx,
+            LogicalType returnType,
+            Seq<GeneratedExpression> operands,
+            @Nullable String jsonPathReader) {
         return GenerateUtils.generateCallIfArgsNotNull(
                 ctx,
                 returnType,
@@ -292,7 +336,8 @@ public final class JsonCodeGenUtils {
                                 operands,
                                 argTerms,
                                 BuiltInMethods.JSON_LENGTH(),
-                                BuiltInMethods.JSON_LENGTH_PATH()));
+                                BuiltInMethods.JSON_LENGTH_PATH(),
+                                jsonPathReader));
     }
 
     /**
@@ -305,8 +350,10 @@ public final class JsonCodeGenUtils {
             Seq<GeneratedExpression> operands,
             Seq<String> argTerms,
             Method wholeDocument,
-            Method withPath) {
-        final String parsed = JsonParseReuse.parseSharedInput(ctx, operands).resultTerm();
+            Method withPath,
+            @Nullable String jsonPathReader) {
+        final String parsed =
+                JsonParseReuse.parseSharedInput(ctx, operands, jsonPathReader).resultTerm();
         if (argTerms.length() == 1) {
             return CodeGenUtils.qualifyMethod(wholeDocument) + "(" + parsed + ")";
         }
